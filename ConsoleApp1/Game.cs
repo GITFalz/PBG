@@ -46,7 +46,8 @@ public class Game : GameWindow
         voxelManager.GenerateBlock(Vector3.Zero);
         
         mesh.vertices = voxelManager.vertices;
-        mesh.uvs = voxelManager.uvs;
+        mesh.uvs2D = voxelManager.uvs2D;
+        mesh.texIndex = voxelManager.texIndex;
         mesh.indices = voxelManager.indices;
 
         try
@@ -60,7 +61,6 @@ public class Game : GameWindow
         }
         
         mesh.RecalculateBounds();
-        mesh.SeperateUvs();
 
         vao = new VAO();
         

@@ -7,10 +7,9 @@ public class Mesh
     public List<Vector3> vertices { get; set; }
     public List<Vector3> uvs { get; set; }
     public List<uint> indices { get; set; }
-    public Bounds bounds { get; set; }
-    
     public List<Vector2> uvs2D { get; set; }
     public List<int> texIndex { get; set; }
+    public Bounds bounds { get; set; }
 
     public Mesh()
     {
@@ -26,7 +25,7 @@ public class Mesh
         uint max = indices.Max();
         
         bool tris = indices.Count % 3 == 0;
-        bool uvs = this.uvs.Count == vertices.Count;
+        bool uvs = this.uvs.Count == vertices.Count || uvs2D.Count == vertices.Count;
         bool verts = vertices.Count > (int)max;
         
         if (!tris)

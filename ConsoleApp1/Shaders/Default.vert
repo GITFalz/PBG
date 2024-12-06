@@ -4,7 +4,7 @@ layout (location = 1) in vec2 aTexCoord; // vertex color
 layout (location = 2) in int texIndex; // texture index
 
 out vec2 TexCoord; // color
-out int TexIndex; // texture index
+flat out int TexIndex; // texture index
 
 // uniform variables
 uniform mat4 model;

@@ -8,12 +8,16 @@ public class VoxelManager
     public List<Vector3> vertices { get; set; }
     public List<Vector3> uvs { get; set; }
     public List<uint> indices { get; set; }
+    public List<Vector2> uvs2D { get; set; }
+    public List<int> texIndex { get; set; }
     
     public VoxelManager()
     {
         vertices = new List<Vector3>();
         uvs = new List<Vector3>();
         indices = new List<uint>();
+        uvs2D = new List<Vector2>();
+        texIndex = new List<int>();
     }
 
     public void GenerateBlock(Vector3 origin)
@@ -100,9 +104,14 @@ public class VoxelManager
         vertices.Add(c);
         vertices.Add(d);
         
-        uvs.Add(new Vector3(0, 0, 0));
-        uvs.Add(new Vector3(0, 1, 0));
-        uvs.Add(new Vector3(1, 1, 0));
-        uvs.Add(new Vector3(1, 0, 0));
+        uvs2D.Add(new Vector2(0, 0));
+        uvs2D.Add(new Vector2(1, 0));
+        uvs2D.Add(new Vector2(1, 1));
+        uvs2D.Add(new Vector2(0, 1));
+        
+        texIndex.Add(1);
+        texIndex.Add(1);
+        texIndex.Add(1);
+        texIndex.Add(1);
     }
 }
