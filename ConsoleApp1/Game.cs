@@ -21,7 +21,7 @@ public class Game : GameWindow
     private VAO vao;
     private IBO ibo;
     ShaderProgram shaderProgram;
-    Texture texture;
+    TextureArray textureArray;
     
     public Game(int width, int height) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
     {
@@ -76,7 +76,7 @@ public class Game : GameWindow
         
         shaderProgram = new ShaderProgram("Default.vert", "Default.frag");
         
-        texture = new Texture("dirt_block.png");
+        textureArray = new TextureArray("Test_TextureAtlas.png", 32, 32);
         
         GL.Enable(EnableCap.DepthTest);
         
@@ -90,7 +90,7 @@ public class Game : GameWindow
         vao.Delete();
         ibo.Delete();
         shaderProgram.Delete();
-        texture.Delete();
+        textureArray.Delete();
     }
     
     protected override void OnRenderFrame(FrameEventArgs args)
@@ -101,7 +101,7 @@ public class Game : GameWindow
         shaderProgram.Bind();
         vao.Bind();
         ibo.Bind();
-        texture.Bind();
+        textureArray.Bind();
 
         Matrix4 model = Matrix4.Identity;
         Matrix4 view = _mainCamera.GetViewMatrix();
