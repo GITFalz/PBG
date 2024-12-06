@@ -1,4 +1,5 @@
-﻿using OpenTK.Mathematics;
+﻿using ConsoleApp1.Assets.Scripts.World.Blocks;
+using OpenTK.Mathematics;
 
 namespace ConsoleApp1.Engine.Scripts.Core.Voxel;
 
@@ -19,14 +20,22 @@ public class VoxelManager
         texIndex = new List<int>();
     }
 
-    public void GenerateBlock(Vector3 origin)
+    public void GenerateBlock(Vector3 origin, int blockId)
     {
+        BlockData blockData = BlockManager.GetBlockData(blockId);
+        if (blockData.blockType == BlockType.AIR) return;
+        
         GenerateFrontFace(origin);
         GenerateRightFace(origin);
         GenerateTopFace(origin);
         GenerateLeftFace(origin);
         GenerateBottomFace(origin);
         GenerateBackFace(origin);
+        
+        for (int i = 0; i < 6; i++)
+        {
+            SetFaceIndex(_textureIndexes[blockData.blockType][i]);
+        }
     }
     
     public void GenerateFrontFace(Vector3 origin)
@@ -103,14 +112,24 @@ public class VoxelManager
         vertices.Add(c);
         vertices.Add(d);
         
-        uvs2D.Add(new Vector2(1, 0));
         uvs2D.Add(new Vector2(1, 1));
-        uvs2D.Add(new Vector2(0, 1));
+        uvs2D.Add(new Vector2(1, 0));
         uvs2D.Add(new Vector2(0, 0));
-        
-        texIndex.Add(1);
-        texIndex.Add(1);
-        texIndex.Add(1);
-        texIndex.Add(1);
+        uvs2D.Add(new Vector2(0, 1));
     }
+    
+    public void SetFaceIndex(int textureIndex)
+    {
+        texIndex.Add(textureIndex);
+        texIndex.Add(textureIndex);
+        texIndex.Add(textureIndex);
+        texIndex.Add(textureIndex);
+    }
+    
+    private readonly Dictionary<BlockType, int[]> _textureIndexes = new Dictionary<BlockType, int[]>()
+    {
+        {BlockType.GRASS, new int[] { 0, 0, 1, 0, 2, 0 }},
+        {BlockType.DIRT, new int[] { 2, 2, 2, 2, 2, 2 }},
+        {BlockType.STONE, new int[] { 3, 3, 3, 3, 3, 3 }},
+    };
 }

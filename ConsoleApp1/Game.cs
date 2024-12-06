@@ -1,4 +1,6 @@
-﻿using ConsoleApp1.Engine.Scripts.Core.Graphics;
+﻿using ConsoleApp1.Assets.Scripts.World.Blocks;
+using ConsoleApp1.Assets.Scripts.World.Chunk;
+using ConsoleApp1.Engine.Scripts.Core.Graphics;
 using ConsoleApp1.Engine.Scripts.Core.Rendering;
 using ConsoleApp1.Engine.Scripts.Core.Voxel;
 using OpenTK.Graphics.OpenGL4;
@@ -14,14 +16,17 @@ public class Game : GameWindow
     private int width, height;
     
     private Camera _mainCamera;
-
-    private Mesh mesh;
+    
     private VoxelManager voxelManager;
-
-    private VAO vao;
-    private IBO ibo;
-    ShaderProgram shaderProgram;
-    TextureArray textureArray;
+    private BlockManager blockManager;
+    private Chunk chunk;
+    
+    private List<VAO> vao;
+    private List<IBO> ibo;
+    private List<int> indicesCount;
+    
+    private ShaderProgram shaderProgram;
+    private TextureArray textureArray;
     
     public Game(int width, int height) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
     {
@@ -40,42 +45,32 @@ public class Game : GameWindow
     {
         base.OnLoad();
         
-        mesh = new Mesh();
+        
         voxelManager = new VoxelManager();
+        blockManager = new BlockManager();
+        chunk = new Chunk();
         
-        voxelManager.GenerateBlock(Vector3.Zero);
+        blockManager.Init();
         
-        mesh.vertices = voxelManager.vertices;
-        mesh.uvs2D = voxelManager.uvs2D;
-        mesh.texIndex = voxelManager.texIndex;
-        mesh.indices = voxelManager.indices;
-
-        try
+        vao = new List<VAO>(9);
+        ibo = new List<IBO>(9);
+        indicesCount = new List<int>(9);
+        
+        for (int x = 0; x < 3; x++)
         {
-            mesh.CheckConformity();
+            for (int z = 0; z < 3; z++)
+            {
+                chunk.GenerateChunk(new Vector3(x * Chunk.WIDTH, 0, z * Chunk.DEPTH));
+                chunk.RenderChunk();
+                
+                vao[x * 3 + z] = chunk.chunkVao;
+                ibo[x * 3 + z] = chunk.chunkIbo;
+                
+                indicesCount[x * 3 + z] = chunk.voxelManager.indices.Count;
+            }
         }
-        catch (Exception e)
-        {
-            Console.WriteLine(e.Message);
-            Environment.Exit(1);
-        }
-        
-        mesh.RecalculateBounds();
-
-        vao = new VAO();
-        
-        VBO vbo = new VBO(mesh.vertices);
-        VBO uvVBO = new VBO(mesh.uvs2D);
-        VBO texIndexVBO = new VBO(mesh.texIndex);
-        
-        vao.LinkToVAO(0, 3, vbo);
-        vao.LinkToVAO(1, 2, uvVBO);
-        vao.LinkToVAO(2, 1, texIndexVBO);
-
-        ibo = new IBO(mesh.indices);
         
         shaderProgram = new ShaderProgram("Default.vert", "Default.frag");
-        
         textureArray = new TextureArray("Test_TextureAtlas.png", 32, 32);
         
         GL.Enable(EnableCap.DepthTest);
@@ -87,8 +82,12 @@ public class Game : GameWindow
     {
         base.OnUnload();
         
-        vao.Delete();
-        ibo.Delete();
+        foreach (var v in vao)
+            v.Delete();
+        
+        foreach (var i in ibo)
+            i.Delete();
+            
         shaderProgram.Delete();
         textureArray.Delete();
     }
@@ -97,10 +96,14 @@ public class Game : GameWindow
     {
         GL.ClearColor(0.6f, 0.3f, 1f, 1f);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+        
+        foreach (var v in vao)
+            v.Bind();
+        
+        foreach (var i in ibo) 
+            i.Bind();
 
         shaderProgram.Bind();
-        vao.Bind();
-        ibo.Bind();
         textureArray.Bind();
 
         Matrix4 model = Matrix4.Identity;
@@ -115,7 +118,7 @@ public class Game : GameWindow
         GL.UniformMatrix4(viewLocation, true, ref view);
         GL.UniformMatrix4(projectionLocation, true, ref projection);
         
-        GL.DrawElements(PrimitiveType.Triangles, mesh.indices.Count, DrawElementsType.UnsignedInt, 0);
+        GL.DrawElements(PrimitiveType.Triangles, chunk.voxelManager.indices.Count, DrawElementsType.UnsignedInt, 0);
 
         Context.SwapBuffers();
         
