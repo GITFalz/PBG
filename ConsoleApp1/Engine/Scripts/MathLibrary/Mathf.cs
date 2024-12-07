@@ -16,4 +16,14 @@ public static class Mathf
     {
         return a + t * (b - a);
     }
+    
+    public static System.Numerics.Vector3 ToNumericsVector3(OpenTK.Mathematics.Vector3 vector)
+    {
+        return new System.Numerics.Vector3(vector.X, vector.Y, vector.Z);
+    }
+    
+    public static System.Numerics.Vector2 ToNumericsVector2(OpenTK.Mathematics.Vector2 vector)
+    {
+        return new System.Numerics.Vector2(vector.X, vector.Y);
+    }
 }

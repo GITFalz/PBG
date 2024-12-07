@@ -123,4 +123,10 @@ public class Camera
     {
         InputController(input, mouse, e);
     }
+    
+    public void UpdateProjectionMatrix(int width, int height)
+    {
+        SCREEN_WIDTH = width;
+        SCREEN_HEIGHT = height;
+    }
 }

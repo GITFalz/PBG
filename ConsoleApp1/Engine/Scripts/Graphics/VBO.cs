@@ -31,4 +31,13 @@ public class VBO
     public void Bind() { GL.BindBuffer(BufferTarget.ArrayBuffer, ID); }
     public void Unbind() { GL.BindBuffer(BufferTarget.ArrayBuffer, 0); }
     public void Delete() { GL.DeleteBuffer(ID); }
+    public void Update(List<Vector3> newData)
+    {
+        GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, newData.Count * Vector3.SizeInBytes, newData.ToArray());
+    }
+    
+    public void Update(List<Vector2> newData)
+    {
+        GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, newData.Count * Vector2.SizeInBytes, newData.ToArray());
+    }
 }
