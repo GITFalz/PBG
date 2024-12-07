@@ -15,6 +15,21 @@ public class MeshData
         tCoords = new List<int>();
     }
 
+    public bool MoveQuad(int index, Vector3 position)
+    {
+        int vertIndex = index * 4;
+        
+        if (vertIndex < 0 || vertIndex > verts.Count)
+            return false;
+        
+        verts[vertIndex + 0] += position;
+        verts[vertIndex + 1] += position;
+        verts[vertIndex + 2] += position;
+        verts[vertIndex + 3] += position;
+
+        return true;
+    }
+
     public void AddQuadAtIndex(Quad quad, int i)
     {
         int vertIndex = i * 4;

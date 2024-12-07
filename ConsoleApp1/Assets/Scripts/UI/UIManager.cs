@@ -4,7 +4,7 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-public class UIController
+public class UIManager
 {
     // UI
     private VAO _uIvao;
@@ -40,10 +40,10 @@ public class UIController
     private Queue<Character> _toBeAdded = new Queue<Character>();
 
     private List<Character> _inputField = new List<Character>();
+
     
-    
-    // UI Elements
-    public List<UI_Base> uiElements = new List<UI_Base>();
+    // Controller
+    private UIController _ui = new UIController();
     
     
     
@@ -54,55 +54,183 @@ public class UIController
         _uItexture = new TextureArray("UI_Atlas.png", 64, 64);
         
         _uiMeshData = new MeshData();
-        
-        UI_Panel panel = new UI_Panel(new Vector2(64, 64), UiAnchorAlignment.MiddleCenter, new Vector4(10, 10, 10, 10), new Vector2(500, 500));
-        panel.RenderUI(_uiMeshData);
-        
         _uIvao = new VAO();
-        
-        _uIvbo = new VBO(_uiMeshData.verts);
-        _uItextureVbo = new VBO(_uiMeshData.uvs);
-        _uIIndexVbo = new VBO(_uiMeshData.tCoords);
-        
-        _uIvao.LinkToVAO(0, 3, _uIvbo);
-        _uIvao.LinkToVAO(1, 2, _uItextureVbo);
-        _uIvao.LinkToVAO(2, 1, _uIIndexVbo);
-        
-        _uIibo = new IBO(_uiMeshData.tris);
         
         
         // Load Text
         _textShader = new ShaderProgram("Text/Text.vert", "Text/Text.frag");
-
         _textTexture = new Texture("text.png");
-        _textMeshData = new MeshData();
         
+        _textMeshData = new MeshData();
         _textVao = new VAO();
-
-        _textVbo = new VBO(_textMeshData.verts);
-        _textTextureVbo = new VBO(_textMeshData.uvs);
-
-        _textVao.LinkToVAO(0, 3, _textVbo);
-        _textVao.LinkToVAO(1, 2, _textTextureVbo);
-
-        _textIbo = new IBO(_textMeshData.tris);
+        
     }
 
     public void Start()
     {
+        // UI creation
+        UI_Panel panel1 = new UI_Panel();
+        /**/UI_Panel panel1a = new UI_Panel();
+        /**/UI_Panel panel1b = new UI_Panel();
+        /**//**/UI_Panel panel1b1 = new UI_Panel();
+        /**/UI_Panel panel1c = new UI_Panel();
         
+        UI_Button button = new UI_Button();
+        
+        
+        // Panel 1
+        panel1.SetOffset(new Vector4(10, 10, 10, 10));
+        panel1.SetSize(new Vector2(500, 500));
+        panel1.SetAnchorAlignment(UiAnchorAlignment.RightScale);
+        panel1.SetAnchorReference(UiAnchor.Absolute);
+        
+        panel1.SetMem(0);
+        
+
+        // Panel 1a
+        panel1a.SetOffset(new Vector4(10, 10, 10, 10));
+        panel1a.SetSize(new Vector2(500, 200));
+        panel1a.SetAnchorAlignment(UiAnchorAlignment.TopScale);
+        panel1a.SetAnchorReference(UiAnchor.Relative);
+        
+        panel1a.SetParent(panel1);
+        
+        panel1a.SetMem(1);
+        
+        
+        // Panel 1b
+        panel1b.SetOffset(new Vector4(10, 10, 220, 10));
+        panel1b.SetSize(new Vector2(500, 200));
+        panel1b.SetAnchorAlignment(UiAnchorAlignment.TopScale);
+        panel1b.SetAnchorReference(UiAnchor.Relative);
+        
+        panel1b.SetParent(panel1);
+        
+        panel1b.SetMem(2);
+
+        
+        // Panel 1b1
+        panel1b1.SetOffset(new Vector4(10, 10, -200, 10));
+        panel1b1.SetSize(new Vector2(100, 100));
+        panel1b1.SetAnchorAlignment(UiAnchorAlignment.RightScale);
+        panel1b1.SetAnchorReference(UiAnchor.Relative);
+        
+        panel1b1.SetParent(panel1b);
+        
+        panel1b1.SetMem(3);
+        
+        
+        // Panel 1c
+        panel1c.SetOffset(new Vector4(10, 10, 430, 10));
+        panel1c.SetSize(new Vector2(500, 200));
+        panel1c.SetAnchorAlignment(UiAnchorAlignment.TopScale);
+        panel1c.SetAnchorReference(UiAnchor.Relative);
+        
+        panel1c.SetParent(panel1);
+        
+        panel1c.SetMem(4);
+        
+        
+        
+        
+        // Button
+        button.SetOffset(new Vector4(10, 10, -410, 10));
+        button.SetSize(new Vector2(150, 50));
+        button.SetAnchorAlignment(UiAnchorAlignment.BottomLeft);
+        button.SetAnchorReference(UiAnchor.Absolute);
+        
+        button.SetMem(5);
+        
+        button.SetTextAlignment(UiAnchorAlignment.MiddleCenter);
+        
+        button.OnClick = () => { Console.WriteLine("Button Clicked"); };
+        
+        
+        
+            
+        // Add to list
+        _ui.AddElement(panel1);
+        _ui.AddElement(panel1a);
+        _ui.AddElement(panel1b);
+        _ui.AddElement(panel1b1);
+        _ui.AddElement(panel1c);
+        
+        _ui.AddElement(button);
+        _ui.AddElement(button.text);
+        
+        RenderUI();
+        
+        // Generate UI
+        GenerateUI();
+        
+        
+        // Text creation
+        UI_Text text = new UI_Text();
+        UI_Text text2 = new UI_Text();
+        
+        // Text
+        text.SetText("Hi there  my name is Falz", 2);
+        
+        text.SetOffset(new Vector4(10, 10, 10, 10));
+        text.SetSize(new Vector2(500, 500));
+        text.SetAnchorAlignment(UiAnchorAlignment.LeftScale);
+        text.SetAnchorReference(UiAnchor.Relative);
+        
+        text.SetParent(panel1a);
+        
+        text.SetMem(7);
+        
+        
+        // Text 2
+        text2.SetText("Boo", 1.5f);
+        
+        text2.SetOffset(new Vector4(10, 10, 220, 10));
+        text2.SetSize(new Vector2(80, 80));
+        text2.SetAnchorAlignment(UiAnchorAlignment.TopLeft);
+        text2.SetAnchorReference(UiAnchor.Relative);
+        
+        text2.SetParent(panel1b1);
+        
+        text2.SetMem(8);
+        
+        
+        // Add to list
+        _ui.AddElement(text);
+        _ui.AddElement(text2);
+        
+        RenderText();
+        
+        
+        // Generate Text
+        GenerateText();
+    }
+
+    public void OnResize()
+    {
+        _uiMeshData.Clear();
+        
+        RenderUI();
+        GenerateUI();
+        
+        _textMeshData.Clear();
+
+        RenderText();
+        GenerateText();
     }
     
-    public void Render()
+    public void RenderUI()
     {
-        foreach (var uiElement in uiElements)
+        foreach (var uiElement in _ui.GetElements())
         {
             uiElement.RenderUI(_uiMeshData);
         }
-        
-        foreach (var uiElement in uiElements)
+    }
+    
+    public void RenderText()
+    {
+        foreach (var uiElement in _ui.GetElements())
         {
-            uiElement.RenderText();
+            uiElement.RenderText(_textMeshData);
         }
     }
     
@@ -135,11 +263,27 @@ public class UIController
     
     public void OnRenderFrame(FrameEventArgs args)
     {
+        for (int i = 0; i < _uiMeshData.verts.Count; i++)
+        {
+            _uiMeshData.verts[i] = _uiMeshData.verts[i] + new Vector3(0, 0.01f, 0);
+        }
+        
         UpdateUi();
         UpdateText();
     }
 
     public void OnUpdateFrame(KeyboardState keyboard, MouseState mouse, FrameEventArgs args)
+    {
+        
+        /*
+         * script that handles inputFields
+        */
+        //InputField(keyboard, mouse, args);
+
+        _ui.Update(mouse);
+    }
+    
+    private void InputField(KeyboardState keyboard, MouseState mouse, FrameEventArgs args)
     {
         if (keyboard.IsAnyKeyDown)
         {
@@ -157,8 +301,30 @@ public class UIController
             _pressedCharacters.Clear();
         }
     }
-    
-    
+
+    private void GenerateUI()
+    {
+        _uIvbo = new VBO(_uiMeshData.verts);
+        _uItextureVbo = new VBO(_uiMeshData.uvs);
+        _uIIndexVbo = new VBO(_uiMeshData.tCoords);
+        
+        _uIvao.LinkToVAO(0, 3, _uIvbo);
+        _uIvao.LinkToVAO(1, 2, _uItextureVbo);
+        _uIvao.LinkToVAO(2, 1, _uIIndexVbo);
+        
+        _uIibo = new IBO(_uiMeshData.tris);
+    }
+
+    private void GenerateText()
+    {
+        _textVbo = new VBO(_textMeshData.verts);
+        _textTextureVbo = new VBO(_textMeshData.uvs);
+
+        _textVao.LinkToVAO(0, 3, _textVbo);
+        _textVao.LinkToVAO(1, 2, _textTextureVbo);
+
+        _textIbo = new IBO(_textMeshData.tris);
+    }
     
     private void UpdateUi()
     {

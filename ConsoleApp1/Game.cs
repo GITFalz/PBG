@@ -25,7 +25,7 @@ public class Game : GameWindow
     
     
     // UI
-    private UIController _uiController;
+    private UIManager _uiManager;
     
     
     // Events
@@ -62,7 +62,8 @@ public class Game : GameWindow
         
         try
         {
-            _uiController.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, e.Width, e.Height, 0, -1, 1);
+            _uiManager.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, e.Width, e.Height, 0, -1, 1);
+            _uiManager.OnResize();
             _mainCamera.UpdateProjectionMatrix(e.Width, e.Height);
         }
         catch (Exception ex)
@@ -73,7 +74,7 @@ public class Game : GameWindow
     
     protected override void OnLoad()
     {
-        _uiController = new UIController();
+        _uiManager = new UIManager();
             
         base.OnLoad();
 
@@ -105,8 +106,8 @@ public class Game : GameWindow
         _shaderProgram = new ShaderProgram("World/Default.vert", "World/Default.frag");
         _textureArray = new TextureArray("Test_TextureAtlas.png", 32, 32);
         
-        _uiController.Load();
-        _uiController.Start();
+        _uiManager.Load();
+        _uiManager.Start();
         
         GL.Enable(EnableCap.DepthTest);
         
@@ -122,7 +123,7 @@ public class Game : GameWindow
         _shaderProgram.Delete();
         _textureArray.Delete();
 
-        _uiController.Unload();
+        _uiManager.Unload();
     }
     
     protected override void OnRenderFrame(FrameEventArgs args)
@@ -148,7 +149,8 @@ public class Game : GameWindow
         
         _chunkManager.RenderChunks();
 
-        _uiController.OnRenderFrame(args);
+        if (_visibleCursor)
+            _uiManager.OnRenderFrame(args);
         
         Context.SwapBuffers();
         
@@ -221,14 +223,24 @@ public class Game : GameWindow
         
         base.OnUpdateFrame(args);
 
-        _uiController.OnUpdateFrame(keyboard, mouse, args);
+        if (_visibleCursor)
+            _uiManager.OnUpdateFrame(keyboard, mouse, args);
         
-        _mainCamera.Update(keyboard, mouse, args);
+        if (!_visibleCursor)
+            _mainCamera.Update(keyboard, mouse, args);
         
         if (_visibleCursorSwitch.CanSwitch(keyboard, Keys.Escape))
         {
             _visibleCursor = !_visibleCursor;
-            CursorState = !_visibleCursor ? CursorState.Grabbed : CursorState.Normal;
+            if (!_visibleCursor)
+            {
+                CursorState = CursorState.Grabbed;
+                _mainCamera.firstMove = true;
+            }
+            else
+            {
+                CursorState = CursorState.Normal;
+            }
         }
     }
 }

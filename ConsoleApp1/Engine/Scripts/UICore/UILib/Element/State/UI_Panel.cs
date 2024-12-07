@@ -3,24 +3,12 @@ using StbImageSharp;
 
 public class UI_Panel : UI_Base
 {
-    public Vector2 textureSize;
+    public Vector2 textureSize = new Vector2(64, 64);
     
-    public UI_Panel(Vector2 textureSize, UiAnchorAlignment alignment, Vector4 offset, Vector2 size)
+    public UI_Panel()
     {
         name = "UI_Panel";
-        
-        this.textureSize = textureSize;
-        
-        this.baseOffset = offset;
-        this.baseSize = size;
-
-        anchorAlignment = alignment;
     }
-    
-    public UI_Panel(Vector2 textureSize, UiAnchorAlignment alignment, Vector2 size) : this(textureSize, alignment, Vector4.Zero, size) { }
-    
-    public UI_Panel(Vector2 textureSize, Vector4 offset, Vector2 size) : this(textureSize, UiAnchorAlignment.MiddleCenter, offset, size) { }
-    public UI_Panel(Vector2 textureSize, Vector2 size) : this(textureSize, UiAnchorAlignment.MiddleCenter, Vector4.Zero, size) { }
     
     public override void RenderUI(MeshData meshData)
     {

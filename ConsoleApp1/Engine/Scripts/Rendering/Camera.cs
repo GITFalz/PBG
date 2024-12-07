@@ -20,7 +20,7 @@ public class Camera
     private float pitch = 0;
     private float yaw = -90;
 
-    private bool firstMove = true;
+    public bool firstMove = true;
     public Vector2 lastPos;
 
     public Camera(float width, float height, Vector3 position)

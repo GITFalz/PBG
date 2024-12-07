@@ -85,16 +85,6 @@ public class UI
         return meshData;
     }
 
-    public static void GenerateCharacters(Vector3 position, float size, List<Character> characters, MeshData meshData)
-    {
-        Vector3 offset = Vector3.Zero;
-        foreach (Character character in characters)
-        {
-            GenerateCharacter(position + offset, size, character, meshData);
-            offset.X += size * 7;
-        }
-    }
-
     public static void GenerateCharacter(Vector3 position, float size, Character character, MeshData meshData)
     {
         lastCharacterPosition = position;
@@ -110,8 +100,23 @@ public class UI
         
         AddTris(meshData);
         AddUvs(meshData, UIText.CharacterUvs[character]);
+    }
+    
+    public static void GenerateCharacter(Vector3 position, float size, char character, MeshData meshData)
+    {
+        if (!UIText.CharUvs.TryGetValue(character, out Vector2[] uvs))
+            return;
         
-        Console.WriteLine("Character: " + character + " Position: " + position);
+        meshData.verts.Add((quadFunc[0](7, 9) * size) + position);
+        meshData.verts.Add((quadFunc[1](7, 9) * size) + position);
+        meshData.verts.Add((quadFunc[2](7, 9) * size) + position);
+        meshData.verts.Add((quadFunc[3](7, 9) * size) + position);
+        
+        
+        Console.WriteLine(character);
+        
+        AddTris(meshData);
+        AddUvs(meshData, uvs);
     }
     
     public static void GenerateCharacterAtLastPosition(float size, Character character, MeshData meshData)

@@ -42,4 +42,11 @@ public class VBO
         GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, newData.Count * Vector2.SizeInBytes, newData.ToArray());
         Unbind();
     }
+    
+    public void Update(List<int> newData)
+    {
+        Bind();
+        GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, newData.Count * sizeof(int), newData.ToArray());
+        Unbind();
+    }
 }
