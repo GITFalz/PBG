@@ -1,8 +1,6 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-namespace ConsoleApp1.Engine.Scripts.Core.Graphics;
-
 public class VBO
 {
     public int ID;
@@ -33,11 +31,15 @@ public class VBO
     public void Delete() { GL.DeleteBuffer(ID); }
     public void Update(List<Vector3> newData)
     {
+        Bind();
         GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, newData.Count * Vector3.SizeInBytes, newData.ToArray());
+        Unbind();
     }
     
     public void Update(List<Vector2> newData)
     {
+        Bind();
         GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, newData.Count * Vector2.SizeInBytes, newData.ToArray());
+        Unbind();
     }
 }

@@ -1,7 +1,5 @@
 ﻿using OpenTK.Mathematics;
 
-namespace ConsoleApp1.Assets.Scripts.Rendering;
-
 public class MeshData
 {
     public List<Vector3> verts;

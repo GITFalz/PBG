@@ -1,9 +1,5 @@
-﻿using ConsoleApp1.Assets.Scripts.Rendering;
-using ConsoleApp1.Engine.Scripts.UI.UITextData;
-using OpenTK.Mathematics;
+﻿using OpenTK.Mathematics;
 using StbImageSharp;
-
-namespace ConsoleApp1.Assets.Scripts.UI;
 
 public class UI
 {
@@ -19,8 +15,11 @@ public class UI
      */
     public static MeshData Generate9Slice(Vector3 position, float textureWidth, float textureHeight, float width, float height, float cellSize, Vector4 grid)
     {
-        MeshData meshData = new MeshData();
-        
+        return Generate9Slice(position, textureWidth, textureHeight, width, height, cellSize, grid, new MeshData());
+    }
+
+    public static MeshData Generate9Slice(Vector3 position, float textureWidth, float textureHeight, float width, float height, float cellSize, Vector4 grid, MeshData meshData)
+    {
         Vector3 offsetX1 = new Vector3(cellSize, 0f, 0f);
         Vector3 offsetX2 = new Vector3(width - cellSize, 0f, 0f);
         
@@ -78,7 +77,10 @@ public class UI
         GenerateBasicQuad(position + offsetX2 + offsetY2, cellSize, meshData);
         
         for (int uv = 0; uv < 9; uv++)
+        {
             AddUvs(meshData, uvMaps[uv](x1, x2, y1, y2, middle));
+        }
+        
         
         return meshData;
     }
@@ -147,6 +149,12 @@ public class UI
         nextCharacterPosition.X -= 7;
     }
     
+    public static void RemoveSpace()
+    {
+        lastCharacterPosition.X -= 7;
+        nextCharacterPosition.X -= 7;
+    }
+    
     
     private static void GenerateBasicQuad(Vector3 position, float size, MeshData meshData)
     {
@@ -174,6 +182,11 @@ public class UI
         meshData.uvs.Add(uvs[1]);
         meshData.uvs.Add(uvs[2]);
         meshData.uvs.Add(uvs[3]);
+        
+        meshData.tCoords.Add(0);
+        meshData.tCoords.Add(0);
+        meshData.tCoords.Add(0);
+        meshData.tCoords.Add(0);
     }
     
     //Only if verts have been added (otherwise Count - 4 could be negative)

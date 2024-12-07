@@ -1,5 +1,4 @@
-﻿using ConsoleApp1.Engine.Scripts.UI.UITextData;
-using OpenTK.Windowing.GraphicsLibraryFramework;
+﻿using OpenTK.Windowing.GraphicsLibraryFramework;
 using Veldrid;
 
 namespace ConsoleApp1.Assets.Scripts.Inputs;
@@ -13,7 +12,7 @@ public static class InputManager
 
     public static Character GetPressedKey(KeyboardState keyboard)
     {
-        foreach (var key in _pressedCharacters)
+        foreach (var key in PressedCharacters)
         {
             if (keyboard.IsKeyDown(key.Key))
             {
@@ -23,8 +22,23 @@ public static class InputManager
 
         return Character.None;
     }
+    
+    public static List<Character> GetPressedKeys(KeyboardState keyboard)
+    {
+        List<Character> pressedKeys = new List<Character>();
+        
+        foreach (var key in PressedCharacters)
+        {
+            if (keyboard.IsKeyDown(key.Key))
+            {
+                pressedKeys.Add(key.Value);
+            }
+        }
 
-    private static Dictionary<Keys, Character> _pressedCharacters = new Dictionary<Keys, Character>()
+        return pressedKeys;
+    }
+
+    private static readonly Dictionary<Keys, Character> PressedCharacters = new Dictionary<Keys, Character>()
     {
         { Keys.A, Character.A },
         { Keys.B, Character.B },

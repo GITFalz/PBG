@@ -1,8 +1,6 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using StbImageSharp;
 
-namespace ConsoleApp1.Engine.Scripts.Core.Graphics;
-
 public class Texture
 {
     public int ID;

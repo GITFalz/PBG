@@ -1,5 +1,4 @@
 using ConsoleApp1.Assets.Scripts.World.Blocks;
-using ConsoleApp1.Engine.Scripts.Core.Graphics;
 using ConsoleApp1.Engine.Scripts.Core.Rendering;
 using ConsoleApp1.Engine.Scripts.Core.Voxel;
 using OpenTK.Mathematics;
@@ -9,7 +8,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ConsoleApp1.Assets.Scripts.Rendering;
 using ConsoleApp1.Engine.Scripts.Core.Data;
 using ConsoleApp1.Engine.Scripts.Core.MathLibrary;
 

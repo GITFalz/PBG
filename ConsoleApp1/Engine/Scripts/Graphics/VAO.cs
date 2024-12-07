@@ -1,7 +1,5 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 
-namespace ConsoleApp1.Engine.Scripts.Core.Graphics;
-
 public class VAO
 {
     public int ID;

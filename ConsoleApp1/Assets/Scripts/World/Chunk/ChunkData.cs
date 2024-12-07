@@ -1,7 +1,5 @@
 ﻿using System.Diagnostics;
-using ConsoleApp1.Assets.Scripts.Rendering;
 using ConsoleApp1.Assets.Scripts.World.Blocks;
-using ConsoleApp1.Engine.Scripts.Core.Graphics;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 

@@ -1,7 +1,5 @@
 ﻿using OpenTK.Mathematics;
 
-namespace ConsoleApp1.Engine.Scripts.UI.UITextData;
-
 public static class UIText
 {
     public const float Cw = 1f / 18f;
