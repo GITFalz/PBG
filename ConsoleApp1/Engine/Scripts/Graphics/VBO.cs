@@ -19,6 +19,13 @@ public class VBO
         GL.BufferData(BufferTarget.ArrayBuffer, data.Count * Vector2.SizeInBytes, data.ToArray(), BufferUsageHint.StaticDraw);
     }
     
+    public VBO(List<Vector2i> data)
+    {
+        ID = GL.GenBuffer();
+        GL.BindBuffer(BufferTarget.ArrayBuffer, ID);
+        GL.BufferData(BufferTarget.ArrayBuffer, data.Count * Vector2i.SizeInBytes, data.ToArray(), BufferUsageHint.StaticDraw);
+    }
+    
     public VBO(List<int> data)
     {
         ID = GL.GenBuffer();

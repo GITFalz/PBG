@@ -7,11 +7,37 @@ public class UI_Button : UI_Base
     public UI_Text text = new UI_Text();
 
     public Action OnClick;
+    public Action<MouseState> OnHold;
+    public Action OnRelease;
+
+    public bool holding = false;
     
     public UI_Button()
     {
         name = "UI_Button";
         
+        GenerateBaseText();
+    }
+    
+    public UI_Button(Mesh mesh)
+    {
+        name = "UI_Button";
+        this.mesh = mesh;
+
+        GenerateBaseText();
+    }
+    
+    public UI_Button(Mesh mesh, Mesh textMesh)
+    {
+        name = "UI_Button";
+        this.mesh = mesh;
+
+        GenerateBaseText();
+        text.SetMesh(textMesh);
+    }
+
+    private void GenerateBaseText()
+    {
         text.SetText("Button", 2);
         
         text.SetOffset(new Vector4(0, 0, 0, 0));
@@ -34,22 +60,37 @@ public class UI_Button : UI_Base
         text.SetMem(pos + 1);
     }
     
+    public override int GetNextMem()
+    {
+        return memPos + text.GetNextMem();
+    }
+    
+    public override int GetMemSize()
+    {
+        return memSize + text.GetMemSize();
+    }
+    
     public void SetTextAlignment(UiAnchorAlignment alignment)
     {
         text.SetTextAlignment(alignment);
     }
     
-    
-    // Render
-    public override void RenderUI(MeshData meshData)
+    public void SetTextMesh(Mesh m)
     {
-        Align();
-        UI.Generate9Slice(position, textureSize.X, textureSize.Y, size.X, size.Y, 10f, new Vector4(10f, 10f, 10f, 10f), meshData);
+        text.SetMesh(m);
     }
     
-    public override void RenderText(MeshData meshData)
+    
+    // Render
+    public override void RenderUI()
     {
-        text.RenderText(meshData);
+        Align();
+        UI.Generate9Slice(position, textureSize.X, textureSize.Y, size.X, size.Y, 10f, new Vector4(10f, 10f, 10f, 10f), mesh);
+    }
+    
+    public override void RenderText()
+    {
+        text.RenderText();
     }
 
 
@@ -60,6 +101,21 @@ public class UI_Button : UI_Base
     
     public bool IsButtonPressed(MouseState mouse)
     {
-        return IsPointInBounds(mouse.Position) && mouse.IsButtonPressed(MouseButton.Left);
+        if (!IsPointInBounds(mouse.Position) || !mouse.IsButtonPressed(MouseButton.Left)) return false;
+        
+        holding = true;
+        return true;
+    }
+
+    public bool IsButtonHeld(MouseState mouse)
+    {
+        return IsPointInBounds(mouse.Position) && holding;
+    }
+
+    public bool IsButtonReleased(MouseState mouse)
+    {
+        holding = false;
+        
+        return IsPointInBounds(mouse.Position);
     }
 }

@@ -29,32 +29,44 @@ public class MeshData
 
         return true;
     }
-
-    public void AddQuadAtIndex(Quad quad, int i)
+    
+    public bool MoveQuadToXy(int index, Vector2 position)
     {
-        int vertIndex = i * 4;
-        int uvIndex = i * 4;
-        int triIndex = i * 6;
+        int vertIndex = index * 4;
         
         if (vertIndex < 0 || vertIndex > verts.Count)
-            return;
+            return false;
         
-        verts.Insert(vertIndex, quad.verts[3]);
-        verts.Insert(vertIndex, quad.verts[2]);
-        verts.Insert(vertIndex, quad.verts[1]);
-        verts.Insert(vertIndex, quad.verts[0]);
+        Console.WriteLine(position);
         
-        uvs.Insert(uvIndex, quad.uvs[3]);
-        uvs.Insert(uvIndex, quad.uvs[2]);
-        uvs.Insert(uvIndex, quad.uvs[1]);
-        uvs.Insert(uvIndex, quad.uvs[0]);
-        
-        tris.Insert(triIndex, (uint)(vertIndex + 0));
-        tris.Insert(triIndex, (uint)(vertIndex + 3));
-        tris.Insert(triIndex, (uint)(vertIndex + 2));
-        tris.Insert(triIndex, (uint)(vertIndex + 2));
-        tris.Insert(triIndex, (uint)(vertIndex + 1));
-        tris.Insert(triIndex, (uint)(vertIndex + 0)); 
+        verts[vertIndex + 0] = new Vector3(position.X, position.Y, verts[vertIndex + 0].Z);
+        verts[vertIndex + 1] = new Vector3(position.X, position.Y, verts[vertIndex + 1].Z);
+        verts[vertIndex + 2] = new Vector3(position.X, position.Y, verts[vertIndex + 2].Z);
+        verts[vertIndex + 3] = new Vector3(position.X, position.Y, verts[vertIndex + 3].Z);
+
+        return true;
+    }
+    
+    public bool MoveElement(UI_Base element, Vector2 offset)
+    {
+        for (int i = 0; i < element.GetMemSize(); i++)
+        {
+            if (!MoveQuad(element.memPos + i, new Vector3(offset.X, offset.Y, 0)))
+                return false;
+        }
+
+        return true;
+    }
+    
+    public bool MoveElementTo(UI_Base element, Vector2 position)
+    {
+        for (int i = 0; i < element.GetMemSize(); i++)
+        {
+            if (!MoveQuadToXy(element.memPos + i, position))
+                return false;
+        }
+
+        return true;
     }
 
     public void RemoveQuadAtIndex(int i)
@@ -94,19 +106,5 @@ public class MeshData
         verts.Clear();
         tris.Clear();
         uvs.Clear();
-    }
-}
-
-public struct Quad
-{
-    public Vector3[] verts;
-    public Vector2[] uvs;
-    public int[] tCoords;
-
-    public Quad(Vector3[] verts, Vector2[] uvs, int[] tCoords)
-    {
-        this.verts = verts;
-        this.uvs = uvs;
-        this.tCoords = tCoords;
     }
 }

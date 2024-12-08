@@ -1,4 +1,6 @@
-﻿using ConsoleApp1.Assets.Scripts.Inputs;
+﻿using System.Diagnostics;
+using ConsoleApp1.Assets.Scripts.Inputs;
+using ConsoleApp1.Engine.Scripts.Core.MathLibrary;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -7,30 +9,17 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 public class UIManager
 {
     // UI
-    private VAO _uIvao;
-    private VBO _uIvbo;
-    private VBO _uItextureVbo;
-    private VBO _uIIndexVbo;
-    private IBO _uIibo;
-    
     private ShaderProgram _uiShader;
     private TextureArray _uItexture;
-    
-    private MeshData _uiMeshData;
     
     public Matrix4 OrthographicProjection;
     
     
     // Text
-    private VAO _textVao;
-    private VBO _textVbo;
-    private VBO _textTextureVbo;
-    private IBO _textIbo;
-    
     private ShaderProgram _textShader;
     private Texture _textTexture;
     
-    private MeshData _textMeshData;
+    UI_Text text;
     
     
     // Input
@@ -40,10 +29,16 @@ public class UIManager
     private Queue<Character> _toBeAdded = new Queue<Character>();
 
     private List<Character> _inputField = new List<Character>();
+    
+    private List<Mesh> _meshes = new List<Mesh>() { };
 
     
     // Controller
     private UIController _ui = new UIController();
+    
+    int frameCount = 0;
+    float elapsedTime = 0;
+    Stopwatch stopwatch = new Stopwatch();
     
     
     
@@ -53,176 +48,62 @@ public class UIManager
         _uiShader = new ShaderProgram("UI/UI.vert", "UI/UI.frag");
         _uItexture = new TextureArray("UI_Atlas.png", 64, 64);
         
-        _uiMeshData = new MeshData();
-        _uIvao = new VAO();
-        
         
         // Load Text
         _textShader = new ShaderProgram("Text/Text.vert", "Text/Text.frag");
         _textTexture = new Texture("text.png");
         
-        _textMeshData = new MeshData();
-        _textVao = new VAO();
-        
     }
 
     public void Start()
     {
-        // UI creation
-        UI_Panel panel1 = new UI_Panel();
-        /**/UI_Panel panel1a = new UI_Panel();
-        /**/UI_Panel panel1b = new UI_Panel();
-        /**//**/UI_Panel panel1b1 = new UI_Panel();
-        /**/UI_Panel panel1c = new UI_Panel();
-        
-        UI_Button button = new UI_Button();
-        
-        
-        // Panel 1
-        panel1.SetOffset(new Vector4(10, 10, 10, 10));
-        panel1.SetSize(new Vector2(500, 500));
-        panel1.SetAnchorAlignment(UiAnchorAlignment.RightScale);
-        panel1.SetAnchorReference(UiAnchor.Absolute);
-        
-        panel1.SetMem(0);
-        
-
-        // Panel 1a
-        panel1a.SetOffset(new Vector4(10, 10, 10, 10));
-        panel1a.SetSize(new Vector2(500, 200));
-        panel1a.SetAnchorAlignment(UiAnchorAlignment.TopScale);
-        panel1a.SetAnchorReference(UiAnchor.Relative);
-        
-        panel1a.SetParent(panel1);
-        
-        panel1a.SetMem(1);
-        
-        
-        // Panel 1b
-        panel1b.SetOffset(new Vector4(10, 10, 220, 10));
-        panel1b.SetSize(new Vector2(500, 200));
-        panel1b.SetAnchorAlignment(UiAnchorAlignment.TopScale);
-        panel1b.SetAnchorReference(UiAnchor.Relative);
-        
-        panel1b.SetParent(panel1);
-        
-        panel1b.SetMem(2);
-
-        
-        // Panel 1b1
-        panel1b1.SetOffset(new Vector4(10, 10, -200, 10));
-        panel1b1.SetSize(new Vector2(100, 100));
-        panel1b1.SetAnchorAlignment(UiAnchorAlignment.RightScale);
-        panel1b1.SetAnchorReference(UiAnchor.Relative);
-        
-        panel1b1.SetParent(panel1b);
-        
-        panel1b1.SetMem(3);
-        
-        
-        // Panel 1c
-        panel1c.SetOffset(new Vector4(10, 10, 430, 10));
-        panel1c.SetSize(new Vector2(500, 200));
-        panel1c.SetAnchorAlignment(UiAnchorAlignment.TopScale);
-        panel1c.SetAnchorReference(UiAnchor.Relative);
-        
-        panel1c.SetParent(panel1);
-        
-        panel1c.SetMem(4);
-        
-        
-        
-        
-        // Button
-        button.SetOffset(new Vector4(10, 10, -410, 10));
-        button.SetSize(new Vector2(150, 50));
-        button.SetAnchorAlignment(UiAnchorAlignment.BottomLeft);
-        button.SetAnchorReference(UiAnchor.Absolute);
-        
-        button.SetMem(5);
-        
-        button.SetTextAlignment(UiAnchorAlignment.MiddleCenter);
-        
-        button.OnClick = () => { Console.WriteLine("Button Clicked"); };
-        
-        
-        
-            
-        // Add to list
-        _ui.AddElement(panel1);
-        _ui.AddElement(panel1a);
-        _ui.AddElement(panel1b);
-        _ui.AddElement(panel1b1);
-        _ui.AddElement(panel1c);
-        
-        _ui.AddElement(button);
-        _ui.AddElement(button.text);
+        TextMesh textMesh = new TextMesh();
         
         RenderUI();
         
-        // Generate UI
-        GenerateUI();
-        
         
         // Text creation
-        UI_Text text = new UI_Text();
-        UI_Text text2 = new UI_Text();
-        
-        // Text
-        text.SetText("Hi there  my name is Falz", 2);
-        
-        text.SetOffset(new Vector4(10, 10, 10, 10));
-        text.SetSize(new Vector2(500, 500));
-        text.SetAnchorAlignment(UiAnchorAlignment.LeftScale);
-        text.SetAnchorReference(UiAnchor.Relative);
-        
-        text.SetParent(panel1a);
-        
-        text.SetMem(7);
-        
-        
+        text = new UI_Text(textMesh);
+
         // Text 2
-        text2.SetText("Boo", 1.5f);
+        text.SetText("1000", 1f);
         
-        text2.SetOffset(new Vector4(10, 10, 220, 10));
-        text2.SetSize(new Vector2(80, 80));
-        text2.SetAnchorAlignment(UiAnchorAlignment.TopLeft);
-        text2.SetAnchorReference(UiAnchor.Relative);
+        text.SetOffset(new Vector4(0, 0, 0, 0));
+        text.SetSize(new Vector2(80, 80));
+        text.SetAnchorAlignment(UiAnchorAlignment.TopLeft);
+        text.SetAnchorReference(UiAnchor.Absolute);
         
-        text2.SetParent(panel1b1);
-        
-        text2.SetMem(8);
+        text.SetMem(0);
         
         
         // Add to list
         _ui.AddElement(text);
-        _ui.AddElement(text2);
+        
+        _meshes.Add(textMesh);
+        
+        GenerateMeshes();
         
         RenderText();
-        
-        
-        // Generate Text
-        GenerateText();
     }
 
     public void OnResize()
     {
-        _uiMeshData.Clear();
+        foreach (var mesh in _meshes)
+        {
+            mesh.Clear();
+        }
         
         RenderUI();
-        GenerateUI();
-        
-        _textMeshData.Clear();
-
         RenderText();
-        GenerateText();
+        
+        GenerateMeshes();
     }
     
     public void RenderUI()
     {
         foreach (var uiElement in _ui.GetElements())
         {
-            uiElement.RenderUI(_uiMeshData);
+            uiElement.RenderUI();
         }
     }
     
@@ -230,56 +111,41 @@ public class UIManager
     {
         foreach (var uiElement in _ui.GetElements())
         {
-            uiElement.RenderText(_textMeshData);
+            uiElement.RenderText();
         }
     }
     
     public void Unload()
     {
-        _uIvao.Delete();
-        _uIvbo.Delete();
-        _uItextureVbo.Delete();
-        _uIIndexVbo.Delete();
-        _uIibo.Delete();
-        
         _uiShader.Delete();
         _uItexture.Delete();
         
-        _uiMeshData.Clear();
-        
-        
-        _textVao.Delete();
-        _textVbo.Delete();
-        _textTextureVbo.Delete();
-        _textIbo.Delete();
+        foreach (var mesh in _meshes)
+        {
+            mesh.Clear();
+            mesh.Delete();
+        }
         
         _textShader.Delete();
         _textTexture.Delete();
-        
-        _textMeshData.Clear();
         
         _inputField.Clear();
     }
     
     public void OnRenderFrame(FrameEventArgs args)
     {
-        for (int i = 0; i < _uiMeshData.verts.Count; i++)
-        {
-            _uiMeshData.verts[i] = _uiMeshData.verts[i] + new Vector3(0, 0.01f, 0);
-        }
+        //GL.Enable(EnableCap.Blend);
+        //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         
         UpdateUi();
-        UpdateText();
+        
+        if (_meshes[0] is not TextMesh textMesh) return;
+        
+        UpdateText(textMesh);
     }
 
     public void OnUpdateFrame(KeyboardState keyboard, MouseState mouse, FrameEventArgs args)
     {
-        
-        /*
-         * script that handles inputFields
-        */
-        //InputField(keyboard, mouse, args);
-
         _ui.Update(mouse);
     }
     
@@ -302,28 +168,12 @@ public class UIManager
         }
     }
 
-    private void GenerateUI()
+    private void GenerateMeshes()
     {
-        _uIvbo = new VBO(_uiMeshData.verts);
-        _uItextureVbo = new VBO(_uiMeshData.uvs);
-        _uIIndexVbo = new VBO(_uiMeshData.tCoords);
-        
-        _uIvao.LinkToVAO(0, 3, _uIvbo);
-        _uIvao.LinkToVAO(1, 2, _uItextureVbo);
-        _uIvao.LinkToVAO(2, 1, _uIIndexVbo);
-        
-        _uIibo = new IBO(_uiMeshData.tris);
-    }
-
-    private void GenerateText()
-    {
-        _textVbo = new VBO(_textMeshData.verts);
-        _textTextureVbo = new VBO(_textMeshData.uvs);
-
-        _textVao.LinkToVAO(0, 3, _textVbo);
-        _textVao.LinkToVAO(1, 2, _textTextureVbo);
-
-        _textIbo = new IBO(_textMeshData.tris);
+        foreach (var mesh in _meshes)
+        {
+            mesh.GenerateBuffers();
+        }
     }
     
     private void UpdateUi()
@@ -334,117 +184,53 @@ public class UIManager
         int projectionLoc = GL.GetUniformLocation(_uiShader.ID, "projection");
         GL.UniformMatrix4(projectionLoc, true, ref OrthographicProjection);
         
-        _uIvao.Bind();
-        _uIibo.Bind();
-
-        _uItextureVbo.Bind();
-
-        GL.DrawElements(PrimitiveType.Triangles, _uiMeshData.tris.Count, DrawElementsType.UnsignedInt, 0);
+        //_meshes[0].RenderMesh();
         
-        _uIvao.Unbind();
-        _uIibo.Unbind();
-
-        _uItextureVbo.Unbind();
+        _uiShader.Unbind();
+        _uItexture.Unbind();
     }
 
-    private void UpdateText()
+    private void UpdateText(TextMesh textMesh)
     {
-        //FpsCalculation();
-
-        UpdateCharacters();
-
         _textShader.Bind();
         _textTexture.Bind();
 
         int textProjectionLoc = GL.GetUniformLocation(_textShader.ID, "projection");
+        int textSizeLoc = GL.GetUniformLocation(_textShader.ID, "size");
+        int textCharsLoc = GL.GetUniformLocation(_textShader.ID, "chars");
+        
         GL.UniformMatrix4(textProjectionLoc, true, ref OrthographicProjection);
+        GL.Uniform2(textSizeLoc, new Vector2(textMesh.chars.Length, 1));
+        GL.Uniform1(textCharsLoc, textMesh.chars.Length, textMesh.chars);
 
-        _textVao.Bind();
-        _textIbo.Bind();
+        textMesh.RenderMesh();
+        
+        _textShader.Unbind();
+        _textTexture.Unbind();
+    }
 
-        _textTextureVbo.Bind();
-
-        GL.DrawElements(PrimitiveType.Triangles, _textMeshData.tris.Count, DrawElementsType.UnsignedInt, 0);
-
-        _textVao.Unbind();
-        _textIbo.Unbind();
-
-        _textTextureVbo.Unbind();
-
+    public void UpdateFps()
+    {
+        FpsCalculation();
+        UpdateText((TextMesh)_meshes[0]);
     }
     
-    private void RemoveLastCharacter()
+    private void FpsCalculation()
     {
-        if (_inputField.Count == 0)
-            return;
+        frameCount++;
+        elapsedTime += stopwatch.ElapsedMilliseconds / 100.0f;
+        stopwatch.Restart();
         
-        Character character = _inputField[^1];
-        
-        if (character == Character.Space)
+        if (elapsedTime >= 1.0f)
         {
-            UI.RemoveSpace();
+            int fps = Mathf.FloorToInt(frameCount / elapsedTime);
+            frameCount = 0;
+            elapsedTime -= 1f;
+            
+            Console.WriteLine(fps);
+            
+            string t = fps.ToString();
+            text.SetText(t, 1);
         }
-        else
-        {
-            UI.RemoveLastQuad(_textMeshData);
-            
-            _textVbo.Bind();
-            _textVbo.Update(_textMeshData.verts);
-            
-            _textTextureVbo.Bind();
-            _textTextureVbo.Update(_textMeshData.uvs);
-            
-            _textIbo.Bind();
-            _textIbo.Update(_textMeshData.tris);
-
-            _textVbo.Unbind();
-            _textTextureVbo.Unbind();
-            _textIbo.Unbind();
-        }
-        
-        _inputField.RemoveAt(_inputField.Count - 1);
-    }
-    
-    private void UpdateCharacters()
-    {
-        if (_toBeAdded.Count == 0)
-            return;
-        
-        Character character;
-
-        while (true)
-        {
-            try
-            {
-                character = _toBeAdded.Dequeue();
-            }
-            catch (InvalidOperationException)
-            {
-                break;
-            }
-            
-            switch (character)
-            {
-                case Character.None:
-                    continue;
-                case Character.Backspace:
-                    RemoveLastCharacter();
-                    continue;
-                default:
-                    _inputField.Add(character);
-                    UI.GenerateCharacterAtLastPosition(1, character, _textMeshData);
-                    break;
-            }
-        }
-        
-        _textVao = new VAO();
-
-        _textVbo = new VBO(_textMeshData.verts);
-        _textTextureVbo = new VBO(_textMeshData.uvs);
-
-        _textVao.LinkToVAO(0, 3, _textVbo);
-        _textVao.LinkToVAO(1, 2, _textTextureVbo);
-
-        _textIbo = new IBO(_textMeshData.tris);
     }
 }

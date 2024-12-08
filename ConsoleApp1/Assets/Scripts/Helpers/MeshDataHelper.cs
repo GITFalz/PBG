@@ -17,4 +17,9 @@ public static class MeshDataHelper
 
         return true;
     }
+    
+    public static bool MoveElementTo(MeshData meshData, UI_Base element, Vector2 position)
+    {
+        return meshData.MoveElementTo(element, position);
+    }
 }

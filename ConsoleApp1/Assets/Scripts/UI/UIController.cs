@@ -14,26 +14,55 @@ public class UIController
     public void Update(MouseState mouse)
     {
         if (mouse.IsAnyButtonDown)
+        {
             CheckButtonOnClick(mouse);
+            CheckButtonOnHold(mouse);
+        }
+        
+        if (mouse.IsButtonReleased(MouseButton.Left))
+        {
+            CheckButtonOnRelease(mouse);
+        }
     }
     
     
-    public bool CheckButtonOnClick(MouseState mouse)
+    public void CheckButtonOnClick(MouseState mouse)
     {
         foreach (UI_Button button in buttons)
         {
             if (button.IsButtonPressed(mouse))
             {
                 button.OnClick?.Invoke();
-                return true;
             }
         }
-
-        return false;
+    }
+    
+    public void CheckButtonOnHold(MouseState mouse)
+    {
+        foreach (UI_Button button in buttons)
+        {
+            if (button.IsButtonHeld(mouse))
+            {
+                button.OnHold?.Invoke(mouse);
+            }
+        }
+    }
+    
+    public void CheckButtonOnRelease(MouseState mouse)
+    {
+        foreach (UI_Button button in buttons)
+        {
+            if (button.IsButtonReleased(mouse))
+            {
+                button.OnRelease?.Invoke();
+            }
+        }
     }
     
     public void AddElement(UI_Base element)
     {
+        element.SetMem(uiElements.Count == 0 ? 0 : uiElements[^1].GetNextMem());
+
         uiElements.Add(element);
         
         if (element is UI_Button button)

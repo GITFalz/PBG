@@ -131,6 +131,9 @@ public class Game : GameWindow
         GL.ClearColor(0.6f, 0.3f, 1f, 1f);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         
+        GL.Enable(EnableCap.CullFace);
+        GL.FrontFace(FrontFaceDirection.Ccw);
+        
         // World
         _shaderProgram.Bind();
         _textureArray.Bind();
@@ -148,10 +151,15 @@ public class Game : GameWindow
         GL.UniformMatrix4(projectionLocation, true, ref projection);
         
         _chunkManager.RenderChunks();
-
+        
+        _shaderProgram.Unbind();
+        _textureArray.Unbind();
+        
         if (_visibleCursor)
             _uiManager.OnRenderFrame(args);
+
         
+        _uiManager.UpdateFps();
         Context.SwapBuffers();
         
         base.OnRenderFrame(args);
@@ -222,7 +230,7 @@ public class Game : GameWindow
         KeyboardState keyboard = KeyboardState;
         
         base.OnUpdateFrame(args);
-
+        
         if (_visibleCursor)
             _uiManager.OnUpdateFrame(keyboard, mouse, args);
         

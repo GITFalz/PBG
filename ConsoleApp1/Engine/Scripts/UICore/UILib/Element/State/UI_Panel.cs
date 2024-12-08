@@ -10,9 +10,15 @@ public class UI_Panel : UI_Base
         name = "UI_Panel";
     }
     
-    public override void RenderUI(MeshData meshData)
+    public UI_Panel(Mesh mesh)
+    {
+        name = "UI_Panel";
+        this.mesh = mesh;
+    }
+    
+    public override void RenderUI()
     {
         Align();
-        UI.Generate9Slice(position, textureSize.X, textureSize.Y, size.X, size.Y, 10f, new Vector4(10f, 10f, 10f, 10f), meshData);
+        UI.Generate9Slice(position, textureSize.X, textureSize.Y, size.X, size.Y, 10f, new Vector4(10f, 10f, 10f, 10f), mesh);
     }
 }

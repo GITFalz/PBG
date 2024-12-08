@@ -20,6 +20,8 @@ public abstract class UI_Base : Component
     
     public UiAnchor anchor = UiAnchor.Absolute;
     public UiAnchorAlignment anchorAlignment = UiAnchorAlignment.MiddleCenter;
+
+    protected Mesh mesh;
     
     
     public virtual void SetSize(Vector2 s)
@@ -46,11 +48,26 @@ public abstract class UI_Base : Component
     {
         parent = p;
     }
+    
+    public void SetMesh(Mesh m)
+    {
+        mesh = m;
+    }
 
 
     public virtual void SetMem(int pos)
     {
         memPos = pos;
+    }
+
+    public virtual int GetNextMem()
+    {
+        return memPos + memSize;
+    }
+    
+    public virtual int GetMemSize()
+    {
+        return memSize;
     }
     
     
@@ -65,15 +82,8 @@ public abstract class UI_Base : Component
         base.Update();
     }
 
-    public virtual void RenderUI(MeshData meshData)
-    {
-        
-    }
-
-    public virtual void RenderText(MeshData meshData)
-    {
-        
-    }
+    public virtual void RenderUI() { }
+    public virtual void RenderText() { }
 
     protected void Align()
     {
@@ -82,11 +92,8 @@ public abstract class UI_Base : Component
             offset = baseOffset + parent.baseOffset;
             size = sizes[anchorAlignment](parent.size.X, parent.size.Y, baseSize, offset);
             position = positions[anchorAlignment](parent.size.X, parent.size.Y, size, offset) + parent.position + TextOffset;
-            
-            Console.WriteLine(offset + " " + parent.offset + " " + size + " " + parent.size + " " + position + " " + parent.position);
         }
         else
-        
         {
             offset = baseOffset;
             size = sizes[anchorAlignment](Game.width, Game.height, baseSize, offset);
