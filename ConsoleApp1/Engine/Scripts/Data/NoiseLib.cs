@@ -1,7 +1,4 @@
-using ConsoleApp1.Engine.Scripts.Core.MathLibrary;
 using OpenTK.Mathematics;
-
-namespace ConsoleApp1.Engine.Scripts.Core.Data;
 
 public class NoiseLib
 {
@@ -27,6 +24,21 @@ public class NoiseLib
         var B = (perm[X+1] + Y) & 0xff;
         return Lerp(v, Lerp(u, Grad(perm[A  ], x, y  ), Grad(perm[B  ], x-1, y  )),
                        Lerp(u, Grad(perm[A+1], x, y-1), Grad(perm[B+1], x-1, y-1)));
+    }
+
+    public static float Noise(int octaves, float x, float y)
+    {
+        var result = 0.0f;
+        var amp = 1.0f;
+        var freq = 1.0f;
+        var max = 0.0f;
+        for (var i = 0; i < octaves; i++) {
+            result += Noise(x * freq, y * freq) * amp;
+            max += amp;
+            amp *= 0.5f;
+            freq *= 2.0f;
+        }
+        return result / max;
     }
 
     public static float Noise(Vector2 coord)

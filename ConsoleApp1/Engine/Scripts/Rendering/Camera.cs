@@ -1,15 +1,16 @@
-﻿using OpenTK.Mathematics;
+﻿using System.Numerics;
+using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-
-namespace ConsoleApp1.Engine.Scripts.Core.Rendering;
+using Vector2 = OpenTK.Mathematics.Vector2;
+using Vector3 = OpenTK.Mathematics.Vector3;
 
 public class Camera
 {
-    private float SPEED = 8f;
+    private float SPEED = 50f;
     private float SCREEN_WIDTH;
     private float SCREEN_HEIGHT;
-    private float SENSITIVITY = 80f;
+    private float SENSITIVITY = 65f;
 
     public Vector3 position;
     
@@ -22,6 +23,10 @@ public class Camera
 
     public bool firstMove = true;
     public Vector2 lastPos;
+    
+    private static Matrix4 viewMatrix;
+    private static Matrix4 projectionMatrix;
+    private static Plane[] frustumPlanes;
 
     public Camera(float width, float height, Vector3 position)
     {
@@ -32,13 +37,40 @@ public class Camera
 
     public Matrix4 GetViewMatrix()
     {
-        return Matrix4.LookAt(position, position + front, up);
+        viewMatrix = Matrix4.LookAt(position, position + front, up);
+        return viewMatrix;
     }
     
     public Matrix4 GetProjectionMatrix()
     {
-        return Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(45), SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 1000f);
+        projectionMatrix = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(45),
+            SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 1000f);
+        return projectionMatrix;
     }
+    
+    public static Plane[] GetFrustumPlanes()
+    {   
+        Matrix4 projectionViewMatrix = projectionMatrix * viewMatrix;
+
+        Plane[] frustumPlanes = new Plane[6];
+        frustumPlanes[0] = new Plane(Mathf.ToNumericsVector4(-projectionViewMatrix.Row3 - projectionViewMatrix.Row0)); // Left
+        frustumPlanes[1] = new Plane(Mathf.ToNumericsVector4(-projectionViewMatrix.Row3 + projectionViewMatrix.Row0)); // Right
+        frustumPlanes[2] = new Plane(Mathf.ToNumericsVector4(-projectionViewMatrix.Row3 - projectionViewMatrix.Row1)); // Bottom
+        frustumPlanes[3] = new Plane(Mathf.ToNumericsVector4(-projectionViewMatrix.Row3 + projectionViewMatrix.Row1)); // Top
+        frustumPlanes[4] = new Plane(Mathf.ToNumericsVector4(-projectionViewMatrix.Row3 - projectionViewMatrix.Row2)); // Near
+        frustumPlanes[5] = new Plane(Mathf.ToNumericsVector4(-projectionViewMatrix.Row3 + projectionViewMatrix.Row2)); // Far
+
+        for (int i = 0; i < frustumPlanes.Length; i++)
+        {
+            frustumPlanes[i] = Plane.Normalize(frustumPlanes[i]);
+        }
+        
+        Camera.frustumPlanes = frustumPlanes;
+
+        return frustumPlanes;
+    }
+
+
 
     public void UpdateVectors()
     {

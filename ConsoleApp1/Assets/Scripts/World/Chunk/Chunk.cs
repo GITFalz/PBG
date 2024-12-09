@@ -1,15 +1,7 @@
 using ConsoleApp1.Assets.Scripts.World.Blocks;
-using ConsoleApp1.Engine.Scripts.Core.Rendering;
 using ConsoleApp1.Engine.Scripts.Core.Voxel;
 using OpenTK.Mathematics;
-using OpenTK.Graphics.OpenGL4;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using ConsoleApp1.Engine.Scripts.Core.Data;
-using ConsoleApp1.Engine.Scripts.Core.MathLibrary;
 
 namespace ConsoleApp1.Assets.Scripts.World.Chunk;
 
@@ -19,6 +11,16 @@ public class Chunk
     public const int HEIGHT = 32;
     public const int DEPTH = 32;
     
+    public static Vector2[] spline = 
+    [
+        new Vector2(-1, 0),
+        new Vector2(-0.4f, 0.05f),
+        new Vector2(-0.3f, 0.2f),
+        new Vector2(0f, 0.3f),
+        new Vector2(0.2f, 0.7f),
+        new Vector2(1, 0.8f)
+    ];
+    
     public static void GenerateChunk(ref ChunkData chunkData, Vector3i position)
     {
         Block[] blocks = new Block[WIDTH * HEIGHT * DEPTH];
@@ -27,21 +29,61 @@ public class Chunk
         {
             for (var z = 0; z < DEPTH; z++)
             {
-                int height = Mathf.FloorToInt(Mathf.Lerp(10, 22, NoiseLib.Noise(((float)x + position.X + 0.001f) / 20f, ((float)z + position.Y + 0.001f) / 20f)));
+                float specNoise = GetSpecNoise(new Vector3(x, 0, z) + position);
+                
+                float splineVector = GetSplineVector(specNoise);
+                
+                float noise = NoiseLib.Noise(4, 
+                    ((float)x + position.X + 0.001f) / 20f,
+                    ((float)z + position.Z + 0.001f) / 20f
+                    );
+                
+                int height = Mathf.FloorToInt(Mathf.Lerp(20, 100, (float)(noise * 0.05 + splineVector)));
+                
+                //Console.WriteLine(noise + " Spline: " + specNoise  + " " + splineVector + " " + height);
+                int terrainHeight = Mathf.Min(Mathf.Max((height - position.Y), 0), 32);
 
-                for (int y = 0; y < height; y++)
+                for (int y = 0; y < terrainHeight; y++)
                 {
-                    blocks[x + z * 32 + y * 1024] = new Block(0, 0);
+                    blocks[x + z * 32 + y * 1024] = GetBlockAtHeight(height, y + position.Y);
                 }
             }
         }
         
-        chunkData = new ChunkData(position);
         chunkData.SetBlocks(blocks);
         chunkData.meshData = new MeshData();
         
         GenerateOcclusion(blocks);
         GenerateMesh(chunkData);
+    }
+
+    public static float GetSplineVector(float noise)
+    {
+        if (spline.Length == 0)
+            return 0;
+    
+        // Handle noise below the first spline point
+        if (noise <= spline[0].X)
+            return spline[0].Y;
+    
+        // Iterate through the spline segments
+        for (int i = 0; i < spline.Length - 1; i++)
+        {
+            if (noise >= spline[i].X && noise <= spline[i + 1].X)
+            {
+                // Calculate t as the normalized position between spline[i].X and spline[i + 1].X
+                float t = (noise - spline[i].X) / (spline[i + 1].X - spline[i].X);
+                return Mathf.Lerp(spline[i].Y, spline[i + 1].Y, t);
+            }
+        }
+
+        // Handle noise above the last spline point
+        return spline[^1].Y;
+    }
+
+    private static float GetSpecNoise(Vector3 position)
+    {
+        return NoiseLib.Noise(4, ((float)position.X + 0.001f) / 100, ((float)position.Z + 0.001f) / 100);
     }
 
     public static void GenerateOcclusion(Block[] blocks, int width = WIDTH, int lod = 0)
@@ -197,5 +239,13 @@ public class Chunk
                 }
             }
         }
+    }
+
+    private static Block GetBlockAtHeight(float terrainHeight, int currentHeight)
+    {
+        if (terrainHeight > currentHeight + 2)
+            return new Block(2, 0);
+        
+        return new Block(0, 0);
     }
 }

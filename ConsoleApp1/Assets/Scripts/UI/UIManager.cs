@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using ConsoleApp1.Assets.Scripts.Inputs;
-using ConsoleApp1.Engine.Scripts.Core.MathLibrary;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -226,8 +225,6 @@ public class UIManager
             int fps = Mathf.FloorToInt(frameCount / elapsedTime);
             frameCount = 0;
             elapsedTime -= 1f;
-            
-            Console.WriteLine(fps);
             
             string t = fps.ToString();
             text.SetText(t, 1);

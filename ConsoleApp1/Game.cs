@@ -1,15 +1,18 @@
 ﻿using System.Diagnostics;
+using System.Numerics;
 using ConsoleApp1.Assets.Scripts.Inputs;
 using ConsoleApp1.Assets.Scripts.World.Blocks;
 using ConsoleApp1.Assets.Scripts.World.Chunk;
 using ConsoleApp1.Engine.Scripts.Core;
-using ConsoleApp1.Engine.Scripts.Core.Rendering;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using StbImageSharp;
+using Vector2 = OpenTK.Mathematics.Vector2;
+using Vector3 = OpenTK.Mathematics.Vector3;
+
 public class Game : GameWindow
 {
     public static int width;
@@ -20,7 +23,7 @@ public class Game : GameWindow
     // World
     private ChunkManager _chunkManager;
     private ShaderProgram _shaderProgram;
-    private TextureArray _textureArray;
+    private Texture _textureArray;
     
     
     
@@ -31,6 +34,8 @@ public class Game : GameWindow
     // Events
     private Action? _updateText;
     
+    
+    private FBO _fbo;
     
     
     public List<GameObject> GameObjects = new List<GameObject>();
@@ -50,6 +55,8 @@ public class Game : GameWindow
         CenterWindow(new Vector2i(width, height));
         Game.width = width;
         Game.height = height;
+        
+        //_fbo = new FBO(1080, 720);
     }
     
     protected override void OnResize(ResizeEventArgs e)
@@ -87,8 +94,8 @@ public class Game : GameWindow
         _chunkManager = new ChunkManager();
         
         UVmaps grassUvs = new UVmaps( new int[] { 0, 0, 1, 0, 2, 0 });
-        UVmaps dirtUvs = new UVmaps( new int[] { 0, 0, 1, 0, 2, 0 });
-        UVmaps stoneUvs = new UVmaps( new int[] { 0, 0, 1, 0, 2, 0 });
+        UVmaps dirtUvs = new UVmaps( new int[] { 2, 2, 2, 2, 2, 2 });
+        UVmaps stoneUvs = new UVmaps( new int[] { 3, 3, 3, 3, 3, 3 });
 
         CWorldBlock grass = new CWorldBlock("grass_block", 0, 1, grassUvs);
         CWorldBlock dirt = new CWorldBlock("dirt_block", 1, 2, dirtUvs);
@@ -98,13 +105,10 @@ public class Game : GameWindow
         BlockManager.Add(dirt);
         BlockManager.Add(stone);
 
-        for (int i = 0; i < 3; i++)
-        {
-            _chunkManager.GenerateChunk(new Vector3i(i * Chunk.WIDTH, 0, 0));
-        }
+        GenerateChunks();
 
         _shaderProgram = new ShaderProgram("World/Default.vert", "World/Default.frag");
-        _textureArray = new TextureArray("Test_TextureAtlas.png", 32, 32);
+        _textureArray = new Texture("Test_TextureAtlas.png");
         
         _uiManager.Load();
         _uiManager.Start();
@@ -112,6 +116,34 @@ public class Game : GameWindow
         GL.Enable(EnableCap.DepthTest);
         
         _mainCamera = new Camera(width, height, new Vector3(0, 0, 0));
+    }
+
+    public async void GenerateChunks()
+    {
+        await Task.Run(() =>
+        {
+            Vector3i playerChunkPos = new Vector3i(0, 0, 0);
+
+            List<Vector3i> chunks = new List<Vector3i>();
+
+            for (int x = 0; x < 20; x++)
+            {
+                for (int y = 0; y < 7; y++)
+                {
+                    for (int z = 0; z < 20; z++)
+                    {
+                        chunks.Add(new Vector3i(x, y, z));
+                    }
+                }
+            }
+
+            chunks.Sort((a, b) => Vector3.Distance(playerChunkPos, a).CompareTo(Vector3.Distance(playerChunkPos, b)));
+
+            foreach (var chunk in chunks)
+            {
+                _chunkManager.GenerateChunk(chunk * 32);
+            }
+        });
     }
     
     protected override void OnUnload()
@@ -124,6 +156,9 @@ public class Game : GameWindow
         _textureArray.Delete();
 
         _uiManager.Unload();
+        
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
     }
     
     protected override void OnRenderFrame(FrameEventArgs args)
@@ -133,6 +168,8 @@ public class Game : GameWindow
         
         GL.Enable(EnableCap.CullFace);
         GL.FrontFace(FrontFaceDirection.Ccw);
+        
+        //_fbo.Bind();
         
         // World
         _shaderProgram.Bind();
@@ -145,15 +182,20 @@ public class Game : GameWindow
         int modelLocation = GL.GetUniformLocation(_shaderProgram.ID, "model");
         int viewLocation = GL.GetUniformLocation(_shaderProgram.ID, "view");
         int projectionLocation = GL.GetUniformLocation(_shaderProgram.ID, "projection");
+        int camPosLocation = GL.GetUniformLocation(_shaderProgram.ID, "camPos");
         
         GL.UniformMatrix4(modelLocation, true, ref model);
         GL.UniformMatrix4(viewLocation, true, ref view);
         GL.UniformMatrix4(projectionLocation, true, ref projection);
+        GL.Uniform3(camPosLocation, _mainCamera.position);
         
+        _chunkManager.CreateChunks();
         _chunkManager.RenderChunks();
         
         _shaderProgram.Unbind();
         _textureArray.Unbind();
+        
+        //_fbo.Unbind();
         
         if (_visibleCursor)
             _uiManager.OnRenderFrame(args);
@@ -164,65 +206,6 @@ public class Game : GameWindow
         
         base.OnRenderFrame(args);
     }
-    
-    /**
-    private void FpsCalculation()
-    {
-        frameCount++;
-        elapsedTime += stopwatch.ElapsedMilliseconds / 100.0f;
-        stopwatch.Restart();
-        
-        if (elapsedTime >= 1.0f)
-        {
-            int fps = Mathf.FloorToInt(frameCount / elapsedTime);
-            frameCount = 0;
-            elapsedTime -= 1f;
-            
-            _textMeshData.Clear();
-
-            int[] fpsArray = IntToArray(fps);
-            
-            UI.GenerateCharacters(new Vector3(55f, 55f, 0.001f), 1, fpsArray, _textMeshData);
-
-            _textVbo.Bind();
-            _textVbo.Update(_textMeshData.verts);
-            
-            _textTextureVbo.Bind();
-            _textTextureVbo.Update(_textMeshData.uvs);
-            
-            _textIbo.Bind();
-            _textIbo.Update(_textMeshData.tris);
-        }
-    }
-
-    private int[] IntToArray(int value)
-    {
-        int digitCount = (int)Math.Floor(Math.Log10(value) + 1);
-        int[] digits;
-        
-        try
-        {
-            digits = new int[digitCount];
-        }
-        catch (OverflowException)
-        {
-            Console.WriteLine("Overflow");
-            return [0];
-        }
-        
-        for (int i = digitCount - 1; i >= 0; i--)
-        {
-            digits[i] = value % 10;
-            value /= 10; 
-        }
-
-        return digits;
-    }
-    */
-
-    
-    
-    
     
     protected override void OnUpdateFrame(FrameEventArgs args)
     {
