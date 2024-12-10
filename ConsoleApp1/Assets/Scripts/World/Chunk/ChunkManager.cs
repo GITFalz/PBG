@@ -3,8 +3,6 @@ using System.Numerics;
 using OpenTK.Mathematics;
 using Vector3 = OpenTK.Mathematics.Vector3;
 
-namespace ConsoleApp1.Assets.Scripts.World.Chunk;
-
 public class ChunkManager
 {
     public ConcurrentDictionary<Vector3i, ChunkData> chunks;
@@ -18,12 +16,23 @@ public class ChunkManager
     
     public void GenerateChunk(Vector3i position)
     {
+        /*
         if (chunks.ContainsKey(position)) return;
 
         ChunkData chunkData = new ChunkData(position);
-        Chunk.GenerateChunk(ref chunkData, position);
+        chunkData.meshData = new MeshData();
         
+        if (!chunkData.FileExists())
+            Chunk.GenerateChunk(ref chunkData, position);
+        else
+            chunkData.LoadChunk();
+
+
+        Chunk.GenerateOcclusion(chunkData.blocks);
+        Chunk.GenerateMesh(chunkData);
+
         toBeCreated.Enqueue(chunkData);
+        */
     }
     
     public void CreateChunks()
@@ -34,6 +43,7 @@ public class ChunkManager
                 toBeCreated.Enqueue(data);
             
             data.CreateChunk();
+            data.StoreData();
         }
     }
     
@@ -51,26 +61,5 @@ public class ChunkManager
         {
             chunk.Value.Delete();
         }
-    }
-    
-    public static bool IsAABBVisible(Bounds bounds, Plane[] frustumPlanes)
-    {
-        foreach (var plane in frustumPlanes)
-        {
-            // Find the most positive vertex relative to the plane normal
-            Vector3 positiveVertex = new Vector3(
-                (plane.Normal.X >= 0) ? bounds.Max.X : bounds.Min.X,
-                (plane.Normal.Y >= 0) ? bounds.Max.Y : bounds.Min.Y,
-                (plane.Normal.Z >= 0) ? bounds.Max.Z : bounds.Min.Z
-            );
-
-            // Check if the positive vertex is outside the plane
-            if (System.Numerics.Vector3.Dot(plane.Normal, Mathf.ToNumericsVector3(positiveVertex)) + plane.D < 0)
-            {
-                return false; // Completely outside, not visible
-            }
-        }
-
-        return true; // Visible (intersects or inside)
     }
 }

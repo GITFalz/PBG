@@ -1,4 +1,5 @@
-﻿using ConsoleApp1.Assets.Scripts.World.Blocks;
+﻿using System.Runtime.CompilerServices;
+using ConsoleApp1.Assets.Scripts.World.Blocks;
 using OpenTK.Mathematics;
 
 namespace ConsoleApp1.Assets.Scripts.World.Blocks;

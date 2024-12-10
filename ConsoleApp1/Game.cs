@@ -2,7 +2,6 @@
 using System.Numerics;
 using ConsoleApp1.Assets.Scripts.Inputs;
 using ConsoleApp1.Assets.Scripts.World.Blocks;
-using ConsoleApp1.Assets.Scripts.World.Chunk;
 using ConsoleApp1.Engine.Scripts.Core;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
@@ -18,10 +17,15 @@ public class Game : GameWindow
     public static int width;
     public static int height;
 
+    public static string mainPath;
+    public static string chunkPath;
+
     private Camera _mainCamera;
     
     // World
     private ChunkManager _chunkManager;
+    private WorldManager _worldManager;
+    
     private ShaderProgram _shaderProgram;
     private Texture _textureArray;
     
@@ -81,6 +85,12 @@ public class Game : GameWindow
     
     protected override void OnLoad()
     {
+        mainPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VoxelGame");
+        chunkPath = Path.Combine(mainPath, "Chunks");
+        
+        if (!Directory.Exists(chunkPath))
+            Directory.CreateDirectory(chunkPath);
+        
         _uiManager = new UIManager();
             
         base.OnLoad();
@@ -92,6 +102,7 @@ public class Game : GameWindow
         
         // World setup
         _chunkManager = new ChunkManager();
+        _worldManager = new WorldManager();
         
         UVmaps grassUvs = new UVmaps( new int[] { 0, 0, 1, 0, 2, 0 });
         UVmaps dirtUvs = new UVmaps( new int[] { 2, 2, 2, 2, 2, 2 });
@@ -105,7 +116,7 @@ public class Game : GameWindow
         BlockManager.Add(dirt);
         BlockManager.Add(stone);
 
-        GenerateChunks();
+        //GenerateChunks();
 
         _shaderProgram = new ShaderProgram("World/Default.vert", "World/Default.frag");
         _textureArray = new Texture("Test_TextureAtlas.png");
@@ -189,19 +200,18 @@ public class Game : GameWindow
         GL.UniformMatrix4(projectionLocation, true, ref projection);
         GL.Uniform3(camPosLocation, _mainCamera.position);
         
-        _chunkManager.CreateChunks();
-        _chunkManager.RenderChunks();
+        //_chunkManager.CreateChunks();
+        //_chunkManager.RenderChunks();
+        
+        _worldManager.Render();
         
         _shaderProgram.Unbind();
         _textureArray.Unbind();
         
         //_fbo.Unbind();
         
-        if (_visibleCursor)
-            _uiManager.OnRenderFrame(args);
-
+        _uiManager.OnRenderFrame(args);
         
-        _uiManager.UpdateFps();
         Context.SwapBuffers();
         
         base.OnRenderFrame(args);
@@ -213,6 +223,9 @@ public class Game : GameWindow
         KeyboardState keyboard = KeyboardState;
         
         base.OnUpdateFrame(args);
+        
+        _worldManager.SetPlayerPosition(_mainCamera.position);
+        _worldManager.Update();
         
         if (_visibleCursor)
             _uiManager.OnUpdateFrame(keyboard, mouse, args);
@@ -233,5 +246,7 @@ public class Game : GameWindow
                 CursorState = CursorState.Normal;
             }
         }
+        
+        _uiManager.UpdateFps(args);
     }
 }

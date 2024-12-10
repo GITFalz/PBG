@@ -3,8 +3,6 @@ using ConsoleApp1.Engine.Scripts.Core.Voxel;
 using OpenTK.Mathematics;
 using ConsoleApp1.Engine.Scripts.Core.Data;
 
-namespace ConsoleApp1.Assets.Scripts.World.Chunk;
-
 public class Chunk
 {
     public const int WIDTH = 32;
@@ -23,8 +21,6 @@ public class Chunk
     
     public static void GenerateChunk(ref ChunkData chunkData, Vector3i position)
     {
-        Block[] blocks = new Block[WIDTH * HEIGHT * DEPTH];
-        
         for (var x = 0; x < WIDTH; x++)
         {
             for (var z = 0; z < DEPTH; z++)
@@ -45,16 +41,11 @@ public class Chunk
 
                 for (int y = 0; y < terrainHeight; y++)
                 {
-                    blocks[x + z * 32 + y * 1024] = GetBlockAtHeight(height, y + position.Y);
+                    Block? block = GetBlockAtHeight(height, y + position.Y);
+                    chunkData.blockStorage.SetBlock(x, y, z, block);
                 }
             }
         }
-        
-        chunkData.SetBlocks(blocks);
-        chunkData.meshData = new MeshData();
-        
-        GenerateOcclusion(blocks);
-        GenerateMesh(chunkData);
     }
 
     public static float GetSplineVector(float noise)
@@ -86,7 +77,7 @@ public class Chunk
         return NoiseLib.Noise(4, ((float)position.X + 0.001f) / 100, ((float)position.Z + 0.001f) / 100);
     }
 
-    public static void GenerateOcclusion(Block[] blocks, int width = WIDTH, int lod = 0)
+    public static void GenerateOcclusion(Block?[] blocks, int width = WIDTH, int lod = 0)
     {
         int index = 0;
         for (int y = 0; y < width; y++)
@@ -95,7 +86,9 @@ public class Chunk
             {
                 for (int x = 0; x < width; x++)
                 {
-                    if (blocks[index] != null)
+                    Block? block = blocks[index];
+                    
+                    if (block != null)
                     {
                         byte occlusion = 0;
                             
@@ -105,7 +98,7 @@ public class Chunk
                                 occlusion |= VoxelData.ShiftPosition[i];
                         }
                             
-                        blocks[index].occlusion = occlusion;
+                        block.occlusion = occlusion;
                     }
                         
                     index++;
@@ -114,7 +107,7 @@ public class Chunk
         }
     }
     
-    public static void GenerateMesh(ChunkData chunkData)
+    public static void GenerateMesh(Block?[] blocks, ChunkData chunkData)
     {
         int index = 0;
         
@@ -124,7 +117,7 @@ public class Chunk
             {
                 for (int x = 0; x < 32; x++)
                 {
-                    Block block = chunkData.blocks[index];
+                    Block? block = blocks[index];
                     
                     if (block != null)
                     {
@@ -156,15 +149,18 @@ public class Chunk
                                 while (loop > 0)
                                 {
                                     i += VoxelData.FirstOffsetBase[side];
-                                    if (chunkData.blocks[i] == null)
+                                    
+                                    Block? blockI = blocks[i];
+                                    
+                                    if (blockI == null)
                                         break;
 
-                                    if (((chunkData.blocks[i].check >> side) & 1) != 0 ||
-                                        ((chunkData.blocks[i].occlusion >> side) & 1) != 0 ||
-                                        chunkData.blocks[i].blockData != block.blockData)
+                                    if (((blockI.check >> side) & 1) != 0 ||
+                                        ((blockI.occlusion >> side) & 1) != 0 ||
+                                        blockI.blockData != block.blockData)
                                         break;
 
-                                    chunkData.blocks[i].check |= (byte)(1 << side);
+                                    blockI.check |= (byte)(1 << side);
 
                                     height++;
                                     loop--;
@@ -182,15 +178,17 @@ public class Chunk
                                     
                                     for (int j = 0; j < height; j++)
                                     {
-                                        if (chunkData.blocks[up] == null)
+                                        Block? upBlock = blocks[up];
+                                        
+                                        if (upBlock == null)
                                         {
                                             quit = true;
                                             break;
                                         }
 
-                                        if (((chunkData.blocks[up].check >> side) & 1) != 0 ||
-                                            ((chunkData.blocks[up].occlusion >> side) & 1) != 0 ||
-                                            chunkData.blocks[up].blockData != block.blockData)
+                                        if (((upBlock.check >> side) & 1) != 0 ||
+                                            ((upBlock.occlusion >> side) & 1) != 0 ||
+                                            upBlock.blockData != block.blockData)
                                         {
                                             quit = true;
                                             break;
@@ -204,7 +202,13 @@ public class Chunk
                                     up = i;
                                     
                                     for (int j = 0; j < height; j++) {
-                                        chunkData.blocks[up].check |= (byte)(1 << side);
+                                        
+                                        Block? upBlock = blocks[up];
+                                        
+                                        if (upBlock == null)
+                                            continue;
+                                        
+                                        upBlock.check |= (byte)(1 << side);
                                         up += VoxelData.FirstOffsetBase[side];
                                     }
 
@@ -239,9 +243,10 @@ public class Chunk
                 }
             }
         }
+        Console.WriteLine("hello again");
     }
 
-    private static Block GetBlockAtHeight(float terrainHeight, int currentHeight)
+    private static Block? GetBlockAtHeight(float terrainHeight, int currentHeight)
     {
         if (terrainHeight > currentHeight + 2)
             return new Block(2, 0);

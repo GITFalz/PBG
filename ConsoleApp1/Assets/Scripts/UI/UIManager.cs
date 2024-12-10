@@ -208,23 +208,22 @@ public class UIManager
         _textTexture.Unbind();
     }
 
-    public void UpdateFps()
+    public void UpdateFps(FrameEventArgs args)
     {
-        FpsCalculation();
-        UpdateText((TextMesh)_meshes[0]);
+        FpsCalculation(args);
     }
     
-    private void FpsCalculation()
+    private void FpsCalculation(FrameEventArgs args)
     {
         frameCount++;
-        elapsedTime += stopwatch.ElapsedMilliseconds / 100.0f;
+        elapsedTime += (float)args.Time;
         stopwatch.Restart();
         
         if (elapsedTime >= 1.0f)
         {
             int fps = Mathf.FloorToInt(frameCount / elapsedTime);
             frameCount = 0;
-            elapsedTime -= 1f;
+            elapsedTime = 0;
             
             string t = fps.ToString();
             text.SetText(t, 1);
