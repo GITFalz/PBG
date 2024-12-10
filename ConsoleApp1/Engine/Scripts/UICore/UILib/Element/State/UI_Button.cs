@@ -38,7 +38,7 @@ public class UI_Button : UI_Base
 
     private void GenerateBaseText()
     {
-        text.SetText("Button", 2);
+        text.SetText("Button", 1);
         
         text.SetOffset(new Vector4(0, 0, 0, 0));
         text.SetAnchorAlignment(UiAnchorAlignment.MiddleCenter);

@@ -7,6 +7,7 @@ public class TextMesh : Mesh
     public VBO _textUvVbo;
 
     public int[] chars = new int[256];
+    public int charCount = 0;
     
     public TextMesh()
     {

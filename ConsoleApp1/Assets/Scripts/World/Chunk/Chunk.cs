@@ -243,7 +243,6 @@ public class Chunk
                 }
             }
         }
-        Console.WriteLine("hello again");
     }
 
     private static Block? GetBlockAtHeight(float terrainHeight, int currentHeight)

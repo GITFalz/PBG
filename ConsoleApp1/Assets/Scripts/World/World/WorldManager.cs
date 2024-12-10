@@ -49,7 +49,7 @@ public class WorldManager
 
     public void Render()
     {
-        Console.WriteLine("Rendering chunk: " + activeChunks.Count);
+        //Console.WriteLine("Rendering chunk: " + activeChunks.Count);
         
         foreach (var chunk in activeChunks)
         {
@@ -90,7 +90,7 @@ public class WorldManager
         {
             if (activeChunks.TryRemove(chunk, out var data))
             {
-                chunksToStore.Enqueue(data);
+                //chunksToStore.Enqueue(data);
                 data.Clear();
             }
         }
@@ -117,17 +117,16 @@ public class WorldManager
 
             await Task.Run(() =>
             {
-                Chunk.GenerateChunk(ref chunkData, position);
-                
-                
-                /*
-                if (!chunkData.FileExists())
+                if (!chunkData.FolderExists())
+                {
                     Chunk.GenerateChunk(ref chunkData, position);
+                    chunksToStore.Enqueue(chunkData);
+                }
                 else
-                    chunkData.LoadChunk();
-                    */
+                    chunkData.LoadData();
                 
                 Block?[] blocks = chunkData.blockStorage.GetFullBlockArray();
+                
                 Chunk.GenerateOcclusion(blocks);
                 Chunk.GenerateMesh(blocks, chunkData);
                     

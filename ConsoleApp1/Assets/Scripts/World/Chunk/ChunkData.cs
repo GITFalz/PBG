@@ -31,7 +31,7 @@ public class ChunkData
         
         bounds = new Bounds(min, max);
         
-        filePath = Path.Combine(Game.chunkPath, $"{position.X}_{position.Y}_{position.Z}.chunk");
+        filePath = Path.Combine(Game.chunkPath, $"Chunk_{position.X}_{position.Y}_{position.Z}");
     }
 
     public void Clear()
@@ -81,11 +81,8 @@ public class ChunkData
 
     public void StoreData()
     {
-        short[] b = new short[32768];
-
+        Console.WriteLine("Storing data");
         int i = 0;
-        
-        string filePath = Path.Combine(Game.chunkPath, $"Chunk_{position.X}_{position.Y}_{position.Z}");
         
         if (!Directory.Exists(filePath))
             Directory.CreateDirectory(filePath);
@@ -112,12 +109,9 @@ public class ChunkData
             foreach (Block? block in data)
             {
                 if (block == null)
-                {
-                    writer.Write(-1);
-                    continue;
-                }
-                
-                writer.Write(block.blockData);
+                    writer.Write((short)-1);
+                else
+                    writer.Write(block.blockData);
             }
         }
     }
@@ -130,28 +124,59 @@ public class ChunkData
         }
     }
     
-    public bool FileExists()
+    public bool FolderExists()
     {
-        return File.Exists(filePath);
+        return Directory.Exists(filePath);
     }
     
-    public void LoadChunk()
+    public void LoadData()
     {
-        /*
-        Console.WriteLine("Loading chunk");
-
-        using (BinaryReader reader = new BinaryReader(File.Open(filePath, FileMode.Open)))
+        Console.WriteLine("Loading data");
+        
+        int i = 0;
+        
+        if (!Directory.Exists(filePath))
+            Directory.CreateDirectory(filePath);
+        
+        foreach (var subPos in blockStorage.SubPositions)
         {
-            for (int i = 0; i < 32768; i++)
+            string subFilePath = Path.Combine(filePath, $"SubChunk_{subPos.X}_{subPos.Y}_{subPos.Z}.chunk");
+            blockStorage.Blocks[i] = LoadChunk(subFilePath, out int count);
+            blockStorage.BlockCount[i] = count;
+            
+            i++;
+        }
+    }
+
+    public Block?[]? LoadChunk(string subFilePath, out int count)
+    {
+        count = 0;
+        
+        using (BinaryReader reader = new BinaryReader(File.Open(subFilePath, FileMode.Open)))
+        {
+            short value = reader.ReadInt16();
+            if (value == -2)
+                return null;
+            
+            Block?[] blocks = new Block?[4096];
+            blocks[0] = value == -1 ? null : new Block(value, 0);
+            
+            for (int i = 1; i < 4096; i++)
             {
-                int value = reader.ReadInt32();
-                if (value == -1)
+                short data = reader.ReadInt16();
+                if (data == -1)
                     blocks[i] = null;
                 else
-                    blocks[i] = new Block((short)value, 0);
+                {
+                    blocks[i] = new Block(data, 0);
+                    count++;
+                }
             }
+            
+            return blocks;
         }
-        */
+        
+        return null;
     }
 }
 
@@ -188,8 +213,8 @@ public class BlockStorage
         int yIndex = y >> 4;
         int zIndex = z >> 4;
 
-        int blockIndex = modX + modY * 16 + modZ * 256;
-        int arrayIndex = xIndex + yIndex * 2 + zIndex * 4;
+        int blockIndex = modX + modZ * 16 + modY * 256;
+        int arrayIndex = xIndex + zIndex * 2 + yIndex * 4;
         
         if (BlockCount[arrayIndex] == 0 || Blocks[arrayIndex] == null)
             Blocks[arrayIndex] = new Block[4096];
@@ -208,8 +233,8 @@ public class BlockStorage
         int yIndex = y >> 4;
         int zIndex = z >> 4;
 
-        int blockIndex = modX + modY * 16 + modZ * 256;
-        int arrayIndex = xIndex + yIndex * 2 + zIndex * 4;
+        int blockIndex = modX + modZ * 16 + modY * 256;
+        int arrayIndex = xIndex + zIndex * 2 + yIndex * 4;
         
         Block?[]? blocks = Blocks[arrayIndex];
         
@@ -226,11 +251,11 @@ public class BlockStorage
         Block?[] blocks = new Block?[32768];
 
         int index = 0;
-        for (int x = 0; x < 32; x++)
+        for (int y = 0; y < 32; y++)
         {
-            for (int y = 0; y < 32; y++)
+            for (int z = 0; z < 32; z++)
             {
-                for (int z = 0; z < 32; z++)
+                for (int x = 0; x < 32; x++)
                 {
                     blocks[index] = GetBlock(x, y, z);
                     index++;

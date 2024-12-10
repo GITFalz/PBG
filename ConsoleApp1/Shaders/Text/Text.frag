@@ -6,15 +6,14 @@ flat in ivec2 Length;
 out vec4 FragColor;
 
 uniform sampler2D texture0;
-uniform vec2 size;
 uniform int chars[256];
 
 const float charSize = 1.0 / 20.0;
 
 void main()
 {
-    float sizeX = size.x;
-    float sizeY = size.y;
+    float sizeX = Length.x;
+    float sizeY = 1;
 
     int char = chars[int(TexCoord.x * sizeX) + Length.y];
 

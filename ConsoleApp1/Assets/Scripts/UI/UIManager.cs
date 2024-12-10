@@ -18,7 +18,8 @@ public class UIManager
     private ShaderProgram _textShader;
     private Texture _textTexture;
     
-    UI_Text text;
+    private UI_Text text;
+    private UI_Text text2;
     
     
     // Input
@@ -57,14 +58,14 @@ public class UIManager
     public void Start()
     {
         TextMesh textMesh = new TextMesh();
+        UiMesh uiMesh = new UiMesh();
+        
         
         RenderUI();
         
-        
-        // Text creation
-        text = new UI_Text(textMesh);
 
-        // Text 2
+        text = new UI_Text(textMesh);
+        
         text.SetText("1000", 1f);
         
         text.SetOffset(new Vector4(0, 0, 0, 0));
@@ -75,14 +76,29 @@ public class UIManager
         text.SetMem(0);
         
         
+        text2 = new UI_Text(textMesh);
+        
+        text2.SetText("Hello world", 1f);
+        
+        text2.SetOffset(new Vector4(0, 0, 20, 0));
+        text2.SetSize(new Vector2(80, 80));
+        text2.SetAnchorAlignment(UiAnchorAlignment.TopLeft);
+        text2.SetAnchorReference(UiAnchor.Absolute);
+        
+        text2.SetMem(4);
+        
+        
         // Add to list
         _ui.AddElement(text);
+        _ui.AddElement(text2);
         
         _meshes.Add(textMesh);
+        _meshes.Add(uiMesh);
         
         GenerateMeshes();
         
         RenderText();
+        RenderUI();
     }
 
     public void OnResize()
@@ -136,7 +152,9 @@ public class UIManager
         //GL.Enable(EnableCap.Blend);
         //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         
-        UpdateUi();
+        if (_meshes[1] is not UiMesh uiMesh) return;
+        
+        UpdateUi(uiMesh);
         
         if (_meshes[0] is not TextMesh textMesh) return;
         
@@ -175,7 +193,7 @@ public class UIManager
         }
     }
     
-    private void UpdateUi()
+    private void UpdateUi(UiMesh uiMesh)
     {
         _uiShader.Bind();
         _uItexture.Bind();
@@ -183,7 +201,7 @@ public class UIManager
         int projectionLoc = GL.GetUniformLocation(_uiShader.ID, "projection");
         GL.UniformMatrix4(projectionLoc, true, ref OrthographicProjection);
         
-        //_meshes[0].RenderMesh();
+        uiMesh.RenderMesh();
         
         _uiShader.Unbind();
         _uItexture.Unbind();
@@ -195,11 +213,9 @@ public class UIManager
         _textTexture.Bind();
 
         int textProjectionLoc = GL.GetUniformLocation(_textShader.ID, "projection");
-        int textSizeLoc = GL.GetUniformLocation(_textShader.ID, "size");
         int textCharsLoc = GL.GetUniformLocation(_textShader.ID, "chars");
         
         GL.UniformMatrix4(textProjectionLoc, true, ref OrthographicProjection);
-        GL.Uniform2(textSizeLoc, new Vector2(textMesh.chars.Length, 1));
         GL.Uniform1(textCharsLoc, textMesh.chars.Length, textMesh.chars);
 
         textMesh.RenderMesh();
@@ -226,6 +242,14 @@ public class UIManager
             elapsedTime = 0;
             
             string t = fps.ToString();
+
+            int miss = 4 - t.Length;
+            
+            for (int i = 0; i < miss; i++)
+            {
+                t += " ";
+            }
+            
             text.SetText(t, 1);
         }
     }

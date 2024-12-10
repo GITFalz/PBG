@@ -41,11 +41,12 @@ public class UI_Text : UI_Base
         
         if (mesh is TextMesh textMesh)
         {
-            textMesh.chars = new int[memSize];
             for (int i = 0; i < memSize; i++)
             {
-                textMesh.chars[i] = TextShaderHelper.CharPosition[textArray[i]];
+                textMesh.chars[i + memPos] = TextShaderHelper.CharPosition[textArray[i]];
             }
+            
+            Console.WriteLine(textMesh.chars);
         }
     }
     
