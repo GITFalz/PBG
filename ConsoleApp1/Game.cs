@@ -116,7 +116,12 @@ public class Game : GameWindow
         BlockManager.Add(dirt);
         BlockManager.Add(stone);
 
-        //GenerateChunks();
+        PlayerStateMachine player = new PlayerStateMachine();
+        GameObject playerObject = new GameObject();
+        
+        playerObject.AddComponent(player);
+
+        GameObjects.Add(playerObject);
 
         _shaderProgram = new ShaderProgram("World/Default.vert", "World/Default.frag");
         _textureArray = new Texture("Test_TextureAtlas.png");
@@ -127,6 +132,11 @@ public class Game : GameWindow
         GL.Enable(EnableCap.DepthTest);
         
         _mainCamera = new Camera(width, height, new Vector3(0, 0, 0));
+
+        foreach (GameObject gameObject in GameObjects)
+        {
+            gameObject.Start();
+        }
     }
 
     public async void GenerateChunks()
@@ -219,6 +229,11 @@ public class Game : GameWindow
     
     protected override void OnUpdateFrame(FrameEventArgs args)
     {
+        foreach (GameObject gameObject in GameObjects)
+        {
+            gameObject.Update();
+        }
+        
         MouseState mouse = MouseState;
         KeyboardState keyboard = KeyboardState;
         

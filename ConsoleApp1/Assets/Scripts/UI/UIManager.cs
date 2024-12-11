@@ -64,28 +64,22 @@ public class UIManager
         RenderUI();
         
 
-        text = new UI_Text(textMesh);
+        text = new UI_Text(textMesh, 0);
         
         text.SetText("1000", 1f);
         
         text.SetOffset(new Vector4(0, 0, 0, 0));
-        text.SetSize(new Vector2(80, 80));
         text.SetAnchorAlignment(UiAnchorAlignment.TopLeft);
         text.SetAnchorReference(UiAnchor.Absolute);
         
-        text.SetMem(0);
         
-        
-        text2 = new UI_Text(textMesh);
+        text2 = new UI_Text(textMesh, 4);
         
         text2.SetText("Hello world", 1f);
         
-        text2.SetOffset(new Vector4(0, 0, 20, 0));
-        text2.SetSize(new Vector2(80, 80));
-        text2.SetAnchorAlignment(UiAnchorAlignment.TopLeft);
+        text2.SetOffset(new Vector4(0, 0, 0, 0));
+        text2.SetAnchorAlignment(UiAnchorAlignment.BottomRight);
         text2.SetAnchorReference(UiAnchor.Absolute);
-        
-        text2.SetMem(4);
         
         
         // Add to list

@@ -27,6 +27,13 @@ public class UI_Text : UI_Base
         name = "UI_Text";
         this.mesh = mesh;
     }
+    
+    public UI_Text(TextMesh mesh, int memPos)
+    {
+        name = "UI_Text";
+        this.mesh = mesh;
+        this.memPos = memPos;
+    }
 
     public void SetText(string text, float fontSize)
     {
@@ -37,7 +44,7 @@ public class UI_Text : UI_Base
         
         memSize = textArray.Length;
         
-        textSize = GetTextSize();
+        baseSize = new Vector2(20 * charCount, 20);
         
         if (mesh is TextMesh textMesh)
         {
@@ -45,8 +52,6 @@ public class UI_Text : UI_Base
             {
                 textMesh.chars[i + memPos] = TextShaderHelper.CharPosition[textArray[i]];
             }
-            
-            Console.WriteLine(textMesh.chars);
         }
     }
     
@@ -59,10 +64,8 @@ public class UI_Text : UI_Base
     {
         Align();
         AlignText();
-        
-        Vector2 size = new Vector2(charCount * 20, 20) * fontSize;
-        
-        mesh.AddQuad(new Vector3(0, 0, 0), MeshHelper.GenerateTextQuad(size.X, size.Y, 0, memSize, memPos));
+
+        mesh.AddQuad(position, MeshHelper.GenerateTextQuad(size.X, size.Y, 0, memSize, memPos));
     }
 
     private void AlignText()
@@ -80,10 +83,10 @@ public class UI_Text : UI_Base
     private float GetTextHeight() { return 9 * fontSize; }
     private Vector2 GetTextSize() { return new Vector2(GetTextWidth(), GetTextHeight()); }
     
-    private float GetOffsetX() { return (size.X - textSize.X) / 2; } 
-    private float GetOffsetXEnd() { return size.X - textSize.X; } 
-    private float GetOffsetY() { return (size.Y - textSize.Y) / 2; }
-    private float GetOffsetYEnd() { return size.Y - textSize.Y; }
+    private float GetOffsetX() { return (size.X - baseSize.X) / 2; } 
+    private float GetOffsetXEnd() { return size.X - baseSize.X; } 
+    private float GetOffsetY() { return (size.Y - baseSize.Y) / 2; }
+    private float GetOffsetYEnd() { return size.Y - baseSize.Y; }
 
 
     private static readonly Dictionary<UiAnchorAlignment, Action<UI_Text>> TextAlignment = new Dictionary<UiAnchorAlignment, Action<UI_Text>>

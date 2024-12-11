@@ -4,6 +4,15 @@ public class GameObject
 {
     public Transform transform;
     public List<Component> components = new List<Component>();
+    public List<Updateable> updateables = new List<Updateable>();
+    
+    public GameObject()
+    {
+        transform = new Transform(this)
+        {
+            gameObject = this
+        };
+    }
     
     public static GameObject Create()
     {
@@ -22,17 +31,49 @@ public class GameObject
         components.Add(component);
         return true;
     }
+    
+    public bool AddComponent<T>(T component) where T : Component, new()
+    {
+        if (ContainsComponent(component.name))
+            return false;
+        
+        components.Add(component);
+        return true;
+    }
 
     private bool ContainsComponent(string name)
     {
         return components.Any(component => component.name == name);
     }
     
-    public void Update()
+    public void InitUpdateables()
     {
+        updateables.Clear();
+        
         foreach (Component component in components)
         {
-            component.Update();
+            if (component is Updateable updateable)
+            {
+                updateables.Add(updateable);
+            }
+        }
+    }
+
+    public void Start()
+    {
+        InitUpdateables();
+            
+        foreach (Updateable updateable in updateables)
+        {
+            updateable.Start();
+        }
+    }
+    
+    public void Update()
+    {
+        foreach (Updateable updateable in updateables)
+        {
+            updateable.Update();
         }
     }
 }

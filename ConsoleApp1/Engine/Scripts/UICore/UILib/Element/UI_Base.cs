@@ -69,17 +69,11 @@ public abstract class UI_Base : Component
     {
         return memSize;
     }
-    
-    
 
-    public override void OnResize()
+
+    protected override void OnResize()
     {
         base.OnResize();
-    }
-
-    public override void Update()
-    {
-        base.Update();
     }
 
     public virtual void RenderUI() { }

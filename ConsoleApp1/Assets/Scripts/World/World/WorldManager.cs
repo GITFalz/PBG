@@ -8,6 +8,8 @@ public class WorldManager
     public ConcurrentQueue<Vector3i> chunksToGenerate;
     public ConcurrentQueue<ChunkData> chunksToCreate;
     public ConcurrentQueue<ChunkData> chunksToStore;
+
+    private ConcurrentBag<Vector3i> chunksToIgnore;
     
     private Task? currentTask = null;
     private Task? storeTask = null;
@@ -20,6 +22,7 @@ public class WorldManager
         chunksToGenerate = new ConcurrentQueue<Vector3i>();
         chunksToCreate = new ConcurrentQueue<ChunkData>();
         chunksToStore = new ConcurrentQueue<ChunkData>();
+        chunksToIgnore = new ConcurrentBag<Vector3i>();
     }
     
     public void Update()
@@ -86,11 +89,14 @@ public class WorldManager
             }
         }
         
+        chunksToIgnore.Clear();
+        
         foreach (var chunk in chunksToRemove)
         {
+            chunksToIgnore.Add(chunk);
+            
             if (activeChunks.TryRemove(chunk, out var data))
             {
-                //chunksToStore.Enqueue(data);
                 data.Clear();
             }
         }
@@ -110,7 +116,7 @@ public class WorldManager
     {
         if (chunksToGenerate.TryDequeue(out var position))
         {
-            if (activeChunks.ContainsKey(position)) return;
+            if (activeChunks.ContainsKey(position) || chunksToIgnore.Contains(position)) return;
 
             ChunkData chunkData = new ChunkData(position);
             chunkData.meshData = new MeshData();
