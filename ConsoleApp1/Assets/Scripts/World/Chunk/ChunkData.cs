@@ -81,7 +81,6 @@ public class ChunkData
 
     public void StoreData()
     {
-        Console.WriteLine("Storing data");
         int i = 0;
         
         if (!Directory.Exists(filePath))
@@ -131,8 +130,6 @@ public class ChunkData
     
     public void LoadData()
     {
-        Console.WriteLine("Loading data");
-        
         int i = 0;
         
         if (!Directory.Exists(filePath))
@@ -244,6 +241,11 @@ public class BlockStorage
             return null;
         
         return blocks[blockIndex];
+    }
+    
+    public Block? GetBlock(Vector3i position)
+    {
+        return GetBlock(position.X, position.Y, position.Z);
     }
 
     public Block?[] GetFullBlockArray()

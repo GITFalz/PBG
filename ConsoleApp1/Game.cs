@@ -119,6 +119,7 @@ public class Game : GameWindow
         PlayerStateMachine player = new PlayerStateMachine();
         GameObject playerObject = new GameObject();
         
+        player.WorldManager = _worldManager;
         playerObject.AddComponent(player);
 
         GameObjects.Add(playerObject);
@@ -190,15 +191,13 @@ public class Game : GameWindow
         GL.Enable(EnableCap.CullFace);
         GL.FrontFace(FrontFaceDirection.Ccw);
         
-        //_fbo.Bind();
-        
         // World
         _shaderProgram.Bind();
         _textureArray.Bind();
-
+        
         Matrix4 model = Matrix4.Identity;
-        Matrix4 view = _mainCamera.GetViewMatrix();
-        Matrix4 projection = _mainCamera.GetProjectionMatrix();
+        Matrix4 view = Camera.GetViewMatrix();
+        Matrix4 projection = Camera.GetProjectionMatrix();
 
         int modelLocation = GL.GetUniformLocation(_shaderProgram.ID, "model");
         int viewLocation = GL.GetUniformLocation(_shaderProgram.ID, "view");
@@ -208,7 +207,7 @@ public class Game : GameWindow
         GL.UniformMatrix4(modelLocation, true, ref model);
         GL.UniformMatrix4(viewLocation, true, ref view);
         GL.UniformMatrix4(projectionLocation, true, ref projection);
-        GL.Uniform3(camPosLocation, _mainCamera.position);
+        GL.Uniform3(camPosLocation, Camera.position);
         
         //_chunkManager.CreateChunks();
         //_chunkManager.RenderChunks();
@@ -218,7 +217,10 @@ public class Game : GameWindow
         _shaderProgram.Unbind();
         _textureArray.Unbind();
         
-        //_fbo.Unbind();
+        foreach (GameObject gameObject in GameObjects)
+        {
+            gameObject.Render();
+        }
         
         _uiManager.OnRenderFrame(args);
         
@@ -229,17 +231,19 @@ public class Game : GameWindow
     
     protected override void OnUpdateFrame(FrameEventArgs args)
     {
-        foreach (GameObject gameObject in GameObjects)
-        {
-            gameObject.Update();
-        }
-        
         MouseState mouse = MouseState;
         KeyboardState keyboard = KeyboardState;
         
+        InputManager.Update(keyboard, mouse);
+        
+        foreach (GameObject gameObject in GameObjects)
+        {
+            gameObject.Update(args);
+        }
+        
         base.OnUpdateFrame(args);
         
-        _worldManager.SetPlayerPosition(_mainCamera.position);
+        _worldManager.SetPlayerPosition(Camera.position);
         _worldManager.Update();
         
         if (_visibleCursor)

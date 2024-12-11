@@ -317,4 +317,105 @@ public static class VoxelData
         (width, height) => new Vector3[] { new Vector3(width, 0, 0), new Vector3(width, 0, height), new Vector3(0, 0, height), new Vector3(0, 0, 0), },
         (width, height) => new Vector3[] { new Vector3(width, 0, 1), new Vector3(width, height, 1), new Vector3(0, height, 1), new Vector3(0, 0, 1), }
     ];
+
+    public static EntityMesh GetEntityBoxMesh(EntityMesh mesh, Vector3 size, Vector3 offset, int color)
+    {
+        MeshHelper.GenerateMeshIndices(mesh);
+        mesh.Uvs.AddRange(VoxelData.UVTable);
+
+        mesh.Vertices.Add(new Vector3(0, 0, 0) + offset);
+        mesh.Vertices.Add(new Vector3(0, size.Y, 0) + offset);
+        mesh.Vertices.Add(new Vector3(size.X, size.Y, 0) + offset);
+        mesh.Vertices.Add(new Vector3(size.X, 0, 0) + offset);
+        
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        
+        MeshHelper.GenerateMeshIndices(mesh);
+        mesh.Uvs.AddRange(VoxelData.UVTable);
+        
+        mesh.Vertices.Add(new Vector3(size.X, 0, 0) + offset);
+        mesh.Vertices.Add(new Vector3(size.X, size.Y, 0) + offset);
+        mesh.Vertices.Add(new Vector3(size.X, size.Y, size.Z) + offset);
+        mesh.Vertices.Add(new Vector3(size.X, 0, size.Z) + offset);
+        
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        
+        MeshHelper.GenerateMeshIndices(mesh);
+        mesh.Uvs.AddRange(VoxelData.UVTable);
+        
+        mesh.Vertices.Add(new Vector3(0, size.Y, 0) + offset);
+        mesh.Vertices.Add(new Vector3(0, size.Y, size.Z) + offset);
+        mesh.Vertices.Add(new Vector3(size.X, size.Y, size.Z) + offset);
+        mesh.Vertices.Add(new Vector3(size.X, size.Y, 0) + offset);
+        
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        
+        MeshHelper.GenerateMeshIndices(mesh);
+        mesh.Uvs.AddRange(VoxelData.UVTable);
+        
+        mesh.Vertices.Add(new Vector3(0, 0, size.Z) + offset);
+        mesh.Vertices.Add(new Vector3(0, size.Y, size.Z) + offset);
+        mesh.Vertices.Add(new Vector3(0, size.Y, 0) + offset);
+        mesh.Vertices.Add(new Vector3(0, 0, 0) + offset);
+        
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        
+        MeshHelper.GenerateMeshIndices(mesh);
+        mesh.Uvs.AddRange(VoxelData.UVTable);
+        
+        mesh.Vertices.Add(new Vector3(size.X, 0, size.Z) + offset);
+        mesh.Vertices.Add(new Vector3(0, 0, size.Z) + offset);
+        mesh.Vertices.Add(new Vector3(0, 0, 0) + offset);
+        mesh.Vertices.Add(new Vector3(size.X, 0, 0) + offset);
+        
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        
+        MeshHelper.GenerateMeshIndices(mesh);
+        mesh.Uvs.AddRange(VoxelData.UVTable);
+        
+        mesh.Vertices.Add(new Vector3(size.X, 0, size.Z) + offset);
+        mesh.Vertices.Add(new Vector3(size.X, size.Y, size.Z) + offset);
+        mesh.Vertices.Add(new Vector3(0, size.Y, size.Z) + offset);
+        mesh.Vertices.Add(new Vector3(0, 0, size.Z) + offset);
+        
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+
+        return mesh;
+    }
+    
+    public static Vector3i BlockToChunkPosition(Vector3 position)
+    {
+        return new Vector3i(
+            (int)position.X & ~31,
+            (int)position.Y & ~31,
+            (int)position.Z & ~31
+        );
+    }
+    
+    public static Vector3i BlockToRelativePosition(Vector3 position)
+    {
+        return new Vector3i(
+            (int)position.X & 31,
+            (int)position.Y & 31,
+            (int)position.Z & 31
+        );
+    }
 }

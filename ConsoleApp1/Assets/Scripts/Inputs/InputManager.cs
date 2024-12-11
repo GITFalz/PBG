@@ -1,13 +1,31 @@
-﻿using OpenTK.Windowing.GraphicsLibraryFramework;
+﻿using OpenTK.Mathematics;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using Veldrid;
-
-namespace ConsoleApp1.Assets.Scripts.Inputs;
 
 public static class InputManager
 {
+    private static KeyboardState _previousKeyboardState;
+    private static MouseState _previousMouseState;
+    
+    public static void Update(KeyboardState keyboard, MouseState mouse)
+    {
+        _previousKeyboardState = keyboard;
+        _previousMouseState = mouse;
+    }
+
     public static bool IsKeyPressed(KeyboardState keyboard, Keys key)
     {
         return keyboard.IsKeyDown(key);
+    }
+    
+    public static bool IsKeyPressed(Keys key)
+    {
+        return _previousKeyboardState.IsKeyPressed(key);
+    }
+    
+    public static bool IsDown(Keys key)
+    {
+        return _previousKeyboardState.IsKeyDown(key);
     }
 
     public static Character GetPressedKey(KeyboardState keyboard)
@@ -37,6 +55,26 @@ public static class InputManager
 
         return pressedKeys;
     }
+    
+    
+    //Player Inputs
+    public static Vector2 GetMovementInput()
+    {
+        Vector2 input = Vector2.Zero;
+
+        if (IsDown(Keys.W))
+            input.Y += 1;
+        if (IsDown(Keys.S))
+            input.Y -= 1;
+        
+        if (IsDown(Keys.A))
+            input.X += 1;
+        if (IsDown(Keys.D))
+            input.X -= 1;
+        
+        return input;
+    }
+    
 
     private static readonly Dictionary<Keys, Character> PressedCharacters = new Dictionary<Keys, Character>()
     {

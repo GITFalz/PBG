@@ -14,32 +14,6 @@ public abstract class Mesh
     
     private bool _updateMesh = false;
     
-    /*
-    public void CheckConformity()
-    {
-        uint max = Indices.Max();
-        
-        bool tris = Indices.Count % 3 == 0;
-        bool uvs = this.Uvs.Count == vertices.Count || uvs2D.Count == vertices.Count;
-        bool verts = vertices.Count > (int)max;
-        
-        if (!tris)
-        {
-            throw new Exception("Indices count must be a multiple of 3");
-        }
-        
-        if (!uvs)
-        {
-            throw new Exception("UVs count must be equal to vertices count");
-        }
-        
-        if (!verts)
-        {
-            throw new Exception("Indices must not reference non-existent vertices");
-        }
-    }
-    */
-    
     public virtual void GenerateBuffers()
     {
         _vertVbo = new VBO(Vertices);
@@ -65,9 +39,9 @@ public abstract class Mesh
         _ibo.Unbind();
     }
     
-    public void UpdateMesh()
+    public virtual void UpdateMesh()
     {
-
+        _vertVbo.Update(Vertices);
     }
     
     public virtual void AddQuad(Vector3 position, Quad quad)

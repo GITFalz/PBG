@@ -2,8 +2,6 @@
 using ConsoleApp1.Assets.Scripts.World.Blocks;
 using OpenTK.Mathematics;
 
-namespace ConsoleApp1.Assets.Scripts.World.Blocks;
-
 public class Block
 {
     public short blockData;

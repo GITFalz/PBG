@@ -11,4 +11,9 @@
     {
         
     }
+    
+    public virtual void Render()
+    {
+
+    }
 }

@@ -35,6 +35,16 @@ public static class Mathf
         return a < b ? a : b;
     }
     
+    public static int Sign(float value)
+    {
+        return value > 0 ? 1 : value < 0 ? -1 : 0;
+    }
+    
+    public static float Abs(float value)
+    {
+        return value < 0 ? -value : value;
+    }
+    
     /// <summary>
     /// turns the range [a, b] into [0, 1] based on t
     /// </summary>

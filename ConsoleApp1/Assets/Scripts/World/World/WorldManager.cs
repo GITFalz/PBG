@@ -1,9 +1,12 @@
 ﻿using System.Collections.Concurrent;
 using ConsoleApp1.Assets.Scripts.World.Blocks;
+using ConsoleApp1.Engine.Scripts.Core.Voxel;
 using OpenTK.Mathematics;
 
 public class WorldManager
 {
+    public HashSet<Vector3> chunks;
+    
     public ConcurrentDictionary<Vector3i, ChunkData> activeChunks;
     public ConcurrentQueue<Vector3i> chunksToGenerate;
     public ConcurrentQueue<ChunkData> chunksToCreate;
@@ -18,6 +21,8 @@ public class WorldManager
     
     public WorldManager()
     {
+        chunks = new HashSet<Vector3>();
+        
         activeChunks = new ConcurrentDictionary<Vector3i, ChunkData>();
         chunksToGenerate = new ConcurrentQueue<Vector3i>();
         chunksToCreate = new ConcurrentQueue<ChunkData>();
@@ -72,6 +77,8 @@ public class WorldManager
             chunksToRemove.Add(chunk.Key);
         }
         
+        chunks.Clear();
+        
         for (int x = -render; x < render; x++)
         {
             for (int y = 0; y < 10; y++)
@@ -80,6 +87,8 @@ public class WorldManager
                 {
                     Vector3i position = new Vector3i(playerChunk.X + x, y, playerChunk.Z + z) * 32;
                     chunksToRemove.Remove(position);
+                    
+                    chunks.Add(position);
                     
                     if (!activeChunks.ContainsKey(position) && !chunksToGenerate.Contains(position) && chunksToCreate.All(c => c.position != position))
                     {
@@ -100,6 +109,18 @@ public class WorldManager
                 data.Clear();
             }
         }
+    }
+
+    public int GetBlock(Vector3i blockPosition, out Block? block)
+    {
+        block = null;
+        Vector3i chunkPosition = VoxelData.BlockToChunkPosition(blockPosition);
+
+        if (!activeChunks.TryGetValue(chunkPosition, out var chunk)) 
+            return chunks.Contains(chunkPosition) ? 2 : 1;
+        
+        block = chunk.blockStorage.GetBlock(VoxelData.BlockToRelativePosition(blockPosition));
+        return block == null ? 1 : 0;
     }
 
     private async void GenerateChunks()

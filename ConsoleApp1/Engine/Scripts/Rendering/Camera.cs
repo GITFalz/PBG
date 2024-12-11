@@ -7,16 +7,16 @@ using Vector3 = OpenTK.Mathematics.Vector3;
 
 public class Camera
 {
-    private float SPEED = 50f;
-    private float SCREEN_WIDTH;
-    private float SCREEN_HEIGHT;
-    private float SENSITIVITY = 65f;
+    private static float SPEED = 50f;
+    private static float SCREEN_WIDTH;
+    private static float SCREEN_HEIGHT;
+    private static float SENSITIVITY = 65f;
 
-    public Vector3 position;
+    public static Vector3 position;
     
-    private Vector3 up = Vector3.UnitY;
-    private Vector3 front = -Vector3.UnitZ;
-    private Vector3 right = Vector3.UnitX;
+    private static Vector3 up = Vector3.UnitY;
+    private static Vector3 front = -Vector3.UnitZ;
+    private static Vector3 right = Vector3.UnitX;
     
     private float pitch = 0;
     private float yaw = -90;
@@ -24,24 +24,24 @@ public class Camera
     public bool firstMove = true;
     public Vector2 lastPos;
     
-    private static Matrix4 viewMatrix;
-    private static Matrix4 projectionMatrix;
-    private static Plane[] frustumPlanes;
+    public static Matrix4 viewMatrix;
+    public static Matrix4 projectionMatrix;
+    public static Plane[] frustumPlanes;
 
     public Camera(float width, float height, Vector3 position)
     {
         SCREEN_WIDTH = width;
         SCREEN_HEIGHT = height;
-        this.position = position;
+        Camera.position = position;
     }
 
-    public Matrix4 GetViewMatrix()
+    public static Matrix4 GetViewMatrix()
     {
         viewMatrix = Matrix4.LookAt(position, position + front, up);
         return viewMatrix;
     }
     
-    public Matrix4 GetProjectionMatrix()
+    public static Matrix4 GetProjectionMatrix()
     {
         projectionMatrix = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(45),
             SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 1000f);
@@ -85,29 +85,37 @@ public class Camera
 
     public void InputController(KeyboardState input, MouseState mouse, FrameEventArgs e)
     {
-        if (input.IsKeyDown(Keys.W))
+        if (!input.IsKeyDown(Keys.LeftAlt))
         {
-            position += Yto0(front) * GetSpeed(e);
-        }
-        if (input.IsKeyDown(Keys.A))
-        {
-            position -= Yto0(right) * GetSpeed(e);
-        }
-        if (input.IsKeyDown(Keys.S))
-        {
-            position -= Yto0(front) * GetSpeed(e);
-        }
-        if (input.IsKeyDown(Keys.D))
-        {
-            position += Yto0(right) * GetSpeed(e);
-        }
-        if (input.IsKeyDown(Keys.Space))
-        {
-            position.Y += GetSpeed(e);
-        }
-        if (input.IsKeyDown(Keys.LeftShift))
-        {
-            position.Y -= GetSpeed(e);
+            if (input.IsKeyDown(Keys.W))
+            {
+                position += Yto0(front) * GetSpeed(e);
+            }
+
+            if (input.IsKeyDown(Keys.A))
+            {
+                position -= Yto0(right) * GetSpeed(e);
+            }
+
+            if (input.IsKeyDown(Keys.S))
+            {
+                position -= Yto0(front) * GetSpeed(e);
+            }
+
+            if (input.IsKeyDown(Keys.D))
+            {
+                position += Yto0(right) * GetSpeed(e);
+            }
+
+            if (input.IsKeyDown(Keys.Space))
+            {
+                position.Y += GetSpeed(e);
+            }
+
+            if (input.IsKeyDown(Keys.LeftShift))
+            {
+                position.Y -= GetSpeed(e);
+            }
         }
 
         if (firstMove)

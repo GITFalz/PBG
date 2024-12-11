@@ -1,4 +1,6 @@
-﻿namespace ConsoleApp1.Engine.Scripts.Core;
+﻿using OpenTK.Windowing.Common;
+
+namespace ConsoleApp1.Engine.Scripts.Core;
 
 public class GameObject
 {
@@ -69,11 +71,19 @@ public class GameObject
         }
     }
     
-    public void Update()
+    public void Update(FrameEventArgs args)
     {
         foreach (Updateable updateable in updateables)
         {
-            updateable.Update();
+            updateable.Update(args);
+        }
+    }
+    
+    public void Render()
+    {
+        foreach (Updateable updateable in updateables)
+        {
+            updateable.Render();
         }
     }
 }

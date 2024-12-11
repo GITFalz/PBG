@@ -1,11 +1,18 @@
-﻿public abstract class Updateable : Component
+﻿using OpenTK.Windowing.Common;
+
+public abstract class Updateable : Component
 {
     public virtual void Start()
     {
 
     }
     
-    public virtual void Update()
+    public virtual void Update(FrameEventArgs args)
+    {
+
+    }
+    
+    public virtual void Render()
     {
 
     }

@@ -1,25 +1,48 @@
-﻿public class PlayerGameState : PlayerBaseState
+﻿using OpenTK.Mathematics;
+
+public class PlayerGameState : PlayerBaseState
 {
+    public PlayerStateMachine PlayerStateMachine;
     private PlayerGameBaseState _currentState;
     
-    private PlayerAdminState _adminState = new();
+    public PlayerAdminState AdminState = new();
+    public PlayerFallingState FallingState = new();
+    public PlayerIdleState IdleState = new();
+    public PlayerWalkingState WalkingState = new();
     
     public override void Enter(PlayerStateMachine playerStateMachine)
     {
         Console.WriteLine("Entering game state");
         
-        _currentState = _adminState;
+        PlayerStateMachine = playerStateMachine;
+        
+        _currentState = FallingState;
         _currentState.Enter(this);
     }
 
     public override void Update(PlayerStateMachine playerStateMachine)
     {
-        
+        _currentState.Update(this);
     }
 
     public override void Exit(PlayerStateMachine playerStateMachine)
     {
 
+    }
+
+    public void ApplyGravity()
+    {
+        int result = PlayerStateMachine.ApplyGravity();
+
+        if (result == 0)
+        {
+            SwitchState(IdleState);
+        }
+    }
+    
+    public void MovePlayer(Vector2 input)
+    {
+        PlayerStateMachine.MovePlayer(input);
     }
     
     public void SwitchState(PlayerGameBaseState newState)

@@ -25,6 +25,18 @@ public static class MeshHelper
         return quad;
     }
 
+    public static void GenerateMeshIndices(Mesh mesh)
+    {
+        uint count = (uint)mesh.Vertices.Count;
+        
+        mesh.Indices.Add(0 + count);
+        mesh.Indices.Add(1 + count);
+        mesh.Indices.Add(2 + count);
+        mesh.Indices.Add(2 + count);
+        mesh.Indices.Add(3 + count);
+        mesh.Indices.Add(0 + count);
+    }
+
     private static Dictionary<FaceDirection, Func<float, float, int, Quad>> _quads = new Dictionary<FaceDirection, Func<float, float, int, Quad>>()
     {
         { FaceDirection.Front, (width, height, t) => new Quad(new Vector3[] { new Vector3(0, 0, 0), new Vector3(0, height, 0), new Vector3(width, height, 0), new Vector3(width, 0, 0) }, new int[] { t, t, t, t }) },
