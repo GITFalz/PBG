@@ -21,7 +21,7 @@ public class PlayerIdleState : PlayerGameBaseState
             return;
         }
         
-        if (InputManager.IsKeyPressed(Keys.Space))
+        if (InputManager.IsKeyPressed(Keys.Space) && Game.MoveTest)
         {
             playerGameState.SwitchState(playerGameState.JumpingState);
             return;

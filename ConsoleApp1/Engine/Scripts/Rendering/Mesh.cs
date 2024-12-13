@@ -7,16 +7,25 @@ public abstract class Mesh
     public List<uint> Indices;
     public List<Vector2> Uvs;
     
+    public List<Vector3> transformedVertices = new List<Vector3>();
+    
     public VAO _vao;
     public VBO _vertVbo;
     public VBO _uvVbo;
     public IBO _ibo;
     
+    public Vector3 Position;
+    
     private bool _updateMesh = false;
     
     public virtual void GenerateBuffers()
     {
-        _vertVbo = new VBO(Vertices);
+        for (int i = 0; i < Vertices.Count; i++)
+        {
+            transformedVertices.Add(Vertices[i] + Position);
+        }
+        
+        _vertVbo = new VBO(transformedVertices);
         _uvVbo = new VBO(Uvs);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
@@ -41,7 +50,7 @@ public abstract class Mesh
     
     public virtual void UpdateMesh()
     {
-        _vertVbo.Update(Vertices);
+        _vertVbo.Update(transformedVertices);
     }
     
     public virtual void AddQuad(Vector3 position, Quad quad)

@@ -11,6 +11,7 @@ public class Camera
     private static float SCREEN_WIDTH;
     private static float SCREEN_HEIGHT;
     private static float SENSITIVITY = 65f;
+    private static float SCROLL_SENSITIVITY = 50f;
 
     public static Vector3 position;
     
@@ -128,7 +129,7 @@ public class Camera
         {
             float scroll = mouse.ScrollDelta.Y;
 
-            CameraDistance -= scroll * GetSpeed(e);
+            CameraDistance -= scroll * SCROLL_SENSITIVITY * GameTime.DeltaTime;
             CameraDistance = Math.Clamp(CameraDistance, 3, 10);
             
             position = PlayerData.Position - front * CameraDistance;

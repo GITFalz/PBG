@@ -86,7 +86,7 @@ public class PlayerStateMachine : Updateable
     
     public int ApplyGravity()
     {
-        Vector3 newVelocity = Velocity + new Vector3(0, -GRAVITY * (float)_args.Time, 0);
+        Vector3 newVelocity = Velocity + new Vector3(0, -GRAVITY * GameTime.DeltaTime, 0);
         newVelocity.Y = Mathf.Min(newVelocity.Y, MAX_FALL_SPEED);
         
         Queue<Vector3i> positions = new Queue<Vector3i>();
@@ -145,7 +145,7 @@ public class PlayerStateMachine : Updateable
     {
         float speed = Speeds[movementSpeed] * (float)_args.Time;
         Vector3 addedVelocity = input.Y * Camera.FrontYto0() - input.X * Camera.RightYto0();
-        Velocity = Vector3.Lerp(Velocity, addedVelocity.Normalized() * speed));
+        Velocity = Vector3.Lerp(Velocity, addedVelocity.Normalized() * speed, 0.5f);
         
         Position += Velocity;
         _mesh.Position = Position;

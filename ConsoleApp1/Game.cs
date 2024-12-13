@@ -250,6 +250,7 @@ public class Game : GameWindow
         KeyboardState keyboard = KeyboardState;
         
         InputManager.Update(keyboard, mouse);
+        GameTime.Update(args);
 
         if (InputManager.IsKeyPressed(Keys.LeftAlt))
             MoveTest = !MoveTest;
