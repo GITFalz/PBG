@@ -245,6 +245,8 @@ public class UIManager
             }
             
             text.SetText(t, 1);
+            
+            Console.WriteLine(args.Time);
         }
     }
 }
