@@ -3,6 +3,8 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PlayerSprintingState : PlayerGameBaseState
 {
+    Vector2 input;
+    
     public override void Enter(PlayerGameState playerGameState)
     {
         Console.WriteLine("Entering sprinting state");
@@ -11,8 +13,8 @@ public class PlayerSprintingState : PlayerGameBaseState
     }
 
     public override void Update(PlayerGameState playerGameState)
-    {
-        Vector2 input = InputManager.GetMovementInput();
+    { 
+        input = InputManager.GetMovementInput();
         
         if (InputManager.IsKeyPressed(Keys.LeftControl))
         {
@@ -37,7 +39,10 @@ public class PlayerSprintingState : PlayerGameBaseState
             playerGameState.SwitchState(playerGameState.FallingState);
             return;
         }
-        
+    }
+    
+    public override void FixedUpdate(PlayerGameState playerGameState)
+    {
         playerGameState.MovePlayer(input, PlayerMovementSpeed.Sprint);
     }
 

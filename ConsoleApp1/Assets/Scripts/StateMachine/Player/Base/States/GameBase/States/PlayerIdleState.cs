@@ -34,6 +34,11 @@ public class PlayerIdleState : PlayerGameBaseState
             return;
         }
     }
+    
+    public override void FixedUpdate(PlayerGameState playerGameState)
+    {
+
+    }
 
     public override void Exit(PlayerGameState playerGameState)
     {

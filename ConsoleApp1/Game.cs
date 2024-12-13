@@ -57,6 +57,9 @@ public class Game : GameWindow
     public static bool MoveTest = false;
     
     
+    private bool isRunning = true;
+    private Thread _physicsThread;
+    
     public Game(int width, int height) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
     {
         CenterWindow(new Vector2i(width, height));
@@ -88,6 +91,8 @@ public class Game : GameWindow
     
     protected override void OnLoad()
     {
+        _mainCamera = new Camera(width, height, new Vector3(0, 100, 0));
+        
         mainPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VoxelGame");
         chunkPath = Path.Combine(mainPath, "Chunks");
         
@@ -138,6 +143,8 @@ public class Game : GameWindow
         playerObject.AddComponent(player);
 
         GameObjects.Add(playerObject);
+        
+        _worldManager.Start();
 
         _shaderProgram = new ShaderProgram("World/Default.vert", "World/Default.frag");
         _textureArray = new Texture("EditorTiles.png");
@@ -146,13 +153,14 @@ public class Game : GameWindow
         _uiManager.Start();
         
         GL.Enable(EnableCap.DepthTest);
-        
-        _mainCamera = new Camera(width, height, new Vector3(0, 100, 0));
 
         foreach (GameObject gameObject in GameObjects)
         {
             gameObject.Start();
         }
+        
+        _physicsThread = new Thread(PhysicsThread);
+        _physicsThread.Start();
     }
 
     public async void GenerateChunks()
@@ -196,6 +204,9 @@ public class Game : GameWindow
         
         GC.Collect();
         GC.WaitForPendingFinalizers();
+        
+        isRunning = false;
+        _physicsThread.Join();
     }
     
     protected override void OnRenderFrame(FrameEventArgs args)
@@ -242,6 +253,26 @@ public class Game : GameWindow
         Context.SwapBuffers();
         
         base.OnRenderFrame(args);
+    }
+
+    public void PhysicsThread()
+    {
+        double time = GameTime.FixedDeltaTime;
+        
+        while (isRunning)
+        {
+            if (time >= GameTime.FixedDeltaTime)
+            {
+                foreach (GameObject gameObject in GameObjects)
+                {
+                    gameObject.FixedUpdate();
+                }
+                
+                time -= GameTime.FixedDeltaTime;
+            }
+            
+            time += GameTime.DeltaTime;
+        }
     }
     
     protected override void OnUpdateFrame(FrameEventArgs args)

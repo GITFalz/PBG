@@ -12,6 +12,11 @@ public abstract class Updateable : Component
 
     }
     
+    public virtual void FixedUpdate()
+    {
+
+    }
+    
     public virtual void Render()
     {
 

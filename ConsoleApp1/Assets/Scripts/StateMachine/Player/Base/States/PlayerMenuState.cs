@@ -9,6 +9,11 @@
     {
 
     }
+    
+    public override void FixedUpdate(PlayerStateMachine playerStateMachine)
+    {
+
+    }
 
     public override void Exit(PlayerStateMachine playerStateMachine)
     {

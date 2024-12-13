@@ -11,8 +11,8 @@ using Veldrid;
 public class PlayerStateMachine : Updateable
 {
     public const float GRAVITY = 0.1f;
-    public const float MAX_FALL_SPEED = 1.5f;
-    public const float WALK_SPEED = 7f;
+    public const float MAX_FALL_SPEED = 2f;
+    public const float WALK_SPEED = 0.0001f;
     public const float SPRINT_SPEED = 18f;
     
     private static readonly Dictionary<PlayerMovementSpeed, float> Speeds = new Dictionary<PlayerMovementSpeed, float>()
@@ -39,6 +39,7 @@ public class PlayerStateMachine : Updateable
     private FrameEventArgs _args;
 
     public bool isGrounded;
+    public bool UpdatePhysics = false;
     
     public override void Start()
     {
@@ -54,6 +55,8 @@ public class PlayerStateMachine : Updateable
         VoxelData.GetEntityBoxMesh(_mesh, new Vector3(1, 2, 1), new Vector3(0, 0, 0), 1);
 
         _mesh.GenerateBuffers();
+
+        CanUpdatePhysics();
     }
 
     public override void Update(FrameEventArgs args)
@@ -61,6 +64,12 @@ public class PlayerStateMachine : Updateable
         _args = args;
         _currentState.Update(this);
         PlayerData.Position = Position + new Vector3(0.5f, 1.8f, 0.5f);
+    }
+    
+    public override void FixedUpdate()
+    {
+        if (UpdatePhysics)
+            _currentState.FixedUpdate(this);
     }
 
     public override void Render()
@@ -84,19 +93,72 @@ public class PlayerStateMachine : Updateable
         _shaderProgram.Unbind();
     }
     
-    public int ApplyGravity()
+    public void CalculateGravity()
     {
-        Vector3 newVelocity = Velocity + new Vector3(0, -GRAVITY * GameTime.DeltaTime, 0);
-        newVelocity.Y = Mathf.Min(newVelocity.Y, MAX_FALL_SPEED);
+        Vector3 newVelocity = Velocity + new Vector3(0, -GRAVITY * GameTime.FixedDeltaTime, 0);
+        newVelocity.Y = Mathf.Max(newVelocity.Y, -MAX_FALL_SPEED * GameTime.FixedDeltaTime);
         
+        Velocity = newVelocity;
+    }
+
+    public int GravityUpdate()
+    {
+        int result = CanUpdatePhysics();
+
+        if (result == 1)
+        {
+            Position += Velocity;
+            _mesh.Position = Position;
+
+            _mesh.UpdatePosition();
+            _mesh.UpdateRotation(_mesh.Position + new Vector3(0.5f, 0, 0.5f), new Vector3(0, 1, 0), yaw);
+            _mesh.UpdateMesh();
+
+            return 1;
+        }
+
+        return result;
+    }
+
+    public void MovePlayer(Vector2 input, PlayerMovementSpeed movementSpeed)
+    {
+        float speed = Speeds[movementSpeed] * GameTime.FixedDeltaTime;
+        Console.WriteLine(speed);
+        Vector3 addedVelocity = input.Y * Camera.FrontYto0() - input.X * Camera.RightYto0();
+        Velocity = Vector3.Lerp(Velocity, addedVelocity.Normalized() * speed, 0.5f);
+        
+        Console.WriteLine(Velocity + " " + addedVelocity.Normalized());
+    }
+
+    public void MoveMeshUpdate()
+    {
+        Position += Velocity;
+        _mesh.Position = Position;
+        
+        yaw = -Camera.GetYaw();
+        
+        _mesh.UpdatePosition();
+        _mesh.UpdateRotation(_mesh.Position + new Vector3(0.5f, 0, 0.5f), new Vector3(0, 1, 0), yaw);
+        _mesh.UpdateMesh();
+    }
+
+    public void SnapToBlockUnder()
+    {
+        Position.Y = Mathf.FloorToInt(Position.Y);
+        _mesh.Position = Position;
+        _mesh.UpdateMesh();
+    }
+
+    public int CanUpdatePhysics()
+    {
         Queue<Vector3i> positions = new Queue<Vector3i>();
         
-        int sign = (int)Mathf.Sign(newVelocity.Y);
-        int abs = (int)Mathf.Abs(newVelocity.Y) + 1;
+        int sign = (int)Mathf.Sign(Velocity.Y);
+        int abs = (int)Mathf.Abs(Velocity.Y) + 1;
         
         for (int i = 0; i < abs; i++)
         {
-            Vector3 futurePosition = Position + newVelocity;
+            Vector3 futurePosition = Position + Velocity;
             
             int x = (int)futurePosition.X;
             int y = (int)futurePosition.Y + sign * i;
@@ -118,50 +180,20 @@ public class PlayerStateMachine : Updateable
             }
             if (result == 2)
             {
+                UpdatePhysics = false;
                 return -1;
             }
         }
         
+        UpdatePhysics = true;
+        
         if (closest != null)
         {
-            newVelocity.Y = 0;
             Velocity.Y = 0;
             return 0;
         }
-        
-        Position += newVelocity;
-        Velocity = newVelocity;
-        
-        _mesh.Position = Position;
-
-        _mesh.UpdatePosition();
-        _mesh.UpdateRotation(_mesh.Position + new Vector3(0.5f, 0, 0.5f), new Vector3(0, 1, 0), yaw);
-        _mesh.UpdateMesh();
 
         return 1;
-    }
-
-    public void MovePlayer(Vector2 input, PlayerMovementSpeed movementSpeed)
-    {
-        float speed = Speeds[movementSpeed] * (float)_args.Time;
-        Vector3 addedVelocity = input.Y * Camera.FrontYto0() - input.X * Camera.RightYto0();
-        Velocity = Vector3.Lerp(Velocity, addedVelocity.Normalized() * speed, 0.5f);
-        
-        Position += Velocity;
-        _mesh.Position = Position;
-        
-        yaw = -Camera.GetYaw();
-        
-        _mesh.UpdatePosition();
-        _mesh.UpdateRotation(_mesh.Position + new Vector3(0.5f, 0, 0.5f), new Vector3(0, 1, 0), yaw);
-        _mesh.UpdateMesh();
-    }
-
-    public void SnapToBlockUnder()
-    {
-        Position.Y = Mathf.FloorToInt(Position.Y);
-        _mesh.Position = Position;
-        _mesh.UpdateMesh();
     }
 
     public bool IsGrounded()

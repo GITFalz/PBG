@@ -4,6 +4,8 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PlayerWalkingState : PlayerGameBaseState
 {
+    Vector2 input;
+    
     public override void Enter(PlayerGameState playerGameState)
     {
         Console.WriteLine("Entering walking state");
@@ -13,7 +15,7 @@ public class PlayerWalkingState : PlayerGameBaseState
 
     public override void Update(PlayerGameState playerGameState)
     {
-        Vector2 input = InputManager.GetMovementInput();
+        input = InputManager.GetMovementInput();
         
         if (InputManager.IsKeyPressed(Keys.LeftControl))
         {
@@ -38,7 +40,12 @@ public class PlayerWalkingState : PlayerGameBaseState
             playerGameState.SwitchState(playerGameState.FallingState);
             return;
         }
-        
+
+        playerGameState.PlayerStateMachine.MoveMeshUpdate();
+    }
+    
+    public override void FixedUpdate(PlayerGameState playerGameState)
+    {
         playerGameState.MovePlayer(input, PlayerMovementSpeed.Walk);
     }
 

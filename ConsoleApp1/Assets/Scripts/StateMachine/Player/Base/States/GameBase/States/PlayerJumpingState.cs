@@ -8,13 +8,18 @@ public class PlayerJumpingState : PlayerGameBaseState
 
     public override void Update(PlayerGameState playerGameState)
     {
-        playerGameState.ApplyGravity();
+        playerGameState.GravityUpdate();
         
         if (playerGameState.PlayerStateMachine.Velocity.Y < 0)
         {
             playerGameState.SwitchState(playerGameState.FallingState);
             return;
         }
+    }
+    
+    public override void FixedUpdate(PlayerGameState playerGameState)
+    {
+
     }
 
     public override void Exit(PlayerGameState playerGameState)

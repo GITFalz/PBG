@@ -5,7 +5,7 @@ using OpenTK.Mathematics;
 
 public class WorldManager
 {
-    public HashSet<Vector3> chunks;
+    public HashSet<Vector3i> chunks;
     
     public ConcurrentDictionary<Vector3i, ChunkData> activeChunks;
     public ConcurrentQueue<Vector3i> chunksToGenerate;
@@ -23,7 +23,7 @@ public class WorldManager
     
     public WorldManager()
     {
-        chunks = new HashSet<Vector3>();
+        chunks = new HashSet<Vector3i>();
         
         activeChunks = new ConcurrentDictionary<Vector3i, ChunkData>();
         chunksToGenerate = new ConcurrentQueue<Vector3i>();
@@ -34,6 +34,11 @@ public class WorldManager
         regionData = new ChunkRegionData(new Vector3i(0, 0, 0));
         regionData.SaveChunk(new Vector3i(0, 1, 0), new ChunkData(new Vector3i(0, 1, 0)));
         regionData.SaveChunk(new Vector3i(1, 1, 0), new ChunkData(new Vector3i(1, 1, 0)));
+    }
+    
+    public void Start()
+    {
+        SetChunks();
     }
     
     public void Update()
@@ -71,8 +76,32 @@ public class WorldManager
         }
     }
 
+    public void SetChunks()
+    {
+        int render = World.renderDistance;
+        Vector3i playerChunk = new Vector3i(0, 0, 0);
+        
+        HashSet<Vector3i> chunkPositions = new HashSet<Vector3i>();
+        
+        for (int x = -render; x < render; x++)
+        {
+            for (int y = 0; y < 10; y++)
+            {
+                for (int z = -render; z < render; z++)
+                {
+                    Vector3i position = new Vector3i(playerChunk.X + x, y, playerChunk.Z + z) * 32;
+                    chunkPositions.Add(position);
+                }
+            }
+        }
+        
+        chunks = chunkPositions;
+    }
+
     public void CheckRenderDistance()
     {
+        SetChunks();
+        
         int render = World.renderDistance;
         //Vector3i playerChunk = new Vector3i(playerPosition.X / 32, playerPosition.Y / 32, playerPosition.Z / 32);
         Vector3i playerChunk = new Vector3i(0, 0, 0);
@@ -84,24 +113,13 @@ public class WorldManager
             chunksToRemove.Add(chunk.Key);
         }
         
-        chunks.Clear();
-        
-        for (int x = -render; x < render; x++)
+        foreach (var chunk in chunks)
         {
-            for (int y = 0; y < 10; y++)
+            chunksToRemove.Remove(chunk);
+            
+            if (!activeChunks.ContainsKey(chunk) && !chunksToGenerate.Contains(chunk) && chunksToCreate.All(c => c.position != chunk))
             {
-                for (int z = -render; z < render; z++)
-                {
-                    Vector3i position = new Vector3i(playerChunk.X + x, y, playerChunk.Z + z) * 32;
-                    chunksToRemove.Remove(position);
-                    
-                    chunks.Add(position);
-                    
-                    if (!activeChunks.ContainsKey(position) && !chunksToGenerate.Contains(position) && chunksToCreate.All(c => c.position != position))
-                    {
-                        chunksToGenerate.Enqueue(position);
-                    }
-                }
+                chunksToGenerate.Enqueue(chunk);
             }
         }
         
@@ -123,8 +141,7 @@ public class WorldManager
         block = null;
         Vector3i chunkPosition = VoxelData.BlockToChunkPosition(blockPosition);
 
-        if (!activeChunks.TryGetValue(chunkPosition, out var chunk)) 
-            return chunks.Contains(chunkPosition) ? 2 : 1;
+        if (!activeChunks.TryGetValue(chunkPosition, out var chunk)) return chunks.Contains(chunkPosition) ? 2 : 1;
         
         block = chunk.blockStorage.GetBlock(VoxelData.BlockToRelativePosition(blockPosition));
         return block == null ? 1 : 0;

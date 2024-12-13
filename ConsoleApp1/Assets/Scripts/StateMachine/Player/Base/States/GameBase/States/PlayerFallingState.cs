@@ -7,7 +7,12 @@
 
     public override void Update(PlayerGameState playerGameState)
     {
-        playerGameState.ApplyGravity();
+        playerGameState.GravityUpdate();
+    }
+    
+    public override void FixedUpdate(PlayerGameState playerGameState)
+    {
+        playerGameState.CalculateGravity();
     }
 
     public override void Exit(PlayerGameState playerGameState)

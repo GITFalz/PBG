@@ -9,6 +9,11 @@
     {
 
     }
+    
+    public override void FixedUpdate(PlayerGameState playerGameState)
+    {
+
+    }
 
     public override void Exit(PlayerGameState playerMenuState)
     {

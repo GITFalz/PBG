@@ -71,6 +71,14 @@ public class GameObject
         }
     }
     
+    public void FixedUpdate()
+    {
+        foreach (Updateable updateable in updateables)
+        {
+            updateable.FixedUpdate();
+        }
+    }
+    
     public void Update(FrameEventArgs args)
     {
         foreach (Updateable updateable in updateables)

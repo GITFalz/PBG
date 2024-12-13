@@ -132,8 +132,6 @@ public class Camera
             CameraDistance -= scroll * SCROLL_SENSITIVITY;
             CameraDistance = Math.Clamp(CameraDistance, 3, 10);
             
-            Console.WriteLine(scroll);
-            
             position = PlayerData.Position - front * CameraDistance;
         }
 

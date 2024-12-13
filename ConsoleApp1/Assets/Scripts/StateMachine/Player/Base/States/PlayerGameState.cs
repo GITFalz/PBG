@@ -31,20 +31,30 @@ public class PlayerGameState : PlayerBaseState
     {
         _currentState.Update(this);
     }
+    
+    public override void FixedUpdate(PlayerStateMachine playerStateMachine)
+    {
+        _currentState.FixedUpdate(this);
+    }
 
     public override void Exit(PlayerStateMachine playerStateMachine)
     {
 
     }
 
-    public void ApplyGravity()
+    public void CalculateGravity()
     {
-        int result = PlayerStateMachine.ApplyGravity();
+        PlayerStateMachine.CalculateGravity();
+    }
+    
+    public void GravityUpdate()
+    {
+        int result = PlayerStateMachine.GravityUpdate();
 
         if (result == 0)
         {
-            PlayerStateMachine.Velocity.Y = 0;
             SwitchState(GroundedState);
+            return;
         }
     }
     
