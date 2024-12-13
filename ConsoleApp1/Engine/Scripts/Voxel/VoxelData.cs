@@ -1,8 +1,6 @@
 ﻿using ConsoleApp1.Assets.Scripts.World.Blocks;
 using OpenTK.Mathematics;
 
-namespace ConsoleApp1.Engine.Scripts.Core.Voxel;
-
 public static class VoxelData
 {
     public static readonly List<List<Vector3>> voxelVerts = new List<List<Vector3>>()

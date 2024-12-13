@@ -1,5 +1,4 @@
-﻿using ConsoleApp1.Engine.Scripts.Core.Voxel;
-using OpenTK.Mathematics;
+﻿using OpenTK.Mathematics;
 
 public class EntityMesh : Mesh
 {

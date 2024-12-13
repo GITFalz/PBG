@@ -41,26 +41,10 @@ public class PlayerGameState : PlayerBaseState
     {
 
     }
-
-    public void CalculateGravity()
-    {
-        PlayerStateMachine.CalculateGravity();
-    }
-    
-    public void GravityUpdate()
-    {
-        int result = PlayerStateMachine.GravityUpdate();
-
-        if (result == 0)
-        {
-            SwitchState(GroundedState);
-            return;
-        }
-    }
     
     public void MovePlayer(Vector2 input, PlayerMovementSpeed movementSpeed)
     {
-        PlayerStateMachine.MovePlayer(input, movementSpeed);
+        //PlayerStateMachine.MovePlayer(input, movementSpeed);
     }
     
     public void SwitchState(PlayerGameBaseState newState)

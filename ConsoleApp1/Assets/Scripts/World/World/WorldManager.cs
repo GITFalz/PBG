@@ -1,6 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using ConsoleApp1.Assets.Scripts.World.Blocks;
-using ConsoleApp1.Engine.Scripts.Core.Voxel;
 using OpenTK.Mathematics;
 
 public class WorldManager
@@ -168,15 +166,25 @@ public class WorldManager
 
             await Task.Run(() =>
             {
+                Block?[] blocks;
+                
+                /*
                 if (!chunkData.FolderExists())
                 {
-                    Chunk.GenerateFlatChunk(ref chunkData, position);
+                    
                     chunksToStore.Enqueue(chunkData);
                 }
                 else
+                {
                     chunkData.LoadData();
+                    blocks = chunkData.blockStorage.GetFullBlockArray();
+                }
+                */
                 
-                Block?[] blocks = chunkData.blockStorage.GetFullBlockArray();
+                Chunk.GenerateFlatChunk(ref chunkData, position);
+                Chunk.GenerateBox(ref chunkData, position, new Vector3i(20, 10, 20), new Vector3i(10, 10, 10));
+                
+                blocks = chunkData.blockStorage.GetFullBlockArray();
                 
                 Chunk.GenerateOcclusion(blocks);
                 Chunk.GenerateMesh(blocks, chunkData);

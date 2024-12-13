@@ -6,9 +6,6 @@ public class PlayerIdleState : PlayerGameBaseState
     public override void Enter(PlayerGameState playerGameState)
     {
         Console.WriteLine("Entering idle state");
-
-        playerGameState.PlayerStateMachine.Velocity.X = 0;
-        playerGameState.PlayerStateMachine.Velocity.Z = 0;
     }
 
     public override void Update(PlayerGameState playerGameState)
@@ -33,6 +30,8 @@ public class PlayerIdleState : PlayerGameBaseState
             playerGameState.SwitchState(playerGameState.FallingState);
             return;
         }
+        
+        playerGameState.PlayerStateMachine.MoveMeshUpdate();
     }
     
     public override void FixedUpdate(PlayerGameState playerGameState)

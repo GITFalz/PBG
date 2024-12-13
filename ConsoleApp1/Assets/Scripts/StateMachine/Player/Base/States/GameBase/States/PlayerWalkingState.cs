@@ -4,7 +4,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PlayerWalkingState : PlayerGameBaseState
 {
-    Vector2 input;
+    Vector2 input = Vector2.Zero;
     
     public override void Enter(PlayerGameState playerGameState)
     {
@@ -46,7 +46,7 @@ public class PlayerWalkingState : PlayerGameBaseState
     
     public override void FixedUpdate(PlayerGameState playerGameState)
     {
-        playerGameState.MovePlayer(input, PlayerMovementSpeed.Walk);
+        playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Walk);
     }
 
     public override void Exit(PlayerGameState playerGameState)

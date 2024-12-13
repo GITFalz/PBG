@@ -4,7 +4,9 @@ public class PlayerGroundedState : PlayerGameBaseState
     {
         Console.WriteLine("Entering grounded state");
         
-        playerGameState.PlayerStateMachine.Velocity.Y = 0;
+        playerGameState.PlayerStateMachine.physicsBody.doGravity = false;
+        playerGameState.PlayerStateMachine.physicsBody.Velocity.Y = 0;
+        
         playerGameState.PlayerStateMachine.SnapToBlockUnder();
         
         playerGameState.SwitchState(playerGameState.IdleState);

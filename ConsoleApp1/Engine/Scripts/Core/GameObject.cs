@@ -1,12 +1,12 @@
-﻿using OpenTK.Windowing.Common;
-
-namespace ConsoleApp1.Engine.Scripts.Core;
+﻿using System.Collections.Concurrent;
+using OpenTK.Windowing.Common;
 
 public class GameObject
 {
     public Transform transform;
     public List<Component> components = new List<Component>();
     public List<Updateable> updateables = new List<Updateable>();
+    public ConcurrentBag<PhysicsBody> physicsBodies = new ConcurrentBag<PhysicsBody>();
     
     public GameObject()
     {
@@ -30,6 +30,9 @@ public class GameObject
         if (ContainsComponent(component.name))
             return false;
         
+        component.transform = transform;
+        component.gameObject = this;
+        
         components.Add(component);
         return true;
     }
@@ -40,6 +43,10 @@ public class GameObject
             return false;
         
         components.Add(component);
+        
+        component.transform = transform;
+        component.gameObject = this;
+        
         return true;
     }
 
@@ -60,10 +67,44 @@ public class GameObject
             }
         }
     }
+    
+    public void InitPhysicsBodies()
+    {
+        physicsBodies.Clear();
+        
+        foreach (Component component in components)
+        {
+            if (component is PhysicsBody physicsBody)
+            {
+                physicsBodies.Add(physicsBody);
+            }
+        }
+    }
 
+    
+    /// <summary>
+    /// Returns the first component of type T attached to the GameObject.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    /// <exception cref="NullReferenceException"></exception>
+    public T GetComponent<T>() where T : Component
+    {
+        foreach (Component component in components)
+        {
+            if (component is T t)
+            {
+                return t;
+            }
+        }
+
+        throw new NullReferenceException("Component not found. [Called from GameObject.GetComponent<T>()]");
+    }
+    
     public void Start()
     {
         InitUpdateables();
+        InitPhysicsBodies();
             
         foreach (Updateable updateable in updateables)
         {
@@ -73,6 +114,11 @@ public class GameObject
     
     public void FixedUpdate()
     {
+        foreach (PhysicsBody physicsBody in physicsBodies)
+        {
+            physicsBody.FixedUpdate();
+        }
+        
         foreach (Updateable updateable in updateables)
         {
             updateable.FixedUpdate();

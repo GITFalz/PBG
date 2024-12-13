@@ -218,35 +218,17 @@ public class UIManager
         _textTexture.Unbind();
     }
 
-    public void UpdateFps(FrameEventArgs args)
+    public void UpdateFps(int fps)
     {
-        FpsCalculation(args);
-    }
-    
-    private void FpsCalculation(FrameEventArgs args)
-    {
-        frameCount++;
-        elapsedTime += (float)args.Time;
-        stopwatch.Restart();
-        
-        if (elapsedTime >= 1.0f)
-        {
-            int fps = Mathf.FloorToInt(frameCount / elapsedTime);
-            frameCount = 0;
-            elapsedTime = 0;
-            
-            string t = fps.ToString();
+        string t = fps.ToString();
 
-            int miss = 4 - t.Length;
+        int miss = 4 - t.Length;
             
-            for (int i = 0; i < miss; i++)
-            {
-                t += " ";
-            }
-            
-            text.SetText(t, 1);
-            
-            Console.WriteLine(args.Time);
+        for (int i = 0; i < miss; i++)
+        {
+            t += " ";
         }
+            
+        text.SetText(t, 1);
     }
 }

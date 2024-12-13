@@ -1,5 +1,4 @@
 using ConsoleApp1.Assets.Scripts.World.Blocks;
-using ConsoleApp1.Engine.Scripts.Core.Voxel;
 using OpenTK.Mathematics;
 using ConsoleApp1.Engine.Scripts.Core.Data;
 
@@ -261,6 +260,80 @@ public class Chunk
                 }
             }
         }
+    }
+    public static void GenerateBox(ref ChunkData chunkData, Vector3i chunkPosition, Vector3i origin, Vector3i size)
+    {
+        Vector3i[] corners = GetBoxCorners(origin, size);
+        
+        foreach (Vector3i corner in corners)
+        {
+            if (IsPointInChunk(chunkPosition, corner))
+            {
+                Vector3i min = new Vector3i(
+                    Math.Min(origin.X, origin.X + size.X),
+                    Math.Min(origin.Y, origin.Y + size.Y),
+                    Math.Min(origin.Z, origin.Z + size.Z)
+                );
+
+                Vector3i max = new Vector3i(
+                    Math.Max(origin.X, origin.X + size.X),
+                    Math.Max(origin.Y, origin.Y + size.Y),
+                    Math.Max(origin.Z, origin.Z + size.Z)
+                );
+                
+                int startX = Mathf.Max(min.X - chunkPosition.X, 0);
+                int sizeX = Mathf.Min(max.X - chunkPosition.X, 32);
+                
+                int startY = Mathf.Max(min.Y - chunkPosition.Y, 0);
+                int sizeY = Mathf.Min(max.Y - chunkPosition.Y, 32);
+                
+                int startZ = Mathf.Max(min.Z - chunkPosition.Z, 0);
+                int sizeZ = Mathf.Min(max.Z - chunkPosition.Z, 32);
+
+                for (int x = startX; x < sizeX; x++)
+                {
+                    for (int y = startY; y < sizeY; y++)
+                    {
+                        for (int z = startZ; z < sizeZ; z++)
+                        {
+                            chunkData.blockStorage.SetBlock(x, y, z, new Block(1, 0));
+                        }
+                    }
+                }
+                
+                return;
+            }
+        }
+    }
+    
+    private static bool IsPointInChunk(Vector3i chunkPosition, Vector3i point)
+    {
+        return point.X >= chunkPosition.X && point.X < chunkPosition.X + WIDTH &&
+               point.Y >= chunkPosition.Y && point.Y < chunkPosition.Y + HEIGHT &&
+               point.Z >= chunkPosition.Z && point.Z < chunkPosition.Z + DEPTH;
+    }
+
+    private static Vector3i[] GetBoxCorners(Vector3i origin, Vector3i size)
+    {
+        Vector3i[] corners = new Vector3i[8];
+        
+        corners[0] = origin;
+        corners[1] = origin + new Vector3i(size.X, 0, 0);
+        corners[2] = origin + new Vector3i(0, 0, size.Z);
+        corners[3] = origin + new Vector3i(size.X, 0, size.Z);
+        corners[4] = origin + new Vector3i(0, size.Y, 0);
+        corners[5] = origin + new Vector3i(size.X, size.Y, 0);
+        corners[6] = origin + new Vector3i(0, size.Y, size.Z);
+        corners[7] = origin + new Vector3i(size.X, size.Y, size.Z);
+        
+        return corners;
+    }
+    
+    private static bool IsPointInBox(Vector3i min, Vector3i max, Vector3i point)
+    {
+        return point.X >= min.X && point.X < max.X &&
+               point.Y >= min.Y && point.Y < max.Y &&
+               point.Z >= min.Z && point.Z < max.Z;
     }
 
     private static Block? GetBlockAtHeight(float terrainHeight, int currentHeight)

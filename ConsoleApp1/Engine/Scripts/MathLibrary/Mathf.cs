@@ -6,10 +6,28 @@ public static class Mathf
     {
         return (int)Math.Floor(value);
     }
+    
+    public static int FloorToInt(double value)
+    {
+        return (int)Math.Floor(value);
+    }
+    
+    public static int RoundToInt(float value)
+    {
+        return (int)Math.Round(value);
+    }
 
     public static float Floor(float value)
     {
         return (float)Math.Floor(value);
+    }
+    
+    public static Vector3 Normalize(Vector3 value)
+    {
+        float length = value.Length;
+        if (length == 0)
+            return value;
+        return value / length;
     }
 
     public static float Lerp(float a, float b, float t)

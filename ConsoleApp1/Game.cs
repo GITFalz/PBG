@@ -1,8 +1,10 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Numerics;
 using ConsoleApp1.Assets.Scripts.Inputs;
 using ConsoleApp1.Assets.Scripts.World.Blocks;
 using ConsoleApp1.Engine.Scripts.Core;
+using ConsoleApp1.Engine.Scripts.Rendering.MeshClasses;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -42,7 +44,7 @@ public class Game : GameWindow
     private FBO _fbo;
     
     
-    public List<GameObject> GameObjects = new List<GameObject>();
+    public ConcurrentBag<GameObject> GameObjects = new ConcurrentBag<GameObject>();
     
     private bool _visibleCursor = false;
     private KeyboardSwitch _visibleCursorSwitch;
@@ -59,6 +61,13 @@ public class Game : GameWindow
     
     private bool isRunning = true;
     private Thread _physicsThread;
+    
+    
+    //Skybox
+    private ShaderProgram _skyboxShader;
+
+    private Mesh _skyboxMesh;
+    
     
     public Game(int width, int height) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
     {
@@ -137,12 +146,21 @@ public class Game : GameWindow
         */
 
         PlayerStateMachine player = new PlayerStateMachine();
+        PhysicsBody playerPhysics = new PhysicsBody();
+        
         GameObject playerObject = new GameObject();
         
         player.WorldManager = _worldManager;
+        playerPhysics.doGravity = false;
+        
         playerObject.AddComponent(player);
+        playerObject.AddComponent(playerPhysics);
 
         GameObjects.Add(playerObject);
+        
+        _skyboxMesh = new SkyboxMesh();
+        
+        _skyboxShader = new ShaderProgram("Sky/Default.vert", "Sky/Default.frag");
         
         _worldManager.Start();
 
@@ -214,6 +232,33 @@ public class Game : GameWindow
         GL.ClearColor(0.6f, 0.3f, 1f, 1f);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         
+        GL.DepthFunc(DepthFunction.Lequal);
+        GL.DepthMask(false);
+       
+        _skyboxShader.Bind();
+        
+        Matrix4 model = Matrix4.Identity;
+        Matrix4 view = Camera.GetViewMatrix();
+        Matrix4 projection = Camera.GetProjectionMatrix();
+
+        int sml = GL.GetUniformLocation(_skyboxShader.ID, "model");
+        int svl = GL.GetUniformLocation(_skyboxShader.ID, "view");
+        int spl = GL.GetUniformLocation(_skyboxShader.ID, "projection");
+        
+        GL.UniformMatrix4(sml, true, ref model);
+        GL.UniformMatrix4(svl, true, ref view);
+        GL.UniformMatrix4(spl, true, ref projection);
+        
+        //_chunkManager.CreateChunks();
+        //_chunkManager.RenderChunks();
+        
+        _skyboxMesh.RenderMesh();
+
+        _skyboxShader.Unbind();
+
+        GL.DepthMask(true);
+        GL.DepthFunc(DepthFunction.Less);
+        
         GL.Enable(EnableCap.CullFace);
         GL.FrontFace(FrontFaceDirection.Ccw);
         
@@ -221,9 +266,9 @@ public class Game : GameWindow
         _shaderProgram.Bind();
         _textureArray.Bind();
         
-        Matrix4 model = Matrix4.Identity;
-        Matrix4 view = Camera.GetViewMatrix();
-        Matrix4 projection = Camera.GetProjectionMatrix();
+        model = Matrix4.Identity;
+        view = Camera.GetViewMatrix();
+        projection = Camera.GetProjectionMatrix();
 
         int modelLocation = GL.GetUniformLocation(_shaderProgram.ID, "model");
         int viewLocation = GL.GetUniformLocation(_shaderProgram.ID, "view");
@@ -254,24 +299,33 @@ public class Game : GameWindow
         
         base.OnRenderFrame(args);
     }
+    
+    public static Matrix4 ClearTranslation(Matrix4 matrix)
+    {
+        matrix.Row3.X = 0; // Clear the X translation
+        matrix.Row3.Y = 0; // Clear the Y translation
+        matrix.Row3.Z = 0; // Clear the Z translation
+        return matrix;
+    }
 
     public void PhysicsThread()
     {
-        double time = GameTime.FixedDeltaTime;
+        int seconds = 0;
+        double totalTime = 0;
         
         while (isRunning)
         {
-            if (time >= GameTime.FixedDeltaTime)
+            double time = stopwatch.Elapsed.TotalSeconds;
+            
+            if (time - totalTime >= GameTime.FixedDeltaTime)
             {
                 foreach (GameObject gameObject in GameObjects)
                 {
                     gameObject.FixedUpdate();
                 }
                 
-                time -= GameTime.FixedDeltaTime;
+                totalTime = time;
             }
-            
-            time += GameTime.DeltaTime;
         }
     }
     
@@ -285,6 +339,8 @@ public class Game : GameWindow
 
         if (InputManager.IsKeyPressed(Keys.LeftAlt))
             MoveTest = !MoveTest;
+        
+        
         
         foreach (GameObject gameObject in GameObjects)
         {
@@ -315,8 +371,32 @@ public class Game : GameWindow
             }
         }
         
-        _uiManager.UpdateFps(args);
+        bool update = FpsUpdate();
+        
+        if (update)
+        {
+            _uiManager.UpdateFps(GameTime.Fps);
+        }
         
         base.OnUpdateFrame(args);
+    }
+
+    public bool FpsUpdate()
+    {
+        frameCount++;
+        elapsedTime += (float)GameTime.DeltaTime;
+        
+        if (elapsedTime >= 1.0f)
+        {
+            int fps = Mathf.FloorToInt(frameCount / elapsedTime);
+            frameCount = 0;
+            elapsedTime = 0;
+            
+            GameTime.Fps = fps;
+            
+            return true;
+        }
+        
+        return false;
     }
 }

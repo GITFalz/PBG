@@ -3,7 +3,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PlayerSprintingState : PlayerGameBaseState
 {
-    Vector2 input;
+    Vector2 input = Vector2.Zero;
     
     public override void Enter(PlayerGameState playerGameState)
     {
@@ -39,11 +39,13 @@ public class PlayerSprintingState : PlayerGameBaseState
             playerGameState.SwitchState(playerGameState.FallingState);
             return;
         }
+        
+        playerGameState.PlayerStateMachine.MoveMeshUpdate();
     }
     
     public override void FixedUpdate(PlayerGameState playerGameState)
     {
-        playerGameState.MovePlayer(input, PlayerMovementSpeed.Sprint);
+        playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Sprint);
     }
 
     public override void Exit(PlayerGameState playerGameState)
