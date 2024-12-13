@@ -47,6 +47,24 @@ public class Chunk
             }
         }
     }
+    
+    public static void GenerateFlatChunk(ref ChunkData chunkData, Vector3i position)
+    {
+        for (var x = 0; x < WIDTH; x++)
+        {
+            for (var z = 0; z < DEPTH; z++)
+            {
+                int height = 10;
+                int terrainHeight = Mathf.Min(Mathf.Max((height - position.Y), 0), 32);
+
+                for (int y = 0; y < terrainHeight; y++)
+                {
+                    Block? block = GetBlockAtHeight(height, y + position.Y);
+                    chunkData.blockStorage.SetBlock(x, y, z, block);
+                }
+            }
+        }
+    }
 
     public static float GetSplineVector(float noise)
     {
@@ -247,9 +265,11 @@ public class Chunk
 
     private static Block? GetBlockAtHeight(float terrainHeight, int currentHeight)
     {
+        /*
         if (terrainHeight > currentHeight + 2)
             return new Block(2, 0);
+        */
         
-        return new Block(0, 0);
+        return new Block(1, 0);
     }
 }

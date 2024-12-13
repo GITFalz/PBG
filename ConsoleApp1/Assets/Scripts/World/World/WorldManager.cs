@@ -19,6 +19,8 @@ public class WorldManager
     
     private Vector3i playerPosition = new Vector3i(0, 0, 0);
     
+    public ChunkRegionData regionData;
+    
     public WorldManager()
     {
         chunks = new HashSet<Vector3>();
@@ -28,6 +30,10 @@ public class WorldManager
         chunksToCreate = new ConcurrentQueue<ChunkData>();
         chunksToStore = new ConcurrentQueue<ChunkData>();
         chunksToIgnore = new ConcurrentBag<Vector3i>();
+        
+        regionData = new ChunkRegionData(new Vector3i(0, 0, 0));
+        regionData.SaveChunk(new Vector3i(0, 1, 0), new ChunkData(new Vector3i(0, 1, 0)));
+        regionData.SaveChunk(new Vector3i(1, 1, 0), new ChunkData(new Vector3i(1, 1, 0)));
     }
     
     public void Update()
@@ -68,7 +74,8 @@ public class WorldManager
     public void CheckRenderDistance()
     {
         int render = World.renderDistance;
-        Vector3i playerChunk = new Vector3i(playerPosition.X / 32, playerPosition.Y / 32, playerPosition.Z / 32);
+        //Vector3i playerChunk = new Vector3i(playerPosition.X / 32, playerPosition.Y / 32, playerPosition.Z / 32);
+        Vector3i playerChunk = new Vector3i(0, 0, 0);
         
         HashSet<Vector3i> chunksToRemove = new HashSet<Vector3i>();
         
@@ -146,7 +153,7 @@ public class WorldManager
             {
                 if (!chunkData.FolderExists())
                 {
-                    Chunk.GenerateChunk(ref chunkData, position);
+                    Chunk.GenerateFlatChunk(ref chunkData, position);
                     chunksToStore.Enqueue(chunkData);
                 }
                 else

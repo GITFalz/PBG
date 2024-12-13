@@ -7,12 +7,19 @@ public class PlayerGameState : PlayerBaseState
     
     public PlayerAdminState AdminState = new();
     public PlayerFallingState FallingState = new();
+    public PlayerGroundedState GroundedState = new();
     public PlayerIdleState IdleState = new();
     public PlayerWalkingState WalkingState = new();
+    public PlayerSprintingState SprintingState = new();
+    public PlayerJumpingState JumpingState = new();
+
+    public PlayerGameBaseState NextMovingState;
     
     public override void Enter(PlayerStateMachine playerStateMachine)
     {
         Console.WriteLine("Entering game state");
+        
+        NextMovingState = WalkingState;
         
         PlayerStateMachine = playerStateMachine;
         
@@ -36,13 +43,14 @@ public class PlayerGameState : PlayerBaseState
 
         if (result == 0)
         {
-            SwitchState(IdleState);
+            PlayerStateMachine.Velocity.Y = 0;
+            SwitchState(GroundedState);
         }
     }
     
-    public void MovePlayer(Vector2 input)
+    public void MovePlayer(Vector2 input, PlayerMovementSpeed movementSpeed)
     {
-        PlayerStateMachine.MovePlayer(input);
+        PlayerStateMachine.MovePlayer(input, movementSpeed);
     }
     
     public void SwitchState(PlayerGameBaseState newState)

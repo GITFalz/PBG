@@ -17,6 +17,10 @@ public class ChunkData
     public VBO uvVBO;
     public VBO textureIndexVBO;
     public IBO chunkIbo;
+
+    public bool Save = true;
+    public bool isEmpty = true;
+    public short filePosition = -1;
     
     private string filePath;
 

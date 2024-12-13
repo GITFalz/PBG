@@ -1,3 +1,5 @@
+using OpenTK.Mathematics;
+
 public static class Mathf
 {
     public static int FloorToInt(float value)
@@ -69,5 +71,14 @@ public static class Mathf
     public static System.Numerics.Vector2 ToNumericsVector2(OpenTK.Mathematics.Vector2 vector)
     {
         return new System.Numerics.Vector2(vector.X, vector.Y);
+    }
+    
+    public static Vector3 RotateAround(Vector3 point, Vector3 center, Vector3 axis, float angleDegrees)
+    {
+        Vector3 translatedPoint = point - center;
+        float angleRadians = MathHelper.DegreesToRadians(angleDegrees);
+        Quaternion rotation = Quaternion.FromAxisAngle(axis, angleRadians);
+        Vector3 rotatedPoint = Vector3.Transform(translatedPoint, rotation);
+        return rotatedPoint + center;
     }
 }

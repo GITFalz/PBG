@@ -52,6 +52,9 @@ public class Game : GameWindow
     private int frameCount = 0;
     private float elapsedTime = 0;
     private Stopwatch stopwatch;
+
+
+    public static bool MoveTest = false;
     
     
     public Game(int width, int height) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
@@ -104,17 +107,29 @@ public class Game : GameWindow
         _chunkManager = new ChunkManager();
         _worldManager = new WorldManager();
         
+        UVmaps editorUvs = new UVmaps( new int[] { 0, 0, 0, 0, 0, 0 });
+        
+        /*
         UVmaps grassUvs = new UVmaps( new int[] { 0, 0, 1, 0, 2, 0 });
         UVmaps dirtUvs = new UVmaps( new int[] { 2, 2, 2, 2, 2, 2 });
         UVmaps stoneUvs = new UVmaps( new int[] { 3, 3, 3, 3, 3, 3 });
+        */
+        
+        CWorldBlock editor = new CWorldBlock("editor_block", 1, 1, editorUvs);
 
+        /*
         CWorldBlock grass = new CWorldBlock("grass_block", 0, 1, grassUvs);
         CWorldBlock dirt = new CWorldBlock("dirt_block", 1, 2, dirtUvs);
         CWorldBlock stone = new CWorldBlock("stone_block", 2, 3, stoneUvs);
+        */
+        
+        BlockManager.Add(editor);
 
+        /*
         BlockManager.Add(grass);
         BlockManager.Add(dirt);
         BlockManager.Add(stone);
+        */
 
         PlayerStateMachine player = new PlayerStateMachine();
         GameObject playerObject = new GameObject();
@@ -125,14 +140,14 @@ public class Game : GameWindow
         GameObjects.Add(playerObject);
 
         _shaderProgram = new ShaderProgram("World/Default.vert", "World/Default.frag");
-        _textureArray = new Texture("Test_TextureAtlas.png");
+        _textureArray = new Texture("EditorTiles.png");
         
         _uiManager.Load();
         _uiManager.Start();
         
         GL.Enable(EnableCap.DepthTest);
         
-        _mainCamera = new Camera(width, height, new Vector3(0, 0, 0));
+        _mainCamera = new Camera(width, height, new Vector3(0, 100, 0));
 
         foreach (GameObject gameObject in GameObjects)
         {
@@ -235,22 +250,24 @@ public class Game : GameWindow
         KeyboardState keyboard = KeyboardState;
         
         InputManager.Update(keyboard, mouse);
+
+        if (InputManager.IsKeyPressed(Keys.LeftAlt))
+            MoveTest = !MoveTest;
         
         foreach (GameObject gameObject in GameObjects)
         {
             gameObject.Update(args);
         }
         
-        base.OnUpdateFrame(args);
-        
-        _worldManager.SetPlayerPosition(Camera.position);
-        _worldManager.Update();
-        
         if (_visibleCursor)
             _uiManager.OnUpdateFrame(keyboard, mouse, args);
         
         if (!_visibleCursor)
             _mainCamera.Update(keyboard, mouse, args);
+
+        
+        _worldManager.SetPlayerPosition(Camera.position);
+        _worldManager.Update();
         
         if (_visibleCursorSwitch.CanSwitch(keyboard, Keys.Escape))
         {
@@ -267,5 +284,7 @@ public class Game : GameWindow
         }
         
         _uiManager.UpdateFps(args);
+        
+        base.OnUpdateFrame(args);
     }
 }

@@ -18,8 +18,10 @@ public class Camera
     private static Vector3 front = -Vector3.UnitZ;
     private static Vector3 right = Vector3.UnitX;
     
-    private float pitch = 0;
-    private float yaw = -90;
+    private static float CameraDistance = 5;
+    
+    private static float pitch = 0;
+    private static float yaw = -90;
 
     public bool firstMove = true;
     public Vector2 lastPos;
@@ -27,6 +29,10 @@ public class Camera
     public static Matrix4 viewMatrix;
     public static Matrix4 projectionMatrix;
     public static Plane[] frustumPlanes;
+    
+    
+    private Vector2 _smoothMouseDelta = Vector2.Zero;
+    private const float SMOOTH_FACTOR = 0.2f;
 
     public Camera(float width, float height, Vector3 position)
     {
@@ -85,7 +91,7 @@ public class Camera
 
     public void InputController(KeyboardState input, MouseState mouse, FrameEventArgs e)
     {
-        if (!input.IsKeyDown(Keys.LeftAlt))
+        if (!Game.MoveTest)
         {
             if (input.IsKeyDown(Keys.W))
             {
@@ -118,6 +124,16 @@ public class Camera
             }
         }
 
+        else
+        {
+            float scroll = mouse.ScrollDelta.Y;
+
+            CameraDistance -= scroll * GetSpeed(e);
+            CameraDistance = Math.Clamp(CameraDistance, 3, 10);
+            
+            position = PlayerData.Position - front * CameraDistance;
+        }
+
         if (firstMove)
         {
             lastPos = new Vector2(mouse.X, mouse.Y);
@@ -125,31 +141,41 @@ public class Camera
         }
         else
         {
-            float deltaX = mouse.X - lastPos.X;
-            float deltaY = mouse.Y - lastPos.Y;
+            Vector2 currentMouseDelta = new Vector2(mouse.X - lastPos.X, mouse.Y - lastPos.Y);
+            _smoothMouseDelta = Vector2.Lerp(_smoothMouseDelta, currentMouseDelta, SMOOTH_FACTOR);
             lastPos = new Vector2(mouse.X, mouse.Y);
+
+            float deltaX = _smoothMouseDelta.X;
+            float deltaY = _smoothMouseDelta.Y;
 
             deltaX *= SENSITIVITY * (float)e.Time;
             deltaY *= SENSITIVITY * (float)e.Time;
 
             yaw += deltaX;
             pitch -= deltaY;
-            
-            if (pitch > 89.0f)
-            {
-                pitch = 89.0f;
-            }
-            if (pitch < -89.0f)
-            {
-                pitch = -89.0f;
-            }
+
+            pitch = Math.Clamp(pitch, -89.0f, 89.0f);
 
             UpdateVectors();
         }
     }
 
-    private Vector3 Yto0(Vector3 v)
+    public static Vector3 Yto0(Vector3 v)
     {
+        v.Y = 0;
+        return Vector3.Normalize(v);
+    }
+    
+    public static Vector3 FrontYto0()
+    {
+        Vector3 v = front;
+        v.Y = 0;
+        return Vector3.Normalize(v);
+    }
+    
+    public static Vector3 RightYto0()
+    {
+        Vector3 v = right;
         v.Y = 0;
         return Vector3.Normalize(v);
     }
@@ -157,6 +183,11 @@ public class Camera
     private float GetSpeed(FrameEventArgs e)
     {
         return SPEED * (float)e.Time;
+    }
+    
+    public static float GetYaw()
+    {
+        return yaw;
     }
 
     public void Update(KeyboardState input, MouseState mouse, FrameEventArgs e)

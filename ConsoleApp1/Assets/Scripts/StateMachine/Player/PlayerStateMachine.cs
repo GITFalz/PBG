@@ -12,7 +12,14 @@ public class PlayerStateMachine : Updateable
 {
     public const float GRAVITY = 0.1f;
     public const float MAX_FALL_SPEED = 1.5f;
-    public const float WALK_SPEED = 5f;
+    public const float WALK_SPEED = 7f;
+    public const float SPRINT_SPEED = 18f;
+    
+    private static readonly Dictionary<PlayerMovementSpeed, float> Speeds = new Dictionary<PlayerMovementSpeed, float>()
+    {
+        {PlayerMovementSpeed.Walk, WALK_SPEED},
+        {PlayerMovementSpeed.Sprint, SPRINT_SPEED},
+    };
     
     private PlayerBaseState _currentState;
     
@@ -27,6 +34,7 @@ public class PlayerStateMachine : Updateable
     
     public Vector3 Position;
     public Vector3 Velocity;
+    public float yaw;
     
     private FrameEventArgs _args;
 
@@ -43,8 +51,8 @@ public class PlayerStateMachine : Updateable
         
         _mesh = new EntityMesh();
 
-        VoxelData.GetEntityBoxMesh(_mesh, new Vector3(1, 2, 1), Position, 0);
-        
+        VoxelData.GetEntityBoxMesh(_mesh, new Vector3(1, 2, 1), new Vector3(0, 0, 0), 1);
+
         _mesh.GenerateBuffers();
     }
 
@@ -52,6 +60,7 @@ public class PlayerStateMachine : Updateable
     {
         _args = args;
         _currentState.Update(this);
+        PlayerData.Position = Position + new Vector3(0.5f, 1.8f, 0.5f);
     }
 
     public override void Render()
@@ -121,39 +130,44 @@ public class PlayerStateMachine : Updateable
         }
         
         Position += newVelocity;
-        
-        for (int i = 0; i < _mesh.Vertices.Count; i++)
-        {
-            _mesh.Vertices[i] += newVelocity;
-        }
-        
         Velocity = newVelocity;
         
+        _mesh.Position = Position;
+
+        _mesh.UpdatePosition();
+        _mesh.UpdateRotation(_mesh.Position + new Vector3(0.5f, 0, 0.5f), new Vector3(0, 1, 0), yaw);
         _mesh.UpdateMesh();
 
         return 1;
     }
 
-    public void MovePlayer(Vector2 input)
+    public void MovePlayer(Vector2 input, PlayerMovementSpeed movementSpeed)
     {
-        float speed = WALK_SPEED * (float)_args.Time;
-        Velocity = new Vector3(input.X * speed, 0, input.Y * speed);
+        float speed = Speeds[movementSpeed] * (float)_args.Time;
+        Vector3 addedVelocity = input.Y * Camera.FrontYto0() - input.X * Camera.RightYto0();
+        Velocity = Vector3.Lerp(Velocity, addedVelocity.Normalized() * speed));
+        
         Position += Velocity;
+        _mesh.Position = Position;
         
-        Console.WriteLine(Position);
+        yaw = -Camera.GetYaw();
         
-        for (int i = 0; i < _mesh.Vertices.Count; i++)
-        {
-            _mesh.Vertices[i] += Velocity;
-        }
-        
+        _mesh.UpdatePosition();
+        _mesh.UpdateRotation(_mesh.Position + new Vector3(0.5f, 0, 0.5f), new Vector3(0, 1, 0), yaw);
+        _mesh.UpdateMesh();
+    }
+
+    public void SnapToBlockUnder()
+    {
+        Position.Y = Mathf.FloorToInt(Position.Y);
+        _mesh.Position = Position;
         _mesh.UpdateMesh();
     }
 
     public bool IsGrounded()
     {
-        Vector3 posA = new Vector3(0, -0.5f, 0) + Position;
-        Vector3 posB = new Vector3(0, -0.5f, -1) + Position;
+        Vector3 posA = new Vector3(0, -0.1f + Velocity.Y, 0) + Position;
+        Vector3 posB = new Vector3(0, -0.1f + Velocity.Y, -1) + Position;
         
         Vector3i a = new Vector3i((int)posA.X, (int)posA.Y, (int)posA.Z);
         Vector3i b = new Vector3i((int)posB.X, (int)posB.Y, (int)posB.Z);
@@ -186,4 +200,10 @@ public class PlayerStateMachine : Updateable
         _currentState = newState;
         _currentState.Enter(this);
     }
+}
+
+public enum PlayerMovementSpeed
+{
+    Walk,
+    Sprint,
 }

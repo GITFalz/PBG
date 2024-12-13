@@ -1,14 +1,13 @@
-﻿using ConsoleApp1.Assets.Scripts.Inputs;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-public class PlayerWalkingState : PlayerGameBaseState
+public class PlayerSprintingState : PlayerGameBaseState
 {
     public override void Enter(PlayerGameState playerGameState)
     {
-        Console.WriteLine("Entering walking state");
+        Console.WriteLine("Entering sprinting state");
         
-        playerGameState.NextMovingState = playerGameState.WalkingState;
+        playerGameState.NextMovingState = playerGameState.SprintingState;
     }
 
     public override void Update(PlayerGameState playerGameState)
@@ -17,7 +16,7 @@ public class PlayerWalkingState : PlayerGameBaseState
         
         if (InputManager.IsKeyPressed(Keys.LeftControl))
         {
-            playerGameState.SwitchState(playerGameState.SprintingState);
+            playerGameState.SwitchState(playerGameState.WalkingState);
             return;
         }
         
@@ -39,7 +38,7 @@ public class PlayerWalkingState : PlayerGameBaseState
             return;
         }
         
-        playerGameState.MovePlayer(input, PlayerMovementSpeed.Walk);
+        playerGameState.MovePlayer(input, PlayerMovementSpeed.Sprint);
     }
 
     public override void Exit(PlayerGameState playerGameState)

@@ -7,9 +7,6 @@
 
     public override void Update(PlayerGameState playerGameState)
     {
-        playerGameState.PlayerStateMachine.Velocity.X = 0;
-        playerGameState.PlayerStateMachine.Velocity.Z = 0;
-        
         playerGameState.ApplyGravity();
     }
 
