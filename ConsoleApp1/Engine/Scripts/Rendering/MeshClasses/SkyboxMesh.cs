@@ -1,7 +1,5 @@
 ﻿using OpenTK.Mathematics;
 
-namespace ConsoleApp1.Engine.Scripts.Rendering.MeshClasses;
-
 public class SkyboxMesh : Mesh
 {
     public SkyboxMesh()

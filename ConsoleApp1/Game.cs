@@ -1,17 +1,12 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Numerics;
 using ConsoleApp1.Assets.Scripts.Inputs;
 using ConsoleApp1.Assets.Scripts.World.Blocks;
-using ConsoleApp1.Engine.Scripts.Core;
-using ConsoleApp1.Engine.Scripts.Rendering.MeshClasses;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using StbImageSharp;
-using Vector2 = OpenTK.Mathematics.Vector2;
 using Vector3 = OpenTK.Mathematics.Vector3;
 
 public class Game : GameWindow

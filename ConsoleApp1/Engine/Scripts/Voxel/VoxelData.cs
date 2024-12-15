@@ -398,6 +398,89 @@ public static class VoxelData
 
         return mesh;
     }
+
+    public static void GenerateStandardMeshBox(BoxMesh mesh, int color)
+    {
+        mesh.Position = new Vector3(0, 0, 0);
+        
+        MeshHelper.GenerateMeshIndices(mesh);
+        mesh.Uvs.AddRange(VoxelData.UVTable);
+
+        mesh.Vertices.Add(new Vector3(0, 0, 0));
+        mesh.Vertices.Add(new Vector3(0, 1, 0));
+        mesh.Vertices.Add(new Vector3(1, 1, 0));
+        mesh.Vertices.Add(new Vector3(1, 0, 0));
+        
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        
+        MeshHelper.GenerateMeshIndices(mesh);
+        mesh.Uvs.AddRange(VoxelData.UVTable);
+        
+        mesh.Vertices.Add(new Vector3(1, 0, 0));
+        mesh.Vertices.Add(new Vector3(1, 1, 0));
+        mesh.Vertices.Add(new Vector3(1, 1, 1));
+        mesh.Vertices.Add(new Vector3(1, 0, 1));
+        
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        
+        MeshHelper.GenerateMeshIndices(mesh);
+        mesh.Uvs.AddRange(VoxelData.UVTable);
+        
+        mesh.Vertices.Add(new Vector3(0, 1, 0));
+        mesh.Vertices.Add(new Vector3(0, 1, 1));
+        mesh.Vertices.Add(new Vector3(1, 1, 1));
+        mesh.Vertices.Add(new Vector3(1, 1, 0));
+        
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        
+        MeshHelper.GenerateMeshIndices(mesh);
+        mesh.Uvs.AddRange(VoxelData.UVTable);
+        
+        mesh.Vertices.Add(new Vector3(0, 0, 1));
+        mesh.Vertices.Add(new Vector3(0, 1, 1));
+        mesh.Vertices.Add(new Vector3(0, 1, 0));
+        mesh.Vertices.Add(new Vector3(0, 0, 0));
+        
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        
+        MeshHelper.GenerateMeshIndices(mesh);
+        mesh.Uvs.AddRange(VoxelData.UVTable);
+        
+        mesh.Vertices.Add(new Vector3(1, 0, 1));
+        mesh.Vertices.Add(new Vector3(0, 0, 1));
+        mesh.Vertices.Add(new Vector3(0, 0, 0));
+        mesh.Vertices.Add(new Vector3(1, 0, 0));
+        
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        
+        MeshHelper.GenerateMeshIndices(mesh);
+        mesh.Uvs.AddRange(VoxelData.UVTable);
+        
+        mesh.Vertices.Add(new Vector3(1, 0, 1));
+        mesh.Vertices.Add(new Vector3(1, 1, 1));
+        mesh.Vertices.Add(new Vector3(0, 1, 1));
+        mesh.Vertices.Add(new Vector3(0, 0, 1));
+        
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+        mesh.TextureIndices.Add(color);
+    }
     
     public static Vector3i BlockToChunkPosition(Vector3 position)
     {

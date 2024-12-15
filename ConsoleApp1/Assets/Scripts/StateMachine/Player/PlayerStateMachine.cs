@@ -26,6 +26,7 @@ public class PlayerStateMachine : Updateable
     private PlayerMenuState _menuState = new();
     
     private EntityMesh _mesh;
+    private AnimationMesh _swordMesh;
     
     private ShaderProgram _shaderProgram;
     
@@ -34,6 +35,8 @@ public class PlayerStateMachine : Updateable
     public PhysicsBody physicsBody;
 
     public float yaw;
+
+    public float angle;
 
     public bool isGrounded;
     
@@ -54,12 +57,26 @@ public class PlayerStateMachine : Updateable
         transform.Position = new Vector3(0, 100, 0);
         
         _mesh = new EntityMesh();
-
         VoxelData.GetEntityBoxMesh(_mesh, new Vector3(1, 2, 1), new Vector3(0, 0, 0), 1);
-
         _mesh.GenerateBuffers();
         
-        Debug.Start();
+        _swordMesh = new AnimationMesh();
+        VoxelData.GenerateStandardMeshBox(_swordMesh, 2);
+        VoxelData.GenerateStandardMeshBox(_swordMesh, 2);
+        _swordMesh.Sizes.Add(new Vector3(0.1f, 0.3f, 0.1f));
+        _swordMesh.Sizes.Add(new Vector3(0.5f, 2f, 0.1f));
+        
+        _swordMesh.Position.Add(new Vector3(0, 100, 0));
+        _swordMesh.Position.Add(new Vector3(-0.2f, 100.3f, 0));
+        
+        _swordMesh.GenerateBuffers();
+        
+        _swordMesh.UpdateScale();
+        _swordMesh.UpdatePosition();
+        
+        _swordMesh.UpdateMesh();
+        
+        //Debug.Start();
     }
 
     public override void Update(FrameEventArgs args)
@@ -69,6 +86,11 @@ public class PlayerStateMachine : Updateable
 
         _currentState.Update(this);
         PlayerData.Position = transform.Position + new Vector3(0, 1.8f, 0);
+        
+        _swordMesh.UpdateRotation(new Vector3(0.05f, 100, 0.05f), new Vector3(1, 0, 0), angle);
+        _swordMesh.UpdateMesh();
+        
+        angle += 10 * GameTime.DeltaTime;
         
         IsHuggingWall();
     }
@@ -95,10 +117,11 @@ public class PlayerStateMachine : Updateable
         GL.UniformMatrix4(projectionLocation, true, ref projection);
         
         _mesh.RenderMesh();
+        _swordMesh.RenderMesh();
         
         _shaderProgram.Unbind();
         
-        Debug.Render();
+        //Debug.Render();
     }
 
     public int MeshUpdate()
@@ -108,7 +131,7 @@ public class PlayerStateMachine : Updateable
         _mesh.UpdatePosition();
         _mesh.UpdateRotation(_mesh.Position + new Vector3(0.5f, 0, 0.5f), new Vector3(0, 1, 0), yaw);
         _mesh.UpdateMesh();
-
+ 
         return 1;
     }
 
@@ -177,7 +200,7 @@ public class PlayerStateMachine : Updateable
         else
             HugX.Y = Mathf.FloorToInt(transform.Position.Y + 0.5f);
         
-        Debug.DrawBox(HugZ, new Vector3(0.5f, 0.5f, 0.5f));
+        //Debug.DrawBox(HugZ, new Vector3(0.5f, 0.5f, 0.5f));
 
         if (WorldManager.IsBlockChecks(HugZ))
             return true;

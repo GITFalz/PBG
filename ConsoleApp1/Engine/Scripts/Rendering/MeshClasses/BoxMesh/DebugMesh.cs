@@ -1,12 +1,8 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-public class DebugMesh : Mesh
+public class DebugMesh : BoxMesh
 {
-    public List<int> TextureIndices;
-    
-    public List<Vector3> _transformedVerts;
-    
     private VBO _textureVbo;
     
     public DebugMesh()
@@ -43,8 +39,6 @@ public class DebugMesh : Mesh
         
         for (int i = 0; i < Vertices.Count; i++)
         {
-            int offset = i % 4;
-            int face = i / 4;
             _transformedVerts[i] += Vertices[i] * size;
         }
     }

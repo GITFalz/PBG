@@ -1,11 +1,7 @@
 ﻿using OpenTK.Mathematics;
 
-public class EntityMesh : Mesh
+public class EntityMesh : BoxMesh
 {
-    public List<int> TextureIndices;
-
-    public List<Vector3> _transformedVerts;
-    
     private VBO _textureVbo;
 
     public Vector3 Position;
@@ -21,14 +17,6 @@ public class EntityMesh : Mesh
         TextureIndices = new List<int>();
         
         _transformedVerts = new List<Vector3>();
-    }
-    
-    public void GenerateMesh(Vector3 position, Vector3 size, int textureIndex)
-    {
-        Position = position;
-        Size = size;
-
-        VoxelData.GetEntityBoxMesh(this, size, position, textureIndex);
     }
 
     public void UpdatePosition()
