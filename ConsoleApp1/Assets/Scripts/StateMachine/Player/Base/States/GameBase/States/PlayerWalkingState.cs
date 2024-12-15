@@ -11,6 +11,7 @@ public class PlayerWalkingState : PlayerGameBaseState
         Console.WriteLine("Entering walking state");
         
         playerGameState.NextMovingState = playerGameState.WalkingState;
+        playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Sprint);
     }
 
     public override void Update(PlayerGameState playerGameState)
@@ -29,7 +30,7 @@ public class PlayerWalkingState : PlayerGameBaseState
             return;
         }
         
-        if (InputManager.IsKeyPressed(Keys.Space) && Game.MoveTest)
+        if (InputManager.IsDown(Keys.Space) && Game.MoveTest)
         {
             playerGameState.SwitchState(playerGameState.JumpingState);
             return;
@@ -41,7 +42,7 @@ public class PlayerWalkingState : PlayerGameBaseState
             return;
         }
 
-        playerGameState.PlayerStateMachine.MoveMeshUpdate();
+        playerGameState.PlayerStateMachine.MeshRotateUpdate();
     }
     
     public override void FixedUpdate(PlayerGameState playerGameState)

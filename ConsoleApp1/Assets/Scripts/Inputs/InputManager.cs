@@ -6,6 +6,12 @@ public static class InputManager
 {
     private static KeyboardState _previousKeyboardState;
     private static MouseState _previousMouseState;
+
+    public static void Start(KeyboardState keyboard, MouseState mouse)
+    {
+        _previousKeyboardState = keyboard;
+        _previousMouseState = mouse;
+    }
     
     public static void Update(KeyboardState keyboard, MouseState mouse)
     {

@@ -1,4 +1,5 @@
 using OpenTK.Mathematics;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PlayerJumpingState : PlayerGameBaseState
 {
@@ -6,16 +7,18 @@ public class PlayerJumpingState : PlayerGameBaseState
     {
         Console.WriteLine("Entering jumping state");
         
-        playerGameState.PlayerStateMachine.physicsBody.doGravity = 
-            playerGameState.PlayerStateMachine.CanUpdatePhysics() == 1;
-        
-        playerGameState.PlayerStateMachine.physicsBody.AddForce(new Vector3(0, 60, 0));
+        playerGameState.PlayerStateMachine.physicsBody.doGravity = true;
+        playerGameState.PlayerStateMachine.physicsBody.AddForce(new Vector3(0, 30, 0));
     }
 
     public override void Update(PlayerGameState playerGameState)
     {
-        int result = playerGameState.PlayerStateMachine.CanUpdatePhysics();
-        playerGameState.PlayerStateMachine.physicsBody.doGravity = result == 1;
+        if (playerGameState.PlayerStateMachine.IsHuggingWall() && InputManager.IsKeyPressed(Keys.Space))
+        {
+            playerGameState.PlayerStateMachine.physicsBody.Velocity.Y = 0;
+            playerGameState.SwitchState(playerGameState.JumpingState);
+            return;
+        }
         
         if (playerGameState.PlayerStateMachine.physicsBody.Velocity.Y < 0)
         {
@@ -23,11 +26,8 @@ public class PlayerJumpingState : PlayerGameBaseState
             return;
         }
         
-        if (result == 1)
-        {
-            playerGameState.PlayerStateMachine.GravityUpdate();
-            return;
-        }
+        playerGameState.PlayerStateMachine.MeshUpdate();
+        return;
     }
     
     public override void FixedUpdate(PlayerGameState playerGameState)

@@ -22,6 +22,11 @@ public static class Mathf
         return (float)Math.Floor(value);
     }
     
+    public static Vector3i FloorToInt(Vector3 value)
+    {
+        return new Vector3i(FloorToInt(value.X), FloorToInt(value.Y), FloorToInt(value.Z));
+    }
+    
     public static Vector3 Normalize(Vector3 value)
     {
         float length = value.Length;
@@ -63,6 +68,11 @@ public static class Mathf
     public static float Abs(float value)
     {
         return value < 0 ? -value : value;
+    }
+    
+    public static Vector3 Abs(Vector3 value)
+    {
+        return new Vector3(Abs(value.X), Abs(value.Y), Abs(value.Z));
     }
     
     /// <summary>

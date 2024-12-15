@@ -34,7 +34,7 @@ public abstract class Mesh
         _ibo = new IBO(Indices);
     }
 
-    public void RenderMesh()
+    public virtual void RenderMesh()
     {
         if (_updateMesh)
             UpdateMesh();

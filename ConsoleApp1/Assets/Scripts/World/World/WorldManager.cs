@@ -3,6 +3,8 @@ using OpenTK.Mathematics;
 
 public class WorldManager
 {
+    public static WorldManager? Instance;
+    
     public HashSet<Vector3i> chunks;
     
     public ConcurrentDictionary<Vector3i, ChunkData> activeChunks;
@@ -21,6 +23,8 @@ public class WorldManager
     
     public WorldManager()
     {
+        Instance ??= this;
+        
         chunks = new HashSet<Vector3i>();
         
         activeChunks = new ConcurrentDictionary<Vector3i, ChunkData>();
@@ -213,5 +217,32 @@ public class WorldManager
                 chunk.StoreData();
             });
         }
+    }
+    
+    public static bool IsBlockChecks(Vector3i[] positions)
+    {
+        Block? block;
+
+        foreach (var position in positions)
+        {
+            int result = Instance.GetBlock(position, out block);
+
+            if (result == 0 || result == 2)
+                return true;
+        }
+        
+        return false;
+    }
+    
+    public static bool IsBlockChecks(Vector3i position)
+    {
+        Block? block;
+        
+        int result = Instance.GetBlock(position, out block);
+
+        if (result == 0 || result == 2)
+            return true;
+            
+        return false;
     }
 }

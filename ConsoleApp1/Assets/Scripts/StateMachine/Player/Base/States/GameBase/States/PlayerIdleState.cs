@@ -11,6 +11,8 @@ public class PlayerIdleState : PlayerGameBaseState
     public override void Update(PlayerGameState playerGameState)
     {
         Vector2 input = InputManager.GetMovementInput();
+        
+        playerGameState.PlayerStateMachine.physicsBody.Velocity = Vector3.Zero;
 
         if (input != Vector2.Zero && Game.MoveTest)
         {
@@ -18,7 +20,7 @@ public class PlayerIdleState : PlayerGameBaseState
             return;
         }
         
-        if (InputManager.IsKeyPressed(Keys.Space) && Game.MoveTest)
+        if (InputManager.IsDown(Keys.Space) && Game.MoveTest)
         {
             playerGameState.SwitchState(playerGameState.JumpingState);
             return;
@@ -31,7 +33,7 @@ public class PlayerIdleState : PlayerGameBaseState
             return;
         }
         
-        playerGameState.PlayerStateMachine.MoveMeshUpdate();
+        //playerGameState.PlayerStateMachine.MoveMeshUpdate();
     }
     
     public override void FixedUpdate(PlayerGameState playerGameState)

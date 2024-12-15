@@ -108,9 +108,12 @@ public class Game : GameWindow
         if (!Directory.Exists(chunkPath))
             Directory.CreateDirectory(chunkPath);
         
+        MouseState mouse = MouseState;
+        KeyboardState keyboard = KeyboardState;
+        
+        InputManager.Update(keyboard, mouse);
+        
         _uiManager = new UIManager();
-            
-        base.OnLoad();
 
         stopwatch = new Stopwatch();
         stopwatch.Start();
@@ -158,6 +161,7 @@ public class Game : GameWindow
 
         GameObjects.Add(playerObject);
         
+        
         _skyboxMesh = new SkyboxMesh();
         
         _skyboxShader = new ShaderProgram("Sky/Default.vert", "Sky/Default.frag");
@@ -179,6 +183,8 @@ public class Game : GameWindow
         
         _physicsThread = new Thread(PhysicsThread);
         _physicsThread.Start();
+        
+        base.OnLoad();
     }
 
     public async void GenerateChunks()
@@ -232,6 +238,7 @@ public class Game : GameWindow
         GL.ClearColor(0.6f, 0.3f, 1f, 1f);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         
+        /*
         GL.DepthFunc(DepthFunction.Lequal);
         GL.DepthMask(false);
        
@@ -258,6 +265,7 @@ public class Game : GameWindow
 
         GL.DepthMask(true);
         GL.DepthFunc(DepthFunction.Less);
+        */
         
         GL.Enable(EnableCap.CullFace);
         GL.FrontFace(FrontFaceDirection.Ccw);
@@ -266,9 +274,9 @@ public class Game : GameWindow
         _shaderProgram.Bind();
         _textureArray.Bind();
         
-        model = Matrix4.Identity;
-        view = Camera.GetViewMatrix();
-        projection = Camera.GetProjectionMatrix();
+        Matrix4 model = Matrix4.Identity;
+        Matrix4 view = Camera.GetViewMatrix();
+        Matrix4 projection = Camera.GetProjectionMatrix();
 
         int modelLocation = GL.GetUniformLocation(_shaderProgram.ID, "model");
         int viewLocation = GL.GetUniformLocation(_shaderProgram.ID, "view");
@@ -346,6 +354,7 @@ public class Game : GameWindow
         {
             gameObject.Update(args);
         }
+
         
         if (_visibleCursor)
             _uiManager.OnUpdateFrame(keyboard, mouse, args);

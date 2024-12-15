@@ -1,5 +1,10 @@
-﻿public class PlayerFallingState : PlayerGameBaseState
+﻿using OpenTK.Mathematics;
+using OpenTK.Windowing.GraphicsLibraryFramework;
+
+public class PlayerFallingState : PlayerGameBaseState
 {
+    Vector2 input = Vector2.Zero;
+    
     public override void Enter(PlayerGameState playerGameState)
     {
         Console.WriteLine("Entering falling state");
@@ -8,24 +13,28 @@
 
     public override void Update(PlayerGameState playerGameState)
     {
-        int result = playerGameState.PlayerStateMachine.CanUpdatePhysics();
-        playerGameState.PlayerStateMachine.physicsBody.doGravity = result == 1;
+        input = InputManager.GetMovementInput();
         
-        if (result == 0)
+        if (playerGameState.PlayerStateMachine.IsHuggingWall() && InputManager.IsKeyPressed(Keys.Space))
+        {
+            playerGameState.PlayerStateMachine.physicsBody.Velocity.Y = 0;
+            playerGameState.SwitchState(playerGameState.JumpingState);
+            return;
+        }
+        
+        if (playerGameState.PlayerStateMachine.IsGrounded())
         {
             playerGameState.SwitchState(playerGameState.GroundedState);
             return;
         }
-        if (result == 1)
-        {
-            playerGameState.PlayerStateMachine.GravityUpdate();
-            return;
-        }
+        
+        playerGameState.PlayerStateMachine.MeshUpdate();
+        return;
     }
     
     public override void FixedUpdate(PlayerGameState playerGameState)
     {
-        
+        playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Fall);
     }
 
     public override void Exit(PlayerGameState playerGameState)
