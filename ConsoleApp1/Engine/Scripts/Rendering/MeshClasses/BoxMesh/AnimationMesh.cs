@@ -4,8 +4,11 @@ public class AnimationMesh : BoxMesh
 {
     private VBO _textureVbo;
 
-    public List<Vector3> Position;
     public List<Vector3> Sizes;
+    public List<Vector3> Rotation;
+    public List<Vector3> Position;
+    
+    public Vector3 basePosition = Vector3.Zero;
     
     public AnimationMesh()
     {
@@ -18,8 +21,9 @@ public class AnimationMesh : BoxMesh
         
         _transformedVerts = new List<Vector3>();
         
-        Position = new List<Vector3>();
         Sizes = new List<Vector3>();
+        Rotation = new List<Vector3>();
+        Position = new List<Vector3>();
     }
 
     /// <summary>
@@ -41,7 +45,7 @@ public class AnimationMesh : BoxMesh
         for (int i = 0; i < Vertices.Count; i++)
         {
             int PositionIndex = i / 24;
-            _transformedVerts[i] += Position[PositionIndex];
+            _transformedVerts[i] += Position[PositionIndex] + basePosition;
         }
     }
     
@@ -79,15 +83,17 @@ public class AnimationMesh : BoxMesh
     /// <param name="center"></param>
     /// <param name="axis"></param>
     /// <param name="angle"></param>
-    public void UpdateRotation(Vector3 center, Vector3 axis, float angle)
+    public void UpdateRotation(Vector3 axis, float angle)
     {
         UpdateScale();
-        UpdatePosition();
         
         for (int i = 0; i < Vertices.Count; i++)
         {
-            _transformedVerts[i] = Mathf.RotateAround(_transformedVerts[i], center, axis, angle);
+            int rotationIndex = i / 24;
+            _transformedVerts[i] = Mathf.RotateAround(_transformedVerts[i], Rotation[rotationIndex], axis, angle);
         }
+        
+        UpdatePosition();
     }
 
     public override void UpdateMesh()

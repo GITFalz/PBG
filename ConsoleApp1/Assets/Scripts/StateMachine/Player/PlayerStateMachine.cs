@@ -66,8 +66,13 @@ public class PlayerStateMachine : Updateable
         _swordMesh.Sizes.Add(new Vector3(0.1f, 0.3f, 0.1f));
         _swordMesh.Sizes.Add(new Vector3(0.5f, 2f, 0.1f));
         
-        _swordMesh.Position.Add(new Vector3(0, 100, 0));
-        _swordMesh.Position.Add(new Vector3(-0.2f, 100.3f, 0));
+        _swordMesh.Position.Add(new Vector3(0, 0, 0));
+        _swordMesh.Position.Add(new Vector3(-0.2f, 0.3f, 0));
+        
+        _swordMesh.basePosition = new Vector3(0, 100, 0);
+        
+        _swordMesh.Rotation.Add(new Vector3(0.0f, 0.0f, 0.0f));
+        _swordMesh.Rotation.Add(new Vector3(0.2f, -0.3f, 0.0f));
         
         _swordMesh.GenerateBuffers();
         
@@ -86,9 +91,16 @@ public class PlayerStateMachine : Updateable
 
         _currentState.Update(this);
         PlayerData.Position = transform.Position + new Vector3(0, 1.8f, 0);
+
+        if (InputManager.IsDown(Keys.F) && AnimationController.Instance.GetFrame(out var keyframe))
+        {
+            if (keyframe != null)
+            {
+                _swordMesh.UpdateRotation(new Vector3(0, 0, 1), keyframe.Rotation.Z);
+                _swordMesh.UpdateMesh();
+            }
+        }
         
-        _swordMesh.UpdateRotation(new Vector3(0.05f, 100, 0.05f), new Vector3(1, 0, 0), angle);
-        _swordMesh.UpdateMesh();
         
         angle += 10 * GameTime.DeltaTime;
         

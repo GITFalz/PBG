@@ -179,6 +179,9 @@ public class Game : GameWindow
         _physicsThread = new Thread(PhysicsThread);
         _physicsThread.Start();
         
+        AnimationController animationController = new AnimationController();
+        animationController.Start();
+        
         base.OnLoad();
     }
 
@@ -342,8 +345,6 @@ public class Game : GameWindow
 
         if (InputManager.IsKeyPressed(Keys.LeftAlt))
             MoveTest = !MoveTest;
-        
-        
         
         foreach (GameObject gameObject in GameObjects)
         {
