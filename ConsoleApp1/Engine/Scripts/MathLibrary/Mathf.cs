@@ -109,4 +109,11 @@ public static class Mathf
         Vector3 rotatedPoint = Vector3.Transform(translatedPoint, rotation);
         return rotatedPoint + center;
     }
+    
+    public static Vector3 RotateAround(Vector3 point, Vector3 center, Quaternion rotation)
+    {
+        Vector3 translatedPoint = point - center;
+        Vector3 rotatedPoint = Vector3.Transform(translatedPoint, rotation);
+        return rotatedPoint + center;
+    }
 }

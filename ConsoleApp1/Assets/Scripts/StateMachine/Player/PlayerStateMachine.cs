@@ -61,24 +61,14 @@ public class PlayerStateMachine : Updateable
         _mesh.GenerateBuffers();
         
         _swordMesh = new AnimationMesh();
-        VoxelData.GenerateStandardMeshBox(_swordMesh, 2);
-        VoxelData.GenerateStandardMeshBox(_swordMesh, 2);
-        _swordMesh.Sizes.Add(new Vector3(0.1f, 0.3f, 0.1f));
-        _swordMesh.Sizes.Add(new Vector3(0.5f, 2f, 0.1f));
-        
-        _swordMesh.Position.Add(new Vector3(0, 0, 0));
-        _swordMesh.Position.Add(new Vector3(-0.2f, 0.3f, 0));
-        
-        _swordMesh.basePosition = new Vector3(0, 100, 0);
+        VoxelData.GenerateStandardMeshBox(_swordMesh, new Vector3(0.2f, 0.3f, 0.2f), new Vector3(1, 0, 0), new Vector3(90, 0, -90), 2);
+        VoxelData.GenerateStandardMeshBox(_swordMesh, new Vector3(0.8f, 2f, 0.2f), new Vector3(0.7f, 0.3f, 0), new Vector3(90, 0, -90), 2);
         
         _swordMesh.Rotation.Add(new Vector3(0.0f, 0.0f, 0.0f));
-        _swordMesh.Rotation.Add(new Vector3(0.2f, -0.3f, 0.0f));
+        _swordMesh.Rotation.Add(new Vector3(0.0f, 0.0f, 0.0f));
         
         _swordMesh.GenerateBuffers();
-        
-        _swordMesh.UpdateScale();
-        _swordMesh.UpdatePosition();
-        
+
         _swordMesh.UpdateMesh();
         
         //Debug.Start();
@@ -86,23 +76,29 @@ public class PlayerStateMachine : Updateable
 
     public override void Update(FrameEventArgs args)
     {
+        _swordMesh.WorldPosition = transform.Position + new Vector3(0, 1f, 0);
+        
+        _swordMesh.Init();
+        
         if (InputManager.IsKeyPressed(Keys.M))
             physicsBody.doGravity = !physicsBody.doGravity;
 
         _currentState.Update(this);
-        PlayerData.Position = transform.Position + new Vector3(0, 1.8f, 0);
+        PlayerData.Position = transform.Position + new Vector3(0, 1f, 0);
 
         if (InputManager.IsDown(Keys.F) && AnimationController.Instance.GetFrame(out var keyframe))
         {
             if (keyframe != null)
             {
-                _swordMesh.UpdateRotation(new Vector3(0, 0, 1), keyframe.Rotation.Z);
-                _swordMesh.UpdateMesh();
+                _swordMesh.UpdateRotation(keyframe.Rotation);
             }
         }
         
         
         angle += 10 * GameTime.DeltaTime;
+        
+        _swordMesh.Center();
+        _swordMesh.UpdateMesh();
         
         IsHuggingWall();
     }

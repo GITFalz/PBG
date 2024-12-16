@@ -399,17 +399,18 @@ public static class VoxelData
         return mesh;
     }
 
-    public static void GenerateStandardMeshBox(BoxMesh mesh, int color)
+    public static void GenerateStandardMeshBox(BoxMesh mesh, Vector3 size, Vector3 position, Vector3 rotation, int color)
     {
-        mesh.Position = new Vector3(0, 0, 0);
+        Quaternion rot = Quaternion.FromEulerAngles(MathHelper.DegreesToRadians(rotation.X), MathHelper.DegreesToRadians(rotation.Y), MathHelper.DegreesToRadians(rotation.Z));
+        Vector3 center = new Vector3(0, 0, 0);
         
         MeshHelper.GenerateMeshIndices(mesh);
         mesh.Uvs.AddRange(VoxelData.UVTable);
 
-        mesh.Vertices.Add(new Vector3(0, 0, 0));
-        mesh.Vertices.Add(new Vector3(0, 1, 0));
-        mesh.Vertices.Add(new Vector3(1, 1, 0));
-        mesh.Vertices.Add(new Vector3(1, 0, 0));
+        AddVertToBoxMesh(mesh, new Vector3(0, 0, 0), rot, position);
+        AddVertToBoxMesh(mesh, new Vector3(0, size.Y, 0), rot, position);
+        AddVertToBoxMesh(mesh, new Vector3(size.X, size.Y, 0), rot, position);
+        AddVertToBoxMesh(mesh, new Vector3(size.X, 0, 0), rot, position);
         
         mesh.TextureIndices.Add(color);
         mesh.TextureIndices.Add(color);
@@ -419,10 +420,10 @@ public static class VoxelData
         MeshHelper.GenerateMeshIndices(mesh);
         mesh.Uvs.AddRange(VoxelData.UVTable);
         
-        mesh.Vertices.Add(new Vector3(1, 0, 0));
-        mesh.Vertices.Add(new Vector3(1, 1, 0));
-        mesh.Vertices.Add(new Vector3(1, 1, 1));
-        mesh.Vertices.Add(new Vector3(1, 0, 1));
+        AddVertToBoxMesh(mesh, new Vector3(size.X, 0, 0), rot, position);
+        AddVertToBoxMesh(mesh, new Vector3(size.X, size.Y, 0), rot, position);
+        AddVertToBoxMesh(mesh, new Vector3(size.X, size.Y, size.Z), rot, position);
+        AddVertToBoxMesh(mesh, new Vector3(size.X, 0, size.Z), rot, position);
         
         mesh.TextureIndices.Add(color);
         mesh.TextureIndices.Add(color);
@@ -432,10 +433,10 @@ public static class VoxelData
         MeshHelper.GenerateMeshIndices(mesh);
         mesh.Uvs.AddRange(VoxelData.UVTable);
         
-        mesh.Vertices.Add(new Vector3(0, 1, 0));
-        mesh.Vertices.Add(new Vector3(0, 1, 1));
-        mesh.Vertices.Add(new Vector3(1, 1, 1));
-        mesh.Vertices.Add(new Vector3(1, 1, 0));
+        AddVertToBoxMesh(mesh, new Vector3(0, size.Y, 0), rot, position);
+        AddVertToBoxMesh(mesh, new Vector3(0, size.Y, size.Z), rot, position);
+        AddVertToBoxMesh(mesh, new Vector3(size.X, size.Y, size.Z), rot, position);
+        AddVertToBoxMesh(mesh, new Vector3(size.X, size.Y, 0), rot, position);
         
         mesh.TextureIndices.Add(color);
         mesh.TextureIndices.Add(color);
@@ -445,10 +446,10 @@ public static class VoxelData
         MeshHelper.GenerateMeshIndices(mesh);
         mesh.Uvs.AddRange(VoxelData.UVTable);
         
-        mesh.Vertices.Add(new Vector3(0, 0, 1));
-        mesh.Vertices.Add(new Vector3(0, 1, 1));
-        mesh.Vertices.Add(new Vector3(0, 1, 0));
-        mesh.Vertices.Add(new Vector3(0, 0, 0));
+        AddVertToBoxMesh(mesh, new Vector3(0, 0, size.Z), rot, position);
+        AddVertToBoxMesh(mesh, new Vector3(0, size.Y, size.Z), rot, position);
+        AddVertToBoxMesh(mesh, new Vector3(0, size.Y, 0), rot, position);
+        AddVertToBoxMesh(mesh, new Vector3(0, 0, 0), rot, position);
         
         mesh.TextureIndices.Add(color);
         mesh.TextureIndices.Add(color);
@@ -458,10 +459,10 @@ public static class VoxelData
         MeshHelper.GenerateMeshIndices(mesh);
         mesh.Uvs.AddRange(VoxelData.UVTable);
         
-        mesh.Vertices.Add(new Vector3(1, 0, 1));
-        mesh.Vertices.Add(new Vector3(0, 0, 1));
-        mesh.Vertices.Add(new Vector3(0, 0, 0));
-        mesh.Vertices.Add(new Vector3(1, 0, 0));
+        AddVertToBoxMesh(mesh, new Vector3(size.X, 0, size.Z), rot, position);
+        AddVertToBoxMesh(mesh, new Vector3(0, 0, size.Z), rot, position);
+        AddVertToBoxMesh(mesh, new Vector3(0, 0, 0), rot, position);
+        AddVertToBoxMesh(mesh, new Vector3(size.X, 0, 0), rot, position);
         
         mesh.TextureIndices.Add(color);
         mesh.TextureIndices.Add(color);
@@ -471,15 +472,20 @@ public static class VoxelData
         MeshHelper.GenerateMeshIndices(mesh);
         mesh.Uvs.AddRange(VoxelData.UVTable);
         
-        mesh.Vertices.Add(new Vector3(1, 0, 1));
-        mesh.Vertices.Add(new Vector3(1, 1, 1));
-        mesh.Vertices.Add(new Vector3(0, 1, 1));
-        mesh.Vertices.Add(new Vector3(0, 0, 1));
+        AddVertToBoxMesh(mesh, new Vector3(size.X, 0, size.Z), rot, position);
+        AddVertToBoxMesh(mesh, new Vector3(size.X, size.Y, size.Z), rot, position);
+        AddVertToBoxMesh(mesh, new Vector3(0, size.Y, size.Z), rot, position);
+        AddVertToBoxMesh(mesh, new Vector3(0, 0, size.Z), rot, position);
         
         mesh.TextureIndices.Add(color);
         mesh.TextureIndices.Add(color);
         mesh.TextureIndices.Add(color);
         mesh.TextureIndices.Add(color);
+    }
+
+    public static void AddVertToBoxMesh(BoxMesh mesh, Vector3 scale, Quaternion rotation, Vector3 position)
+    {
+        mesh.Vertices.Add(Mathf.RotateAround(scale + position, new Vector3(0, 0, 0), rotation));
     }
     
     public static Vector3i BlockToChunkPosition(Vector3 position)

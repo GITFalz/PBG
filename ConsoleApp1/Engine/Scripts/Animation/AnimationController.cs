@@ -17,10 +17,9 @@ public class AnimationController
     {
         Instance = this;
         
-        Keyframes.Add(new AnimationKeyframe(Vector3.One, Vector3.Zero, Vector3.Zero));
-        SetKeyframe(4, new AnimationKeyframe(Vector3.One, new Vector3(0, 0, 90), Vector3.Zero));
-        SetKeyframe(6, new AnimationKeyframe(Vector3.One, new Vector3(0, 0, 180), Vector3.Zero));
-        SetKeyframe(10, new AnimationKeyframe(Vector3.One, new Vector3(0, 0, 270), Vector3.Zero));
+        Keyframes.Add(new AnimationKeyframe(Vector3.One, Quaternion.Identity, Vector3.Zero));
+        SetKeyframe(5, new AnimationKeyframe(Vector3.One, (0, 110, 0), Vector3.Zero));
+        SetKeyframe(10, new AnimationKeyframe(Vector3.One, (0, 220, 0), Vector3.Zero));
     }
     
     public bool GetFrame(out AnimationKeyframe? keyframe)
@@ -34,11 +33,11 @@ public class AnimationController
         AnimationKeyframe keyframe2 = Keyframes[index + 1];
 
         Vector3 scale1 = keyframe1.Scale;
-        Vector3 rotation1 = keyframe1.Rotation;
+        Quaternion rotation1 = keyframe1.Rotation;
         Vector3 position1 = keyframe1.Position;
         
         Vector3 scale2 = keyframe2.Scale;
-        Vector3 rotation2 = keyframe2.Rotation;
+        Quaternion rotation2 = keyframe2.Rotation;
         Vector3 position2 = keyframe2.Position;
         
         float t = (elapsedTime - index * frameTime) / frameTime;
@@ -70,21 +69,28 @@ public class AnimationController
 public class AnimationKeyframe
 {
     public Vector3 Scale;
-    public Vector3 Rotation;
+    public Quaternion Rotation;
     public Vector3 Position;
-    
-    public AnimationKeyframe(Vector3 scale, Vector3 rotation, Vector3 position)
+
+    public AnimationKeyframe(Vector3 scale, Quaternion rotation, Vector3 position)
     {
         Scale = scale;
         Rotation = rotation;
         Position = position;
     }
     
+    public AnimationKeyframe(Vector3 scale, Vector3 rotation, Vector3 position)
+    {
+        Scale = scale;
+        Rotation = Quaternion.FromEulerAngles(MathHelper.DegreesToRadians(rotation.X), MathHelper.DegreesToRadians(rotation.Y), MathHelper.DegreesToRadians(rotation.Z));
+        Position = position;
+    }
+
     public AnimationKeyframe Lerp(AnimationKeyframe keyframe, float t)
     {
         return new AnimationKeyframe(
             Vector3.Lerp(Scale, keyframe.Scale, t),
-            Vector3.Lerp(Rotation, keyframe.Rotation, t),
+            Quaternion.Slerp(Rotation, keyframe.Rotation, t),
             Vector3.Lerp(Position, keyframe.Position, t)
         );
     }

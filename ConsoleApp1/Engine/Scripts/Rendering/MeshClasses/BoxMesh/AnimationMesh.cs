@@ -7,8 +7,9 @@ public class AnimationMesh : BoxMesh
     public List<Vector3> Sizes;
     public List<Vector3> Rotation;
     public List<Vector3> Position;
-    
-    public Vector3 basePosition = Vector3.Zero;
+
+    public Vector3 Pivot = Vector3.Zero;
+    public Vector3 WorldPosition = Vector3.Zero;
     
     public AnimationMesh()
     {
@@ -27,45 +28,38 @@ public class AnimationMesh : BoxMesh
     }
 
     /// <summary>
-    /// !!!NOTE: This function NEEDS to be called before scaling or rotating the mesh!!!
+    /// !!!NOTE: This function needs to be called after generating the buffers
     /// </summary>
-    public void UpdatePosition(Vector3 position)
+    public void Init()
     {
         for (int i = 0; i < Vertices.Count; i++)
         {
-            _transformedVerts[i] = Vertices[i] + position;
+            _transformedVerts[i] = Vertices[i];
         }
     }
     
-    /// <summary>
-    /// !!!NOTE: This function NEEDS to be called before scaling or rotating the mesh!!!
-    /// </summary>
     public void UpdatePosition()
     {
         for (int i = 0; i < Vertices.Count; i++)
         {
             int PositionIndex = i / 24;
-            _transformedVerts[i] += Position[PositionIndex] + basePosition;
+            if (PositionIndex >= Position.Count)
+                break;
+            _transformedVerts[i] += Position[PositionIndex];
         }
     }
     
-    /// <summary>
-    /// NOTE: This function NEEDS to be called after positioning and before rotating!!!
-    /// </summary>
-    /// <param name="size"></param>
     public void UpdateScale()
     {
         for (int i = 0; i < Vertices.Count; i++)
         {
             int sizeIndex = i / 24;
+            if (sizeIndex >= Sizes.Count)
+                break;
             _transformedVerts[i] = Vertices[i] * (Mathf.Abs(Sizes[sizeIndex]));
         }
     }
-    
-    /// <summary>
-    /// NOTE: This function NEEDS to be called after positioning and before rotating!!!
-    /// </summary>
-    /// <param name="size"></param>
+
     public void UpdateScale(Vector3 size)
     {
         size = Mathf.Abs(size);
@@ -77,23 +71,31 @@ public class AnimationMesh : BoxMesh
         }
     }
 
-    /// <summary>
-    /// NOTE: This function NEEDS to be called after positioning and scaling!!!
-    /// </summary>
-    /// <param name="center"></param>
-    /// <param name="axis"></param>
-    /// <param name="angle"></param>
     public void UpdateRotation(Vector3 axis, float angle)
     {
-        UpdateScale();
-        
         for (int i = 0; i < Vertices.Count; i++)
         {
             int rotationIndex = i / 24;
             _transformedVerts[i] = Mathf.RotateAround(_transformedVerts[i], Rotation[rotationIndex], axis, angle);
         }
+    }
         
-        UpdatePosition();
+    public void UpdateRotation(Quaternion rotation)
+    {
+        for (int i = 0; i < Vertices.Count; i++)
+        {
+            int rotationIndex = i / 24;
+            _transformedVerts[i] = Mathf.RotateAround(_transformedVerts[i], Rotation[rotationIndex], rotation);
+        }
+    }
+
+    public void Center()
+    {
+        Console.WriteLine("Centering");
+        for (int i = 0; i < Vertices.Count; i++)
+        {
+            _transformedVerts[i] += WorldPosition;
+        }
     }
 
     public override void UpdateMesh()
