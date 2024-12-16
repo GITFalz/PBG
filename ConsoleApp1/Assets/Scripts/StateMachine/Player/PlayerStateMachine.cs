@@ -27,18 +27,12 @@ public class PlayerStateMachine : Updateable
     
     private EntityMesh _mesh;
     private AnimationMesh _swordMesh;
-    
     private ShaderProgram _shaderProgram;
-    
-    public WorldManager WorldManager;
-    
     public PhysicsBody physicsBody;
-
+    
+    public Animation currentAnimation;
+    
     public float yaw;
-
-    public float angle;
-
-    public bool isGrounded;
     
     
     //Random values
@@ -61,17 +55,23 @@ public class PlayerStateMachine : Updateable
         _mesh.GenerateBuffers();
         
         _swordMesh = new AnimationMesh();
-        VoxelData.GenerateStandardMeshBox(_swordMesh, new Vector3(0.2f, 0.3f, 0.2f), new Vector3(1, 0, 0), new Vector3(90, 0, -90), 2);
-        VoxelData.GenerateStandardMeshBox(_swordMesh, new Vector3(0.8f, 2f, 0.2f), new Vector3(0.7f, 0.3f, 0), new Vector3(90, 0, -90), 2);
-        
-        _swordMesh.Rotation.Add(new Vector3(0.0f, 0.0f, 0.0f));
-        _swordMesh.Rotation.Add(new Vector3(0.0f, 0.0f, 0.0f));
+        VoxelData.GenerateStandardMeshBox(_swordMesh,
+            new Vector3(0.3f, 0.2f, 0.2f), 
+            new Vector3(0, 0, 0), 
+            new Vector3(0, 0, 0), 
+            2
+        );
+        VoxelData.GenerateStandardMeshBox(_swordMesh, 
+            new Vector3(0.8f, 2f, 0.2f), 
+            new Vector3(-0.3f, 0.3f, 0), 
+            new Vector3(0, 0, 0), 
+            2
+        );
         
         _swordMesh.GenerateBuffers();
-
         _swordMesh.UpdateMesh();
-        
-        //Debug.Start();
+
+        currentAnimation = AnimationController.Instance.GetAnimation("test");
     }
 
     public override void Update(FrameEventArgs args)
@@ -84,18 +84,9 @@ public class PlayerStateMachine : Updateable
             physicsBody.doGravity = !physicsBody.doGravity;
 
         _currentState.Update(this);
-        PlayerData.Position = transform.Position + new Vector3(0, 1f, 0);
-
-        if (InputManager.IsDown(Keys.F) && AnimationController.Instance.GetFrame(out var keyframe))
-        {
-            if (keyframe != null)
-            {
-                _swordMesh.UpdateRotation(keyframe.Rotation);
-            }
-        }
+        PlayerData.Position = transform.Position + new Vector3(.5f, 1f, .5f);
         
-        
-        angle += 10 * GameTime.DeltaTime;
+        AnimationController.Instance.Update(_swordMesh, yaw);
         
         _swordMesh.Center();
         _swordMesh.UpdateMesh();

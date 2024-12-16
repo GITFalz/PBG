@@ -148,7 +148,6 @@ public class Game : GameWindow
         
         GameObject playerObject = new GameObject();
         
-        player.WorldManager = _worldManager;
         playerPhysics.doGravity = false;
         
         playerObject.AddComponent(player);
@@ -170,6 +169,9 @@ public class Game : GameWindow
         _uiManager.Start();
         
         GL.Enable(EnableCap.DepthTest);
+        
+        AnimationController animationController = new AnimationController();
+        animationController.Start();
 
         foreach (GameObject gameObject in GameObjects)
         {
@@ -178,9 +180,6 @@ public class Game : GameWindow
         
         _physicsThread = new Thread(PhysicsThread);
         _physicsThread.Start();
-        
-        AnimationController animationController = new AnimationController();
-        animationController.Start();
         
         base.OnLoad();
     }

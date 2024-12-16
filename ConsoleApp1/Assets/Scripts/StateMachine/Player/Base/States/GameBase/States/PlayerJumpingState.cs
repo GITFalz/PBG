@@ -9,6 +9,8 @@ public class PlayerJumpingState : PlayerGameBaseState
         
         playerGameState.PlayerStateMachine.physicsBody.doGravity = true;
         playerGameState.PlayerStateMachine.physicsBody.AddForce(new Vector3(0, 30, 0));
+        
+        AnimationController.Instance.currentAnimation = playerGameState.PlayerStateMachine.currentAnimation;
     }
 
     public override void Update(PlayerGameState playerGameState)

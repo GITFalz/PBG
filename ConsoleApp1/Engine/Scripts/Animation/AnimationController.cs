@@ -7,62 +7,51 @@ public class AnimationController
     
     public static AnimationController Instance;
     
-    public List<AnimationKeyframe> Keyframes = new List<AnimationKeyframe>();
+    public Dictionary<string, Animation> Animations = new Dictionary<string, Animation>();
 
     private int oldIndex = 0;
     int index = 0;
     float elapsedTime = 0;
+
+    public Animation currentAnimation = new Animation();
     
     public void Start()
     {
         Instance = this;
-        
-        Keyframes.Add(new AnimationKeyframe(Vector3.One, Quaternion.Identity, Vector3.Zero));
-        SetKeyframe(5, new AnimationKeyframe(Vector3.One, (0, 110, 0), Vector3.Zero));
-        SetKeyframe(10, new AnimationKeyframe(Vector3.One, (0, 220, 0), Vector3.Zero));
-    }
-    
-    public bool GetFrame(out AnimationKeyframe? keyframe)
-    {
-        keyframe = null;
 
-        if (index >= Keyframes.Count - 1)
-            return false;
+        Vector3 testPos = new Vector3(0.5f, 0, -1);
         
-        AnimationKeyframe keyframe1 = Keyframes[index];
-        AnimationKeyframe keyframe2 = Keyframes[index + 1];
-
-        Vector3 scale1 = keyframe1.Scale;
-        Quaternion rotation1 = keyframe1.Rotation;
-        Vector3 position1 = keyframe1.Position;
+        Animations.Add("test", new Animation());
+        Animation test = Animations["test"];
         
-        Vector3 scale2 = keyframe2.Scale;
-        Quaternion rotation2 = keyframe2.Rotation;
-        Vector3 position2 = keyframe2.Position;
-        
-        float t = (elapsedTime - index * frameTime) / frameTime;
-        
-        keyframe = keyframe1.Lerp(keyframe2, t);
-
-        elapsedTime += GameTime.DeltaTime;
-        index = (int)(elapsedTime / frameTime);
-
-        return true;
+        test.Keyframes.Add(new AnimationKeyframe(Vector3.One, (-90, 0, -90), testPos));
+        test.SetKeyframe(2, new AnimationKeyframe(Vector3.One, (-90, 0, -41), (-1, 0, -1)));
+        test.SetKeyframe(6, new AnimationKeyframe(Vector3.One, (-90, 0, 129), (-1, 0, 1)));
+        test.SetKeyframe(8, new AnimationKeyframe(Vector3.One, (-90, 0, 170), (-1, 0, 1)));
     }
 
-    public void SetKeyframe(int index, AnimationKeyframe keyframe)
+    public void Update(AnimationMesh mesh, float angle)
     {
-        if (index < 0 || index >= Keyframes.Count)
+        if (!currentAnimation.IsEnd() && currentAnimation.GetFrame(out var keyframe))
         {
-            int last = Keyframes.Count - 1;
-            float t = index - last;
-            
-            for (int i = Keyframes.Count; i <= index; i++)
+            if (keyframe != null)
             {
-                int current = i - last;
-                Keyframes.Add(Keyframes[last].Lerp(keyframe, current / t));
+                mesh.UpdateRotation(keyframe.Rotation);
+                mesh.UpdatePosition(keyframe.Position);
+                mesh.UpdateRotation((0, 1, 0), angle + 180);
             }
         }
+    }
+
+    public Animation GetAnimation(string name)
+    {
+        return Animations.TryGetValue(name, out var animation) ? animation : new Animation();
+    }
+
+    public static AnimationKeyframe? PlayAnimation(Animation animation)
+    {
+        animation.GetFrame(out var keyframe);
+        return keyframe;
     }
 }
 
