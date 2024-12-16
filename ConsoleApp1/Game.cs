@@ -95,54 +95,57 @@ public class Game : GameWindow
     
     protected override void OnLoad()
     {
-        _mainCamera = new Camera(width, height, new Vector3(0, 100, 0));
+        // Utils
+        stopwatch = new Stopwatch();
+        stopwatch.Start();
         
+        // Camera
+        _mainCamera = new Camera(width, height, new Vector3(0, 20, 0));
+        
+        // File Paths
         mainPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VoxelGame");
         chunkPath = Path.Combine(mainPath, "Chunks");
         
         if (!Directory.Exists(chunkPath))
             Directory.CreateDirectory(chunkPath);
         
+        // Input
         MouseState mouse = MouseState;
         KeyboardState keyboard = KeyboardState;
         
         InputManager.Update(keyboard, mouse);
         
-        _uiManager = new UIManager();
-
-        stopwatch = new Stopwatch();
-        stopwatch.Start();
-        
         _visibleCursorSwitch = new KeyboardSwitch(InputManager.IsKeyPressed);
         
-        // World setup
-        _chunkManager = new ChunkManager();
-        _worldManager = new WorldManager();
+        // UI
+        _uiManager = new UIManager();
+        _uiManager.Load();
+        _uiManager.Start();
         
+        // Blocks
         UVmaps editorUvs = new UVmaps( new int[] { 0, 0, 0, 0, 0, 0 });
         
-        /*
-        UVmaps grassUvs = new UVmaps( new int[] { 0, 0, 1, 0, 2, 0 });
-        UVmaps dirtUvs = new UVmaps( new int[] { 2, 2, 2, 2, 2, 2 });
-        UVmaps stoneUvs = new UVmaps( new int[] { 3, 3, 3, 3, 3, 3 });
-        */
+        //UVmaps grassUvs = new UVmaps( new int[] { 0, 0, 1, 0, 2, 0 });
+        //UVmaps dirtUvs = new UVmaps( new int[] { 2, 2, 2, 2, 2, 2 });
+        //UVmaps stoneUvs = new UVmaps( new int[] { 3, 3, 3, 3, 3, 3 });
+    
         
         CWorldBlock editor = new CWorldBlock("editor_block", 1, 1, editorUvs);
-
-        /*
-        CWorldBlock grass = new CWorldBlock("grass_block", 0, 1, grassUvs);
-        CWorldBlock dirt = new CWorldBlock("dirt_block", 1, 2, dirtUvs);
-        CWorldBlock stone = new CWorldBlock("stone_block", 2, 3, stoneUvs);
-        */
+        
+        //CWorldBlock grass = new CWorldBlock("grass_block", 0, 1, grassUvs);
+        //CWorldBlock dirt = new CWorldBlock("dirt_block", 1, 2, dirtUvs);
+        //CWorldBlock stone = new CWorldBlock("stone_block", 2, 3, stoneUvs);
         
         BlockManager.Add(editor);
+        
+        //BlockManager.Add(grass);
+        //BlockManager.Add(dirt);
+        //BlockManager.Add(stone);
+        
+        // Animation
+        new AnimationManager().Start();
 
-        /*
-        BlockManager.Add(grass);
-        BlockManager.Add(dirt);
-        BlockManager.Add(stone);
-        */
-
+        // GameObjects
         PlayerStateMachine player = new PlayerStateMachine();
         PhysicsBody playerPhysics = new PhysicsBody();
         
@@ -159,19 +162,15 @@ public class Game : GameWindow
         _skyboxMesh = new SkyboxMesh();
         
         _skyboxShader = new ShaderProgram("Sky/Default.vert", "Sky/Default.frag");
-        
-        _worldManager.Start();
 
         _shaderProgram = new ShaderProgram("World/Default.vert", "World/Default.frag");
         _textureArray = new Texture("EditorTiles.png");
         
-        _uiManager.Load();
-        _uiManager.Start();
+        // World setup
+        _chunkManager = new ChunkManager();
+        _worldManager = new WorldManager();
         
-        GL.Enable(EnableCap.DepthTest);
-        
-        AnimationController animationController = new AnimationController();
-        animationController.Start();
+        _worldManager.Start();
 
         foreach (GameObject gameObject in GameObjects)
         {
@@ -180,6 +179,8 @@ public class Game : GameWindow
         
         _physicsThread = new Thread(PhysicsThread);
         _physicsThread.Start();
+        
+        GL.Enable(EnableCap.DepthTest);
         
         base.OnLoad();
     }

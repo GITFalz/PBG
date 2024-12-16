@@ -338,10 +338,8 @@ public class Chunk
 
     private static Block? GetBlockAtHeight(float terrainHeight, int currentHeight)
     {
-        /*
-        if (terrainHeight > currentHeight + 2)
-            return new Block(2, 0);
-        */
+        //if (terrainHeight > currentHeight + 2)
+            //return new Block(2, 0);
         
         return new Block(1, 0);
     }

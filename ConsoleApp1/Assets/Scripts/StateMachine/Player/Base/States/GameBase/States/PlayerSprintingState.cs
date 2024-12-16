@@ -11,6 +11,8 @@ public class PlayerSprintingState : PlayerGameBaseState
         
         playerGameState.NextMovingState = playerGameState.SprintingState;
         playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Sprint);
+        
+        AnimationManager.Instance.LoopAnimation("Player", "running");
     }
 
     public override void Update(PlayerGameState playerGameState)
@@ -26,6 +28,12 @@ public class PlayerSprintingState : PlayerGameBaseState
         if (input == Vector2.Zero)
         {
             playerGameState.SwitchState(playerGameState.IdleState);
+            return;
+        }
+        
+        if (InputManager.IsMousePressed(MouseButton.Left))
+        {
+            playerGameState.SwitchState(playerGameState.Attack1State);
             return;
         }
         

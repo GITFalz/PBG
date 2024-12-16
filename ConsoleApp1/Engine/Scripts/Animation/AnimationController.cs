@@ -2,36 +2,35 @@
 
 public class AnimationController
 {
+    public string Name;
+    
     public const float framesPerSecond = 30;
     public const float frameTime = 1 / framesPerSecond;
-    
-    public static AnimationController Instance;
     
     public Dictionary<string, Animation> Animations = new Dictionary<string, Animation>();
 
     private int oldIndex = 0;
     int index = 0;
     float elapsedTime = 0;
-
-    public Animation currentAnimation = new Animation();
     
-    public void Start()
+    public Animation baseAnimation;
+    public Animation? currentAnimation = null;
+    
+    public AnimationMesh mesh;
+    
+    public bool loop = false;
+    
+    public AnimationController(string name)
     {
-        Instance = this;
-
-        Vector3 testPos = new Vector3(0.5f, 0, -1);
-        
-        Animations.Add("test", new Animation());
-        Animation test = Animations["test"];
-        
-        test.Keyframes.Add(new AnimationKeyframe(Vector3.One, (-90, 0, -90), testPos));
-        test.SetKeyframe(2, new AnimationKeyframe(Vector3.One, (-90, 0, -41), (-1, 0, -1)));
-        test.SetKeyframe(6, new AnimationKeyframe(Vector3.One, (-90, 0, 129), (-1, 0, 1)));
-        test.SetKeyframe(8, new AnimationKeyframe(Vector3.One, (-90, 0, 170), (-1, 0, 1)));
+        Name = name;
     }
+    
 
-    public void Update(AnimationMesh mesh, float angle)
+    public bool Update(float angle)
     {
+        if (currentAnimation == null)
+            return false;
+        
         if (!currentAnimation.IsEnd() && currentAnimation.GetFrame(out var keyframe))
         {
             if (keyframe != null)
@@ -40,18 +39,49 @@ public class AnimationController
                 mesh.UpdatePosition(keyframe.Position);
                 mesh.UpdateRotation((0, 1, 0), angle + 180);
             }
+
+            return true;
         }
+        
+        currentAnimation.Reset();
+        
+        if (loop)
+            return true;
+
+        BaseAnimation();
+
+        return false;
     }
 
     public Animation GetAnimation(string name)
     {
         return Animations.TryGetValue(name, out var animation) ? animation : new Animation();
     }
+    
+    public void SetAnimation(Animation animation)
+    {
+        currentAnimation?.Reset();
+        currentAnimation = animation;
+    }
+    
+    public void SetAnimation(string name)
+    {
+        if (Animations.TryGetValue(name, out var animation))
+        {
+            currentAnimation?.Reset();
+            currentAnimation = animation;
+        }
+    }
 
     public static AnimationKeyframe? PlayAnimation(Animation animation)
     {
         animation.GetFrame(out var keyframe);
         return keyframe;
+    }
+    
+    public void BaseAnimation()
+    {
+        currentAnimation = baseAnimation;
     }
 }
 

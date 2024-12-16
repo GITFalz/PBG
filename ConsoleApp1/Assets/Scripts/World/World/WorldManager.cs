@@ -171,7 +171,7 @@ public class WorldManager
             await Task.Run(() =>
             {
                 Block?[] blocks;
-                
+
                 /*
                 if (!chunkData.FolderExists())
                 {

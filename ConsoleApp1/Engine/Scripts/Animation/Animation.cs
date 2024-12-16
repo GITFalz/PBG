@@ -7,16 +7,6 @@ public class Animation
     int index = 0;
     float elapsedTime = 0;
     
-    public void Start()
-    {
-        Vector3 testPos = new Vector3(0.5f, 0, -1);
-        
-        Keyframes.Add(new AnimationKeyframe(Vector3.One, (-90, 0, -90), testPos));
-        SetKeyframe(2, new AnimationKeyframe(Vector3.One, (-90, 0, -41), (-1, 0, -1)));
-        SetKeyframe(6, new AnimationKeyframe(Vector3.One, (-90, 0, 129), (-1, 0, 1)));
-        SetKeyframe(8, new AnimationKeyframe(Vector3.One, (-90, 0, 170), (-1, 0, 1)));
-    }
-    
     public bool GetFrame(out AnimationKeyframe? keyframe)
     {
         keyframe = null;

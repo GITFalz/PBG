@@ -3,9 +3,9 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PhysicsBody : Component
 {
-    public const float GRAVITY = 2f;
-    public const float MAX_FALL_SPEED = 170f;
-    public const float DRAG = 10f;
+    public const float GRAVITY = 1.3f;
+    public const float MAX_FALL_SPEED = 150f;
+    public float DRAG = 1f;
     
     public bool doGravity = false;
     
@@ -31,7 +31,7 @@ public class PhysicsBody : Component
     {
         if (doGravity)
             Gravity();
-        //Drag();
+        Drag();
         CollisionCheck();
         
         transform.Position += Velocity;
@@ -144,10 +144,10 @@ public class PhysicsBody : Component
     {
         Vector3i[] yPositions =
         [
-            Mathf.FloorToInt(Hitbox.CornerX1Y1Z1 + new Vector3(0, -0.5f, 0)),
-            Mathf.FloorToInt(Hitbox.CornerX2Y1Z1 + new Vector3(0, -0.5f, 0)),
-            Mathf.FloorToInt(Hitbox.CornerX2Y1Z2 + new Vector3(0, -0.5f, 0)),
-            Mathf.FloorToInt(Hitbox.CornerX1Y1Z2 + new Vector3(0, -0.5f, 0)),
+            Mathf.FloorToInt(Hitbox.CornerX1Y1Z1 + new Vector3(0, -0.2f, 0)),
+            Mathf.FloorToInt(Hitbox.CornerX2Y1Z1 + new Vector3(0, -0.2f, 0)),
+            Mathf.FloorToInt(Hitbox.CornerX2Y1Z2 + new Vector3(0, -0.2f, 0)),
+            Mathf.FloorToInt(Hitbox.CornerX1Y1Z2 + new Vector3(0, -0.2f, 0)),
         ];
         
         return WorldManager.IsBlockChecks(yPositions);

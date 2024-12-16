@@ -1,6 +1,6 @@
 ﻿using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using Veldrid;
+using MouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
 
 public static class InputManager
 {
@@ -22,6 +22,11 @@ public static class InputManager
     public static bool IsKeyPressed(KeyboardState keyboard, Keys key)
     {
         return keyboard.IsKeyDown(key);
+    }
+    
+    public static bool IsMousePressed(MouseButton button)
+    {
+        return _previousMouseState.IsButtonPressed(button);
     }
     
     public static bool IsKeyPressed(Keys key)

@@ -8,9 +8,7 @@ public class PlayerJumpingState : PlayerGameBaseState
         Console.WriteLine("Entering jumping state");
         
         playerGameState.PlayerStateMachine.physicsBody.doGravity = true;
-        playerGameState.PlayerStateMachine.physicsBody.AddForce(new Vector3(0, 30, 0));
-        
-        AnimationController.Instance.currentAnimation = playerGameState.PlayerStateMachine.currentAnimation;
+        playerGameState.PlayerStateMachine.physicsBody.AddForce(new Vector3(0, 20, 0));
     }
 
     public override void Update(PlayerGameState playerGameState)
@@ -39,6 +37,6 @@ public class PlayerJumpingState : PlayerGameBaseState
 
     public override void Exit(PlayerGameState playerGameState)
     {
-
+        
     }
 }

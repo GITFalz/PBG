@@ -6,6 +6,8 @@ public class PlayerIdleState : PlayerGameBaseState
     public override void Enter(PlayerGameState playerGameState)
     {
         Console.WriteLine("Entering idle state");
+        
+        AnimationManager.Instance.LoopAnimation("Player", "idle");
     }
 
     public override void Update(PlayerGameState playerGameState)
@@ -17,6 +19,12 @@ public class PlayerIdleState : PlayerGameBaseState
         if (input != Vector2.Zero && Game.MoveTest)
         {
             playerGameState.SwitchState(playerGameState.NextMovingState);
+            return;
+        }
+        
+        if (InputManager.IsMousePressed(MouseButton.Left))
+        {
+            playerGameState.SwitchState(playerGameState.Attack1State);
             return;
         }
         

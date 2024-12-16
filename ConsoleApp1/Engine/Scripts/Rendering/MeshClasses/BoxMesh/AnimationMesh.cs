@@ -5,6 +5,7 @@ public class AnimationMesh : BoxMesh
     private VBO _textureVbo;
     
     public Vector3 WorldPosition = Vector3.Zero;
+    public Quaternion LastRotation = Quaternion.Identity;
     
     public AnimationMesh()
     {
@@ -75,9 +76,11 @@ public class AnimationMesh : BoxMesh
         
         _vertVbo = new VBO(_transformedVerts);
         _uvVbo = new VBO(Uvs);
+        _textureVbo = new VBO(TextureIndices);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
         _vao.LinkToVAO(1, 2, _uvVbo);
+        _vao.LinkToVAO(2, 1, _textureVbo);
         
         _ibo = new IBO(Indices);
     }

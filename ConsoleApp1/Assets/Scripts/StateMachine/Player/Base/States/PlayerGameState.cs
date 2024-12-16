@@ -12,6 +12,10 @@ public class PlayerGameState : PlayerBaseState
     public PlayerWalkingState WalkingState = new();
     public PlayerSprintingState SprintingState = new();
     public PlayerJumpingState JumpingState = new();
+    public PlayerAttack1State Attack1State = new();
+    public PlayerAttack2State Attack2State = new();
+    public PlayerAttack3State Attack3State = new();
+    public PlayerAttack4State Attack4State = new();
 
     public PlayerGameBaseState NextMovingState;
     

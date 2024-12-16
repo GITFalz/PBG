@@ -30,6 +30,12 @@ public class PlayerWalkingState : PlayerGameBaseState
             return;
         }
         
+        if (InputManager.IsMousePressed(MouseButton.Left))
+        {
+            playerGameState.SwitchState(playerGameState.Attack1State);
+            return;
+        }
+        
         if (InputManager.IsDown(Keys.Space) && Game.MoveTest)
         {
             playerGameState.SwitchState(playerGameState.JumpingState);
