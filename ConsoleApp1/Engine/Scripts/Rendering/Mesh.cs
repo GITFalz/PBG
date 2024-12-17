@@ -14,7 +14,7 @@ public abstract class Mesh
     public VBO _uvVbo;
     public IBO _ibo;
     
-    public Vector3 Position;
+    public Vector3 Position = Vector3.Zero;
     
     private bool _updateMesh = false;
     

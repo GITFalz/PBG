@@ -9,6 +9,8 @@ public class UI_Button : UI_Base
     public Action OnClick;
     public Action<MouseState> OnHold;
     public Action OnRelease;
+    
+    public UiMesh mesh;
 
     public bool holding = false;
     
@@ -19,7 +21,7 @@ public class UI_Button : UI_Base
         GenerateBaseText();
     }
     
-    public UI_Button(Mesh mesh)
+    public UI_Button(UiMesh mesh)
     {
         name = "UI_Button";
         this.mesh = mesh;
@@ -27,7 +29,7 @@ public class UI_Button : UI_Base
         GenerateBaseText();
     }
     
-    public UI_Button(Mesh mesh, Mesh textMesh)
+    public UI_Button(UiMesh mesh, Mesh textMesh)
     {
         name = "UI_Button";
         this.mesh = mesh;

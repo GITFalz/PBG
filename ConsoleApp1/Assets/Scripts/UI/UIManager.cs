@@ -41,6 +41,9 @@ public class UIManager
     Stopwatch stopwatch = new Stopwatch();
     
     
+    public UiMesh uiMesh = new UiMesh();
+    public TextMesh textMesh = new TextMesh();
+    
     
     public void Load()
     {
@@ -57,13 +60,7 @@ public class UIManager
 
     public void Start()
     {
-        TextMesh textMesh = new TextMesh();
-        UiMesh uiMesh = new UiMesh();
-        
-        
-        RenderUI();
-        
-
+        // Text
         text = new UI_Text(textMesh, 0);
         
         text.SetText("1000", 1f);
@@ -72,7 +69,7 @@ public class UIManager
         text.SetAnchorAlignment(UiAnchorAlignment.TopLeft);
         text.SetAnchorReference(UiAnchor.Absolute);
         
-        
+        /*
         text2 = new UI_Text(textMesh, 4);
         
         text2.SetText("Hello world", 1f);
@@ -80,11 +77,20 @@ public class UIManager
         text2.SetOffset(new Vector4(0, 0, 0, 0));
         text2.SetAnchorAlignment(UiAnchorAlignment.BottomRight);
         text2.SetAnchorReference(UiAnchor.Absolute);
+        */
+        
+        // UI
+        UI_Panel panel = new UI_Panel(uiMesh);
+        
+        panel.SetSize(new Vector2(100, 100));
+        panel.SetAnchorAlignment(UiAnchorAlignment.MiddleCenter);
+        panel.SetAnchorReference(UiAnchor.Absolute);
         
         
         // Add to list
         _ui.AddElement(text);
-        _ui.AddElement(text2);
+        //_ui.AddElement(text2);
+        _ui.AddElement(panel);
         
         _meshes.Add(textMesh);
         _meshes.Add(uiMesh);
@@ -146,13 +152,32 @@ public class UIManager
         //GL.Enable(EnableCap.Blend);
         //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         
-        if (_meshes[1] is not UiMesh uiMesh) return;
+        _uiShader.Bind();
+        _uItexture.Bind();
         
-        UpdateUi(uiMesh);
+        int projectionLoc = GL.GetUniformLocation(_uiShader.ID, "projection");
+        GL.UniformMatrix4(projectionLoc, true, ref OrthographicProjection);
         
-        if (_meshes[0] is not TextMesh textMesh) return;
+        uiMesh.RenderMesh();
         
-        UpdateText(textMesh);
+        _uiShader.Unbind();
+        _uItexture.Unbind();
+        
+        
+        
+        _textShader.Bind();
+        _textTexture.Bind();
+
+        int textProjectionLoc = GL.GetUniformLocation(_textShader.ID, "projection");
+        int textCharsLoc = GL.GetUniformLocation(_textShader.ID, "chars");
+        
+        GL.UniformMatrix4(textProjectionLoc, true, ref OrthographicProjection);
+        GL.Uniform1(textCharsLoc, textMesh.chars.Length, textMesh.chars);
+        
+        textMesh.RenderMesh();
+        
+        _textShader.Unbind();
+        _textTexture.Unbind();
     }
 
     public void OnUpdateFrame(KeyboardState keyboard, MouseState mouse, FrameEventArgs args)
@@ -181,41 +206,12 @@ public class UIManager
 
     private void GenerateMeshes()
     {
+        Console.WriteLine("Generating meshes : " + _meshes.Count);
+        
         foreach (var mesh in _meshes)
         {
             mesh.GenerateBuffers();
         }
-    }
-    
-    private void UpdateUi(UiMesh uiMesh)
-    {
-        _uiShader.Bind();
-        _uItexture.Bind();
-        
-        int projectionLoc = GL.GetUniformLocation(_uiShader.ID, "projection");
-        GL.UniformMatrix4(projectionLoc, true, ref OrthographicProjection);
-        
-        uiMesh.RenderMesh();
-        
-        _uiShader.Unbind();
-        _uItexture.Unbind();
-    }
-
-    private void UpdateText(TextMesh textMesh)
-    {
-        _textShader.Bind();
-        _textTexture.Bind();
-
-        int textProjectionLoc = GL.GetUniformLocation(_textShader.ID, "projection");
-        int textCharsLoc = GL.GetUniformLocation(_textShader.ID, "chars");
-        
-        GL.UniformMatrix4(textProjectionLoc, true, ref OrthographicProjection);
-        GL.Uniform1(textCharsLoc, textMesh.chars.Length, textMesh.chars);
-
-        textMesh.RenderMesh();
-        
-        _textShader.Unbind();
-        _textTexture.Unbind();
     }
 
     public void UpdateFps(int fps)

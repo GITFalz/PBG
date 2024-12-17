@@ -5,8 +5,6 @@ public class UiMesh : Mesh
     public List<int> TextureIndexes;
     
     public VBO _textUvVbo;
-
-    public int[] chars = new int[] { 0, 0, 0, 0, 0, 0 };
     
     public UiMesh()
     {
@@ -16,6 +14,8 @@ public class UiMesh : Mesh
         Uvs = new List<Vector2>();
         Indices = new List<uint>();
         TextureIndexes = new List<int>();
+        
+        transformedVertices = new List<Vector3>();
     }
     
     public override void GenerateBuffers()
@@ -23,8 +23,8 @@ public class UiMesh : Mesh
         _textUvVbo = new VBO(TextureIndexes);
         
         base.GenerateBuffers();
-        
-        _vao.LinkToVAO(2, 2, _textUvVbo);
+
+        _vao.LinkToVAO(2, 1, _textUvVbo);
     }
     
     public override void Delete()

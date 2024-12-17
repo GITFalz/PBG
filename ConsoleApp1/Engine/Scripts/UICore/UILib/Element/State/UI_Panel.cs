@@ -5,12 +5,14 @@ public class UI_Panel : UI_Base
 {
     public Vector2 textureSize = new Vector2(64, 64);
     
+    public UiMesh mesh;
+    
     public UI_Panel()
     {
         name = "UI_Panel";
     }
     
-    public UI_Panel(Mesh mesh)
+    public UI_Panel(UiMesh mesh)
     {
         name = "UI_Panel";
         this.mesh = mesh;

@@ -18,8 +18,9 @@ public class UI
         return Generate9Slice(position, textureWidth, textureHeight, width, height, cellSize, grid, new UiMesh());
     }
 
-    public static Mesh Generate9Slice(Vector3 position, float textureWidth, float textureHeight, float width, float height, float cellSize, Vector4 grid, Mesh mesh)
+    public static UiMesh Generate9Slice(Vector3 position, float textureWidth, float textureHeight, float width, float height, float cellSize, Vector4 grid, UiMesh mesh)
     {
+        /*
         Vector3 offsetX1 = new Vector3(cellSize, 0f, 0f);
         Vector3 offsetX2 = new Vector3(width - cellSize, 0f, 0f);
         
@@ -79,7 +80,12 @@ public class UI
         for (int uv = 0; uv < 9; uv++)
         {
             AddUvs(mesh, uvMaps[uv](x1, x2, y1, y2, middle));
-        }
+            
+            mesh.TextureIndexes.Add(0);
+            mesh.TextureIndexes.Add(0);
+            mesh.TextureIndexes.Add(0);
+            mesh.TextureIndexes.Add(0);
+        }*/
         
         
         return mesh;
