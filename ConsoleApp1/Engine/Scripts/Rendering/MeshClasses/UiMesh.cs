@@ -2,9 +2,12 @@
 
 public class UiMesh : Mesh
 {
-    public List<int> TextureIndexes;
+    public List<Vector2i> TextUvs;
     
     public VBO _textUvVbo;
+
+    public int[] chars = new int[256];
+    public int charCount = 0;
     
     public UiMesh()
     {
@@ -13,18 +16,26 @@ public class UiMesh : Mesh
         Vertices = new List<Vector3>();
         Uvs = new List<Vector2>();
         Indices = new List<uint>();
-        TextureIndexes = new List<int>();
-        
-        transformedVertices = new List<Vector3>();
+        TextUvs = new List<Vector2i>();
     }
     
     public override void GenerateBuffers()
     {
-        _textUvVbo = new VBO(TextureIndexes);
+        //_textUvVbo = new VBO(TextUvs);
         
         base.GenerateBuffers();
-
-        _vao.LinkToVAO(2, 1, _textUvVbo);
+        
+        //_vao.LinkToVAO(2, 2, _textUvVbo);
+    }
+    
+    public override void AddQuad(Vector3 position, Quad quad)
+    {
+        base.AddQuad(position, quad);
+        
+        foreach(Vector2i uv in quad.TextureUvs)
+        {
+            TextUvs.Add(uv);
+        }
     }
     
     public override void Delete()
@@ -33,4 +44,38 @@ public class UiMesh : Mesh
         
         base.Delete();
     }
+    
+    /*
+    //public List<int> TextureIndexes;
+    
+    //public VBO _textUvVbo;
+    
+    public UiMesh()
+    {
+        _vao = new VAO();
+        
+        Vertices = new List<Vector3>();
+        Uvs = new List<Vector2>();
+        Indices = new List<uint>();
+        //TextureIndexes = new List<int>();
+        
+        transformedVertices = new List<Vector3>();
+    }
+    
+    public override void GenerateBuffers()
+    {
+        //_textUvVbo = new VBO(TextureIndexes);
+        
+        base.GenerateBuffers();
+
+        //_vao.LinkToVAO(2, 1, _textUvVbo);
+    }
+    
+    public override void Delete()
+    {
+        //_textUvVbo.Delete();
+        
+        base.Delete();
+    }
+    */
 }

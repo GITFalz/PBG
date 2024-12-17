@@ -20,6 +20,50 @@ public class UI
 
     public static UiMesh Generate9Slice(Vector3 position, float textureWidth, float textureHeight, float width, float height, float cellSize, Vector4 grid, UiMesh mesh)
     {
+        //mesh.AddQuad(position, MeshHelper.GenerateTextQuad(100, 100, 0, 0, 0));
+        //return mesh;
+
+        //Quad quad = new Quad(new Vector3[] { new Vector3(0, 0, 0), new Vector3(0, height, 0), new Vector3(width, height, 0), new Vector3(width, 0, 0) }, new int[] { 0, 0, 0, 0 });
+        
+        mesh.Indices.Add(0);
+        mesh.Indices.Add(1);
+        mesh.Indices.Add(2);
+        mesh.Indices.Add(2);
+        mesh.Indices.Add(3);
+        mesh.Indices.Add(0);
+        
+        mesh.Vertices.Add(new Vector3(0, 0, 0) + position);
+        mesh.Vertices.Add(new Vector3(0, height, 0) + position);
+        mesh.Vertices.Add(new Vector3(width, height, 0) + position);
+        mesh.Vertices.Add(new Vector3(width, 0, 0) + position);
+        
+        mesh.Uvs.Add(new Vector2(0, 0));
+        mesh.Uvs.Add(new Vector2(0, 1));
+        mesh.Uvs.Add(new Vector2(1, 1));
+        mesh.Uvs.Add(new Vector2(1, 0));
+        
+        //mesh.TextUvs.Add(new Vector2i(0, 0));
+        //mesh.TextUvs.Add(new Vector2i(0, 0));
+        //mesh.TextUvs.Add(new Vector2i(0, 0));
+        //mesh.TextUvs.Add(new Vector2i(0, 0));
+        
+        //GenerateBasicQuad(position, 100, mesh);
+        //AddUvs(mesh, [(0, 0), (0.0f, 0), (0.0f, 0.0f), (0, 0.0f)]);
+        
+        /*
+        Vector2i[] uvs = new Vector2i[4]
+        {
+            new Vector2i(0, 0),
+            new Vector2i(0, 0),
+            new Vector2i(0, 0),
+            new Vector2i(0, 0),
+        };
+        
+        quad.TextureUvs = uvs;
+        
+        mesh.AddQuad(position, quad);
+        
+        
         /*
         Vector3 offsetX1 = new Vector3(cellSize, 0f, 0f);
         Vector3 offsetX2 = new Vector3(width - cellSize, 0f, 0f);
@@ -36,7 +80,6 @@ public class UI
         float middle = 1f - x1 - x2;
         
         //Bottom left corner
-        GenerateBasicQuad(position, cellSize, mesh);
         
         //Bottom center
         float sideWidth = width - cellSize * 2;
@@ -85,8 +128,8 @@ public class UI
             mesh.TextureIndexes.Add(0);
             mesh.TextureIndexes.Add(0);
             mesh.TextureIndexes.Add(0);
-        }*/
-        
+        }
+        */
         
         return mesh;
     }
@@ -210,9 +253,9 @@ public class UI
     private static readonly List<Vector3> quad = new List<Vector3>
     {
         new Vector3(0f, 0f, 0f), 
-        new Vector3(1f, 0f, 0f), 
+        new Vector3(0f, 1f, 0f), 
         new Vector3(1f, 1f, 0f), 
-        new Vector3(0f, 1f, 0f) 
+        new Vector3(1f, 0f, 0f) 
     };
     
     private static readonly Func<float, float, Vector3>[] quadFunc = new Func<float, float, Vector3>[]

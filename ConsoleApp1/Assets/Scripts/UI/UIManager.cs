@@ -69,7 +69,6 @@ public class UIManager
         text.SetAnchorAlignment(UiAnchorAlignment.TopLeft);
         text.SetAnchorReference(UiAnchor.Absolute);
         
-        /*
         text2 = new UI_Text(textMesh, 4);
         
         text2.SetText("Hello world", 1f);
@@ -77,12 +76,13 @@ public class UIManager
         text2.SetOffset(new Vector4(0, 0, 0, 0));
         text2.SetAnchorAlignment(UiAnchorAlignment.BottomRight);
         text2.SetAnchorReference(UiAnchor.Absolute);
-        */
+        
         
         // UI
         UI_Panel panel = new UI_Panel(uiMesh);
         
         panel.SetSize(new Vector2(100, 100));
+        panel.SetOffset(new Vector4(0, 0, 200, 0));
         panel.SetAnchorAlignment(UiAnchorAlignment.MiddleCenter);
         panel.SetAnchorReference(UiAnchor.Absolute);
         
@@ -149,8 +149,8 @@ public class UIManager
     
     public void OnRenderFrame(FrameEventArgs args)
     {
-        //GL.Enable(EnableCap.Blend);
-        //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+        GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         
         _uiShader.Bind();
         _uItexture.Bind();

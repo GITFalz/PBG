@@ -20,6 +20,7 @@ public class UI_Panel : UI_Base
     
     public override void RenderUI()
     {
+        //mesh.AddQuad(position, MeshHelper.GenerateTextQuad(size.X, size.Y, 0, memSize, memPos));
         Align();
         UI.Generate9Slice(position, textureSize.X, textureSize.Y, size.X, size.Y, 10f, new Vector4(10f, 10f, 10f, 10f), mesh);
     }
