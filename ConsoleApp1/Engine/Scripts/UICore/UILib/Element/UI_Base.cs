@@ -5,14 +5,14 @@ using Vortice.Mathematics;
 public abstract class UI_Base : Component
 {
     protected static readonly Vector3 TextOffset = new Vector3(0, 0, 0.001f);
-     
-    public int memPos = 0;
-    public int memSize = 1;
     
     public UI_Base? parent;
     
     public Vector3 position = Vector3.Zero;
+    
     public Vector2 size = new Vector2(100, 100);
+    public Vector2 halfSize = new Vector2(50, 50);
+    
     public Vector4 offset = Vector4.Zero;
     
     public Vector4 baseOffset = Vector4.Zero;
@@ -20,13 +20,13 @@ public abstract class UI_Base : Component
     
     public UiAnchor anchor = UiAnchor.Absolute;
     public UiAnchorAlignment anchorAlignment = UiAnchorAlignment.MiddleCenter;
-
-    protected Mesh mesh;
     
     
     public virtual void SetSize(Vector2 s)
     {
         baseSize = s;
+        size = s;
+        halfSize = s / 2;
     }
     
     public void SetOffset(Vector4 offset)
@@ -48,28 +48,6 @@ public abstract class UI_Base : Component
     {
         parent = p;
     }
-    
-    public void SetMesh(Mesh m)
-    {
-        mesh = m;
-    }
-
-
-    public virtual void SetMem(int pos)
-    {
-        memPos = pos;
-    }
-
-    public virtual int GetNextMem()
-    {
-        return memPos + memSize;
-    }
-    
-    public virtual int GetMemSize()
-    {
-        return memSize;
-    }
-
 
     protected override void OnResize()
     {
@@ -79,19 +57,22 @@ public abstract class UI_Base : Component
     public virtual void RenderUI() { }
     public virtual void RenderText() { }
 
-    protected void Align()
+    protected virtual void Align()
     {
         if (parent != null && anchor == UiAnchor.Relative)
         {
             offset = baseOffset + parent.baseOffset;
             size = sizes[anchorAlignment](parent.size.X, parent.size.Y, baseSize, offset);
             position = positions[anchorAlignment](parent.size.X, parent.size.Y, size, offset) + parent.position + TextOffset;
+            return;
         }
-        else
+        
+        if (anchor == UiAnchor.Absolute)
         {
             offset = baseOffset;
             size = sizes[anchorAlignment](Game.width, Game.height, baseSize, offset);
-            position = positions[anchorAlignment](Game.width, Game.height, size, offset);
+            position = positions[anchorAlignment](Game.width, Game.height, size, offset) + TextOffset;
+            return;
         }
     }
     
@@ -135,7 +116,8 @@ public abstract class UI_Base : Component
 public enum UiAnchor
 {
     Absolute,
-    Relative
+    Relative,
+    Free,
 }
 
 public enum UiAnchorAlignment

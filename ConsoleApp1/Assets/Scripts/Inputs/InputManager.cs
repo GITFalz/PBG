@@ -67,6 +67,11 @@ public static class InputManager
         return pressedKeys;
     }
     
+    public static Vector2 GetMousePosition()
+    {
+        return new Vector2(_previousMouseState.X, _previousMouseState.Y);
+    }
+    
     
     //Player Inputs
     public static Vector2 GetMovementInput()

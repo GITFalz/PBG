@@ -46,28 +46,6 @@ public class MeshData
 
         return true;
     }
-    
-    public bool MoveElement(UI_Base element, Vector2 offset)
-    {
-        for (int i = 0; i < element.GetMemSize(); i++)
-        {
-            if (!MoveQuad(element.memPos + i, new Vector3(offset.X, offset.Y, 0)))
-                return false;
-        }
-
-        return true;
-    }
-    
-    public bool MoveElementTo(UI_Base element, Vector2 position)
-    {
-        for (int i = 0; i < element.GetMemSize(); i++)
-        {
-            if (!MoveQuadToXy(element.memPos + i, position))
-                return false;
-        }
-
-        return true;
-    }
 
     public void RemoveQuadAtIndex(int i)
     {

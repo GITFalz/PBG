@@ -1,95 +1,40 @@
 ﻿using OpenTK.Mathematics;
 
-public class UI_Text : UI_Base
+public abstract class UI_Text : UI_Base
 {
     public string text = "";
+    protected float fontSize;
+    protected char[] textArray = [];
+    protected int _charCount;
     
-    private float fontSize;
-    private char[] textArray = [];
-    private int charCount;
+    protected DynamicTextMesh mesh;
 
-    private Vector2 textSize;
+    protected Vector2 textSize;
     
-    private Vector3 _textPosition;
-    private Vector3 _lastPosition;
+    protected Vector3 _textPosition;
+    protected Vector3 _lastPosition;
 
-    private Vector3 _textOffset = new Vector3(0, 0, 0);
+    protected Vector3 _textOffset = new Vector3(0, 0, 0);
     
-    private UiAnchorAlignment _textAlignment = UiAnchorAlignment.MiddleCenter;
+    protected UiAnchorAlignment _textAlignment = UiAnchorAlignment.MiddleCenter;
     
-    public UI_Text()
-    {
-        name = "UI_Text";
-    }
-    
-    public UI_Text(TextMesh mesh)
-    {
-        name = "UI_Text";
-        this.mesh = mesh;
-    }
-    
-    public UI_Text(TextMesh mesh, int memPos)
-    {
-        name = "UI_Text";
-        this.mesh = mesh;
-        this.memPos = memPos;
-    }
-
-    public void SetText(string text, float fontSize)
-    {
-        this.text = text;
-        this.fontSize = fontSize;
-        textArray = text.ToCharArray();
-        charCount = textArray.Length;
-        
-        memSize = textArray.Length;
-        
-        baseSize = new Vector2(20 * charCount, 20);
-        
-        if (mesh is TextMesh textMesh)
-        {
-            for (int i = 0; i < memSize; i++)
-            {
-                textMesh.chars[i + memPos] = TextShaderHelper.CharPosition[textArray[i]];
-            }
-        }
-    }
-    
-    public void SetTextAlignment(UiAnchorAlignment alignment)
-    {
-        _textAlignment = alignment;
-    }
-    
-    public override void RenderText()
-    {
-        Align();
-        AlignText();
-
-        mesh.AddQuad(position, MeshHelper.GenerateTextQuad(size.X, size.Y, 0, memSize, memPos));
-    }
-
-    private void AlignText()
-    {
-        if (!TextAlignment.TryGetValue(_textAlignment, out var value)) return;
-
-        value(this);
-        
-        _textPosition = position + _textOffset;
-    }
+    public abstract void SetText(string text, float fontSize);
+    public abstract void SetMesh(TextMesh mesh);
+    public abstract void SetTextAlignment(UiAnchorAlignment alignment);
     
     #region Text Alignment Functions
     
-    private float GetTextWidth() { return memSize * 7 * fontSize; }
-    private float GetTextHeight() { return 9 * fontSize; }
-    private Vector2 GetTextSize() { return new Vector2(GetTextWidth(), GetTextHeight()); }
+    protected float GetTextWidth() { return _charCount * 7 * fontSize; }
+    protected float GetTextHeight() { return 9 * fontSize; }
+    protected Vector2 GetTextSize() { return new Vector2(GetTextWidth(), GetTextHeight()); }
     
-    private float GetOffsetX() { return (size.X - baseSize.X) / 2; } 
-    private float GetOffsetXEnd() { return size.X - baseSize.X; } 
-    private float GetOffsetY() { return (size.Y - baseSize.Y) / 2; }
-    private float GetOffsetYEnd() { return size.Y - baseSize.Y; }
+    protected float GetOffsetX() { return (size.X - textSize.X) / 2; } 
+    protected float GetOffsetXEnd() { return size.X - textSize.X; } 
+    protected float GetOffsetY() { return (size.Y - textSize.Y) / 2; }
+    protected float GetOffsetYEnd() { return size.Y - textSize.Y; }
 
 
-    private static readonly Dictionary<UiAnchorAlignment, Action<UI_Text>> TextAlignment = new Dictionary<UiAnchorAlignment, Action<UI_Text>>
+    protected static readonly Dictionary<UiAnchorAlignment, Action<UI_DynamicText>> TextAlignment = new Dictionary<UiAnchorAlignment, Action<UI_DynamicText>>
     {
         { UiAnchorAlignment.TopLeft, (t) => t._textOffset =      new Vector3(0,                 0,                 0) },
         { UiAnchorAlignment.TopCenter, (t) => t._textOffset =    new Vector3(t.GetOffsetX(),    0,                 0) },

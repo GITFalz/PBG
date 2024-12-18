@@ -29,6 +29,9 @@ public class PhysicsBody : Component
     
     public override void FixedUpdate()
     {
+        if (!Game.MoveTest)
+            return;
+        
         if (doGravity)
             Gravity();
         Drag();

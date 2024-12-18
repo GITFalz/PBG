@@ -1,15 +1,17 @@
 ﻿using OpenTK.Mathematics;
 
-public class TextMesh : Mesh
+public class StaticTextMesh : TextMesh
 {
     public List<Vector2i> TextUvs;
     
     public VBO _textUvVbo;
+    public TBO _textTbo;
 
-    public int[] chars = new int[256];
+    public List<int> chars = new List<int>();
+    public int elementCount = 0;
     public int charCount = 0;
     
-    public TextMesh()
+    public StaticTextMesh()
     {
         _vao = new VAO();
         
@@ -22,6 +24,7 @@ public class TextMesh : Mesh
     public override void GenerateBuffers()
     {
         _textUvVbo = new VBO(TextUvs);
+        _textTbo = new TBO(chars);
         
         base.GenerateBuffers();
         
@@ -36,6 +39,30 @@ public class TextMesh : Mesh
         {
             TextUvs.Add(uv);
         }
+    }
+    
+    public void MoveUiElement(int index, Vector3 position)
+    {
+        index *= 4;
+        
+        for (int i = 0; i < 4; i++)
+        {
+            transformedVertices[index + i] = Vertices[index + i] + position;
+        }
+        
+        UpdateMesh();
+    }
+
+    public override void RenderMesh()
+    {
+        _textTbo.Bind();
+        base.RenderMesh();
+    }
+
+    public override void UpdateMesh()
+    {
+        _textTbo.Update(chars);
+        base.UpdateMesh();
     }
     
     public override void Delete()

@@ -18,7 +18,7 @@ public class UIManager
     private ShaderProgram _textShader;
     private Texture _textTexture;
     
-    private UI_Text text;
+    private UI_StaticText text;
     private UI_Text text2;
     
     
@@ -42,7 +42,12 @@ public class UIManager
     
     
     public UiMesh uiMesh = new UiMesh();
-    public TextMesh textMesh = new TextMesh();
+ 
+    public StaticTextMesh textMesh = new StaticTextMesh();
+    public DynamicTextMesh dynamicTextMesh = new DynamicTextMesh();
+    
+    
+    private Vector2 _buttonOldMousePosition;
     
     
     public void Load()
@@ -61,44 +66,52 @@ public class UIManager
     public void Start()
     {
         // Text
-        text = new UI_Text(textMesh, 0);
-        
-        text.SetText("1000", 1f);
+        text = new UI_StaticText(textMesh, "10000", 1.5f);
         
         text.SetOffset(new Vector4(0, 0, 0, 0));
         text.SetAnchorAlignment(UiAnchorAlignment.TopLeft);
         text.SetAnchorReference(UiAnchor.Absolute);
         
-        text2 = new UI_Text(textMesh, 4);
-        
-        text2.SetText("Hello world", 1f);
-        
-        text2.SetOffset(new Vector4(0, 0, 0, 0));
-        text2.SetAnchorAlignment(UiAnchorAlignment.BottomRight);
-        text2.SetAnchorReference(UiAnchor.Absolute);
-        
         
         // UI
-        UI_Panel panel = new UI_Panel(uiMesh);
+        UI_DynamicButton panel = new UI_DynamicButton(uiMesh, dynamicTextMesh);
         
-        panel.SetSize(new Vector2(300, 200));
+        panel.SetSize(new Vector2(150, 70));
         panel.SetOffset(new Vector4(0, 0, 200, 0));
         panel.SetAnchorAlignment(UiAnchorAlignment.MiddleCenter);
-        panel.SetAnchorReference(UiAnchor.Absolute);
+        panel.SetAnchorReference(UiAnchor.Free);
+        
+        panel.OnClick = () =>
+        {
+            _buttonOldMousePosition = InputManager.GetMousePosition();
+            Console.WriteLine("Clicked");
+        };
+        
+        panel.OnHold = (mouse) =>
+        {
+            if ((InputManager.GetMousePosition() - _buttonOldMousePosition).Length < 0.1f)
+                return;
+            
+            panel.position = new Vector3(mouse.X - panel.size.X, mouse.Y - panel.size.Y, 0);
+            Vector3 center = new Vector3(panel.position.X + panel.halfSize.X, panel.position.Y + panel.halfSize.Y, 0);
+            
+            panel.UpdatePosition(center);
+            panel.text.UpdatePosition(center);
+        };
         
         
         // Add to list
         _ui.AddElement(text);
-        //_ui.AddElement(text2);
         _ui.AddElement(panel);
         
         _meshes.Add(textMesh);
+        _meshes.Add(dynamicTextMesh);
         _meshes.Add(uiMesh);
         
         GenerateMeshes();
         
-        RenderText();
-        RenderUI();
+        //RenderText();
+        //RenderUI();
     }
 
     public void OnResize()
@@ -163,18 +176,17 @@ public class UIManager
         _uiShader.Unbind();
         _uItexture.Unbind();
         
-        
-        
         _textShader.Bind();
         _textTexture.Bind();
 
         int textProjectionLoc = GL.GetUniformLocation(_textShader.ID, "projection");
-        int textCharsLoc = GL.GetUniformLocation(_textShader.ID, "chars");
+        int charsLoc = GL.GetUniformLocation(_textShader.ID, "charBuffer");
         
         GL.UniformMatrix4(textProjectionLoc, true, ref OrthographicProjection);
-        GL.Uniform1(textCharsLoc, textMesh.chars.Length, textMesh.chars);
+        GL.Uniform1(charsLoc, 0);
         
         textMesh.RenderMesh();
+        dynamicTextMesh.RenderMesh();
         
         _textShader.Unbind();
         _textTexture.Unbind();
@@ -206,8 +218,6 @@ public class UIManager
 
     private void GenerateMeshes()
     {
-        Console.WriteLine("Generating meshes : " + _meshes.Count);
-        
         foreach (var mesh in _meshes)
         {
             mesh.GenerateBuffers();
@@ -218,13 +228,13 @@ public class UIManager
     {
         string t = fps.ToString();
 
-        int miss = 4 - t.Length;
+        int miss = 5 - t.Length;
             
         for (int i = 0; i < miss; i++)
         {
             t += " ";
         }
             
-        text.SetText(t, 1);
+        text.UpdateTextWithSameLength(t);
     }
 }

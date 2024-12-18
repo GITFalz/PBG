@@ -20,12 +20,12 @@ public abstract class Mesh
     
     public virtual void GenerateBuffers()
     {
-        //for (int i = 0; i < Vertices.Count; i++)
-        //{
-        //    transformedVertices.Add(Vertices[i] + Position);
-        //}
+        foreach (var t in Vertices)
+        {
+            transformedVertices.Add(t + Position);
+        }
         
-        _vertVbo = new VBO(Vertices);
+        _vertVbo = new VBO(transformedVertices);
         _uvVbo = new VBO(Uvs);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
@@ -50,7 +50,7 @@ public abstract class Mesh
     
     public virtual void UpdateMesh()
     {
-        _vertVbo.Update(Vertices);
+        _vertVbo.Update(transformedVertices);
     }
     
     public virtual void AddQuad(Vector3 position, Quad quad)

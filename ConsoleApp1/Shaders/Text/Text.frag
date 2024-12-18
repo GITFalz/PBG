@@ -6,7 +6,7 @@ flat in ivec2 Length;
 out vec4 FragColor;
 
 uniform sampler2D texture0;
-uniform int chars[256];
+uniform isamplerBuffer charBuffer;
 
 const float charSize = 1.0 / 20.0;
 
@@ -15,7 +15,8 @@ void main()
     float sizeX = Length.x;
     float sizeY = 1;
 
-    int char = chars[int(TexCoord.x * sizeX) + Length.y];
+    int index = int(TexCoord.x * Length.x) + Length.y;
+    int char = texelFetch(charBuffer, index).r;
 
     if (TexCoord.x > (1 / sizeX) * Length.x || TexCoord.y > (1 / sizeY) || char == -1)
     discard;
@@ -37,6 +38,16 @@ void main()
     discard;
 
     FragColor = texColor;
+
+    /*
+    int index = int(TexCoord.x * Length.x) + Length.y;
+    int charIndex = texelFetch(charBuffer, index).r;
+
+    float color = 0;
     
-    //FragColor = vec4(1.0, 0, 1.0, 1.0);
+    if (charIndex < 395)
+        color = charIndex / 400.0;
+
+    FragColor = vec4(color, 0, 0, 1);
+    */
 }

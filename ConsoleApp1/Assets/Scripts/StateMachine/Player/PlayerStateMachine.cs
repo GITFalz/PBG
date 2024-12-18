@@ -107,6 +107,9 @@ public class PlayerStateMachine : Updateable
 
     public override void Update(FrameEventArgs args)
     {
+        if (!Game.MoveTest)
+            return;
+            
         _swordMesh.WorldPosition = transform.Position + new Vector3(0, 1f, 0);
         _playerMesh.WorldPosition = transform.Position;
         
@@ -115,7 +118,7 @@ public class PlayerStateMachine : Updateable
         
         if (InputManager.IsKeyPressed(Keys.M))
             physicsBody.doGravity = !physicsBody.doGravity;
-
+        
         _currentState.Update(this);
         PlayerData.Position = transform.Position + new Vector3(.5f, 1f, .5f);
         
@@ -136,6 +139,9 @@ public class PlayerStateMachine : Updateable
     
     public override void FixedUpdate()
     {
+        if (!Game.MoveTest)
+            return;
+        
         _currentState.FixedUpdate(this);
     }
 

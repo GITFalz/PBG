@@ -61,12 +61,12 @@ public class UIController
     
     public void AddElement(UI_Base element)
     {
-        element.SetMem(uiElements.Count == 0 ? 0 : uiElements[^1].GetNextMem());
-
         uiElements.Add(element);
         
         if (element is UI_Button button)
+        {
             buttons.Add(button);
+        }
     }
     
     public List<UI_Base> GetElements()
