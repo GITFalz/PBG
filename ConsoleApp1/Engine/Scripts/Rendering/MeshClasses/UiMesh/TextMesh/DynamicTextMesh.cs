@@ -67,8 +67,6 @@ public class DynamicTextMesh : TextMesh
         {
             transformedVertices[i] = Vertices[i] + position;
         }
-
-        UpdateMesh();
     }
 
     public override void UpdateMesh()

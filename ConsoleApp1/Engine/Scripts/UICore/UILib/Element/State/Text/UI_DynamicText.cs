@@ -59,7 +59,7 @@ public class UI_DynamicText : UI_Text
     {
         Align();
         AlignText();
-        mesh.SetQuad(position, MeshHelper.GenerateTextQuad(textSize.X, textSize.Y, 0, _charCount, 0));
+        mesh.SetQuad(_textPosition, MeshHelper.GenerateTextQuad(textSize.X, textSize.Y, 0, _charCount, 0));
     }
     
     public void UpdateText(string text)
@@ -75,9 +75,7 @@ public class UI_DynamicText : UI_Text
     
     public void UpdatePosition(Vector3 position)
     {
-        this.position = position;
-        AlignText();
-        mesh.MoveUiElement(_textPosition);
+        mesh.MoveUiElement(position);
     }
 
     private void AlignText()

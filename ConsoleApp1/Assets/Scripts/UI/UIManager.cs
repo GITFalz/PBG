@@ -108,10 +108,10 @@ public class UIManager
         _meshes.Add(dynamicTextMesh);
         _meshes.Add(uiMesh);
         
-        GenerateMeshes();
+        RenderText();
+        RenderUI();
         
-        //RenderText();
-        //RenderUI();
+        GenerateMeshes();
     }
 
     public void OnResize()

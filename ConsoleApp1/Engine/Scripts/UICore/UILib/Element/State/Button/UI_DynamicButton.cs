@@ -53,8 +53,6 @@ public class UI_DynamicButton : UI_Button
     {
         Align();
         UI.Generate9Slice(position, textureSize.X, textureSize.Y, size.X, size.Y, 10f, new Vector4(10f, 10f, 10f, 10f), mesh);
-        _index = mesh.elementCount;
-        mesh.elementCount++;
     }
     
     public override void RenderText()
@@ -65,7 +63,7 @@ public class UI_DynamicButton : UI_Button
     public void UpdatePosition(Vector3 position)
     {
         this.position = position;
-        mesh.MoveUiElement(_index, position);
+        mesh.MoveUiElement(0, position);
     }
 
 
