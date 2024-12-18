@@ -51,7 +51,7 @@ void main()
 {
     /*
     float depth = logisticDepth(gl_FragCoord.z, 0.01, 100);
-    //FragColor = vec4(depth, depth, depth, 1.0);
+    FragColor = vec4(depth, depth, depth, 1.0);
     
     if (depth > 0.9)
         discard;
@@ -68,4 +68,9 @@ void main()
         discard;
     
     FragColor = texColor;
+    
+    /*
+    float coord = (TexCoord.x + TexCoord.y) / 16;
+    FragColor = vec4(coord, coord, coord, 1.0);
+    */
 }

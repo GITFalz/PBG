@@ -2,7 +2,7 @@
 
 public class UiMesh : Mesh
 {
-    public List<Vector2i> TextUvs;
+    public List<int> TextUvs;
     
     public VBO _textUvVbo;
 
@@ -16,16 +16,16 @@ public class UiMesh : Mesh
         Vertices = new List<Vector3>();
         Uvs = new List<Vector2>();
         Indices = new List<uint>();
-        TextUvs = new List<Vector2i>();
+        TextUvs = new List<int>();
     }
     
     public override void GenerateBuffers()
     {
-        //_textUvVbo = new VBO(TextUvs);
+        _textUvVbo = new VBO(TextUvs);
         
         base.GenerateBuffers();
         
-        //_vao.LinkToVAO(2, 2, _textUvVbo);
+        _vao.LinkToVAO(2, 1, _textUvVbo);
     }
     
     public override void AddQuad(Vector3 position, Quad quad)
@@ -34,7 +34,7 @@ public class UiMesh : Mesh
         
         foreach(Vector2i uv in quad.TextureUvs)
         {
-            TextUvs.Add(uv);
+            TextUvs.Add(uv.X);
         }
     }
     

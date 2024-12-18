@@ -25,6 +25,7 @@ public class UI
 
         //Quad quad = new Quad(new Vector3[] { new Vector3(0, 0, 0), new Vector3(0, height, 0), new Vector3(width, height, 0), new Vector3(width, 0, 0) }, new int[] { 0, 0, 0, 0 });
         
+        /*
         mesh.Indices.Add(0);
         mesh.Indices.Add(1);
         mesh.Indices.Add(2);
@@ -42,29 +43,13 @@ public class UI
         mesh.Uvs.Add(new Vector2(1, 1));
         mesh.Uvs.Add(new Vector2(1, 0));
         
-        //mesh.TextUvs.Add(new Vector2i(0, 0));
-        //mesh.TextUvs.Add(new Vector2i(0, 0));
-        //mesh.TextUvs.Add(new Vector2i(0, 0));
-        //mesh.TextUvs.Add(new Vector2i(0, 0));
-        
-        //GenerateBasicQuad(position, 100, mesh);
-        //AddUvs(mesh, [(0, 0), (0.0f, 0), (0.0f, 0.0f), (0, 0.0f)]);
-        
-        /*
-        Vector2i[] uvs = new Vector2i[4]
-        {
-            new Vector2i(0, 0),
-            new Vector2i(0, 0),
-            new Vector2i(0, 0),
-            new Vector2i(0, 0),
-        };
-        
-        quad.TextureUvs = uvs;
-        
-        mesh.AddQuad(position, quad);
+        mesh.TextUvs.Add(0);
+        mesh.TextUvs.Add(0);
+        mesh.TextUvs.Add(0);
+        mesh.TextUvs.Add(0);
+        */
         
         
-        /*
         Vector3 offsetX1 = new Vector3(cellSize, 0f, 0f);
         Vector3 offsetX2 = new Vector3(width - cellSize, 0f, 0f);
         
@@ -80,56 +65,190 @@ public class UI
         float middle = 1f - x1 - x2;
         
         //Bottom left corner
+        mesh.Indices.Add(0);
+        mesh.Indices.Add(1);
+        mesh.Indices.Add(2);
+        mesh.Indices.Add(2);
+        mesh.Indices.Add(3);
+        mesh.Indices.Add(0);
+        
+        mesh.Vertices.Add(new Vector3(0, 0, 0) + position + offsetY2);
+        mesh.Vertices.Add(new Vector3(0, cellSize, 0) + position + offsetY2);
+        mesh.Vertices.Add(new Vector3(cellSize, cellSize, 0) + position + offsetY2);
+        mesh.Vertices.Add(new Vector3(cellSize, 0, 0) + position + offsetY2);
+        
+        mesh.Uvs.Add(new Vector2(0, 1 - y1));
+        mesh.Uvs.Add(new Vector2(0, 1));
+        mesh.Uvs.Add(new Vector2(x1, 1));
+        mesh.Uvs.Add(new Vector2(x1, 1 - y1));
+        
         
         //Bottom center
         float sideWidth = width - cellSize * 2;
         float sideHeight = cellSize;
-
-        GenerateQuad(position + offsetX1, sideWidth, sideHeight, mesh);
+        
+        mesh.Indices.Add(0 + 4);
+        mesh.Indices.Add(1 + 4);
+        mesh.Indices.Add(2 + 4);
+        mesh.Indices.Add(2 + 4);
+        mesh.Indices.Add(3 + 4);
+        mesh.Indices.Add(0 + 4);
+        
+        mesh.Vertices.Add(new Vector3(0, 0, 0) + position + offsetX1 + offsetY2);
+        mesh.Vertices.Add(new Vector3(0, sideHeight, 0) + position + offsetX1 + offsetY2);
+        mesh.Vertices.Add(new Vector3(sideWidth, sideHeight, 0) + position + offsetX1 + offsetY2);
+        mesh.Vertices.Add(new Vector3(sideWidth, 0, 0) + position + offsetX1 + offsetY2);
+        
+        mesh.Uvs.Add(new Vector2(x1, 1 - y1));
+        mesh.Uvs.Add(new Vector2(x1, 1));
+        mesh.Uvs.Add(new Vector2(1 - x2, 1));
+        mesh.Uvs.Add(new Vector2(1 - x2, 1 - y1));
         
         //Bottom right corner
-        GenerateBasicQuad(position + offsetX2, cellSize, mesh);
+        mesh.Indices.Add(0 + 8);
+        mesh.Indices.Add(1 + 8);
+        mesh.Indices.Add(2 + 8);
+        mesh.Indices.Add(2 + 8);
+        mesh.Indices.Add(3 + 8);
+        mesh.Indices.Add(0 + 8);
+       
+        mesh.Vertices.Add(new Vector3(0, 0, 0) + position + offsetX2 + offsetY2);
+        mesh.Vertices.Add(new Vector3(0, cellSize, 0) + position + offsetX2 + offsetY2);
+        mesh.Vertices.Add(new Vector3(cellSize, cellSize, 0) + position + offsetX2 + offsetY2);
+        mesh.Vertices.Add(new Vector3(cellSize, 0, 0) + position + offsetX2 + offsetY2);
+       
+        mesh.Uvs.Add(new Vector2(1 - x2, 1 - y1));
+        mesh.Uvs.Add(new Vector2(1 - x2, 1));
+        mesh.Uvs.Add(new Vector2(1, 1));
+        mesh.Uvs.Add(new Vector2(1, 1 - y1));
         
         //Middle left
         sideWidth = cellSize;
         sideHeight = height - cellSize * 2;
         
-        GenerateQuad(position + offsetY1, sideWidth, sideHeight, mesh);
+        mesh.Indices.Add(0 + 12);
+        mesh.Indices.Add(1 + 12);
+        mesh.Indices.Add(2 + 12);
+        mesh.Indices.Add(2 + 12);
+        mesh.Indices.Add(3 + 12);
+        mesh.Indices.Add(0 + 12);
+       
+        mesh.Vertices.Add(new Vector3(0, 0, 0) + position + offsetY1);
+        mesh.Vertices.Add(new Vector3(0, sideHeight, 0) + position + offsetY1);
+        mesh.Vertices.Add(new Vector3(sideWidth, sideHeight, 0) + position + offsetY1);
+        mesh.Vertices.Add(new Vector3(sideWidth, 0, 0) + position + offsetY1);
+       
+        mesh.Uvs.Add(new Vector2(0, y2));
+        mesh.Uvs.Add(new Vector2(0, 1 - y1));
+        mesh.Uvs.Add(new Vector2(x1, 1 - y1));
+        mesh.Uvs.Add(new Vector2(x1, y2));
         
         //Middle center
         sideWidth = width - cellSize * 2;
         sideHeight = height - cellSize * 2;
         
-        GenerateQuad(position + offsetX1 + offsetY1, sideWidth, sideHeight, mesh);
+        mesh.Indices.Add(0 + 16);
+        mesh.Indices.Add(1 + 16);
+        mesh.Indices.Add(2 + 16);
+        mesh.Indices.Add(2 + 16);
+        mesh.Indices.Add(3 + 16);
+        mesh.Indices.Add(0 + 16);
+       
+        mesh.Vertices.Add(new Vector3(0, 0, 0) + position + offsetY1 + offsetX1);
+        mesh.Vertices.Add(new Vector3(0, sideHeight, 0) + position + offsetY1 + offsetX1);
+        mesh.Vertices.Add(new Vector3(sideWidth, sideHeight, 0) + position + offsetY1 + offsetX1);
+        mesh.Vertices.Add(new Vector3(sideWidth, 0, 0) + position + offsetY1 + offsetX1);
+       
+        mesh.Uvs.Add(new Vector2(x1, y2));
+        mesh.Uvs.Add(new Vector2(x1, 1 - y1));
+        mesh.Uvs.Add(new Vector2(1 - x2, 1 - y1));
+        mesh.Uvs.Add(new Vector2(1 - x2, y2));
         
         //Middle right
         sideWidth = cellSize;
         sideHeight = height - cellSize * 2;
         
-        GenerateQuad(position + offsetX2 + offsetY1, sideWidth, sideHeight, mesh);
+        mesh.Indices.Add(0 + 20);
+        mesh.Indices.Add(1 + 20);
+        mesh.Indices.Add(2 + 20);
+        mesh.Indices.Add(2 + 20);
+        mesh.Indices.Add(3 + 20);
+        mesh.Indices.Add(0 + 20);
+       
+        mesh.Vertices.Add(new Vector3(0, 0, 0) + position + offsetY1 + offsetX2);
+        mesh.Vertices.Add(new Vector3(0, sideHeight, 0) + position + offsetY1 + offsetX2);
+        mesh.Vertices.Add(new Vector3(sideWidth, sideHeight, 0) + position + offsetY1 + offsetX2);
+        mesh.Vertices.Add(new Vector3(sideWidth, 0, 0) + position + offsetY1 + offsetX2);
+       
+        mesh.Uvs.Add(new Vector2(1 - x2, y2));
+        mesh.Uvs.Add(new Vector2(1 - x2, 1 - y1));
+        mesh.Uvs.Add(new Vector2(1, 1 - y1));
+        mesh.Uvs.Add(new Vector2(1, y2));
         
         //Top left corner
-        GenerateBasicQuad(position + offsetY2, cellSize, mesh);
+        mesh.Indices.Add(0 + 24);
+        mesh.Indices.Add(1 + 24);
+        mesh.Indices.Add(2 + 24);
+        mesh.Indices.Add(2 + 24);
+        mesh.Indices.Add(3 + 24);
+        mesh.Indices.Add(0 + 24);
+       
+        mesh.Vertices.Add(new Vector3(0, 0, 0) + position);
+        mesh.Vertices.Add(new Vector3(0, cellSize, 0) + position);
+        mesh.Vertices.Add(new Vector3(cellSize, cellSize, 0) + position);
+        mesh.Vertices.Add(new Vector3(cellSize, 0, 0) + position);
+       
+        mesh.Uvs.Add(new Vector2(0, 0));
+        mesh.Uvs.Add(new Vector2(0, y2));
+        mesh.Uvs.Add(new Vector2(x1, y2));
+        mesh.Uvs.Add(new Vector2(x1, 0));
         
         //Top center
         sideWidth = width - cellSize * 2;
         sideHeight = cellSize;
         
-        GenerateQuad(position + offsetX1 + offsetY2, sideWidth, sideHeight, mesh);
+        mesh.Indices.Add(0 + 28);
+        mesh.Indices.Add(1 + 28);
+        mesh.Indices.Add(2 + 28);
+        mesh.Indices.Add(2 + 28);
+        mesh.Indices.Add(3 + 28);
+        mesh.Indices.Add(0 + 28);
+       
+        mesh.Vertices.Add(new Vector3(0, 0, 0) + position + offsetX1);
+        mesh.Vertices.Add(new Vector3(0, sideHeight, 0) + position + offsetX1);
+        mesh.Vertices.Add(new Vector3(sideWidth, sideHeight, 0) + position + offsetX1);
+        mesh.Vertices.Add(new Vector3(sideWidth, 0, 0) + position + offsetX1);
+       
+        mesh.Uvs.Add(new Vector2(x1, 0));
+        mesh.Uvs.Add(new Vector2(x1, y2));
+        mesh.Uvs.Add(new Vector2(1 - x2, y2));
+        mesh.Uvs.Add(new Vector2(1 - x2, 0));
         
         //Top right corner
-        GenerateBasicQuad(position + offsetX2 + offsetY2, cellSize, mesh);
+        mesh.Indices.Add(0 + 32);
+        mesh.Indices.Add(1 + 32);
+        mesh.Indices.Add(2 + 32);
+        mesh.Indices.Add(2 + 32);
+        mesh.Indices.Add(3 + 32);
+        mesh.Indices.Add(0 + 32);
+       
+        mesh.Vertices.Add(new Vector3(0, 0, 0) + position + offsetX2);
+        mesh.Vertices.Add(new Vector3(0, cellSize, 0) + position + offsetX2);
+        mesh.Vertices.Add(new Vector3(cellSize, cellSize, 0) + position + offsetX2);
+        mesh.Vertices.Add(new Vector3(cellSize, 0, 0) + position + offsetX2);
+       
+        mesh.Uvs.Add(new Vector2(1 - x2, 0));
+        mesh.Uvs.Add(new Vector2(1 - x2, y2));
+        mesh.Uvs.Add(new Vector2(1, y2));
+        mesh.Uvs.Add(new Vector2(1, 0));
         
         for (int uv = 0; uv < 9; uv++)
         {
-            AddUvs(mesh, uvMaps[uv](x1, x2, y1, y2, middle));
-            
-            mesh.TextureIndexes.Add(0);
-            mesh.TextureIndexes.Add(0);
-            mesh.TextureIndexes.Add(0);
-            mesh.TextureIndexes.Add(0);
+            mesh.TextUvs.Add(0);
+            mesh.TextUvs.Add(0);
+            mesh.TextUvs.Add(0);
+            mesh.TextUvs.Add(0);
         }
-        */
         
         return mesh;
     }

@@ -81,7 +81,7 @@ public class UIManager
         // UI
         UI_Panel panel = new UI_Panel(uiMesh);
         
-        panel.SetSize(new Vector2(100, 100));
+        panel.SetSize(new Vector2(300, 200));
         panel.SetOffset(new Vector4(0, 0, 200, 0));
         panel.SetAnchorAlignment(UiAnchorAlignment.MiddleCenter);
         panel.SetAnchorReference(UiAnchor.Absolute);
