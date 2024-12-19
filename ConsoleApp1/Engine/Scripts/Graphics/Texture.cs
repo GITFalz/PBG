@@ -30,8 +30,12 @@ public class Texture
 
         Unbind();
     }
-    
-    public void Bind() { GL.BindTexture(TextureTarget.Texture2D, ID); }
+
+    public void Bind()
+    {
+        GL.ActiveTexture(TextureUnit.Texture0);
+        GL.BindTexture(TextureTarget.Texture2D, ID);
+    }
     public void Unbind() { GL.BindTexture(TextureTarget.Texture2D, 0); }
     public void Delete() { GL.DeleteTexture(ID); }
 }

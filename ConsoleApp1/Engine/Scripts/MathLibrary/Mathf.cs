@@ -17,6 +17,11 @@ public static class Mathf
         return (int)Math.Round(value);
     }
 
+    public static float Clamp(float min, float max, float value)
+    {
+        return value < min ? min : value > max ? max : value;
+    }
+
     public static float Floor(float value)
     {
         return (float)Math.Floor(value);

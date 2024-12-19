@@ -4,7 +4,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 public class UI_DynamicButton : UI_Button
 {
     public Vector2 textureSize = new Vector2(64, 64);
-    public UI_DynamicText text;
+    public UI_DynamicText Text;
     
     public UiMesh mesh;
     public bool holding = false;
@@ -15,27 +15,37 @@ public class UI_DynamicButton : UI_Button
         name = "UI_Button";
         this.mesh = mesh;
 
-        text = new UI_DynamicText();
-        text.SetMesh(textMesh);
-        GenerateBaseText();
+        Text = new UI_DynamicText();
+        Text.SetMesh(textMesh);
+        GenerateBaseText("Button");
+    }
+    
+    public UI_DynamicButton(UiMesh mesh, DynamicTextMesh textMesh, string text)
+    {
+        name = "UI_Button";
+        this.mesh = mesh;
+
+        Text = new UI_DynamicText();
+        Text.SetMesh(textMesh);
+        GenerateBaseText(text);
     }
 
-    private void GenerateBaseText()
+    private void GenerateBaseText(string text)
     {
-        text.SetText("Button", 1.5f);
+        Text.SetText(text, 1.5f);
         
-        text.SetOffset(new Vector4(0, 0, 0, 0));
-        text.SetAnchorAlignment(UiAnchorAlignment.MiddleCenter);
-        text.SetAnchorReference(UiAnchor.Relative);
+        Text.SetOffset(new Vector4(0, 0, 0, 0));
+        Text.SetAnchorAlignment(UiAnchorAlignment.MiddleCenter);
+        Text.SetAnchorReference(UiAnchor.Relative);
         
-        text.SetParent(this);
+        Text.SetParent(this);
     }
     
     // Setters
     public override void SetSize(Vector2 s)
     {
         base.SetSize(s);
-        text.SetSize(s);
+        Text.SetSize(s);
     }
     
     public void SetPosition(Vector3 pos)
@@ -45,7 +55,7 @@ public class UI_DynamicButton : UI_Button
     
     public override void SetTextAlignment(UiAnchorAlignment alignment)
     {
-        text.SetTextAlignment(alignment);
+        Text.SetTextAlignment(alignment);
     }
     
     // Render
@@ -57,13 +67,13 @@ public class UI_DynamicButton : UI_Button
     
     public override void RenderText()
     {
-        text.RenderText();
+        Text.RenderText();
     }
 
     public void UpdatePosition(Vector3 position)
     {
         this.position = position;
-        mesh.MoveUiElement(0, position);
+        mesh.MoveUiElement(1, position);
     }
 
 

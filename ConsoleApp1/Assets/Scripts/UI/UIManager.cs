@@ -74,35 +74,45 @@ public class UIManager
         
         
         // UI
-        UI_DynamicButton panel = new UI_DynamicButton(uiMesh, dynamicTextMesh);
+        UI_Panel panel = new UI_Panel(uiMesh);
         
-        panel.SetSize(new Vector2(150, 70));
-        panel.SetOffset(new Vector4(0, 0, 200, 0));
-        panel.SetAnchorAlignment(UiAnchorAlignment.MiddleCenter);
-        panel.SetAnchorReference(UiAnchor.Free);
+        panel.SetSize(new Vector2(300, 200));
+        panel.SetOffset(new Vector4(0, 0, 0, 0));
+        panel.SetAnchorAlignment(UiAnchorAlignment.BottomLeft);
         
-        panel.OnClick = () =>
+        
+        UI_DynamicButton button1 = new UI_DynamicButton(uiMesh, dynamicTextMesh, "O");
+        
+        button1.SetSize(new Vector2(20, 20));
+        button1.SetOffset(new Vector4(10, 10, 10, 10));
+        button1.SetAnchorAlignment(UiAnchorAlignment.BottomLeft);
+        button1.SetAnchorReference(UiAnchor.Free);
+        
+        button1.OnClick = () =>
         {
             _buttonOldMousePosition = InputManager.GetMousePosition();
             Console.WriteLine("Clicked");
         };
         
-        panel.OnHold = (mouse) =>
+        button1.OnHold = (mouse) =>
         {
             if ((InputManager.GetMousePosition() - _buttonOldMousePosition).Length < 0.1f)
                 return;
             
-            panel.position = new Vector3(mouse.X - panel.size.X, mouse.Y - panel.size.Y, 0);
-            Vector3 center = new Vector3(panel.position.X + panel.halfSize.X, panel.position.Y + panel.halfSize.Y, 0);
+            float y = Mathf.Clamp(Game.height - 180, Game.height - 50, mouse.Y - button1.size.Y);
             
-            panel.UpdatePosition(center);
-            panel.text.UpdatePosition(center);
+            button1.position = new Vector3(10, y, 0.1f);
+            Vector3 center = new Vector3(button1.position.X + button1.halfSize.X, button1.position.Y + button1.halfSize.Y, 0.1f);
+            
+            button1.UpdatePosition(center);
+            button1.Text.UpdatePosition(center);
         };
         
         
         // Add to list
         _ui.AddElement(text);
         _ui.AddElement(panel);
+        _ui.AddElement(button1);
         
         _meshes.Add(textMesh);
         _meshes.Add(dynamicTextMesh);
@@ -183,7 +193,7 @@ public class UIManager
         int charsLoc = GL.GetUniformLocation(_textShader.ID, "charBuffer");
         
         GL.UniformMatrix4(textProjectionLoc, true, ref OrthographicProjection);
-        GL.Uniform1(charsLoc, 0);
+        GL.Uniform1(charsLoc, 1);
         
         textMesh.RenderMesh();
         dynamicTextMesh.RenderMesh();

@@ -31,8 +31,12 @@ public class TextureArray
         
         Unbind();
     }
-    
-    public void Bind() { GL.BindTexture(TextureTarget.Texture2DArray, ID); }
+
+    public void Bind()
+    {
+        GL.ActiveTexture(TextureUnit.Texture0);
+        GL.BindTexture(TextureTarget.Texture2DArray, ID);
+    }
     public void Unbind() { GL.BindTexture(TextureTarget.Texture2DArray, 0); }
     public void Delete() { GL.DeleteTexture(ID); }
 }

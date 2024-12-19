@@ -1,4 +1,5 @@
-﻿using OpenTK.Mathematics;
+﻿using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 
 public class StaticTextMesh : TextMesh
 {
@@ -55,8 +56,9 @@ public class StaticTextMesh : TextMesh
 
     public override void RenderMesh()
     {
-        _textTbo.Bind();
+        _textTbo.Bind(TextureUnit.Texture1);
         base.RenderMesh();
+        _textTbo.Unbind();
     }
 
     public override void UpdateMesh()

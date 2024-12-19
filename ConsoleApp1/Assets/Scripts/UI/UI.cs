@@ -65,12 +65,7 @@ public class UI
         float middle = 1f - x1 - x2;
         
         //Bottom left corner
-        mesh.Indices.Add(0);
-        mesh.Indices.Add(1);
-        mesh.Indices.Add(2);
-        mesh.Indices.Add(2);
-        mesh.Indices.Add(3);
-        mesh.Indices.Add(0);
+        AddIndices(mesh.Vertices.Count, mesh);
         
         mesh.Vertices.Add(new Vector3(0, 0, 0) + position + offsetY2);
         mesh.Vertices.Add(new Vector3(0, cellSize, 0) + position + offsetY2);
@@ -87,12 +82,7 @@ public class UI
         float sideWidth = width - cellSize * 2;
         float sideHeight = cellSize;
         
-        mesh.Indices.Add(0 + 4);
-        mesh.Indices.Add(1 + 4);
-        mesh.Indices.Add(2 + 4);
-        mesh.Indices.Add(2 + 4);
-        mesh.Indices.Add(3 + 4);
-        mesh.Indices.Add(0 + 4);
+        AddIndices(mesh.Vertices.Count, mesh);
         
         mesh.Vertices.Add(new Vector3(0, 0, 0) + position + offsetX1 + offsetY2);
         mesh.Vertices.Add(new Vector3(0, sideHeight, 0) + position + offsetX1 + offsetY2);
@@ -105,12 +95,7 @@ public class UI
         mesh.Uvs.Add(new Vector2(1 - x2, 1 - y1));
         
         //Bottom right corner
-        mesh.Indices.Add(0 + 8);
-        mesh.Indices.Add(1 + 8);
-        mesh.Indices.Add(2 + 8);
-        mesh.Indices.Add(2 + 8);
-        mesh.Indices.Add(3 + 8);
-        mesh.Indices.Add(0 + 8);
+        AddIndices(mesh.Vertices.Count, mesh);
        
         mesh.Vertices.Add(new Vector3(0, 0, 0) + position + offsetX2 + offsetY2);
         mesh.Vertices.Add(new Vector3(0, cellSize, 0) + position + offsetX2 + offsetY2);
@@ -126,12 +111,7 @@ public class UI
         sideWidth = cellSize;
         sideHeight = height - cellSize * 2;
         
-        mesh.Indices.Add(0 + 12);
-        mesh.Indices.Add(1 + 12);
-        mesh.Indices.Add(2 + 12);
-        mesh.Indices.Add(2 + 12);
-        mesh.Indices.Add(3 + 12);
-        mesh.Indices.Add(0 + 12);
+        AddIndices(mesh.Vertices.Count, mesh);
        
         mesh.Vertices.Add(new Vector3(0, 0, 0) + position + offsetY1);
         mesh.Vertices.Add(new Vector3(0, sideHeight, 0) + position + offsetY1);
@@ -147,12 +127,7 @@ public class UI
         sideWidth = width - cellSize * 2;
         sideHeight = height - cellSize * 2;
         
-        mesh.Indices.Add(0 + 16);
-        mesh.Indices.Add(1 + 16);
-        mesh.Indices.Add(2 + 16);
-        mesh.Indices.Add(2 + 16);
-        mesh.Indices.Add(3 + 16);
-        mesh.Indices.Add(0 + 16);
+        AddIndices(mesh.Vertices.Count, mesh);
        
         mesh.Vertices.Add(new Vector3(0, 0, 0) + position + offsetY1 + offsetX1);
         mesh.Vertices.Add(new Vector3(0, sideHeight, 0) + position + offsetY1 + offsetX1);
@@ -168,12 +143,7 @@ public class UI
         sideWidth = cellSize;
         sideHeight = height - cellSize * 2;
         
-        mesh.Indices.Add(0 + 20);
-        mesh.Indices.Add(1 + 20);
-        mesh.Indices.Add(2 + 20);
-        mesh.Indices.Add(2 + 20);
-        mesh.Indices.Add(3 + 20);
-        mesh.Indices.Add(0 + 20);
+        AddIndices(mesh.Vertices.Count, mesh);
        
         mesh.Vertices.Add(new Vector3(0, 0, 0) + position + offsetY1 + offsetX2);
         mesh.Vertices.Add(new Vector3(0, sideHeight, 0) + position + offsetY1 + offsetX2);
@@ -186,12 +156,7 @@ public class UI
         mesh.Uvs.Add(new Vector2(1, y2));
         
         //Top left corner
-        mesh.Indices.Add(0 + 24);
-        mesh.Indices.Add(1 + 24);
-        mesh.Indices.Add(2 + 24);
-        mesh.Indices.Add(2 + 24);
-        mesh.Indices.Add(3 + 24);
-        mesh.Indices.Add(0 + 24);
+        AddIndices(mesh.Vertices.Count, mesh);
        
         mesh.Vertices.Add(new Vector3(0, 0, 0) + position);
         mesh.Vertices.Add(new Vector3(0, cellSize, 0) + position);
@@ -207,12 +172,7 @@ public class UI
         sideWidth = width - cellSize * 2;
         sideHeight = cellSize;
         
-        mesh.Indices.Add(0 + 28);
-        mesh.Indices.Add(1 + 28);
-        mesh.Indices.Add(2 + 28);
-        mesh.Indices.Add(2 + 28);
-        mesh.Indices.Add(3 + 28);
-        mesh.Indices.Add(0 + 28);
+        AddIndices(mesh.Vertices.Count, mesh);
        
         mesh.Vertices.Add(new Vector3(0, 0, 0) + position + offsetX1);
         mesh.Vertices.Add(new Vector3(0, sideHeight, 0) + position + offsetX1);
@@ -225,12 +185,7 @@ public class UI
         mesh.Uvs.Add(new Vector2(1 - x2, 0));
         
         //Top right corner
-        mesh.Indices.Add(0 + 32);
-        mesh.Indices.Add(1 + 32);
-        mesh.Indices.Add(2 + 32);
-        mesh.Indices.Add(2 + 32);
-        mesh.Indices.Add(3 + 32);
-        mesh.Indices.Add(0 + 32);
+        AddIndices(mesh.Vertices.Count, mesh);
        
         mesh.Vertices.Add(new Vector3(0, 0, 0) + position + offsetX2);
         mesh.Vertices.Add(new Vector3(0, cellSize, 0) + position + offsetX2);
@@ -251,6 +206,16 @@ public class UI
         }
         
         return mesh;
+    }
+
+    public static void AddIndices(int index, Mesh mesh)
+    {
+        mesh.Indices.Add((uint)index);
+        mesh.Indices.Add((uint)index + 1);
+        mesh.Indices.Add((uint)index + 2);
+        mesh.Indices.Add((uint)index + 2);
+        mesh.Indices.Add((uint)index + 3);
+        mesh.Indices.Add((uint)index); 
     }
 
     public static void GenerateCharacter(Vector3 position, float size, Character character, Mesh mesh)
