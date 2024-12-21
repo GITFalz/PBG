@@ -18,9 +18,6 @@ public class UIManager
     private ShaderProgram _textShader;
     private Texture _textTexture;
     
-    private UI_StaticText text;
-    private UI_Text text2;
-    
     
     // Input
     private bool _isTyping = false;
@@ -42,9 +39,10 @@ public class UIManager
     
     
     public UiMesh uiMesh = new UiMesh();
- 
-    public StaticTextMesh textMesh = new StaticTextMesh();
-    public DynamicTextMesh dynamicTextMesh = new DynamicTextMesh();
+    public TextMesh textMesh = new TextMesh();
+
+
+    public StaticText text;
     
     
     private Vector2 _buttonOldMousePosition;
@@ -65,63 +63,72 @@ public class UIManager
 
     public void Start()
     {
-        // Text
-        text = new UI_StaticText(textMesh, "10000", 1.5f);
+        /*
+        StaticPanel topLeftPanel = new StaticPanel();
+
+        topLeftPanel.SetMesh(uiMesh);
+        topLeftPanel.SetAnchorType(AnchorType.TopLeft);
+        topLeftPanel.Generate();
         
-        text.SetOffset(new Vector4(0, 0, 0, 0));
-        text.SetAnchorAlignment(UiAnchorAlignment.TopLeft);
-        text.SetAnchorReference(UiAnchor.Absolute);
+        StaticPanel topCenterPanel = new StaticPanel();
+        
+        topCenterPanel.SetMesh(uiMesh);
+        topCenterPanel.SetAnchorType(AnchorType.TopCenter);
+        topCenterPanel.Generate();
+        
+        StaticPanel topRightPanel = new StaticPanel();
+        
+        topRightPanel.SetMesh(uiMesh);
+        topRightPanel.SetAnchorType(AnchorType.TopRight);
+        topRightPanel.Generate();
+        
+        StaticPanel middleLeftPanel = new StaticPanel();
+        
+        middleLeftPanel.SetMesh(uiMesh);
+        middleLeftPanel.SetAnchorType(AnchorType.MiddleLeft);
+        middleLeftPanel.Generate();
+        
+        StaticPanel middleCenterPanel = new StaticPanel();
+        
+        middleCenterPanel.SetMesh(uiMesh);
+        middleCenterPanel.SetAnchorType(AnchorType.MiddleCenter);
+        middleCenterPanel.Generate();
+        
+        StaticPanel middleRightPanel = new StaticPanel();
+        
+        middleRightPanel.SetMesh(uiMesh);
+        middleRightPanel.SetAnchorType(AnchorType.MiddleRight);
+        middleRightPanel.Generate();
+        
+        StaticPanel bottomLeftPanel = new StaticPanel();
+        
+        bottomLeftPanel.SetMesh(uiMesh);
+        bottomLeftPanel.SetAnchorType(AnchorType.BottomLeft);
+        bottomLeftPanel.Generate();
+        
+        StaticPanel bottomCenterPanel = new StaticPanel();
+        
+        bottomCenterPanel.SetMesh(uiMesh);
+        bottomCenterPanel.SetAnchorType(AnchorType.BottomCenter);
+        bottomCenterPanel.Generate();
+        
+        StaticPanel bottomRightPanel = new StaticPanel();
+        
+        bottomRightPanel.SetMesh(uiMesh);
+        bottomRightPanel.SetAnchorType(AnchorType.BottomRight);
+        bottomRightPanel.Generate();
+        */
         
         
-        // UI
-        UI_Panel panel = new UI_Panel(uiMesh);
+        text = new StaticText("10000");
         
-        panel.SetSize(new Vector2(300, 200));
-        panel.SetOffset(new Vector4(0, 0, 0, 0));
-        panel.SetAnchorAlignment(UiAnchorAlignment.BottomLeft);
-        
-        
-        UI_DynamicButton button1 = new UI_DynamicButton(uiMesh, dynamicTextMesh, "O");
-        
-        button1.SetSize(new Vector2(20, 20));
-        button1.SetOffset(new Vector4(10, 10, 10, 10));
-        button1.SetAnchorAlignment(UiAnchorAlignment.BottomLeft);
-        button1.SetAnchorReference(UiAnchor.Free);
-        
-        button1.OnClick = () =>
-        {
-            _buttonOldMousePosition = InputManager.GetMousePosition();
-            Console.WriteLine("Clicked");
-        };
-        
-        button1.OnHold = (mouse) =>
-        {
-            if ((InputManager.GetMousePosition() - _buttonOldMousePosition).Length < 0.1f)
-                return;
-            
-            float y = Mathf.Clamp(Game.height - 180, Game.height - 50, mouse.Y - button1.size.Y);
-            
-            button1.position = new Vector3(10, y, 0.1f);
-            Vector3 center = new Vector3(button1.position.X + button1.halfSize.X, button1.position.Y + button1.halfSize.Y, 0.1f);
-            
-            button1.UpdatePosition(center);
-            button1.Text.UpdatePosition(center);
-        };
+        text.SetMesh(textMesh);
+        text.SetAnchorType(AnchorType.TopLeft);
+        text.Generate();
         
         
-        // Add to list
-        _ui.AddElement(text);
-        _ui.AddElement(panel);
-        _ui.AddElement(button1);
-        
-        _meshes.Add(textMesh);
-        _meshes.Add(dynamicTextMesh);
-        _meshes.Add(uiMesh);
-        
-        RenderText();
-        RenderUI();
-        
-        GenerateMeshes();
+        uiMesh.GenerateBuffers();
+        textMesh.GenerateBuffers();
     }
 
     public void OnResize()
@@ -131,28 +138,9 @@ public class UIManager
             mesh.Clear();
         }
         
-        RenderUI();
-        RenderText();
-        
         GenerateMeshes();
     }
-    
-    public void RenderUI()
-    {
-        foreach (var uiElement in _ui.GetElements())
-        {
-            uiElement.RenderUI();
-        }
-    }
-    
-    public void RenderText()
-    {
-        foreach (var uiElement in _ui.GetElements())
-        {
-            uiElement.RenderText();
-        }
-    }
-    
+
     public void Unload()
     {
         _uiShader.Delete();
@@ -196,7 +184,10 @@ public class UIManager
         GL.Uniform1(charsLoc, 1);
         
         textMesh.RenderMesh();
-        dynamicTextMesh.RenderMesh();
+        
+        //Console.WriteLine("Vertices : " + textMesh.transformedVertices[0] + " " + textMesh.transformedVertices[1] + " " + textMesh.transformedVertices[2] + " " + textMesh.transformedVertices[3]);
+        //Console.WriteLine("Indices : " + textMesh.Indices[0] + " " + textMesh.Indices[1] + " " + textMesh.Indices[2] + " " + textMesh.Indices[3] + " " + textMesh.Indices[4] + " " + textMesh.Indices[5]);
+        //Console.WriteLine("Uvs : " + textMesh.Uvs[0] + " " + textMesh.Uvs[1] + " " + textMesh.Uvs[2] + " " + textMesh.Uvs[3]);
         
         _textShader.Unbind();
         _textTexture.Unbind();
@@ -204,7 +195,7 @@ public class UIManager
 
     public void OnUpdateFrame(KeyboardState keyboard, MouseState mouse, FrameEventArgs args)
     {
-        _ui.Update(mouse);
+        //_ui.Update(mouse);
     }
     
     private void InputField(KeyboardState keyboard, MouseState mouse, FrameEventArgs args)
@@ -245,6 +236,8 @@ public class UIManager
             t += " ";
         }
             
-        text.UpdateTextWithSameLength(t);
+        text.SetText(t);
+        text.Generate();
+        text.UpdateText();
     }
 }

@@ -6,7 +6,6 @@ public class GameObject
     public Transform transform;
     public List<Component> components = new List<Component>();
     public List<Updateable> updateables = new List<Updateable>();
-    public ConcurrentBag<PhysicsBody> physicsBodies = new ConcurrentBag<PhysicsBody>();
     
     public GameObject()
     {
@@ -67,19 +66,6 @@ public class GameObject
             }
         }
     }
-    
-    public void InitPhysicsBodies()
-    {
-        physicsBodies.Clear();
-        
-        foreach (Component component in components)
-        {
-            if (component is PhysicsBody physicsBody)
-            {
-                physicsBodies.Add(physicsBody);
-            }
-        }
-    }
 
     
     /// <summary>
@@ -104,8 +90,7 @@ public class GameObject
     public void Start()
     {
         InitUpdateables();
-        InitPhysicsBodies();
-            
+        
         foreach (Updateable updateable in updateables)
         {
             updateable.Start();
@@ -114,22 +99,17 @@ public class GameObject
     
     public void FixedUpdate()
     {
-        foreach (PhysicsBody physicsBody in physicsBodies)
-        {
-            physicsBody.FixedUpdate();
-        }
-        
         foreach (Updateable updateable in updateables)
         {
             updateable.FixedUpdate();
         }
     }
     
-    public void Update(FrameEventArgs args)
+    public void Update()
     {
         foreach (Updateable updateable in updateables)
         {
-            updateable.Update(args);
+            updateable.Update();
         }
     }
     

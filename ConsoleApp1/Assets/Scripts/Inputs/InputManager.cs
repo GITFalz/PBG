@@ -29,6 +29,11 @@ public static class InputManager
         return _previousMouseState.IsButtonPressed(button);
     }
     
+    public static Vector2 GetMouseScroll()
+    {
+        return _previousMouseState.Scroll;
+    }
+    
     public static bool IsKeyPressed(Keys key)
     {
         return _previousKeyboardState.IsKeyPressed(key);

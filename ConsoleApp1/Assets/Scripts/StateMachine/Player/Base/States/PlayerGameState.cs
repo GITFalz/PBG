@@ -16,6 +16,9 @@ public class PlayerGameState : PlayerBaseState
     public PlayerAttack2State Attack2State = new();
     public PlayerAttack3State Attack3State = new();
     public PlayerAttack4State Attack4State = new();
+    public PlayerDashState DashState = new();
+    public PlayerGrapplingState GrapplingState = new();
+    public PlayerGrapplingSwingOutState GrapplingSwingOutState = new();
 
     public PlayerGameBaseState NextMovingState;
     

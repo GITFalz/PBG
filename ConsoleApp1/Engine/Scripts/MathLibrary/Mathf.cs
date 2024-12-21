@@ -45,6 +45,32 @@ public static class Mathf
         return a + t * (b - a);
     }
     
+    public static Vector3 Lerp(Vector3 a, Vector3 b, float t)
+    {
+        return a + (b - a) * t;
+    }
+    
+    public static float Ease_I_O_Lerp(float a, float b, float t)
+    {
+        t = t * t * (3f - 2f * t);
+        return Lerp(a, b, t);
+    }
+    
+    public static Vector3 YAngleToDirection(float yAngleDegrees)
+    {
+        float yAngleRadians = yAngleDegrees * (float)Math.PI / 180.0f;
+        
+        float x = (float)Math.Cos(yAngleRadians);
+        float z = (float)Math.Sin(yAngleRadians);
+
+        return new Vector3(x, 0, z);
+    }
+    
+    public static double Max(double a, double b)
+    {
+        return a > b ? a : b;
+    }
+    
     public static float Max(float a, float b)
     {
         return a > b ? a : b;
@@ -53,6 +79,11 @@ public static class Mathf
     public static int Max(int a, int b)
     {
         return a > b ? a : b;
+    }
+    
+    public static double Min(double a, double b)
+    {
+        return a < b ? a : b;
     }
     
     public static float Min(float a, float b)

@@ -58,14 +58,38 @@ public class AnimationManager
         playerAttack4.SetKeyframe(17, new AnimationKeyframe(Vector3.One, (0, 5, 15), (0, 0, 0)));
         playerAttack4.SetKeyframe(25, new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
         
+        
+        Animation playerJumping = new Animation();
+        playerController.Animations.Add("jumping", playerJumping);
+        
+        playerJumping.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        playerJumping.SetKeyframe(1, new AnimationKeyframe(Vector3.One, (0, 0, 10), (0, -0.1f, 0)));
+        playerJumping.SetKeyframe(5, new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        
+        Animation playerWalking = new Animation();
+        playerController.Animations.Add("walking", playerWalking);
+        
+        playerWalking.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 10), (0, 0, 0)));
+        playerWalking.SetKeyframe(5, new AnimationKeyframe(Vector3.One, (1, 0, 11), (0, 0, 0)));
+        playerWalking.SetKeyframe(10, new AnimationKeyframe(Vector3.One, (0, 0, 10), (0, 0, 0)));
+        playerWalking.SetKeyframe(15, new AnimationKeyframe(Vector3.One, (-1, 0, 11), (0, 0, 0)));
+        playerWalking.SetKeyframe(20, new AnimationKeyframe(Vector3.One, (0, 0, 10), (0, 0, 0)));
+        
         Animation playerRunning = new Animation();
         playerController.Animations.Add("running", playerRunning);
         
-        playerRunning.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, -10, 0), (0, 0, 0)));
-        playerRunning.SetKeyframe(5, new AnimationKeyframe(Vector3.One, (0f, -10, 0), (0f, 0.1f, 0.1f)));
-        playerRunning.SetKeyframe(10, new AnimationKeyframe(Vector3.One, (0, -10, 0), (0, 0, 0)));
-        playerRunning.SetKeyframe(15, new AnimationKeyframe(Vector3.One, (0, -10, 0), (0, 0.1f, -0.1f)));
-        playerRunning.SetKeyframe(20, new AnimationKeyframe(Vector3.One, (0, -10, 0), (0, 0, 0)));
+        playerRunning.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 30), (0, 0, 0)));
+        playerRunning.SetKeyframe(5, new AnimationKeyframe(Vector3.One, (1f, 0, 31), (0f, 0.1f, 0.1f)));
+        playerRunning.SetKeyframe(10, new AnimationKeyframe(Vector3.One, (0, 0, 30), (0, 0, 0)));
+        playerRunning.SetKeyframe(15, new AnimationKeyframe(Vector3.One, (-1, 0, 31), (0, 0.1f, -0.1f)));
+        playerRunning.SetKeyframe(20, new AnimationKeyframe(Vector3.One, (0, 0, 30), (0, 0, 0)));
+        
+        Animation playerDashing = new Animation();
+        playerController.Animations.Add("dashing", playerDashing);
+        
+        playerDashing.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 40), (0, 0, 0)));
+        playerDashing.SetKeyframe(4, new AnimationKeyframe(Vector3.One, (0, 0, 40), (0, 0, 0)));
+        playerDashing.SetKeyframe(10, new AnimationKeyframe(Vector3.One, (0, 0, 25), (0, 0, 0)));
         
         Animation playerIdle = new Animation();
         playerController.Animations.Add("idle", playerIdle);
@@ -73,6 +97,46 @@ public class AnimationManager
         playerIdle.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
         playerIdle.SetKeyframe(15, new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0.03f, 0f)));
         playerIdle.SetKeyframe(30, new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        
+        
+        Animation playerGrappleIn = new Animation();
+        playerController.Animations.Add("grappleIn", playerGrappleIn);
+        
+        playerGrappleIn.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        playerGrappleIn.SetKeyframe(7, new AnimationKeyframe(Vector3.One, (0, 0, 45), (0, 0, 0)));
+        
+        Animation playerGrapple = new Animation();
+        playerController.Animations.Add("grapple", playerGrapple);
+
+        playerGrapple.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 45), (0, 0, 0)));
+        playerGrapple.SetKeyframe(10, new AnimationKeyframe(Vector3.One, (0, 0, 43), (0, 0, 0)));
+        playerGrapple.SetKeyframe(20, new AnimationKeyframe(Vector3.One, (0, 0, 45), (0, 0, 0)));
+        
+        Animation playerGrappleSwingOut = new Animation();
+        playerController.Animations.Add("grappleSwingOut", playerGrappleSwingOut);
+        
+        playerGrappleSwingOut.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 45), (0, 0, 0)));
+        playerGrappleSwingOut.SetKeyframe(20, new AnimationKeyframe(Vector3.One, (0, 0, -50), (0, 0, 0)));
+        
+        Animation playerGrappleSwingEnd = new Animation();
+        playerController.Animations.Add("grappleSwingEnd", playerGrappleSwingEnd);
+        
+        playerGrappleSwingEnd.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, -50), (0, 0, 0)));
+        playerGrappleSwingEnd.SetKeyframe(12, new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        
+        Animation playerGrappleOut = new Animation();
+        playerController.Animations.Add("grappleOut", playerGrappleOut);
+        
+        playerGrappleOut.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 45), (0, 0, 0)));
+        playerGrappleOut.SetKeyframe(7, new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        
+        
+        Animation playerFalling = new Animation();
+        playerController.Animations.Add("falling", playerFalling);
+        
+        playerFalling.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        playerFalling.SetKeyframe(5, new AnimationKeyframe(Vector3.One, (2, 0, 0), (0, 0, 0)));
+        playerFalling.SetKeyframe(10, new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
         
         
         //Sword
@@ -153,6 +217,22 @@ public class AnimationManager
         {
             animController.SetAnimation(animation);
             animController.loop = true;
+        }
+    }
+    
+    public void QueueAnimation(string controller, string animation)
+    {
+        if (AnimationControllers.TryGetValue(controller, out var animController))
+        {
+            animController.QueueAnimation(animation);
+        }
+    }
+    
+    public void QueueLoopAnimation(string controller, string animation)
+    {
+        if (AnimationControllers.TryGetValue(controller, out var animController))
+        {
+            animController.QueueLoopAnimation(animation);
         }
     }
     

@@ -8,6 +8,7 @@ public class AnimationController
     public const float frameTime = 1 / framesPerSecond;
     
     public Dictionary<string, Animation> Animations = new Dictionary<string, Animation>();
+    public Queue<AnimationQueue> AnimationQueue = new Queue<AnimationQueue>();
 
     private int oldIndex = 0;
     int index = 0;
@@ -31,7 +32,9 @@ public class AnimationController
         if (currentAnimation == null)
             return false;
         
-        if (!currentAnimation.IsEnd() && currentAnimation.GetFrame(out var keyframe))
+        bool isEnd = currentAnimation.IsEnd();
+        
+        if (!isEnd && currentAnimation.GetFrame(out var keyframe))
         {
             if (keyframe != null)
             {
@@ -44,6 +47,14 @@ public class AnimationController
         }
         
         currentAnimation.Reset();
+        
+        if (AnimationQueue.Count > 0 && isEnd)
+        {
+            AnimationQueue animationQueue = AnimationQueue.Dequeue();
+            
+            currentAnimation = animationQueue.animation;
+            loop = animationQueue.loop;
+        }
         
         if (loop)
             return true;
@@ -68,8 +79,25 @@ public class AnimationController
     {
         if (Animations.TryGetValue(name, out var animation))
         {
+            AnimationQueue.Clear();
             currentAnimation?.Reset();
             currentAnimation = animation;
+        }
+    }
+    
+    public void QueueAnimation(string name)
+    {
+        if (Animations.TryGetValue(name, out var animation))
+        {
+            AnimationQueue.Enqueue(new AnimationQueue(animation, false));
+        }
+    }
+    
+    public void QueueLoopAnimation(string name)
+    {
+        if (Animations.TryGetValue(name, out var animation))
+        {
+            AnimationQueue.Enqueue(new AnimationQueue(animation, true));
         }
     }
 
@@ -85,37 +113,14 @@ public class AnimationController
     }
 }
 
-public class AnimationKeyframe
+public struct AnimationQueue
 {
-    public Vector3 Scale;
-    public Quaternion Rotation;
-    public Vector3 Position;
-
-    public AnimationKeyframe(Vector3 scale, Quaternion rotation, Vector3 position)
-    {
-        Scale = scale;
-        Rotation = rotation;
-        Position = position;
-    }
+    public Animation animation;
+    public bool loop;
     
-    public AnimationKeyframe(Vector3 scale, Vector3 rotation, Vector3 position)
+    public AnimationQueue(Animation animation, bool loop)
     {
-        Scale = scale;
-        Rotation = Quaternion.FromEulerAngles(MathHelper.DegreesToRadians(rotation.X), MathHelper.DegreesToRadians(rotation.Y), MathHelper.DegreesToRadians(rotation.Z));
-        Position = position;
-    }
-
-    public AnimationKeyframe Lerp(AnimationKeyframe keyframe, float t)
-    {
-        return new AnimationKeyframe(
-            Vector3.Lerp(Scale, keyframe.Scale, t),
-            Quaternion.Slerp(Rotation, keyframe.Rotation, t),
-            Vector3.Lerp(Position, keyframe.Position, t)
-        );
-    }
-
-    public override string ToString()
-    {
-        return $"Scale: {Scale}, Rotation: {Rotation}, Position: {Position}";
+        this.animation = animation;
+        this.loop = loop;
     }
 }

@@ -53,3 +53,38 @@ public class Animation
         }
     }
 }
+
+public class AnimationKeyframe
+{
+    public Vector3 Scale;
+    public Quaternion Rotation;
+    public Vector3 Position;
+
+    public AnimationKeyframe(Vector3 scale, Quaternion rotation, Vector3 position)
+    {
+        Scale = scale;
+        Rotation = rotation;
+        Position = position;
+    }
+    
+    public AnimationKeyframe(Vector3 scale, Vector3 rotation, Vector3 position)
+    {
+        Scale = scale;
+        Rotation = Quaternion.FromEulerAngles(MathHelper.DegreesToRadians(rotation.X), MathHelper.DegreesToRadians(rotation.Y), MathHelper.DegreesToRadians(rotation.Z));
+        Position = position;
+    }
+
+    public AnimationKeyframe Lerp(AnimationKeyframe keyframe, float t)
+    {
+        return new AnimationKeyframe(
+            Vector3.Lerp(Scale, keyframe.Scale, t),
+            Quaternion.Slerp(Rotation, keyframe.Rotation, t),
+            Vector3.Lerp(Position, keyframe.Position, t)
+        );
+    }
+
+    public override string ToString()
+    {
+        return $"Scale: {Scale}, Rotation: {Rotation}, Position: {Position}";
+    }
+}

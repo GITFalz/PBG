@@ -12,6 +12,10 @@ public class Camera
     private static float SCREEN_HEIGHT;
     private static float SENSITIVITY = 65f;
     private static float SCROLL_SENSITIVITY = 0.1f;
+    
+    public static float FOV = 45f;
+    private static float targetFOV = 45f;
+    private static float FOV_SMOTH_FACTOR = 10f;
 
     public static Vector3 position;
     
@@ -28,12 +32,14 @@ public class Camera
     public Vector2 lastPos;
     
     public static Matrix4 viewMatrix;
-    public static Matrix4 projectionMatrix;
-    public static Plane[] frustumPlanes;
+    public static Matrix4 projectionMatrix = GetProjectionMatrix();
     
     
     private Vector2 _smoothMouseDelta = Vector2.Zero;
-    private const float SMOOTH_FACTOR = 0.2f;
+    private const float SMOOTH_FACTOR = 5f;
+    
+    private Vector3 _targetPosition;
+    private const float POSITION_SMOOTH_FACTOR = 50f;
 
     public Camera(float width, float height, Vector3 position)
     {
@@ -50,34 +56,24 @@ public class Camera
     
     public static Matrix4 GetProjectionMatrix()
     {
-        projectionMatrix = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(45),
-            SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 1000f);
+        float fov = Mathf.Lerp(FOV, targetFOV, FOV_SMOTH_FACTOR * GameTime.DeltaTime);
+        FOV = Mathf.Clamp(1, 179, fov);
+        
+        projectionMatrix = Matrix4.CreatePerspectiveFieldOfView(
+            MathHelper.DegreesToRadians(FOV),
+            SCREEN_WIDTH / SCREEN_HEIGHT, 
+            0.1f, 
+            1000f
+        );
         return projectionMatrix;
     }
-    
-    public static Plane[] GetFrustumPlanes()
-    {   
-        Matrix4 projectionViewMatrix = projectionMatrix * viewMatrix;
 
-        Plane[] frustumPlanes = new Plane[6];
-        frustumPlanes[0] = new Plane(Mathf.ToNumericsVector4(-projectionViewMatrix.Row3 - projectionViewMatrix.Row0)); // Left
-        frustumPlanes[1] = new Plane(Mathf.ToNumericsVector4(-projectionViewMatrix.Row3 + projectionViewMatrix.Row0)); // Right
-        frustumPlanes[2] = new Plane(Mathf.ToNumericsVector4(-projectionViewMatrix.Row3 - projectionViewMatrix.Row1)); // Bottom
-        frustumPlanes[3] = new Plane(Mathf.ToNumericsVector4(-projectionViewMatrix.Row3 + projectionViewMatrix.Row1)); // Top
-        frustumPlanes[4] = new Plane(Mathf.ToNumericsVector4(-projectionViewMatrix.Row3 - projectionViewMatrix.Row2)); // Near
-        frustumPlanes[5] = new Plane(Mathf.ToNumericsVector4(-projectionViewMatrix.Row3 + projectionViewMatrix.Row2)); // Far
-
-        for (int i = 0; i < frustumPlanes.Length; i++)
-        {
-            frustumPlanes[i] = Plane.Normalize(frustumPlanes[i]);
-        }
-        
-        Camera.frustumPlanes = frustumPlanes;
-
-        return frustumPlanes;
+    public static void SetFOV(float fov)
+    {
+        targetFOV = fov;
+        projectionMatrix = GetProjectionMatrix();
     }
-
-
+    
 
     public void UpdateVectors()
     {
@@ -90,67 +86,70 @@ public class Camera
         up = Vector3.Normalize(Vector3.Cross(right, front));
     }
 
-    public void InputController(KeyboardState input, MouseState mouse, FrameEventArgs e)
+    public void InputController()
     {
         if (!Game.MoveTest)
         {
-            if (input.IsKeyDown(Keys.W))
+            if (InputManager.IsDown(Keys.W))
             {
-                position += Yto0(front) * GetSpeed(e);
+                position += Yto0(front) * GameTime.DeltaTime;
             }
 
-            if (input.IsKeyDown(Keys.A))
+            if (InputManager.IsDown(Keys.A))
             {
-                position -= Yto0(right) * GetSpeed(e);
+                position -= Yto0(right) * GameTime.DeltaTime;
             }
 
-            if (input.IsKeyDown(Keys.S))
+            if (InputManager.IsDown(Keys.S))
             {
-                position -= Yto0(front) * GetSpeed(e);
+                position -= Yto0(front) * GameTime.DeltaTime;
             }
 
-            if (input.IsKeyDown(Keys.D))
+            if (InputManager.IsDown(Keys.D))
             {
-                position += Yto0(right) * GetSpeed(e);
+                position += Yto0(right) * GameTime.DeltaTime;
             }
 
-            if (input.IsKeyDown(Keys.Space))
+            if (InputManager.IsDown(Keys.Space))
             {
-                position.Y += GetSpeed(e);
+                position.Y += GameTime.DeltaTime;
             }
 
-            if (input.IsKeyDown(Keys.LeftShift))
+            if (InputManager.IsDown(Keys.LeftShift))
             {
-                position.Y -= GetSpeed(e);
+                position.Y -= GameTime.DeltaTime;
             }
         }
 
         else
         {
-            float scroll = mouse.ScrollDelta.Y;
-
+            float scroll = InputManager.GetMouseScroll().Y;
+            
             CameraDistance -= scroll * SCROLL_SENSITIVITY;
             CameraDistance = Math.Clamp(CameraDistance, 3, 10);
-            
-            position = PlayerData.Position - front * CameraDistance;
+    
+            _targetPosition = PlayerData.EyePosition - front * CameraDistance;
+            position = Vector3.Lerp(position, _targetPosition, POSITION_SMOOTH_FACTOR * GameTime.DeltaTime);
         }
 
         if (firstMove)
         {
-            lastPos = new Vector2(mouse.X, mouse.Y);
+            lastPos = InputManager.GetMousePosition();
             firstMove = false;
         }
         else
         {
-            Vector2 currentMouseDelta = new Vector2(mouse.X - lastPos.X, mouse.Y - lastPos.Y);
-            _smoothMouseDelta = Vector2.Lerp(_smoothMouseDelta, currentMouseDelta, SMOOTH_FACTOR);
-            lastPos = new Vector2(mouse.X, mouse.Y);
+            Vector2 pos = InputManager.GetMousePosition();
+            
+            Vector2 currentMouseDelta = new Vector2(pos.X - lastPos.X, pos.Y - lastPos.Y);
+            _smoothMouseDelta = Vector2.Lerp(_smoothMouseDelta, currentMouseDelta, SMOOTH_FACTOR * GameTime.DeltaTime);
+            lastPos = new Vector2(pos.X, pos.Y);
 
             float deltaX = _smoothMouseDelta.X;
             float deltaY = _smoothMouseDelta.Y;
 
-            deltaX *= SENSITIVITY * (float)e.Time;
-            deltaY *= SENSITIVITY * (float)e.Time;
+            deltaX *= SENSITIVITY * GameTime.DeltaTime;
+            deltaY *= SENSITIVITY * GameTime.DeltaTime;
 
             yaw += deltaX;
             pitch -= deltaY;
@@ -174,6 +173,11 @@ public class Camera
         return Vector3.Normalize(v);
     }
     
+    public static Vector3 Front()
+    {
+        return front;
+    }
+    
     public static Vector3 RightYto0()
     {
         Vector3 v = right;
@@ -191,9 +195,9 @@ public class Camera
         return yaw;
     }
 
-    public void Update(KeyboardState input, MouseState mouse, FrameEventArgs e)
+    public void Update()
     {
-        InputController(input, mouse, e);
+        InputController();
     }
     
     public void UpdateProjectionMatrix(int width, int height)

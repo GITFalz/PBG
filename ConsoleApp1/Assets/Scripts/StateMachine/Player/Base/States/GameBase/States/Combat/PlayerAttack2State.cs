@@ -17,7 +17,7 @@ public class PlayerAttack2State : PlayerGameBaseState
         attacked = false;
         
         playerGameState.PlayerStateMachine.physicsBody.doGravity = true;
-        playerGameState.PlayerStateMachine.physicsBody.AddForce(Camera.FrontYto0() * 10);
+        playerGameState.PlayerStateMachine.physicsBody.AddForce(Camera.FrontYto0() * 0.2f);
         
         AnimationManager.Instance.SetAnimation("Sword", "attack2");
         AnimationManager.Instance.SetAnimation("Player", "attack2");

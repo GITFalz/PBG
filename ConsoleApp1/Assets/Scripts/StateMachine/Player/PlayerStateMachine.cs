@@ -9,15 +9,19 @@ using Veldrid;
 
 public class PlayerStateMachine : Updateable
 {
-    public const float WALK_SPEED = 7f;
-    public const float SPRINT_SPEED = 30f;
-    public const float FALL_SPEED = 5f;
+    public const float WALK_SPEED = 0.2f;
+    public const float SPRINT_SPEED = 0.3f;
+    public const float FALL_SPEED = 0.2f;
+    public const float GRAPPLE_SPEED = 0.6f;
+    
+    public Vector3 forward = new Vector3(0, 0, -1);
     
     public static readonly Dictionary<PlayerMovementSpeed, float> Speeds = new Dictionary<PlayerMovementSpeed, float>()
     {
         {PlayerMovementSpeed.Walk, WALK_SPEED},
         {PlayerMovementSpeed.Sprint, SPRINT_SPEED},
         {PlayerMovementSpeed.Fall, FALL_SPEED},
+        {PlayerMovementSpeed.Grappling, GRAPPLE_SPEED},
     };
     
     private PlayerBaseState _currentState;
@@ -57,6 +61,7 @@ public class PlayerStateMachine : Updateable
         _shaderProgram = new ShaderProgram("Entity/Entity.vert", "Entity/Entity.frag");
         
         transform.Position = new Vector3(0, 60, 0);
+        physicsBody.newPosition = transform.Position;
         
         //Mesh
         _mesh = new EntityMesh();
@@ -105,8 +110,17 @@ public class PlayerStateMachine : Updateable
             throw new System.Exception("Failed to get controller");
     }
 
-    public override void Update(FrameEventArgs args)
+    public override void Update()
     {
+        Vector2 input = InputManager.GetMovementInput();
+        
+        if (input != Vector2.Zero)
+            yaw = -Camera.GetYaw() + _inputAngle[input];
+        
+        _mesh.Position = transform.Position + new Vector3(-0.5f, 0, -0.5f);
+        
+        forward = Mathf.YAngleToDirection(-yaw);
+        
         if (!Game.MoveTest)
             return;
             
@@ -120,7 +134,8 @@ public class PlayerStateMachine : Updateable
             physicsBody.doGravity = !physicsBody.doGravity;
         
         _currentState.Update(this);
-        PlayerData.Position = transform.Position + new Vector3(.5f, 1f, .5f);
+        PlayerData.Position = transform.Position;
+        PlayerData.EyePosition = transform.Position + new Vector3(0, 1.8f, 0);
         
         if (_swordAnimationController != null && _swordAnimationController.Update(yaw))
         {
@@ -185,8 +200,6 @@ public class PlayerStateMachine : Updateable
     {
         _mesh.Position = transform.Position + new Vector3(-0.5f, 0, -0.5f);
         
-        yaw = -Camera.GetYaw();
-        
         _mesh.UpdatePosition();
         _mesh.UpdateRotation(_mesh.Position + new Vector3(0.5f, 0, 0.5f), new Vector3(0, 1, 0), yaw);
         _mesh.UpdateMesh();
@@ -194,7 +207,7 @@ public class PlayerStateMachine : Updateable
 
     public void SnapToBlockUnder()
     {
-        transform.Position.Y = Mathf.RoundToInt(transform.Position.Y);
+        SetPosition(new Vector3(transform.Position.X, Mathf.RoundToInt(transform.Position.Y), transform.Position.Z));
         _mesh.Position = transform.Position + new Vector3(-0.5f, 0, -0.5f);
         
         _mesh.UpdatePosition();
@@ -217,14 +230,23 @@ public class PlayerStateMachine : Updateable
     public void MovePlayer(PlayerMovementSpeed playerMovementSpeed)
     {
         Vector2 input = InputManager.GetMovementInput();
-        
+        if (input == Vector2.Zero)
+            return;
+        MovePlayer(playerMovementSpeed, input);
+    }
+    
+    public void MovePlayer(PlayerMovementSpeed playerMovementSpeed, Vector2 input)
+    {
         Vector3 direction = Camera.FrontYto0() * input.Y - Camera.RightYto0() * input.X;
         Vector3 oldVelocity = physicsBody.GetHorizontalVelocity();
-        
-        direction = Mathf.Normalize(direction);
-        
-        physicsBody.AddForce(direction, Speeds[playerMovementSpeed]);
+        MovePlayer(playerMovementSpeed, direction);
         physicsBody.Velocity -= oldVelocity;
+    }
+    
+    public void MovePlayer(PlayerMovementSpeed playerMovementSpeed, Vector3 direction)
+    {
+        direction = Mathf.Normalize(direction);
+        physicsBody.AddForce(direction, Speeds[playerMovementSpeed]);
     }
 
     public bool IsHuggingWall()
@@ -255,6 +277,24 @@ public class PlayerStateMachine : Updateable
         
         return false;
     }
+
+    private readonly Dictionary<Vector2, float> _inputAngle = new Dictionary<Vector2, float>()
+    {
+        { new Vector2(0, 1), 0 },
+        { new Vector2(1, 1), 45 },
+        { new Vector2(1, 0), 90 },
+        { new Vector2(1, -1), 135 },
+        { new Vector2(0, -1), 180 },
+        { new Vector2(-1, -1), 225 },
+        { new Vector2(-1, 0), 270 },
+        { new Vector2(-1, 1), 315 },
+    };
+    
+    public void SetPosition(Vector3 position)
+    {
+        transform.Position = position;
+        physicsBody.newPosition = position;
+    }
 }
 
 public enum PlayerMovementSpeed
@@ -262,4 +302,5 @@ public enum PlayerMovementSpeed
     Walk,
     Sprint,
     Fall,
+    Grappling,
 }

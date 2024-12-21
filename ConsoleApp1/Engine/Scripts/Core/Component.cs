@@ -5,12 +5,12 @@
     public GameObject gameObject;
     public Transform transform;
 
-    protected virtual void OnResize()
+    public virtual void OnResize()
     {
         
     }
     
-    protected virtual void Update()
+    public virtual void Update()
     {
         
     }

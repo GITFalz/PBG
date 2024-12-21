@@ -332,6 +332,8 @@ public class Game : GameWindow
                 
                 totalTime = time;
             }
+            
+            Thread.Sleep(1);
         }
     }
     
@@ -348,16 +350,13 @@ public class Game : GameWindow
         
         foreach (GameObject gameObject in GameObjects)
         {
-            gameObject.Update(args);
+            gameObject.Update();
         }
-
         
         if (_visibleCursor)
             _uiManager.OnUpdateFrame(keyboard, mouse, args);
-        
         if (!_visibleCursor)
-            _mainCamera.Update(keyboard, mouse, args);
-
+            _mainCamera.Update();
         
         _worldManager.SetPlayerPosition(Camera.position);
         _worldManager.Update();

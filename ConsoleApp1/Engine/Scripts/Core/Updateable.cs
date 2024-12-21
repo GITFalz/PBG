@@ -7,7 +7,7 @@ public abstract class Updateable : Component
 
     }
     
-    public virtual void Update(FrameEventArgs args)
+    public virtual void Update()
     {
 
     }

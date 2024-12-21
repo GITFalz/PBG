@@ -20,6 +20,8 @@ public abstract class Mesh
     
     public virtual void GenerateBuffers()
     {
+        transformedVertices.Clear();
+        
         foreach (var t in Vertices)
         {
             transformedVertices.Add(t + Position);
@@ -89,7 +91,7 @@ public abstract class Mesh
         }
     }
     
-    public void Clear()
+    public virtual void Clear()
     {
         Vertices.Clear();
         Uvs.Clear();

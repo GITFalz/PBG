@@ -1,32 +1,41 @@
-﻿using ConsoleApp1.Assets.Scripts.Inputs;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-public class PlayerWalkingState : PlayerGameBaseState
+public class PlayerSprintingState : PlayerGameBaseState
 {
     Vector2 input = Vector2.Zero;
     
     public override void Enter(PlayerGameState playerGameState)
     {
-        Console.WriteLine("Entering walking state");
+        Console.WriteLine("Entering sprinting state");
         
-        playerGameState.NextMovingState = playerGameState.WalkingState;
+        playerGameState.NextMovingState = playerGameState.SprintingState;
         playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Sprint);
+        
+        AnimationManager.Instance.LoopAnimation("Player", "running");
+        
+        Camera.SetFOV(55);
     }
 
     public override void Update(PlayerGameState playerGameState)
-    {
+    { 
         input = InputManager.GetMovementInput();
         
         if (InputManager.IsKeyPressed(Keys.LeftControl))
         {
-            playerGameState.SwitchState(playerGameState.SprintingState);
+            playerGameState.SwitchState(playerGameState.WalkingState);
             return;
         }
         
         if (input == Vector2.Zero)
         {
             playerGameState.SwitchState(playerGameState.IdleState);
+            return;
+        }
+        
+        if (InputManager.IsMousePressed(MouseButton.Right))
+        {
+            playerGameState.SwitchState(playerGameState.DashState);
             return;
         }
         
@@ -47,17 +56,17 @@ public class PlayerWalkingState : PlayerGameBaseState
             playerGameState.SwitchState(playerGameState.FallingState);
             return;
         }
-
+        
         playerGameState.PlayerStateMachine.MeshRotateUpdate();
     }
     
     public override void FixedUpdate(PlayerGameState playerGameState)
     {
-        playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Walk);
+        playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Sprint);
     }
 
     public override void Exit(PlayerGameState playerGameState)
     {
-        
+        Camera.SetFOV(45);
     }
 }

@@ -9,7 +9,7 @@ public class PlayerGroundedState : PlayerGameBaseState
         
         playerGameState.PlayerStateMachine.SnapToBlockUnder();
         
-        playerGameState.SwitchState(playerGameState.IdleState);
+        playerGameState.SwitchState(playerGameState.NextMovingState);
     }
 
     public override void Update(PlayerGameState playerGameState)

@@ -34,13 +34,14 @@ void main()
 
     vec4 texColor = texture(texture0, atlasUV);
 
+    FragColor = texColor;
+
 
     //if (texColor.a < 0.01)
     //discard;
 
     //vec4 debugColor = vec4(atlasUV, 0.0, 1.0);
     //FragColor = debugColor;
-    FragColor = texColor;
     //FragColor = vec4(char / 400.0, 0, 0, 1);
 
     /*

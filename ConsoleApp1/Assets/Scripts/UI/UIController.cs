@@ -6,11 +6,10 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class UIController
 {
-    private List<UI_Base> uiElements = new List<UI_Base>();
-    
-    private List<UI_Button> buttons = new List<UI_Button>();
+    private List<UiElement> uiElements = new List<UiElement>();
 
     
+    /*
     public void Update(MouseState mouse)
     {
         if (mouse.IsAnyButtonDown)
@@ -18,14 +17,13 @@ public class UIController
             CheckButtonOnClick(mouse);
             CheckButtonOnHold(mouse);
         }
-        
+
         if (mouse.IsButtonReleased(MouseButton.Left))
         {
             CheckButtonOnRelease(mouse);
         }
     }
-    
-    
+
     public void CheckButtonOnClick(MouseState mouse)
     {
         foreach (UI_Button button in buttons)
@@ -36,7 +34,7 @@ public class UIController
             }
         }
     }
-    
+
     public void CheckButtonOnHold(MouseState mouse)
     {
         foreach (UI_Button button in buttons)
@@ -47,7 +45,7 @@ public class UIController
             }
         }
     }
-    
+
     public void CheckButtonOnRelease(MouseState mouse)
     {
         foreach (UI_Button button in buttons)
@@ -58,19 +56,20 @@ public class UIController
             }
         }
     }
-    
+
     public void AddElement(UI_Base element)
     {
         uiElements.Add(element);
-        
+
         if (element is UI_Button button)
         {
             buttons.Add(button);
         }
     }
-    
+
     public List<UI_Base> GetElements()
     {
         return uiElements;
     }
+    */
 }

@@ -9,6 +9,10 @@ public class PlayerFallingState : PlayerGameBaseState
     {
         Console.WriteLine("Entering falling state");
         playerGameState.PlayerStateMachine.physicsBody.doGravity = true;
+        playerGameState.PlayerStateMachine.physicsBody.GRAVITY = 1.3f;
+        playerGameState.PlayerStateMachine.physicsBody.DRAG = 0.1f;
+        
+        AnimationManager.Instance.LoopAnimation("Player", "falling");
     }
 
     public override void Update(PlayerGameState playerGameState)
@@ -39,6 +43,6 @@ public class PlayerFallingState : PlayerGameBaseState
 
     public override void Exit(PlayerGameState playerGameState)
     {
-        
+        playerGameState.PlayerStateMachine.physicsBody.DRAG = 0.9f;
     }
 }

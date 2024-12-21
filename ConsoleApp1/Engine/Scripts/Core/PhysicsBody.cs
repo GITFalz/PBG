@@ -1,10 +1,10 @@
 ﻿using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-public class PhysicsBody : Component
+public class PhysicsBody : Updateable
 {
-    public const float GRAVITY = 1.3f;
-    public const float MAX_FALL_SPEED = 150f;
+    public float GRAVITY = 1.3f;
+    public float MAX_FALL_SPEED = 150f;
     public float DRAG = 1f;
     
     public bool doGravity = false;
@@ -20,6 +20,11 @@ public class PhysicsBody : Component
     public bool huggingNegX = false;
     
     public bool huggingWall = false;
+
+    public double time = 0;
+
+    public Vector3 oldPosition;
+    public Vector3 newPosition;
     
     public PhysicsBody()
     {
@@ -36,9 +41,26 @@ public class PhysicsBody : Component
             Gravity();
         Drag();
         CollisionCheck();
+
+        oldPosition = newPosition;
+        newPosition += Velocity;
+        Hitbox.Position = newPosition;
+
+        time = 0;
         
-        transform.Position += Velocity;
-        Hitbox.Position = transform.Position;
+        if (InputManager.IsDown(Keys.L))
+            Console.WriteLine("Physics : " + newPosition);
+    }
+    
+    public override void Update()
+    {
+        if (!Game.MoveTest)
+            return;
+        
+        transform.Position = Mathf.Lerp(oldPosition, newPosition, (float)time * GameTime.PhysicSteps);
+        if (InputManager.IsDown(Keys.L))
+            Console.WriteLine("PlayerPosition : " + transform.Position + " Time : " + time * GameTime.PhysicSteps);
+        time = Mathf.Min(time + GameTime.DeltaTime, 1d);
     }
     
     public void Gravity()
@@ -59,7 +81,7 @@ public class PhysicsBody : Component
     }
     public void AddForce(Vector3 direction)
     {
-        Velocity += direction * GameTime.FixedDeltaTime;
+        Velocity += direction;
     }
 
     public void CollisionCheck()
@@ -141,7 +163,9 @@ public class PhysicsBody : Component
             Velocity.X = 0;
         }
         if (WorldManager.IsBlockChecks(yPositions))
+        {
             Velocity.Y = 0;
+        }
     }
     public bool IsGroundedCheck()
     {
