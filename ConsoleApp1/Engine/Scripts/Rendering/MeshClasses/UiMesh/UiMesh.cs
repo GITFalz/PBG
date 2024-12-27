@@ -23,9 +23,23 @@ public class UiMesh : Mesh
     {
         _textUvVbo = new VBO(TextUvs);
         
-        base.GenerateBuffers();
+        transformedVertices.Clear();
+
+        int i = 0;
+        foreach (var t in Vertices)
+        {
+            transformedVertices.Add(t + Position + new Vector3(0, 0, 0.01f) * (int)(i / 36));
+            i++;
+        }
         
+        _vertVbo = new VBO(transformedVertices);
+        _uvVbo = new VBO(Uvs);
+        
+        _vao.LinkToVAO(0, 3, _vertVbo);
+        _vao.LinkToVAO(1, 2, _uvVbo);
         _vao.LinkToVAO(2, 1, _textUvVbo);
+        
+        _ibo = new IBO(Indices);
     }
     
     public void AddUiElement(Panel panel)

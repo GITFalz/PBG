@@ -9,6 +9,7 @@ public class TextMesh : Mesh
     public TBO _textTbo;
 
     public List<int> chars;
+    public int CharCount;
     
     public TextMesh()
     {
@@ -28,6 +29,7 @@ public class TextMesh : Mesh
     {
         _textUvVbo = new VBO(TextUvs);
         _textTbo = new TBO(chars);
+        CharCount = chars.Count;
         
         base.GenerateBuffers();
         
@@ -75,6 +77,12 @@ public class TextMesh : Mesh
 
     public override void UpdateMesh()
     {
+        if (chars.Count != CharCount)
+        {
+            _textTbo = new TBO(chars);
+            CharCount = chars.Count;
+            _textUvVbo.Update(TextUvs);
+        }
         _textTbo.Update(chars);
         base.UpdateMesh();
     }
@@ -91,5 +99,13 @@ public class TextMesh : Mesh
         _textUvVbo.Delete();
         
         base.Delete();
+    }
+
+    public override void Clear()
+    {
+        base.Clear();
+        
+        TextUvs.Clear();
+        chars.Clear();
     }
 }

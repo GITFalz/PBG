@@ -56,21 +56,29 @@ public class Animation
 
 public class AnimationKeyframe
 {
-    public Vector3 Scale;
-    public Quaternion Rotation;
-    public Vector3 Position;
-
-    public AnimationKeyframe(Vector3 scale, Quaternion rotation, Vector3 position)
-    {
-        Scale = scale;
-        Rotation = rotation;
-        Position = position;
-    }
+    public Vector3 Scale = Vector3.One;
+    public Quaternion Rotation = Quaternion.Identity;
+    public Vector3 Position = Vector3.Zero;
+    
+    public Vector3 Forward => Vector3.Transform((0, 0, 1), Rotation);
+    public Vector3 Up => Vector3.Transform((0, 1, 0), Rotation);
     
     public AnimationKeyframe(Vector3 scale, Vector3 rotation, Vector3 position)
     {
         Scale = scale;
-        Rotation = Quaternion.FromEulerAngles(MathHelper.DegreesToRadians(rotation.X), MathHelper.DegreesToRadians(rotation.Y), MathHelper.DegreesToRadians(rotation.Z));
+        
+        Rotation = Mathf.RotateAround((1, 0, 0), Rotation, MathHelper.DegreesToRadians(rotation.X));
+        Rotation = Mathf.RotateAround(Up, Rotation, MathHelper.DegreesToRadians(rotation.Y));
+        Rotation = Mathf.RotateAround(Forward, Rotation, MathHelper.DegreesToRadians(rotation.Z));
+        
+        //Rotation = Quaternion.FromEulerAngles(MathHelper.DegreesToRadians(rotation.X), MathHelper.DegreesToRadians(rotation.Y), MathHelper.DegreesToRadians(rotation.Z));
+        Position = position;
+    }
+    
+    public AnimationKeyframe(Vector3 scale, Quaternion rotation, Vector3 position)
+    {
+        Scale = scale;
+        Rotation = rotation;
         Position = position;
     }
 

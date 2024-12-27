@@ -11,8 +11,6 @@ public class PlayerAttack4State : PlayerGameBaseState
     
     public override void Enter(PlayerGameState playerGameState)
     {
-        playerGameState.PlayerStateMachine.physicsBody.DRAG = 2f;
-        
         Console.WriteLine("Entering attack 4 state");
         
         smashed1 = false;

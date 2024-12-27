@@ -50,6 +50,13 @@ public class VBO
         Unbind();
     }
     
+    public void Update(List<Vector2i> newData)
+    {
+        Bind();
+        GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, newData.Count * Vector2i.SizeInBytes, newData.ToArray());
+        Unbind();
+    }
+    
     public void Update(List<int> newData)
     {
         Bind();

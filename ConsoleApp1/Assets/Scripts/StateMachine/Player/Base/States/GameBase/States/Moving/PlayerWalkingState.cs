@@ -11,7 +11,6 @@ public class PlayerWalkingState : PlayerGameBaseState
         Console.WriteLine("Entering walking state");
         
         playerGameState.NextMovingState = playerGameState.WalkingState;
-        playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Sprint);
         
         AnimationManager.Instance.LoopAnimation("Player", "walking");
     }
@@ -60,6 +59,6 @@ public class PlayerWalkingState : PlayerGameBaseState
 
     public override void Exit(PlayerGameState playerGameState)
     {
-        
+
     }
 }

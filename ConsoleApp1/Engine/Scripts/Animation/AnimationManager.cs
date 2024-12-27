@@ -17,6 +17,12 @@ public class AnimationManager
         AnimationController playerController = new AnimationController("Player");
         AnimationControllers.Add("Player", playerController);
         
+        Animation playerBase = new Animation();
+        playerController.baseAnimation = playerBase;
+        
+        playerBase.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        playerBase.SetKeyframe(5, new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        
         Animation playerAttack1 = new Animation();
         playerController.Animations.Add("attack1", playerAttack1);
         
@@ -147,14 +153,27 @@ public class AnimationManager
         
         swordController.baseAnimation = new Animation();
         swordController.Animations.Add("idle", swordController.baseAnimation);
+
+        swordController.baseAnimation.Keyframes.Add(new AnimationKeyframe(Vector3.One, (95, 0, -90), (0.5f, 0, -1)));
+        swordController.baseAnimation.SetKeyframe(20, new AnimationKeyframe(Vector3.One, (95, 0, -95), (0.5f, 0, -1)));
+        swordController.baseAnimation.SetKeyframe(40, new AnimationKeyframe(Vector3.One, (95, 0, -90), (0.5f, 0, -1)));
         
+        swordController.BaseAnimation();
+        swordController.loop = true;
+        
+        //swordController.baseAnimation.SetKeyframe(20, new AnimationKeyframe(Vector3.One, (-90, 10, -93), (0.5f, 0, -1)));
+        //swordController.baseAnimation.SetKeyframe(40, new AnimationKeyframe(Vector3.One, (-90, 10, -87), (0.5f, 0, -1)));
+        /*
+        swordController.baseAnimation = new Animation();
+        swordController.Animations.Add("idle", swordController.baseAnimation);
+
         swordController.baseAnimation.Keyframes.Add(new AnimationKeyframe(Vector3.One, (-90, 10, -87), (0.5f, 0, -1)));
         swordController.baseAnimation.SetKeyframe(20, new AnimationKeyframe(Vector3.One, (-90, 10, -93), (0.5f, 0, -1)));
         swordController.baseAnimation.SetKeyframe(40, new AnimationKeyframe(Vector3.One, (-90, 10, -87), (0.5f, 0, -1)));
-        
+
         swordController.Animations.Add("attack1", new Animation());
         Animation attack1 = swordController.Animations["attack1"];
-        
+
         attack1.Keyframes.Add(new AnimationKeyframe(Vector3.One, (-90, 10, -90), testPos));
         attack1.SetKeyframe(2, new AnimationKeyframe(Vector3.One, (-90, 0, -41), (-1, 0, -1)));
         attack1.SetKeyframe(6, new AnimationKeyframe(Vector3.One, (-90, 10, 129), (-1, 0, 1)));
@@ -162,18 +181,18 @@ public class AnimationManager
         attack1.SetKeyframe(15, new AnimationKeyframe(Vector3.One, (-90, 10, 129), (-1, 0, 1)));
         attack1.SetKeyframe(20, new AnimationKeyframe(Vector3.One, (-90, 0, -41), (-1, 0, -1)));
         attack1.SetKeyframe(25, new AnimationKeyframe(Vector3.One, (-90, 10, -90), testPos));
-        
+
         swordController.Animations.Add("attack2", new Animation());
         Animation attack2 = swordController.Animations["attack2"];
-        
+
         attack2.Keyframes.Add(new AnimationKeyframe(Vector3.One, (-90, -10, 170), (-1, 0, 1)));
         attack2.SetKeyframe(2, new AnimationKeyframe(Vector3.One, (-90, 0, 129), (-1, 0, 1)));
         attack2.SetKeyframe(6, new AnimationKeyframe(Vector3.One, (-90, -10, -41), (-1, 0, -1)));
         attack2.SetKeyframe(8, new AnimationKeyframe(Vector3.One, (-90, -20, -90), testPos));
-        
+
         swordController.Animations.Add("attack3", new Animation());
         Animation attack3 = swordController.Animations["attack3"];
-        
+
         attack3.Keyframes.Add(new AnimationKeyframe(Vector3.One, (-90, -40, -90), testPos));
         attack3.SetKeyframe(2, new AnimationKeyframe(Vector3.One, (-90, -30, -41), (-1, 0, -1)));
         attack3.SetKeyframe(6, new AnimationKeyframe(Vector3.One, (-90, 0, 129), (-1, 0, 1)));
@@ -181,7 +200,7 @@ public class AnimationManager
         attack3.SetKeyframe(15, new AnimationKeyframe(Vector3.One, (-90, -20, 129), (-1, 0, 1)));
         attack3.SetKeyframe(20, new AnimationKeyframe(Vector3.One, (-90, -10, -41), (-1, 0, -1)));
         attack3.SetKeyframe(25, new AnimationKeyframe(Vector3.One, (-90, -10, -90), testPos));
-        
+
         swordController.Animations.Add("attack4", new Animation());
         Animation attack4 = swordController.Animations["attack4"];
 
@@ -192,6 +211,7 @@ public class AnimationManager
         attack4.SetKeyframe(22, new AnimationKeyframe(Vector3.One, (0, 20, 110), (-0.6f, 0f, -0.7f)));
         attack4.SetKeyframe(28, new AnimationKeyframe(Vector3.One, (-45, -20, 40), testPos));
         attack4.SetKeyframe(35, new AnimationKeyframe(Vector3.One, (-90, -20, -90), testPos));
+        */
     }
     
     public void Update(float angle)

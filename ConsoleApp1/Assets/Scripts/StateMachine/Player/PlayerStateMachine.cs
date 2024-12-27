@@ -9,10 +9,11 @@ using Veldrid;
 
 public class PlayerStateMachine : Updateable
 {
-    public const float WALK_SPEED = 0.2f;
-    public const float SPRINT_SPEED = 0.3f;
-    public const float FALL_SPEED = 0.2f;
-    public const float GRAPPLE_SPEED = 0.6f;
+    public const float WALK_SPEED = 7 * 250;
+    public const float SPRINT_SPEED = 22 * 250;
+    public const float FALL_SPEED = 1 * 250;
+    public const float GRAPPLE_SPEED = 30 * 250;
+    public const float JUMP_SPEED = 6f * 250;
     
     public Vector3 forward = new Vector3(0, 0, -1);
     
@@ -22,6 +23,7 @@ public class PlayerStateMachine : Updateable
         {PlayerMovementSpeed.Sprint, SPRINT_SPEED},
         {PlayerMovementSpeed.Fall, FALL_SPEED},
         {PlayerMovementSpeed.Grappling, GRAPPLE_SPEED},
+        {PlayerMovementSpeed.Jump, JUMP_SPEED},
     };
     
     private PlayerBaseState _currentState;
@@ -35,6 +37,8 @@ public class PlayerStateMachine : Updateable
     private AnimationMesh _playerMesh;
     private AnimationMesh _swordMesh;
     
+    private AnimationMesh _testMesh;
+    
     private AnimationController? _playerAnimationController;
     private AnimationController? _swordAnimationController;
     
@@ -43,17 +47,25 @@ public class PlayerStateMachine : Updateable
     public PhysicsBody physicsBody;
     
     public Animation currentAnimation;
+
+    public GameObject go;
     
     public float yaw;
     
+    private Quaternion _rotation = Quaternion.Identity;
     
     //Random values
     Vector3i HugZ = Vector3i.Zero;
     Vector3i HugX = Vector3i.Zero;
     
+    
+    private Vector3 _lastCameraPosition = Camera.position;
+    private float _lastCameraYaw = Camera.yaw;
+    private float _lastCameraPitch = Camera.pitch;
+    
     public override void Start()
     {
-        physicsBody = gameObject.GetComponent<PhysicsBody>();
+        physicsBody = ((Component)this).gameObject.GetComponent<PhysicsBody>();
         
         _currentState = _gameState;
         _currentState.Enter(this);
@@ -61,7 +73,7 @@ public class PlayerStateMachine : Updateable
         _shaderProgram = new ShaderProgram("Entity/Entity.vert", "Entity/Entity.frag");
         
         transform.Position = new Vector3(0, 60, 0);
-        physicsBody.newPosition = transform.Position;
+        physicsBody.SetPosition(transform.Position);
         
         //Mesh
         _mesh = new EntityMesh();
@@ -90,6 +102,19 @@ public class PlayerStateMachine : Updateable
             1
         );
         
+        _testMesh = new AnimationMesh();
+        VoxelData.GenerateStandardMeshBox(_testMesh, 
+            new Vector3(1, 2, 1), 
+            new Vector3(-0.5f, 0, -0.5f), 
+            new Vector3(0, 0, 0), 
+            1
+        );
+        
+        _testMesh.WorldPosition = new Vector3(0, 60, 0);
+        
+        _testMesh.GenerateBuffers();
+        _testMesh.UpdateMesh();
+        
         _swordMesh.GenerateBuffers();
         _swordMesh.UpdateMesh();
         
@@ -108,6 +133,23 @@ public class PlayerStateMachine : Updateable
         
         if (!AnimationManager.Instance.GetController("Sword", out _swordAnimationController) || _swordAnimationController == null)
             throw new System.Exception("Failed to get controller");
+
+        go = new GameObject();
+    }
+    
+    public override void Awake()
+    {
+        Console.WriteLine("Player State Machine");
+        
+        Camera.SetCameraMode(CameraMode.Free);
+        
+        Camera.position = _lastCameraPosition;
+        Camera.yaw = _lastCameraYaw;
+        Camera.pitch = _lastCameraPitch;
+        
+        Camera.UpdateVectors();
+        
+        base.Awake();
     }
 
     public override void Update()
@@ -179,10 +221,22 @@ public class PlayerStateMachine : Updateable
         //_mesh.RenderMesh();
         _swordMesh.RenderMesh();
         _playerMesh.RenderMesh();
+        _testMesh.RenderMesh();
         
         _shaderProgram.Unbind();
         
         //Debug.Render();
+    }
+
+    public override void Exit()
+    {
+        Console.WriteLine("Exiting Player State Machine");
+        
+        _lastCameraPosition = Camera.position;
+        _lastCameraYaw = Camera.yaw;
+        _lastCameraPitch = Camera.pitch;
+        
+        base.Exit();
     }
 
     public int MeshUpdate()
@@ -207,7 +261,7 @@ public class PlayerStateMachine : Updateable
 
     public void SnapToBlockUnder()
     {
-        SetPosition(new Vector3(transform.Position.X, Mathf.RoundToInt(transform.Position.Y), transform.Position.Z));
+        physicsBody.SnapToBlockY();
         _mesh.Position = transform.Position + new Vector3(-0.5f, 0, -0.5f);
         
         _mesh.UpdatePosition();
@@ -292,8 +346,7 @@ public class PlayerStateMachine : Updateable
     
     public void SetPosition(Vector3 position)
     {
-        transform.Position = position;
-        physicsBody.newPosition = position;
+        physicsBody.SetPosition(position);
     }
 }
 
@@ -303,4 +356,5 @@ public enum PlayerMovementSpeed
     Sprint,
     Fall,
     Grappling,
+    Jump,
 }

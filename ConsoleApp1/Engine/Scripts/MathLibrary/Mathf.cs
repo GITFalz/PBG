@@ -21,6 +21,11 @@ public static class Mathf
     {
         return value < min ? min : value > max ? max : value;
     }
+    
+    public static int Clamp(int min, int max, int value)
+    {
+        return value < min ? min : value > max ? max : value;
+    }
 
     public static float Floor(float value)
     {
@@ -151,5 +156,10 @@ public static class Mathf
         Vector3 translatedPoint = point - center;
         Vector3 rotatedPoint = Vector3.Transform(translatedPoint, rotation);
         return rotatedPoint + center;
+    }
+    
+    public static Quaternion RotateAround(Vector3 axis, Quaternion rotation, float angle)
+    {
+        return Quaternion.FromAxisAngle(axis, angle) * rotation;
     }
 }

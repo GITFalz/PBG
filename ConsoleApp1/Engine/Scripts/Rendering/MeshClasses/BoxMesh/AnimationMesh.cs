@@ -45,6 +45,14 @@ public class AnimationMesh : BoxMesh
             _transformedVerts[i] = Mathf.RotateAround(_transformedVerts[i], new Vector3(0, 0, 0), axis, angle);
         }
     }
+    
+    public void UpdateRotation(Quaternion rotation, Vector3 pivot)
+    {
+        for (int i = 0; i < Vertices.Count; i++)
+        {
+            _transformedVerts[i] = Mathf.RotateAround(_transformedVerts[i], pivot, rotation);
+        }
+    }
 
     public void UpdatePosition(Vector3 position)
     {

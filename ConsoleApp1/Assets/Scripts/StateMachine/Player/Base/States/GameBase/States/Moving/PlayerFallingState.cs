@@ -5,14 +5,22 @@ public class PlayerFallingState : PlayerGameBaseState
 {
     Vector2 input = Vector2.Zero;
     
+    Vector3 right;
+    Vector3 forward;
+    Vector3 direction;
+    
     public override void Enter(PlayerGameState playerGameState)
     {
         Console.WriteLine("Entering falling state");
         playerGameState.PlayerStateMachine.physicsBody.doGravity = true;
-        playerGameState.PlayerStateMachine.physicsBody.GRAVITY = 1.3f;
-        playerGameState.PlayerStateMachine.physicsBody.DRAG = 0.1f;
         
         AnimationManager.Instance.LoopAnimation("Player", "falling");
+        
+        right = Vector3.Zero;
+        forward = Vector3.Zero;
+        direction = playerGameState.PlayerStateMachine.physicsBody.GetHorizontalVelocity();
+        
+        playerGameState.PlayerStateMachine.physicsBody.AddForce(direction);
     }
 
     public override void Update(PlayerGameState playerGameState)
@@ -38,11 +46,14 @@ public class PlayerFallingState : PlayerGameBaseState
     
     public override void FixedUpdate(PlayerGameState playerGameState)
     {
-        playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Fall);
+        if (input.X != 0)
+            right = -Camera.RightYto0() * input.X;
+        if (input.Y != 0)
+            forward = Camera.FrontYto0() * input.Y;
     }
 
     public override void Exit(PlayerGameState playerGameState)
     {
-        playerGameState.PlayerStateMachine.physicsBody.DRAG = 0.9f;
+
     }
 }

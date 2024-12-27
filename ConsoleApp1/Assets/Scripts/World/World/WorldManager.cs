@@ -1,7 +1,9 @@
 ﻿using System.Collections.Concurrent;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
-public class WorldManager
+public class WorldManager : Updateable
 {
     public static WorldManager? Instance;
     
@@ -17,9 +19,11 @@ public class WorldManager
     private Task? currentTask = null;
     private Task? storeTask = null;
     
-    private Vector3i playerPosition = new Vector3i(0, 0, 0);
-    
     public ChunkRegionData regionData;
+    
+    
+    private ShaderProgram _shaderProgram;
+    private Texture _textureArray;
     
     public WorldManager()
     {
@@ -36,14 +40,26 @@ public class WorldManager
         regionData = new ChunkRegionData(new Vector3i(0, 0, 0));
         regionData.SaveChunk(new Vector3i(0, 1, 0), new ChunkData(new Vector3i(0, 1, 0)));
         regionData.SaveChunk(new Vector3i(1, 1, 0), new ChunkData(new Vector3i(1, 1, 0)));
+        
+        _shaderProgram = new ShaderProgram("World/Default.vert", "World/Default.frag");
     }
     
-    public void Start()
+    public override void Awake()
     {
+        Console.WriteLine("World Manager");
+        
+        _textureArray = new Texture("EditorTiles.png");
+        
+        activeChunks.Clear();
+        chunksToGenerate.Clear();
+        chunksToCreate.Clear();
+        chunksToStore.Clear();
+        chunksToIgnore.Clear();
+        
         SetChunks();
     }
     
-    public void Update()
+    public override void Update()
     {
         CheckRenderDistance();
         GenerateChunks();
@@ -62,20 +78,40 @@ public class WorldManager
             }
         }
     }
-    
-    public void SetPlayerPosition(Vector3 position)
-    {
-        playerPosition = new Vector3i((int)position.X, (int)position.Y, (int)position.Z);
-    }
 
-    public void Render()
+    public override void Render()
     {
+        _shaderProgram.Bind();
+        _textureArray.Bind();
+        
+        Matrix4 model = Matrix4.Identity;
+        Matrix4 view = Camera.viewMatrix;
+        Matrix4 projection = Camera.projectionMatrix;
+
+        int modelLocation = GL.GetUniformLocation(_shaderProgram.ID, "model");
+        int viewLocation = GL.GetUniformLocation(_shaderProgram.ID, "view");
+        int projectionLocation = GL.GetUniformLocation(_shaderProgram.ID, "projection");
+        int camPosLocation = GL.GetUniformLocation(_shaderProgram.ID, "camPos");
+        
+        GL.UniformMatrix4(modelLocation, true, ref model);
+        GL.UniformMatrix4(viewLocation, true, ref view);
+        GL.UniformMatrix4(projectionLocation, true, ref projection);
+        GL.Uniform3(camPosLocation, Camera.position);
         //Console.WriteLine("Rendering chunk: " + activeChunks.Count);
         
         foreach (var chunk in activeChunks)
         {
             chunk.Value.RenderChunk();
         }
+        
+        _shaderProgram.Unbind();
+        _textureArray.Unbind();
+    }
+
+    public override void Exit()
+    {
+        Delete();
+        base.Exit();
     }
 
     public void SetChunks()
@@ -244,5 +280,23 @@ public class WorldManager
             return true;
             
         return false;
+    }
+    
+    public void Delete()
+    {
+        foreach (var chunk in activeChunks)
+        {
+            chunk.Value.Delete();
+        }
+        
+        try
+        {
+            _shaderProgram.Delete();
+            _textureArray.Delete();
+        }
+        catch (Exception e)
+        {
+            // ignored
+        }
     }
 }

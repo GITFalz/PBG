@@ -1,4 +1,5 @@
 ﻿using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using MouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
 
@@ -6,6 +7,7 @@ public static class InputManager
 {
     private static KeyboardState _previousKeyboardState;
     private static MouseState _previousMouseState;
+    private static CursorState cursorState = CursorState.Normal;
 
     public static void Start(KeyboardState keyboard, MouseState mouse)
     {
@@ -27,6 +29,16 @@ public static class InputManager
     public static bool IsMousePressed(MouseButton button)
     {
         return _previousMouseState.IsButtonPressed(button);
+    }
+    
+    public static bool IsMouseDown(MouseButton button)
+    {
+        return _previousMouseState.IsButtonDown(button);
+    }
+    
+    public static bool IsMouseReleased(MouseButton button)
+    {
+        return _previousMouseState.IsButtonReleased(button);
     }
     
     public static Vector2 GetMouseScroll()
@@ -75,6 +87,16 @@ public static class InputManager
     public static Vector2 GetMousePosition()
     {
         return new Vector2(_previousMouseState.X, _previousMouseState.Y);
+    }
+    
+    public static Vector2 GetMouseDelta()
+    {
+        return _previousMouseState.Delta;
+    }
+    
+    public static void SwitchCursor(CursorState state)
+    {
+        Game.SetCursorState(state);
     }
     
     

@@ -9,7 +9,7 @@ public class PlayerGrapplingSwingOutState : PlayerGameBaseState
         Console.WriteLine("Entering grappling swing out state");
         
         playerGameState.PlayerStateMachine.physicsBody.doGravity = true;
-        playerGameState.PlayerStateMachine.physicsBody.GRAVITY = 0.3f;
+        playerGameState.PlayerStateMachine.physicsBody.gravity = 20f;
         
         AnimationManager.Instance.SetAnimation("Player", "grappleSwingOut");
         AnimationManager.Instance.QueueAnimation("Player", "grappleSwingEnd");
@@ -19,7 +19,7 @@ public class PlayerGrapplingSwingOutState : PlayerGameBaseState
 
     public override void Update(PlayerGameState playerGameState)
     {
-        if (playerGameState.PlayerStateMachine.physicsBody.Velocity.Y < 0f)
+        if (playerGameState.PlayerStateMachine.physicsBody.Velocity.Y < -2f)
         {
             Camera.SetFOV(45);
             playerGameState.SwitchState(playerGameState.FallingState);
@@ -42,6 +42,6 @@ public class PlayerGrapplingSwingOutState : PlayerGameBaseState
 
     public override void Exit(PlayerGameState playerGameState)
     {
-        
+        playerGameState.PlayerStateMachine.physicsBody.gravity = 50f;
     }
 }

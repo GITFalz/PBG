@@ -11,6 +11,8 @@ using Vector3 = OpenTK.Mathematics.Vector3;
 
 public class Game : GameWindow
 {
+    public static Game Instance;
+    
     public static int width;
     public static int height;
 
@@ -19,29 +21,19 @@ public class Game : GameWindow
 
     private Camera _mainCamera;
     
-    // World
-    private ChunkManager _chunkManager;
     private WorldManager _worldManager;
     
-    private ShaderProgram _shaderProgram;
-    private Texture _textureArray;
-    
-    
-    
-    // UI
     private UIManager _uiManager;
-    
-    
-    // Events
+
     private Action? _updateText;
     
     
     private FBO _fbo;
     
     
-    public ConcurrentBag<GameObject> GameObjects = new ConcurrentBag<GameObject>();
+    public ConcurrentDictionary<string, Scene> Scenes = new ConcurrentDictionary<string, Scene>();
     
-    private bool _visibleCursor = false;
+    public static bool cameraMove = false;
     private KeyboardSwitch _visibleCursorSwitch;
 
 
@@ -62,15 +54,23 @@ public class Game : GameWindow
     private ShaderProgram _skyboxShader;
 
     private Mesh _skyboxMesh;
+
+
+    private Scene _worldScene = new Scene("World");
+    private Scene _animationScene = new Scene("Animation");
+    private Scene _uiScene = new Scene("UI");
+    
+    
+    public Scene? CurrentScene { get; private set; }
     
     
     public Game(int width, int height) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
     {
+        Instance = this;
+        
         CenterWindow(new Vector2i(width, height));
         Game.width = width;
         Game.height = height;
-        
-        //_fbo = new FBO(1080, 720);
     }
     
     protected override void OnResize(ResizeEventArgs e)
@@ -95,12 +95,17 @@ public class Game : GameWindow
     
     protected override void OnLoad()
     {
+        // Scenes
+        _worldScene.AddSceneSwitcher(new SceneSwitcherKey(Keys.RightShift, "Animation"));
+        _animationScene.AddSceneSwitcher(new SceneSwitcherKey(Keys.RightShift, "World"));
+        
         // Utils
         stopwatch = new Stopwatch();
         stopwatch.Start();
         
         // Camera
         _mainCamera = new Camera(width, height, new Vector3(0, 20, 0));
+        _mainCamera.Start();
         
         // File Paths
         mainPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VoxelGame");
@@ -113,7 +118,7 @@ public class Game : GameWindow
         MouseState mouse = MouseState;
         KeyboardState keyboard = KeyboardState;
         
-        InputManager.Update(keyboard, mouse);
+        InputManager.Start(keyboard, mouse);
         
         _visibleCursorSwitch = new KeyboardSwitch(InputManager.IsKeyPressed);
         
@@ -146,36 +151,39 @@ public class Game : GameWindow
         new AnimationManager().Start();
 
         // GameObjects
+        GameObject playerObject = new GameObject();
+        
         PlayerStateMachine player = new PlayerStateMachine();
         PhysicsBody playerPhysics = new PhysicsBody();
-        
-        GameObject playerObject = new GameObject();
         
         playerPhysics.doGravity = false;
         
         playerObject.AddComponent(player);
         playerObject.AddComponent(playerPhysics);
-
-        GameObjects.Add(playerObject);
         
         
         _skyboxMesh = new SkyboxMesh();
-        
         _skyboxShader = new ShaderProgram("Sky/Default.vert", "Sky/Default.frag");
-
-        _shaderProgram = new ShaderProgram("World/Default.vert", "World/Default.frag");
-        _textureArray = new Texture("EditorTiles.png");
         
         // World setup
-        _chunkManager = new ChunkManager();
+        GameObject worldObject = new GameObject();
         _worldManager = new WorldManager();
+        worldObject.AddComponent(_worldManager);
         
-        _worldManager.Start();
-
-        foreach (GameObject gameObject in GameObjects)
-        {
-            gameObject.Start();
-        }
+        _worldScene.AddGameObject(playerObject);
+        _worldScene.AddGameObject(worldObject);
+        
+        
+        // Animation Editor
+        GameObject animationObject = new GameObject();
+        
+        animationObject.AddComponent(new AnimationEditor());
+        
+        _animationScene.AddGameObject(animationObject);
+        
+        AddScenes(_worldScene, _animationScene, _uiScene);
+        
+        LoadScene("Animation");
         
         _physicsThread = new Thread(PhysicsThread);
         _physicsThread.Start();
@@ -184,45 +192,13 @@ public class Game : GameWindow
         
         base.OnLoad();
     }
-
-    public async void GenerateChunks()
-    {
-        await Task.Run(() =>
-        {
-            Vector3i playerChunkPos = new Vector3i(0, 0, 0);
-
-            List<Vector3i> chunks = new List<Vector3i>();
-
-            for (int x = 0; x < 20; x++)
-            {
-                for (int y = 0; y < 7; y++)
-                {
-                    for (int z = 0; z < 20; z++)
-                    {
-                        chunks.Add(new Vector3i(x, y, z));
-                    }
-                }
-            }
-
-            chunks.Sort((a, b) => Vector3.Distance(playerChunkPos, a).CompareTo(Vector3.Distance(playerChunkPos, b)));
-
-            foreach (var chunk in chunks)
-            {
-                _chunkManager.GenerateChunk(chunk * 32);
-            }
-        });
-    }
     
     protected override void OnUnload()
     {
         base.OnUnload();
-        
-        _chunkManager.Delete();
-            
-        _shaderProgram.Delete();
-        _textureArray.Delete();
 
         _uiManager.Unload();
+        _worldManager.Delete();
         
         GC.Collect();
         GC.WaitForPendingFinalizers();
@@ -235,6 +211,9 @@ public class Game : GameWindow
     {
         GL.ClearColor(0.6f, 0.3f, 1f, 1f);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
+        Camera.GetViewMatrix();
+        Camera.GetProjectionMatrix();
         
         /*
         GL.DepthFunc(DepthFunction.Lequal);
@@ -268,38 +247,8 @@ public class Game : GameWindow
         GL.Enable(EnableCap.CullFace);
         GL.FrontFace(FrontFaceDirection.Ccw);
         
-        // World
-        _shaderProgram.Bind();
-        _textureArray.Bind();
-        
-        Matrix4 model = Matrix4.Identity;
-        Matrix4 view = Camera.GetViewMatrix();
-        Matrix4 projection = Camera.GetProjectionMatrix();
-
-        int modelLocation = GL.GetUniformLocation(_shaderProgram.ID, "model");
-        int viewLocation = GL.GetUniformLocation(_shaderProgram.ID, "view");
-        int projectionLocation = GL.GetUniformLocation(_shaderProgram.ID, "projection");
-        int camPosLocation = GL.GetUniformLocation(_shaderProgram.ID, "camPos");
-        
-        GL.UniformMatrix4(modelLocation, true, ref model);
-        GL.UniformMatrix4(viewLocation, true, ref view);
-        GL.UniformMatrix4(projectionLocation, true, ref projection);
-        GL.Uniform3(camPosLocation, Camera.position);
-        
-        //_chunkManager.CreateChunks();
-        //_chunkManager.RenderChunks();
-        
-        _worldManager.Render();
-        
-        _shaderProgram.Unbind();
-        _textureArray.Unbind();
-        
-        foreach (GameObject gameObject in GameObjects)
-        {
-            gameObject.Render();
-        }
-        
-        _uiManager.OnRenderFrame(args);
+        CurrentScene?.Render();
+        _uiManager.Render();
         
         Context.SwapBuffers();
         
@@ -325,10 +274,7 @@ public class Game : GameWindow
             
             if (time - totalTime >= GameTime.FixedDeltaTime)
             {
-                foreach (GameObject gameObject in GameObjects)
-                {
-                    gameObject.FixedUpdate();
-                }
+                _worldScene.FixedUpdate();
                 
                 totalTime = time;
             }
@@ -348,23 +294,17 @@ public class Game : GameWindow
         if (InputManager.IsKeyPressed(Keys.LeftAlt))
             MoveTest = !MoveTest;
         
-        foreach (GameObject gameObject in GameObjects)
-        {
-            gameObject.Update();
-        }
-        
-        if (_visibleCursor)
-            _uiManager.OnUpdateFrame(keyboard, mouse, args);
-        if (!_visibleCursor)
+        if (cameraMove)
+            _uiManager.Update();
+        if (!cameraMove)
             _mainCamera.Update();
         
-        _worldManager.SetPlayerPosition(Camera.position);
-        _worldManager.Update();
+        CurrentScene?.Update();
         
         if (_visibleCursorSwitch.CanSwitch(keyboard, Keys.Escape))
         {
-            _visibleCursor = !_visibleCursor;
-            if (!_visibleCursor)
+            cameraMove = !cameraMove;
+            if (!cameraMove)
             {
                 CursorState = CursorState.Grabbed;
                 _mainCamera.firstMove = true;
@@ -402,5 +342,30 @@ public class Game : GameWindow
         }
         
         return false;
+    }
+    
+    public static void SetCursorState(CursorState state)
+    {
+        Instance.CursorState = state;
+    }
+    
+    public static void LoadScene(string sceneName)
+    {
+        if (Instance.Scenes.TryGetValue(sceneName, out Scene? scene))
+        {
+            Instance.CurrentScene?.Exit();
+            Instance.CurrentScene = scene;
+            scene.Start();
+            scene.Awake();
+        }
+    }
+    
+    public static void AddScenes(params Scene[] scene)
+    {
+        foreach (Scene s in scene)
+        {
+            if (!Instance.Scenes.TryAdd(s.Name, s))
+                throw new Exception($"Failed to add {s.Name} Scene");
+        }
     }
 }

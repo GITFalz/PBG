@@ -5,7 +5,6 @@ public class GameObject
 {
     public Transform transform;
     public List<Component> components = new List<Component>();
-    public List<Updateable> updateables = new List<Updateable>();
     
     public GameObject()
     {
@@ -53,19 +52,6 @@ public class GameObject
     {
         return components.Any(component => component.name == name);
     }
-    
-    public void InitUpdateables()
-    {
-        updateables.Clear();
-        
-        foreach (Component component in components)
-        {
-            if (component is Updateable updateable)
-            {
-                updateables.Add(updateable);
-            }
-        }
-    }
 
     
     /// <summary>
@@ -87,37 +73,51 @@ public class GameObject
         throw new NullReferenceException("Component not found. [Called from GameObject.GetComponent<T>()]");
     }
     
+    public void Awake()
+    {
+        foreach (Component component in components)
+        {
+            component.Awake();
+        }
+    }
+    
     public void Start()
     {
-        InitUpdateables();
-        
-        foreach (Updateable updateable in updateables)
+        foreach (Component component in components)
         {
-            updateable.Start();
+            component.Start();
         }
     }
     
     public void FixedUpdate()
     {
-        foreach (Updateable updateable in updateables)
+        foreach (Component component in components)
         {
-            updateable.FixedUpdate();
+            component.FixedUpdate();
         }
     }
     
     public void Update()
     {
-        foreach (Updateable updateable in updateables)
+        foreach (Component component in components)
         {
-            updateable.Update();
+            component.Update();
         }
     }
     
     public void Render()
     {
-        foreach (Updateable updateable in updateables)
+        foreach (Component component in components)
         {
-            updateable.Render();
+            component.Render();
+        }
+    }
+    
+    public void Exit()
+    {
+        foreach (Component component in components)
+        {
+            component.Exit();
         }
     }
 }

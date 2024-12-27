@@ -10,8 +10,6 @@ public class PlayerAttack1State : PlayerGameBaseState
     
     public override void Enter(PlayerGameState playerGameState)
     {
-        playerGameState.PlayerStateMachine.physicsBody.DRAG = 2f;
-        
         Console.WriteLine("Entering attack 1 state");
         
         attacked = false;

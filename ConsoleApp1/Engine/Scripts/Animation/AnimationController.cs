@@ -32,6 +32,8 @@ public class AnimationController
         if (currentAnimation == null)
             return false;
         
+        Console.WriteLine(Name);
+        
         bool isEnd = currentAnimation.IsEnd();
         
         if (!isEnd && currentAnimation.GetFrame(out var keyframe))

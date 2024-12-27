@@ -13,7 +13,7 @@ public class PlayerJumpingState : PlayerGameBaseState
         velocity.Y = 0;
         velocity = Mathf.Normalize(velocity) * 0.05f;
         
-        playerGameState.PlayerStateMachine.physicsBody.AddForce(new Vector3(velocity.X, 0.3f, velocity.Z));
+        playerGameState.PlayerStateMachine.physicsBody.AddForce(new Vector3(velocity.X, PlayerStateMachine.JUMP_SPEED, velocity.Z));
         
         AnimationManager.Instance.SetAnimation("Player", "jumping");
     }
@@ -41,7 +41,7 @@ public class PlayerJumpingState : PlayerGameBaseState
             return;
         }
         
-        if (playerGameState.PlayerStateMachine.IsGrounded())
+        if (playerGameState.PlayerStateMachine.IsGrounded() && playerGameState.PlayerStateMachine.physicsBody.Velocity.Y < 0)
         {
             Camera.SetFOV(45);
             playerGameState.SwitchState(playerGameState.GroundedState);

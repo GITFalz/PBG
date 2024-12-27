@@ -237,7 +237,7 @@ public class BlockStorage
         int blockIndex = modX + modZ * 16 + modY * 256;
         int arrayIndex = xIndex + zIndex * 2 + yIndex * 4;
         
-        Block?[]? blocks = Blocks[arrayIndex];
+        Block?[]? blocks = arrayIndex >= Blocks.Count ? null : Blocks[arrayIndex];
         
         //Console.WriteLine((BlockCount[arrayIndex] == 0) + " " + (blocks == null));
         
