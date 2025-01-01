@@ -55,21 +55,21 @@ public abstract class Mesh
         _vertVbo.Update(transformedVertices);
     }
     
-    public virtual void AddQuad(Vector3 position, Quad quad)
+    public virtual void AddQuad(Vector3 position, MeshQuad meshQuad)
     {
         int index = Vertices.Count;
         
-        foreach (int i in quad.Indices)
+        foreach (int i in meshQuad.Indices)
         {
             Indices.Add((uint)(i + index));
         }
         
-        foreach (Vector3 vertex in quad.Vertices)
+        foreach (Vector3 vertex in meshQuad.Vertices)
         {
             Vertices.Add(position + vertex);
         }
         
-        foreach (Vector2 uv in quad.Uvs)
+        foreach (Vector2 uv in meshQuad.Uvs)
         {
             Uvs.Add(uv);
         }
@@ -115,7 +115,7 @@ public abstract class Mesh
     }
 }
 
-public struct Quad
+public struct MeshQuad
 {
     public Vector3[] Vertices;
     public int[] Indices;
@@ -123,7 +123,7 @@ public struct Quad
     public int[] TextureIndices;
     public Vector2i[] TextureUvs;
 
-    public Quad(Vector3[] v, int[] t)
+    public MeshQuad(Vector3[] v, int[] t)
     {
         Vertices = v;
         TextureIndices = t;
@@ -143,7 +143,7 @@ public struct Quad
         };
     }
     
-    public Quad(Vector3[] v, int[] t, Vector2i[] uvs)
+    public MeshQuad(Vector3[] v, int[] t, Vector2i[] uvs)
     {
         Vertices = v;
         TextureIndices = t;

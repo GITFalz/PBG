@@ -36,7 +36,7 @@ public class TextMesh : Mesh
         _vao.LinkToVAO(2, 2, _textUvVbo);
     }
     
-    public void SetQuad(Vector3 position, Quad quad)
+    public void SetQuad(Vector3 position, MeshQuad meshQuad)
     {
         Vertices.Clear();
         Uvs.Clear();
@@ -45,23 +45,23 @@ public class TextMesh : Mesh
         transformedVertices.Clear();
         chars.Clear();
         
-        foreach (Vector3 v in quad.Vertices)
+        foreach (Vector3 v in meshQuad.Vertices)
         {
             Vertices.Add(v + position);
             transformedVertices.Add(v + position);
         }
         
-        foreach (int i in quad.Indices)
+        foreach (int i in meshQuad.Indices)
         {
             Indices.Add((uint)i);
         }
         
-        foreach (Vector2 uv in quad.Uvs)
+        foreach (Vector2 uv in meshQuad.Uvs)
         {
             Uvs.Add(uv);
         }
         
-        foreach (Vector2i uv in quad.TextureUvs)
+        foreach (Vector2i uv in meshQuad.TextureUvs)
         {
             TextUvs.Add(uv);
         }

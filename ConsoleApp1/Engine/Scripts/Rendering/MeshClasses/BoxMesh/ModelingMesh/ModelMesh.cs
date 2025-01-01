@@ -1,4 +1,4 @@
-﻿using OpenTK.Mathematics;
+using OpenTK.Mathematics;
 
 public class ModelMesh : BoxMesh
 {
@@ -11,6 +11,8 @@ public class ModelMesh : BoxMesh
 
     private int _modelCount = 0;
     
+    public List<Vertex> VertexList = new List<Vertex>();
+    
     public ModelMesh()
     {
         _vao = new VAO();
@@ -22,72 +24,23 @@ public class ModelMesh : BoxMesh
         
         _transformedVerts = new List<Vector3>();
     }
-
-    /// <summary>
-    /// !!!NOTE: This function needs to be called after generating the buffers
-    /// </summary>
+    
     public void Init()
     {
-        for (int i = 0; i < Vertices.Count; i++)
+        _transformedVerts = new List<Vector3>(VertexList.Count);
+
+        foreach (var t in VertexList)
         {
-            _transformedVerts[i] = Vertices[i];
+            _transformedVerts.Add(t.Position);
+            //Console.WriteLine(t.Position);
         }
     }
     
     public void Center()
     {
-        for (int i = 0; i < Vertices.Count; i++)
+        for (int i = 0; i < VertexList.Count; i++)
         {
             _transformedVerts[i] += WorldPosition;
-      
-   
-        }
-    }
-    
-    public void AddModelNode(ModelNode node)
-    {
-        _modelCount++;
-        
-        foreach (var quad in node.Quads)
-        {
-            AddQuad(quad);
-        }
-    }
-
-    public void UpdateNode(int index, ModelNode node)
-    {
-        index *= 24;
-        
-        for (int i = 0; i < 6; i++)
-        {
-            UpdateQuad(index, i, node.Quads[i], node.Offsets);
-        }
-    }
-
-    public void AddQuad(ModelQuad quad)
-    {
-        int index = Vertices.Count;
-        
-        Indices.Add((uint)index);
-        Indices.Add((uint)index + 1);
-        Indices.Add((uint)index + 2);
-        Indices.Add((uint)index + 2);
-        Indices.Add((uint)index + 3);
-        Indices.Add((uint)index);
-        
-        Uvs.Add(new Vector2(0, 0));
-        Uvs.Add(new Vector2(0, 1));
-        Uvs.Add(new Vector2(1, 1));
-        Uvs.Add(new Vector2(1, 0));
-        
-        TextureIndices.Add(0);
-        TextureIndices.Add(0);
-        TextureIndices.Add(0);
-        TextureIndices.Add(0);
-        
-        foreach (var vertex in quad.Vertices)
-        {
-            Vertices.Add(vertex - new Vector3(0.5f, 0.5f, 0.5f));
         }
     }
 
@@ -101,15 +54,39 @@ public class ModelMesh : BoxMesh
             TextureIndices[newIndex + i] = color;
         }
     }
-    
-    public void UpdateQuad(int pos, int index, ModelQuad quad, Vector3[] Offsets)
+
+    public void AddTriangle(Triangle triangle)
     {
-        int vertIndex = index * 4 + pos;
+        Indices.Add((uint)VertexList.Count);
+        Indices.Add((uint)VertexList.Count + 1);
+        Indices.Add((uint)VertexList.Count + 2);
         
-        for (int i = 0; i < 4; i++)
-        {
-            Vertices[vertIndex + i] = quad.Vertices[i] + Offsets[_offsets[index][i]] - new Vector3(0.5f, 0.5f, 0.5f);
-        }
+        VertexList.Add(triangle.A);
+        VertexList.Add(triangle.B);
+        VertexList.Add(triangle.C);
+        
+        Uvs.Add((0, 0));
+        Uvs.Add((0, 1));
+        Uvs.Add((1, 1));
+        
+        TextureIndices.Add(0);
+        TextureIndices.Add(0);
+        TextureIndices.Add(0);
+    }
+    
+    public bool SwapVertices(Vertex A, Vertex B)
+    {
+        if (!VertexList.Contains(A) || !VertexList.Contains(B)) 
+            return false;
+        
+        int indexA = VertexList.IndexOf(A);
+        int indexB = VertexList.IndexOf(B);
+            
+        VertexList[indexA] = B;
+        VertexList[indexB] = A;
+            
+        return true;
+
     }
     
     public void UpdateRotation(Quaternion rotation)
@@ -126,11 +103,19 @@ public class ModelMesh : BoxMesh
         _textureVbo.Update(TextureIndices);
     }
     
+    public void ResetVertex()
+    {
+        foreach (var t in VertexList)
+        {
+            t.WentThrough = false;
+        }
+    }
+    
     public override void GenerateBuffers()
     {
-        for (int i = 0; i < Vertices.Count; i++)
+        foreach (var t in VertexList)
         {
-            _transformedVerts.Add(Vertices[i]);
+            _transformedVerts.Add(t.Position);
         }
         
         _vertVbo = new VBO(_transformedVerts);
@@ -150,14 +135,4 @@ public class ModelMesh : BoxMesh
         
         base.Delete();
     }
-
-    private readonly Vector4i[] _offsets =
-    [
-        (0, 3, 2, 1),
-        (1, 2, 6, 5),
-        (3, 7, 6, 2),
-        (4, 7, 3, 0),
-        (1, 5, 4, 0),
-        (5, 6, 7, 4),
-    ];
 }

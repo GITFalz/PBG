@@ -4,6 +4,9 @@ public class UiMesh : Mesh
 {
     public List<int> TextUvs;
     public VBO _textUvVbo;
+
+    public List<Vector2> UiSizes;
+    public VBO _uiSizeVbo;
     
     public int elementCount = 0;
     
@@ -15,6 +18,7 @@ public class UiMesh : Mesh
         Uvs = new List<Vector2>();
         Indices = new List<uint>();
         TextUvs = new List<int>();
+        UiSizes = new List<Vector2>();
         
         transformedVertices = new List<Vector3>();
     }
@@ -22,6 +26,7 @@ public class UiMesh : Mesh
     public override void GenerateBuffers()
     {
         _textUvVbo = new VBO(TextUvs);
+        _uiSizeVbo = new VBO(UiSizes);
         
         transformedVertices.Clear();
 
@@ -38,8 +43,36 @@ public class UiMesh : Mesh
         _vao.LinkToVAO(0, 3, _vertVbo);
         _vao.LinkToVAO(1, 2, _uvVbo);
         _vao.LinkToVAO(2, 1, _textUvVbo);
+        _vao.LinkToVAO(3, 2, _uiSizeVbo);
         
         _ibo = new IBO(Indices);
+    }
+    
+    public void AddPanel(Panel panel)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            Vertices.Add(panel.Vertices[i]);
+            Uvs.Add(panel.Uvs[i]);
+            TextUvs.Add(panel.TextUvs[i]);
+            UiSizes.Add(panel.UiSizes[i]);
+        }
+        
+        foreach (var t in Vertices)
+        {
+            transformedVertices.Add(t + Position);
+        }
+        
+        int offset = elementCount * 4;
+            
+        Indices.Add((uint) (offset));
+        Indices.Add((uint) (offset + 1));
+        Indices.Add((uint) (offset + 2));
+        Indices.Add((uint) (offset + 2));
+        Indices.Add((uint) (offset + 3));
+        Indices.Add((uint) (offset));
+        
+        elementCount++;
     }
     
     public void AddUiElement(Panel panel)
@@ -78,12 +111,6 @@ public class UiMesh : Mesh
         elementCount++;
     }
 
-    public override void RenderMesh()
-    {
-        //Console.WriteLine("Vertices : " + transformedVertices.Count + " Indices : " + Indices.Count + " Uvs : " + Uvs.Count);
-        base.RenderMesh();
-    }
-
     public void MoveUiElement(int index, Vector3 position)
     {
         index *= 36;
@@ -94,6 +121,18 @@ public class UiMesh : Mesh
         }
         
         UpdateMesh();
+    }
+    
+    public override void Clear()
+    {
+        Vertices.Clear();
+        Uvs.Clear();
+        TextUvs?.Clear();
+        Indices.Clear();
+        
+        transformedVertices.Clear();
+        
+        elementCount = 0;
     }
     
     public override void Delete()

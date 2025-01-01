@@ -3,7 +3,7 @@ using StbImageSharp;
 
 public class UI
 {
-    public static Panel GeneratePanel(Vector3 position, float textureWidth, float textureHeight, float width, float height, float cellSize, Vector4 grid)
+    public static Panel GeneratePanel(Vector3 position, float textureWidth, float textureHeight, float width, float height, float cellSize, Vector4 grid, int textureIndex)
     {
         Panel panel = new Panel();
         
@@ -137,11 +137,59 @@ public class UI
         
         for (int uv = 0; uv < 9; uv++)
         {
-            panel.TextUvs.Add(0);
-            panel.TextUvs.Add(0);
-            panel.TextUvs.Add(0);
-            panel.TextUvs.Add(0);
+            panel.TextUvs.Add(textureIndex);
+            panel.TextUvs.Add(textureIndex);
+            panel.TextUvs.Add(textureIndex);
+            panel.TextUvs.Add(textureIndex);
         }
+        
+        return panel;
+    }
+    
+    public static StaticButton CreateStaticButton(AnchorType anchorType, PositionType positionType, Vector3 scale, Vector4 offset, UiMesh? mesh)
+    {
+        StaticButton button = new StaticButton();
+        
+        button.SetAnchorType(anchorType);
+        button.SetPositionType(positionType);
+        button.SetScale(scale);
+        button.SetOffset(offset);
+        
+        if (mesh != null)
+            button.SetMesh(mesh);
+        
+        return button;
+    }
+    
+    public static StaticText CreateStaticText(string text, AnchorType? anchorType, PositionType? positionType, Vector3? scale, Vector4? offset)
+    {
+        StaticText Text = new StaticText(text);
+        
+        if (anchorType != null)
+            Text.SetAnchorType((AnchorType)anchorType);
+        if (positionType != null)
+            Text.SetPositionType((PositionType)positionType);
+        if (scale != null)
+            Text.SetScale((Vector3)scale);
+        if (offset != null)
+            Text.SetOffset((Vector4)offset);
+        Text.SetMesh(new TextMesh());
+        
+        return Text;
+    }
+    
+    public static StaticPanel CreateStaticPanel(AnchorType anchorType, PositionType? positionType, Vector3 scale, Vector4? offset, UiMesh? mesh)
+    {
+        StaticPanel panel = new StaticPanel();
+        
+        panel.SetAnchorType(anchorType);
+        panel.SetScale(scale);
+        if (positionType != null)
+            panel.SetPositionType((PositionType)positionType);
+        if (offset != null)
+            panel.SetOffset((Vector4)offset);
+        if (mesh != null)
+            panel.SetMesh(mesh);
         
         return panel;
     }
@@ -152,4 +200,5 @@ public class Panel
     public List<Vector3> Vertices = new();
     public List<Vector2> Uvs = new();
     public List<int> TextUvs = new();
+    public List<Vector2> UiSizes = new();
 }

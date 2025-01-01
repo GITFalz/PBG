@@ -44,8 +44,8 @@ public class StaticText : StaticElement
     public override void Generate()
     {
         Align(new Vector3(TextSize.X, TextSize.Y, 0));
-        Quad quad = MeshHelper.GenerateTextQuad(CharCount * 20, 20, 0, CharCount, 0);
-        Mesh.SetQuad(Origin + new Vector3(0, 0, 1f), quad);
+        MeshQuad meshQuad = MeshHelper.GenerateTextQuad(CharCount * 20, 20, 0, CharCount, 0);
+        Mesh.SetQuad(Origin + new Vector3(0, 0, 1f), meshQuad);
         foreach (var character in Characters)
         {
             Mesh.chars.Add(TextShaderHelper.CharPosition[character]);

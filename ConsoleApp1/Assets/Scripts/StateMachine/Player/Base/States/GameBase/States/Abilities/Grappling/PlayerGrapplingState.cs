@@ -3,12 +3,16 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PlayerGrapplingState : PlayerGameBaseState
 {
+    Camera Camera;
+    
     float timer = 0;
     Vector3 grappleDirection;
     
     public override void Enter(PlayerGameState playerGameState)
     {
         Console.WriteLine("Entering grappling state");
+        
+        Camera = playerGameState.PlayerStateMachine.camera;
         
         Camera.SetFOV(70);
         
@@ -25,7 +29,7 @@ public class PlayerGrapplingState : PlayerGameBaseState
     {
         timer += GameTime.DeltaTime;
         
-        if (InputManager.IsKeyPressed(Keys.LeftShift))
+        if (Input.IsKeyPressed(Keys.LeftShift))
         {
             playerGameState.SwitchState(playerGameState.GrapplingSwingOutState);
             return;

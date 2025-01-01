@@ -12,7 +12,7 @@ public class PlayerIdleState : PlayerGameBaseState
 
     public override void Update(PlayerGameState playerGameState)
     {
-        Vector2 input = InputManager.GetMovementInput();
+        Vector2 input = Input.GetMovementInput();
         
         playerGameState.PlayerStateMachine.physicsBody.Velocity = Vector3.Zero;
 
@@ -22,13 +22,13 @@ public class PlayerIdleState : PlayerGameBaseState
             return;
         }
         
-        if (InputManager.IsMousePressed(MouseButton.Left))
+        if (Input.IsMousePressed(MouseButton.Left))
         {
             playerGameState.SwitchState(playerGameState.Attack1State);
             return;
         }
         
-        if (InputManager.IsDown(Keys.Space) && Game.MoveTest)
+        if (Input.IsKeyDown(Keys.Space) && Game.MoveTest)
         {
             playerGameState.SwitchState(playerGameState.JumpingState);
             return;

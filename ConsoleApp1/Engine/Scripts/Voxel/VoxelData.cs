@@ -316,7 +316,7 @@ public static class VoxelData
         (width, height) => new Vector3[] { new Vector3(width, 0, 1), new Vector3(width, height, 1), new Vector3(0, height, 1), new Vector3(0, 0, 1), }  //Back
     ];
 
-    public static EntityMesh GetEntityBoxMesh(EntityMesh mesh, Vector3 size, Vector3 offset, int color)
+    public static BoxMesh GetEntityBoxMesh(BoxMesh mesh, Vector3 size, Vector3 offset, int color)
     {
         MeshHelper.GenerateMeshIndices(mesh);
         mesh.Uvs.AddRange(VoxelData.UVTable);

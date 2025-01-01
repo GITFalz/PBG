@@ -3,6 +3,8 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PlayerAttack4State : PlayerGameBaseState
 {
+    Camera Camera;
+    
     double timer = 0;
     Vector2 input;
     
@@ -12,6 +14,8 @@ public class PlayerAttack4State : PlayerGameBaseState
     public override void Enter(PlayerGameState playerGameState)
     {
         Console.WriteLine("Entering attack 4 state");
+        
+        Camera = playerGameState.PlayerStateMachine.camera;
         
         smashed1 = false;
         smashed2 = false;
@@ -26,7 +30,7 @@ public class PlayerAttack4State : PlayerGameBaseState
     public override void Update(PlayerGameState playerGameState)
     {
         timer += GameTime.DeltaTime;
-        input = InputManager.GetMovementInput();
+        input = Input.GetMovementInput();
         
         if (timer > 0.12 && !smashed1)
         {
@@ -42,7 +46,7 @@ public class PlayerAttack4State : PlayerGameBaseState
         
         if (timer > 0.4)
         {
-            if (InputManager.IsMousePressed(MouseButton.Left))
+            if (Input.IsMousePressed(MouseButton.Left))
             {
                 playerGameState.SwitchState(playerGameState.Attack1State);
                 return;
@@ -64,7 +68,7 @@ public class PlayerAttack4State : PlayerGameBaseState
             }
         }
         
-        if (InputManager.IsDown(Keys.Space) && Game.MoveTest)
+        if (Input.IsKeyDown(Keys.Space) && Game.MoveTest)
         {
             playerGameState.SwitchState(playerGameState.JumpingState);
             return;

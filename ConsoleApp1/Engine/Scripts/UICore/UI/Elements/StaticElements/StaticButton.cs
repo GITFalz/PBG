@@ -8,16 +8,19 @@ public class StaticButton : StaticElement
     public TextMesh TextMesh;
     
     public StaticText? Text;
-    
+
+    public Action OnHover;
     public Action OnClick;
     public Action OnHold;
     public Action OnRelease;
     
     private bool _clicked = false;
     
+    public int TextureIndex = 0;
+    
     public StaticButton(StaticText text)
     {
-        Name = "Static Panel";
+        Name = "Static Button";
         
         Text = text;
         
@@ -27,7 +30,7 @@ public class StaticButton : StaticElement
     
     public StaticButton()
     {
-        Name = "Static Panel";
+        Name = "Static Button";
         
         AnchorType = AnchorType.MiddleCenter;
         PositionType = PositionType.Absolute;
@@ -49,8 +52,34 @@ public class StaticButton : StaticElement
     public override void Generate()
     {
         Align();
-        Panel panel = UI.GeneratePanel(Origin, 64, 64, Scale.X, Scale.Y, 10f, new Vector4(10f, 10f, 10f, 10f));
-        Mesh.AddUiElement(panel);
+        if (TextureIndex >= 0)
+        {
+            Panel panel = new Panel();
+
+            Vector3 position = Origin;
+        
+            panel.Vertices.Add(new Vector3(0, 0, 0) + position);
+            panel.Vertices.Add(new Vector3(0, Scale.Y, 0) + position);
+            panel.Vertices.Add(new Vector3(Scale.X, Scale.Y, 0) + position);
+            panel.Vertices.Add(new Vector3(Scale.X, 0, 0) + position);
+        
+            panel.Uvs.Add(new Vector2(0, 0));
+            panel.Uvs.Add(new Vector2(0, 1));
+            panel.Uvs.Add(new Vector2(1, 1));
+            panel.Uvs.Add(new Vector2(1, 0));
+        
+            panel.TextUvs.Add(TextureIndex);
+            panel.TextUvs.Add(TextureIndex);
+            panel.TextUvs.Add(TextureIndex);
+            panel.TextUvs.Add(TextureIndex);
+        
+            panel.UiSizes.Add(new Vector2(Scale.X, Scale.Y));
+            panel.UiSizes.Add(new Vector2(Scale.X, Scale.Y));
+            panel.UiSizes.Add(new Vector2(Scale.X, Scale.Y));
+            panel.UiSizes.Add(new Vector2(Scale.X, Scale.Y));
+        
+            Mesh.AddPanel(panel);
+        }
         
         Text?.Generate();
     }
@@ -62,7 +91,7 @@ public class StaticButton : StaticElement
     
     public bool IsMouseOver()
     {
-        Vector2 pos = InputManager.GetMousePosition();
+        Vector2 pos = Input.GetMousePosition();
         return pos.X >= Origin.X && pos.X <= Origin.X + Scale.X && pos.Y >= Origin.Y && pos.Y <= Origin.Y + Scale.Y;
     }
 
@@ -70,10 +99,15 @@ public class StaticButton : StaticElement
     {
         bool mouseOver = IsMouseOver();
         
-        if (mouseOver && InputManager.IsMousePressed(MouseButton.Left) && !_clicked)
+        if (mouseOver)
         {
-            OnClick?.Invoke();
-            _clicked = true;
+            OnHover?.Invoke();
+            
+            if ( Input.IsMousePressed(MouseButton.Left) && !_clicked)
+            {
+                OnClick?.Invoke();
+                _clicked = true;
+            }
         }
         
         if (_clicked)
@@ -82,7 +116,7 @@ public class StaticButton : StaticElement
             OnHold?.Invoke();
         }
             
-        if (InputManager.IsMouseReleased(MouseButton.Left) && _clicked)
+        if (Input.IsMouseReleased(MouseButton.Left) && _clicked)
         {
             Game.SetCursorState(CursorState.Normal);
             OnRelease?.Invoke();

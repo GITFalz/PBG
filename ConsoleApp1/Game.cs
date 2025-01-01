@@ -15,6 +15,9 @@ public class Game : GameWindow
     
     public static int width;
     public static int height;
+    
+    public static int centerX;
+    public static int centerY;
 
     public static string mainPath;
     public static string chunkPath;
@@ -71,6 +74,9 @@ public class Game : GameWindow
         CenterWindow(new Vector2i(width, height));
         Game.width = width;
         Game.height = height;
+        
+        Game.centerX = width / 2;
+        Game.centerY = height / 2;
     }
     
     protected override void OnResize(ResizeEventArgs e)
@@ -81,9 +87,12 @@ public class Game : GameWindow
         Game.width = e.Width;
         Game.height = e.Height;
         
+        centerX = e.Width / 2;
+        centerY = e.Height / 2;
+        
         try
         {
-            _uiManager.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, e.Width, e.Height, 0, -1, 1);
+            UIController.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, e.Width, e.Height, 0, -1, 1);
             _uiManager.OnResize();
             _mainCamera.UpdateProjectionMatrix(e.Width, e.Height);
         }
@@ -118,14 +127,9 @@ public class Game : GameWindow
         MouseState mouse = MouseState;
         KeyboardState keyboard = KeyboardState;
         
-        InputManager.Start(keyboard, mouse);
+        Input.Start(keyboard, mouse);
         
-        _visibleCursorSwitch = new KeyboardSwitch(InputManager.IsKeyPressed);
-        
-        // UI
-        _uiManager = new UIManager();
-        _uiManager.Load();
-        _uiManager.Start();
+        _visibleCursorSwitch = new KeyboardSwitch(Input.IsKeyPressed);
         
         // Blocks
         UVmaps editorUvs = new UVmaps( new int[] { 0, 0, 0, 0, 0, 0 });
@@ -196,8 +200,7 @@ public class Game : GameWindow
     protected override void OnUnload()
     {
         base.OnUnload();
-
-        _uiManager.Unload();
+        
         _worldManager.Delete();
         
         GC.Collect();
@@ -211,9 +214,8 @@ public class Game : GameWindow
     {
         GL.ClearColor(0.6f, 0.3f, 1f, 1f);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-        Camera.GetViewMatrix();
-        Camera.GetProjectionMatrix();
+        
+        GL.Viewport(0, 0, width, height);
         
         /*
         GL.DepthFunc(DepthFunction.Lequal);
@@ -248,7 +250,6 @@ public class Game : GameWindow
         GL.FrontFace(FrontFaceDirection.Ccw);
         
         CurrentScene?.Render();
-        _uiManager.Render();
         
         Context.SwapBuffers();
         
@@ -288,39 +289,13 @@ public class Game : GameWindow
         MouseState mouse = MouseState;
         KeyboardState keyboard = KeyboardState;
         
-        InputManager.Update(keyboard, mouse);
+        Input.Update(keyboard, mouse);
         GameTime.Update(args);
 
-        if (InputManager.IsKeyPressed(Keys.LeftAlt))
+        if (Input.IsKeyPressed(Keys.LeftAlt))
             MoveTest = !MoveTest;
         
-        if (cameraMove)
-            _uiManager.Update();
-        if (!cameraMove)
-            _mainCamera.Update();
-        
         CurrentScene?.Update();
-        
-        if (_visibleCursorSwitch.CanSwitch(keyboard, Keys.Escape))
-        {
-            cameraMove = !cameraMove;
-            if (!cameraMove)
-            {
-                CursorState = CursorState.Grabbed;
-                _mainCamera.firstMove = true;
-            }
-            else
-            {
-                CursorState = CursorState.Normal;
-            }
-        }
-        
-        bool update = FpsUpdate();
-        
-        if (update)
-        {
-            _uiManager.UpdateFps(GameTime.Fps);
-        }
         
         base.OnUpdateFrame(args);
     }

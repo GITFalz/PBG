@@ -17,9 +17,9 @@ public class PlayerWalkingState : PlayerGameBaseState
 
     public override void Update(PlayerGameState playerGameState)
     {
-        input = InputManager.GetMovementInput();
+        input = Input.GetMovementInput();
         
-        if (InputManager.IsKeyPressed(Keys.LeftControl))
+        if (Input.IsKeyPressed(Keys.LeftControl))
         {
             playerGameState.SwitchState(playerGameState.SprintingState);
             return;
@@ -31,13 +31,13 @@ public class PlayerWalkingState : PlayerGameBaseState
             return;
         }
         
-        if (InputManager.IsMousePressed(MouseButton.Left))
+        if (Input.IsMousePressed(MouseButton.Left))
         {
             playerGameState.SwitchState(playerGameState.Attack1State);
             return;
         }
         
-        if (InputManager.IsDown(Keys.Space) && Game.MoveTest)
+        if (Input.IsKeyDown(Keys.Space) && Game.MoveTest)
         {
             playerGameState.SwitchState(playerGameState.JumpingState);
             return;

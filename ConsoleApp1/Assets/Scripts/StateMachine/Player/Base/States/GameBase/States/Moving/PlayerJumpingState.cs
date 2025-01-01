@@ -3,9 +3,13 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PlayerJumpingState : PlayerGameBaseState
 {
+    Camera Camera;
+    
     public override void Enter(PlayerGameState playerGameState)
     {
         Console.WriteLine("Entering jumping state");
+        
+        Camera = playerGameState.PlayerStateMachine.camera;
         
         playerGameState.PlayerStateMachine.physicsBody.doGravity = true;
         Vector3 velocity = playerGameState.PlayerStateMachine.physicsBody.Velocity;
@@ -20,7 +24,7 @@ public class PlayerJumpingState : PlayerGameBaseState
 
     public override void Update(PlayerGameState playerGameState)
     {
-        if (playerGameState.PlayerStateMachine.IsHuggingWall() && InputManager.IsKeyPressed(Keys.Space))
+        if (playerGameState.PlayerStateMachine.IsHuggingWall() && Input.IsKeyPressed(Keys.Space))
         {
             Camera.SetFOV(45);
             playerGameState.PlayerStateMachine.physicsBody.Velocity.Y = 0;
@@ -28,7 +32,7 @@ public class PlayerJumpingState : PlayerGameBaseState
             return;
         }
 
-        if (InputManager.IsKeyPressed(Keys.F))
+        if (Input.IsKeyPressed(Keys.F))
         {
             playerGameState.SwitchState(playerGameState.GrapplingState);
             return;

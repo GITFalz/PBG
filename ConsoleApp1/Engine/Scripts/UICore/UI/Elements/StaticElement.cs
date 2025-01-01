@@ -10,6 +10,9 @@ public abstract class StaticElement : UiElement
     }
     public void Align(Vector3 scale)
     {
+        if (PositionType == PositionType.Free)
+            return;
+        
         float width;
         float height;
 

@@ -7,70 +7,66 @@ using Vector3 = OpenTK.Mathematics.Vector3;
 
 public class Camera : Component
 {
-    private static Camera Instance;
+    public float SPEED { get; private set; } = 50f;
+    public float SCREEN_WIDTH { get; private set; }
+    public float SCREEN_HEIGHT { get; private set; }
+    public float SENSITIVITY { get; private set; } = 65f;
+    public float SCROLL_SENSITIVITY { get; private set; } = 0.4f;
+    
+    public float FOV { get; private set; } = 45f;
+    public float targetFOV { get; private set; } = 45f;
+    public float FOV_SMOTH_FACTOR { get; private set; } = 100f;
 
-    public static float SPEED { get; private set; } = 50f;
-    public static float SCREEN_WIDTH { get; private set; }
-    public static float SCREEN_HEIGHT { get; private set; }
-    public static float SENSITIVITY { get; private set; } = 65f;
-    public static float SCROLL_SENSITIVITY { get; private set; } = 0.4f;
+    public Vector3 position;
+    public float pitch = 0;
+    public float yaw = -90;
     
-    public static float FOV { get; private set; } = 45f;
-    public static float targetFOV { get; private set; } = 45f;
-    public static float FOV_SMOTH_FACTOR { get; private set; } = 100f;
-
-    public static Vector3 position;
-    public static float pitch = 0;
-    public static float yaw = -90;
+    public Vector3 up = Vector3.UnitY;
+    public Vector3 front = -Vector3.UnitZ;
+    public Vector3 right = Vector3.UnitX;
     
-    private static Vector3 up = Vector3.UnitY;
-    private static Vector3 front = -Vector3.UnitZ;
-    private static Vector3 right = Vector3.UnitX;
-    
-    private static float CameraDistance = 5;
-    private static float oldScroll = 0;
+    private float CameraDistance = 5;
+    private float oldScroll = 0;
 
     public bool firstMove = true;
     public Vector2 lastPos;
     
-    public static Matrix4 viewMatrix;
-    public static Matrix4 projectionMatrix = GetProjectionMatrix();
+    public Matrix4 viewMatrix;
+    public Matrix4 projectionMatrix;
     
     
     private Vector2 _smoothMouseDelta = Vector2.Zero;
-    private static bool _smooth = false;
-    private static float SMOOTH_FACTOR = 5f;
+    private bool _smooth = false;
+    private float SMOOTH_FACTOR = 5f;
     
     private Vector3 _targetPosition;
-    private static bool _positionSmooth = false;
-    private static float POSITION_SMOOTH_FACTOR = 50f;
+    private bool _positionSmooth = false;
+    private float POSITION_SMOOTH_FACTOR = 50f;
     
-    private static CameraMode _cameraMode = CameraMode.Fixed;
+    private CameraMode _cameraMode = CameraMode.Fixed;
     
-    private static Dictionary<CameraMode, Action> _cameraModes;
+    private Dictionary<CameraMode, Action> _cameraModes;
 
     public Camera(float width, float height, Vector3 position)
     {
         SCREEN_WIDTH = width;
         SCREEN_HEIGHT = height;
-        Camera.position = position;
-        
-        Instance = this;
+        this.position = position;
         
         _cameraModes = new Dictionary<CameraMode, Action>
         {
-            {CameraMode.Free, Instance.FreeCamera},
-            {CameraMode.Fixed, Instance.FixedCamera}
+            {CameraMode.Free, FreeCamera},
+            {CameraMode.Fixed, FixedCamera}
         };
     }
 
-    public static Matrix4 GetViewMatrix()
+    public Matrix4 GetViewMatrix()
     {
         viewMatrix = Matrix4.LookAt(position, position + front, up);
         return viewMatrix;
     }
     
-    public static Matrix4 GetProjectionMatrix()
+    public Matrix4 GetProjectionMatrix()
     {
         float fov = Mathf.Lerp(FOV, targetFOV, FOV_SMOTH_FACTOR * GameTime.DeltaTime);
         FOV = Mathf.Clamp(1, 179, fov);
@@ -83,20 +79,35 @@ public class Camera : Component
         );
         return projectionMatrix;
     }
+    
+    public Matrix4x4 GetNumericsViewMatrix()
+    {
+        return Mathf.ToNumericsMatrix4(GetViewMatrix());
+    }
+    
+    public Matrix4x4 GetNumericsProjectionMatrix()
+    {
+        return Mathf.ToNumericsMatrix4(GetProjectionMatrix());
+    }
+    
+    public Matrix4 GetViewProjectionMatrix()
+    {
+        return GetProjectionMatrix() * GetViewMatrix();
+    }
 
-    public static void SetFOV(float fov)
+    public void SetFOV(float fov)
     {
         targetFOV = fov;
         projectionMatrix = GetProjectionMatrix();
     }
     
-    public static void SetCameraMode(CameraMode mode)
+    public void SetCameraMode(CameraMode mode)
     {
         _cameraMode = mode;
     }
     
 
-    public static void UpdateVectors()
+    public void UpdateVectors()
     {
         front.X = MathF.Cos(MathHelper.DegreesToRadians(pitch)) * MathF.Cos(MathHelper.DegreesToRadians(yaw));
         front.Y = MathF.Sin(MathHelper.DegreesToRadians(pitch));
@@ -107,32 +118,32 @@ public class Camera : Component
         up = Vector3.Normalize(Vector3.Cross(right, front));
     }
 
-    public static Vector3 Yto0(Vector3 v)
+    public Vector3 Yto0(Vector3 v)
     {
         v.Y = 0;
         return Vector3.Normalize(v);
     }
     
-    public static Vector3 FrontYto0()
+    public Vector3 FrontYto0()
     {
         Vector3 v = front;
         v.Y = 0;
         return Vector3.Normalize(v);
     }
     
-    public static Vector3 Front()
+    public Vector3 Front()
     {
         return front;
     }
     
-    public static Vector3 RightYto0()
+    public Vector3 RightYto0()
     {
         Vector3 v = right;
         v.Y = 0;
         return Vector3.Normalize(v);
     }
     
-    public static float GetYaw()
+    public float GetYaw()
     {
         return yaw;
     }
@@ -160,32 +171,32 @@ public class Camera : Component
         {
             float speed = SPEED * GameTime.DeltaTime;
 
-            if (InputManager.IsDown(Keys.W))
+            if (Input.IsKeyDown(Keys.W))
             {
                 position += Yto0(front) * speed;
             }
 
-            if (InputManager.IsDown(Keys.A))
+            if (Input.IsKeyDown(Keys.A))
             {
                 position -= Yto0(right) * speed;
             }
 
-            if (InputManager.IsDown(Keys.S))
+            if (Input.IsKeyDown(Keys.S))
             {
                 position -= Yto0(front) * speed;
             }
 
-            if (InputManager.IsDown(Keys.D))
+            if (Input.IsKeyDown(Keys.D))
             {
                 position += Yto0(right) * speed;
             }
 
-            if (InputManager.IsDown(Keys.Space))
+            if (Input.IsKeyDown(Keys.Space))
             {
                 position.Y += speed;
             }
 
-            if (InputManager.IsDown(Keys.LeftShift))
+            if (Input.IsKeyDown(Keys.LeftShift))
             {
                 position.Y -= speed;
             }
@@ -197,12 +208,12 @@ public class Camera : Component
         
         if (firstMove)
         {
-            lastPos = InputManager.GetMousePosition();
+            lastPos = Input.GetMousePosition();
             firstMove = false;
         }
         else
         {
-            Vector2 pos = InputManager.GetMousePosition();
+            Vector2 pos = Input.GetMousePosition();
             
             Vector2 currentMouseDelta = new Vector2(pos.X - lastPos.X, pos.Y - lastPos.Y);
             _smoothMouseDelta = _smooth ? Vector2.Lerp(_smoothMouseDelta, currentMouseDelta, SMOOTH_FACTOR * GameTime.DeltaTime) : currentMouseDelta;
@@ -230,7 +241,7 @@ public class Camera : Component
 
     private void CameraZoom()
     {
-        float scroll = InputManager.GetMouseScroll().Y;
+        float scroll = Input.GetMouseScroll().Y;
             
         CameraDistance -= (scroll - oldScroll) * SCROLL_SENSITIVITY;
         CameraDistance = Math.Clamp(CameraDistance, 3, 10);
@@ -240,12 +251,12 @@ public class Camera : Component
         position = _positionSmooth ? Vector3.Lerp(position, _targetPosition, POSITION_SMOOTH_FACTOR * GameTime.DeltaTime) : _targetPosition;
     }
     
-    public static void SetSmoothFactor(bool value)
+    public void SetSmoothFactor(bool value)
     {
         _smooth = value;
     }
     
-    public static void SetPositionSmoothFactor(bool value)
+    public void SetPositionSmoothFactor(bool value)
     {
         _positionSmooth = value;
     }

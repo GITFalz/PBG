@@ -7,6 +7,8 @@ public class WorldManager : Updateable
 {
     public static WorldManager? Instance;
     
+    public Camera camera;
+    
     public HashSet<Vector3i> chunks;
     
     public ConcurrentDictionary<Vector3i, ChunkData> activeChunks;
@@ -85,8 +87,8 @@ public class WorldManager : Updateable
         _textureArray.Bind();
         
         Matrix4 model = Matrix4.Identity;
-        Matrix4 view = Camera.viewMatrix;
-        Matrix4 projection = Camera.projectionMatrix;
+        Matrix4 view = camera.viewMatrix;
+        Matrix4 projection = camera.projectionMatrix;
 
         int modelLocation = GL.GetUniformLocation(_shaderProgram.ID, "model");
         int viewLocation = GL.GetUniformLocation(_shaderProgram.ID, "view");
@@ -96,7 +98,7 @@ public class WorldManager : Updateable
         GL.UniformMatrix4(modelLocation, true, ref model);
         GL.UniformMatrix4(viewLocation, true, ref view);
         GL.UniformMatrix4(projectionLocation, true, ref projection);
-        GL.Uniform3(camPosLocation, Camera.position);
+        GL.Uniform3(camPosLocation, camera.position);
         //Console.WriteLine("Rendering chunk: " + activeChunks.Count);
         
         foreach (var chunk in activeChunks)

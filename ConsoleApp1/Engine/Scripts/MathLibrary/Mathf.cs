@@ -26,10 +26,25 @@ public static class Mathf
     {
         return value < min ? min : value > max ? max : value;
     }
+    
+    public static float Clamp01(float value)
+    {
+        return value < 0 ? 0 : value > 1 ? 1 : value;
+    }
+    
+    public static int Clamp01(int value)
+    {
+        return value < 0 ? 0 : value > 1 ? 1 : value;
+    }
 
     public static float Floor(float value)
     {
         return (float)Math.Floor(value);
+    }
+    
+    public static Vector3 Floor(Vector3 value)
+    {
+        return new Vector3(Floor(value.X), Floor(value.Y), Floor(value.Z));
     }
     
     public static Vector3i FloorToInt(Vector3 value)
@@ -127,6 +142,15 @@ public static class Mathf
         return (t - a) / (b - a);
     }
     
+    public static System.Numerics.Matrix4x4 ToNumericsMatrix4(Matrix4 matrix)
+    {
+        return new System.Numerics.Matrix4x4(
+            matrix.M11, matrix.M12, matrix.M13, matrix.M14,
+            matrix.M21, matrix.M22, matrix.M23, matrix.M24,
+            matrix.M31, matrix.M32, matrix.M33, matrix.M34,
+            matrix.M41, matrix.M42, matrix.M43, matrix.M44);
+    }
+    
     public static System.Numerics.Vector4 ToNumericsVector4(OpenTK.Mathematics.Vector4 vector)
     {
         return new System.Numerics.Vector4(vector.X, vector.Y, vector.Z, vector.W);
@@ -161,5 +185,54 @@ public static class Mathf
     public static Quaternion RotateAround(Vector3 axis, Quaternion rotation, float angle)
     {
         return Quaternion.FromAxisAngle(axis, angle) * rotation;
+    }
+    
+    public static Vector2? WorldToScreen(Vector3 worldPosition, System.Numerics.Matrix4x4 projectionMatrix, System.Numerics.Matrix4x4 vMatrix)
+    {
+        System.Numerics.Matrix4x4 viewMatrix = vMatrix;
+        System.Numerics.Matrix4x4 projMatrix = projectionMatrix;
+
+        System.Numerics.Vector4 viewSpace = System.Numerics.Vector4.Transform(
+            new System.Numerics.Vector4(Mathf.ToNumericsVector3(worldPosition), 1.0f),
+            viewMatrix
+        );
+
+        System.Numerics.Vector4 clipSpace = System.Numerics.Vector4.Transform(viewSpace, projMatrix);
+
+        if (clipSpace.W <= 0)
+            return null;
+
+        float ndcX = clipSpace.X / clipSpace.W;
+        float ndcY = clipSpace.Y / clipSpace.W;
+
+        Vector2 screenPos = new Vector2(
+            (ndcX + 1.0f) * Game.width * 0.5f,
+            (1.0f - ndcY) * Game.height * 0.5f
+        );
+
+        return screenPos;
+    }
+
+    public static Vector3 Cross(Vector3 a, Vector3 b)
+    {
+        return 
+        (
+            a.Y * b.Z - a.Z * b.Y,
+            a.Z * b.X - a.X * b.Z,
+            a.X * b.Y - a.Y * b.X
+        );
+    }
+
+    /// <summary>
+    /// Function that maps the vector "from" on the vector "to"
+    /// </summary>
+    /// <param name="from"></param>
+    /// <param name="to"></param>
+    /// <returns></returns>
+    public static Vector3 Map(Vector3 from, Vector3 to)
+    {
+        float uv = from.X * to.X + from.Y * to.Y + from.Z + to.Z;
+        float vSq = to.X * to.X + to.Y * to.Y + to.Z * to.Z;
+        return vSq == 0 ? (0, 0, 0) : (uv / vSq) * to;
     }
 }

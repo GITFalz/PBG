@@ -3,11 +3,15 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PlayerSprintingState : PlayerGameBaseState
 {
+    Camera Camera;
+    
     Vector2 input = Vector2.Zero;
     
     public override void Enter(PlayerGameState playerGameState)
     {
         Console.WriteLine("Entering sprinting state");
+        
+        Camera = playerGameState.PlayerStateMachine.camera;
         
         playerGameState.NextMovingState = playerGameState.SprintingState;
         playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Sprint);
@@ -19,9 +23,9 @@ public class PlayerSprintingState : PlayerGameBaseState
 
     public override void Update(PlayerGameState playerGameState)
     { 
-        input = InputManager.GetMovementInput();
+        input = Input.GetMovementInput();
         
-        if (InputManager.IsKeyPressed(Keys.LeftControl))
+        if (Input.IsKeyPressed(Keys.LeftControl))
         {
             playerGameState.SwitchState(playerGameState.WalkingState);
             return;
@@ -33,19 +37,19 @@ public class PlayerSprintingState : PlayerGameBaseState
             return;
         }
         
-        if (InputManager.IsMousePressed(MouseButton.Right))
+        if (Input.IsMousePressed(MouseButton.Right))
         {
             playerGameState.SwitchState(playerGameState.DashState);
             return;
         }
         
-        if (InputManager.IsMousePressed(MouseButton.Left))
+        if (Input.IsMousePressed(MouseButton.Left))
         {
             playerGameState.SwitchState(playerGameState.Attack1State);
             return;
         }
         
-        if (InputManager.IsDown(Keys.Space) && Game.MoveTest)
+        if (Input.IsKeyDown(Keys.Space) && Game.MoveTest)
         {
             playerGameState.SwitchState(playerGameState.JumpingState);
             return;

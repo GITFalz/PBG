@@ -111,6 +111,6 @@ public class SceneSwitcherKey(Keys key, string sceneName) : SceneSwitcher(sceneN
 {
     public override bool CanSwitch()
     {
-        return InputManager.IsKeyPressed(key);
+        return Input.IsKeyPressed(key);
     }
 }

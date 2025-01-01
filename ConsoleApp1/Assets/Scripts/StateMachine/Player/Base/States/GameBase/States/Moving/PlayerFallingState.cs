@@ -3,6 +3,8 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PlayerFallingState : PlayerGameBaseState
 {
+    Camera Camera;
+    
     Vector2 input = Vector2.Zero;
     
     Vector3 right;
@@ -13,6 +15,8 @@ public class PlayerFallingState : PlayerGameBaseState
     {
         Console.WriteLine("Entering falling state");
         playerGameState.PlayerStateMachine.physicsBody.doGravity = true;
+        
+        Camera = playerGameState.PlayerStateMachine.camera;
         
         AnimationManager.Instance.LoopAnimation("Player", "falling");
         
@@ -25,9 +29,9 @@ public class PlayerFallingState : PlayerGameBaseState
 
     public override void Update(PlayerGameState playerGameState)
     {
-        input = InputManager.GetMovementInput();
+        input = Input.GetMovementInput();
         
-        if (playerGameState.PlayerStateMachine.IsHuggingWall() && InputManager.IsKeyPressed(Keys.Space))
+        if (playerGameState.PlayerStateMachine.IsHuggingWall() && Input.IsKeyPressed(Keys.Space))
         {
             playerGameState.PlayerStateMachine.physicsBody.Velocity.Y = 0;
             playerGameState.SwitchState(playerGameState.JumpingState);

@@ -3,7 +3,7 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using MouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
 
-public static class InputManager
+public static class Input
 {
     private static KeyboardState _previousKeyboardState;
     private static MouseState _previousMouseState;
@@ -51,9 +51,38 @@ public static class InputManager
         return _previousKeyboardState.IsKeyPressed(key);
     }
     
-    public static bool IsDown(Keys key)
+    public static bool IsKeyDown(Keys key)
     {
         return _previousKeyboardState.IsKeyDown(key);
+    }
+    
+    public static bool AreKeysDown(out Keys? key, params Keys[] keys)
+    {
+        foreach (var k in keys)
+        {
+            if (!_previousKeyboardState.IsKeyDown(k)) 
+                continue;
+            
+            key = k;
+            return true;
+        }
+
+        key = null;
+        return false;
+    }
+    
+    public static bool AreKeysDown(out int index, params Keys[] keys)
+    {
+        index = 0;
+        foreach (var k in keys)
+        {
+            if (_previousKeyboardState.IsKeyDown(k)) 
+                return true;
+            index++;
+        }
+
+        index = -1;
+        return false;
     }
 
     public static Character GetPressedKey(KeyboardState keyboard)
@@ -67,6 +96,11 @@ public static class InputManager
         }
 
         return Character.None;
+    }
+    
+    public static bool IsKeyReleased(Keys key)
+    {
+        return _previousKeyboardState.IsKeyReleased(key);
     }
     
     public static List<Character> GetPressedKeys(KeyboardState keyboard)
@@ -105,14 +139,14 @@ public static class InputManager
     {
         Vector2 input = Vector2.Zero;
 
-        if (IsDown(Keys.W))
+        if (IsKeyDown(Keys.W))
             input.Y += 1;
-        if (IsDown(Keys.S))
+        if (IsKeyDown(Keys.S))
             input.Y -= 1;
         
-        if (IsDown(Keys.A))
+        if (IsKeyDown(Keys.A))
             input.X += 1;
-        if (IsDown(Keys.D))
+        if (IsKeyDown(Keys.D))
             input.X -= 1;
         
         return input;

@@ -14,6 +14,8 @@ public class PlayerStateMachine : Updateable
     public const float FALL_SPEED = 1 * 250;
     public const float GRAPPLE_SPEED = 30 * 250;
     public const float JUMP_SPEED = 6f * 250;
+
+    public Camera camera;
     
     public Vector3 forward = new Vector3(0, 0, -1);
     
@@ -59,12 +61,18 @@ public class PlayerStateMachine : Updateable
     Vector3i HugX = Vector3i.Zero;
     
     
-    private Vector3 _lastCameraPosition = Camera.position;
-    private float _lastCameraYaw = Camera.yaw;
-    private float _lastCameraPitch = Camera.pitch;
+    private Vector3 _lastCameraPosition;
+    private float _lastCameraYaw;
+    private float _lastCameraPitch;
     
     public override void Start()
     {
+        camera = new Camera(Game.width, Game.height, new Vector3(0, 20, 0));
+        
+        _lastCameraPitch = camera.pitch;
+        _lastCameraYaw = camera.yaw;
+        _lastCameraPosition = camera.position;
+        
         physicsBody = ((Component)this).gameObject.GetComponent<PhysicsBody>();
         
         _currentState = _gameState;
@@ -141,23 +149,27 @@ public class PlayerStateMachine : Updateable
     {
         Console.WriteLine("Player State Machine");
         
-        Camera.SetCameraMode(CameraMode.Free);
+        WorldManager.Instance.camera = camera;
         
-        Camera.position = _lastCameraPosition;
-        Camera.yaw = _lastCameraYaw;
-        Camera.pitch = _lastCameraPitch;
+        camera.SetCameraMode(CameraMode.Free);
         
-        Camera.UpdateVectors();
+        camera.position = _lastCameraPosition;
+        camera.yaw = _lastCameraYaw;
+        camera.pitch = _lastCameraPitch;
+        
+        camera.UpdateVectors();
         
         base.Awake();
     }
 
     public override void Update()
     {
-        Vector2 input = InputManager.GetMovementInput();
+        camera.Update();
+        
+        Vector2 input = Input.GetMovementInput();
         
         if (input != Vector2.Zero)
-            yaw = -Camera.GetYaw() + _inputAngle[input];
+            yaw = -camera.yaw + _inputAngle[input];
         
         _mesh.Position = transform.Position + new Vector3(-0.5f, 0, -0.5f);
         
@@ -172,7 +184,7 @@ public class PlayerStateMachine : Updateable
         _swordMesh.Init();
         _playerMesh.Init();
         
-        if (InputManager.IsKeyPressed(Keys.M))
+        if (Input.IsKeyPressed(Keys.M))
             physicsBody.doGravity = !physicsBody.doGravity;
         
         _currentState.Update(this);
@@ -207,8 +219,8 @@ public class PlayerStateMachine : Updateable
         _shaderProgram.Bind();
         
         Matrix4 model = Matrix4.Identity;
-        Matrix4 view = Camera.viewMatrix;
-        Matrix4 projection = Camera.projectionMatrix;
+        Matrix4 view = camera.GetViewMatrix();
+        Matrix4 projection = camera.GetProjectionMatrix();
 
         int modelLocation = GL.GetUniformLocation(_shaderProgram.ID, "model");
         int viewLocation = GL.GetUniformLocation(_shaderProgram.ID, "view");
@@ -232,9 +244,9 @@ public class PlayerStateMachine : Updateable
     {
         Console.WriteLine("Exiting Player State Machine");
         
-        _lastCameraPosition = Camera.position;
-        _lastCameraYaw = Camera.yaw;
-        _lastCameraPitch = Camera.pitch;
+        _lastCameraPosition = camera.position;
+        _lastCameraYaw = camera.yaw;
+        _lastCameraPitch = camera.pitch;
         
         base.Exit();
     }
@@ -283,7 +295,7 @@ public class PlayerStateMachine : Updateable
 
     public void MovePlayer(PlayerMovementSpeed playerMovementSpeed)
     {
-        Vector2 input = InputManager.GetMovementInput();
+        Vector2 input = Input.GetMovementInput();
         if (input == Vector2.Zero)
             return;
         MovePlayer(playerMovementSpeed, input);
@@ -291,7 +303,7 @@ public class PlayerStateMachine : Updateable
     
     public void MovePlayer(PlayerMovementSpeed playerMovementSpeed, Vector2 input)
     {
-        Vector3 direction = Camera.FrontYto0() * input.Y - Camera.RightYto0() * input.X;
+        Vector3 direction = camera.FrontYto0() * input.Y - camera.RightYto0() * input.X;
         Vector3 oldVelocity = physicsBody.GetHorizontalVelocity();
         MovePlayer(playerMovementSpeed, direction);
         physicsBody.Velocity -= oldVelocity;

@@ -3,11 +3,15 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PlayerDashState : PlayerGameBaseState
 {
+    private Camera Camera;
+    
     Vector2 input;
     float timer = 0;
     public override void Enter(PlayerGameState playerGameState)
     {
         Console.WriteLine("Entering dash state");
+        
+        Camera = playerGameState.PlayerStateMachine.camera;
         
         timer = 0;
 
@@ -22,7 +26,7 @@ public class PlayerDashState : PlayerGameBaseState
 
     public override void Update(PlayerGameState playerGameState)
     {
-        input = InputManager.GetMovementInput();
+        input = Input.GetMovementInput();
         timer += GameTime.DeltaTime;
         
         if (timer > 0.5f)
@@ -41,7 +45,7 @@ public class PlayerDashState : PlayerGameBaseState
             }
         }
         
-        if (InputManager.IsDown(Keys.Space) && Game.MoveTest)
+        if (Input.IsKeyDown(Keys.Space) && Game.MoveTest)
         {
             Camera.SetFOV(60);
             playerGameState.SwitchState(playerGameState.JumpingState);

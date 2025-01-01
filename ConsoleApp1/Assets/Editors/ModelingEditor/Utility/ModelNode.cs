@@ -2,47 +2,70 @@
 
 public class ModelNode(ModelGridCell gridCell)
 {
-    public ModelQuad[] Quads = new ModelQuad[6];
+    public OldModelQuad[] Quads = new OldModelQuad[6];
     public Vector3[] Offsets = new Vector3[8];
     
     public ModelGridCell GridCell = gridCell;
 
-    public Symmetry Symmetry => AnimationEditor.symmetry;
+    public static Symmetry Symmetry => AnimationEditor.symmetry;
 
     public void MoveVert(int index, Vector3 offset)
     {
         foreach (var multiplier in SymmetryOffsets[0][Symmetry])
         {
+            Vector3 vector = multiplier.vector;
+            
             int vertIndex = VertexIndex[index][multiplier.w];
-            Offsets[vertIndex] += offset * multiplier.vector;
+            Offsets[vertIndex] += offset * vector;
 
             ModelNode? A = GridCell.GetModelNode(SideNodeIndexes[vertIndex][0]);
             ModelNode? B = GridCell.GetModelNode(SideNodeIndexes[vertIndex][1]);
             ModelNode? C = GridCell.GetModelNode(SideNodeIndexes[vertIndex][2]);
+            ModelNode? D = GridCell.GetModelNode(SideNodeIndexes[vertIndex][3]);
+            ModelNode? E = GridCell.GetModelNode(SideNodeIndexes[vertIndex][4]);
+            ModelNode? F = GridCell.GetModelNode(SideNodeIndexes[vertIndex][5]);
+            ModelNode? G = GridCell.GetModelNode(SideNodeIndexes[vertIndex][6]);
             
             int AIndex = SideNodeVertIndexes[vertIndex][0];
             int BIndex = SideNodeVertIndexes[vertIndex][1];
             int CIndex = SideNodeVertIndexes[vertIndex][2];
-            
-            if (A != null)
-                A.Offsets[AIndex] += offset * multiplier.vector;
-            
-            if (B != null)
-                B.Offsets[BIndex] += offset * multiplier.vector;
-            
-            if (C != null)
-                C.Offsets[CIndex] += offset * multiplier.vector;
+            int DIndex = SideNodeVertIndexes[vertIndex][3];
+            int EIndex = SideNodeVertIndexes[vertIndex][4];
+            int FIndex = SideNodeVertIndexes[vertIndex][5];
+            int GIndex = SideNodeVertIndexes[vertIndex][6];
+
+            Vector3 vertPosition = GetVertPosition(vertIndex);
+
+            A?.SetVertPosition(AIndex, vertPosition);
+            B?.SetVertPosition(BIndex, vertPosition);
+            C?.SetVertPosition(CIndex, vertPosition);
+            D?.SetVertPosition(DIndex, vertPosition);
+            E?.SetVertPosition(EIndex, vertPosition);
+            F?.SetVertPosition(FIndex, vertPosition);
+            G?.SetVertPosition(GIndex, vertPosition);
         }
+    }
+
+    public Vector3 GetVertPosition(int index)
+    {
+        return ModelData.Corners[index] + Offsets[index];
+    }
+    
+    public void SetVertPosition(int index, Vector3 position)
+    {
+        Offsets[index] = position - ModelData.Corners[index];
     }
 
     public void CreateNewHexahedron(Vector3 offset)
     {
-        Quads[0] = new ModelQuad(new Vector3(0, 0, 0), new Vector3(0, 1, 0), new Vector3(1, 1, 0), new Vector3(1, 0, 0));
-        Quads[1] = new ModelQuad(new Vector3(1, 0, 0), new Vector3(1, 1, 0), new Vector3(1, 1, 1), new Vector3(1, 0, 1));
-        Quads[2] = new ModelQuad(new Vector3(0, 1, 0), new Vector3(0, 1, 1), new Vector3(1, 1, 1), new Vector3(1, 1, 0));
-        Quads[3] = new ModelQuad(new Vector3(0, 0, 1), new Vector3(0, 1, 1), new Vector3(0, 1, 0), new Vector3(0, 0, 0));
-        Quads[4] = new ModelQuad(new Vector3(1, 0, 0), new Vector3(1, 0, 1), new Vector3(0, 0, 1), new Vector3(0, 0, 0));
-        Quads[5] = new ModelQuad(new Vector3(1, 0, 1), new Vector3(1, 1, 1), new Vector3(0, 1, 1), new Vector3(0, 0, 1));
+        offset.Z = -offset.Z;
+        
+        Quads[0] = new OldModelQuad(new Vector3(0, 0, 0), new Vector3(0, 1, 0), new Vector3(1, 1, 0), new Vector3(1, 0, 0));
+        Quads[1] = new OldModelQuad(new Vector3(1, 0, 0), new Vector3(1, 1, 0), new Vector3(1, 1, 1), new Vector3(1, 0, 1));
+        Quads[2] = new OldModelQuad(new Vector3(0, 1, 0), new Vector3(0, 1, 1), new Vector3(1, 1, 1), new Vector3(1, 1, 0));
+        Quads[3] = new OldModelQuad(new Vector3(0, 0, 1), new Vector3(0, 1, 1), new Vector3(0, 1, 0), new Vector3(0, 0, 0));
+        Quads[4] = new OldModelQuad(new Vector3(1, 0, 0), new Vector3(1, 0, 1), new Vector3(0, 0, 1), new Vector3(0, 0, 0));
+        Quads[5] = new OldModelQuad(new Vector3(1, 0, 1), new Vector3(1, 1, 1), new Vector3(0, 1, 1), new Vector3(0, 0, 1));
         
         for (int i = 0; i < 8; i++) 
             Offsets[i] = offset;
@@ -59,29 +82,29 @@ public class ModelNode(ModelGridCell gridCell)
         [6, 7, 4, 5, 2, 3, 0, 1],
         [7, 6, 5, 4, 3, 2, 1, 0],
     ];
-
+    
     private int[][] SideNodeIndexes =
     [
         [0, 1, 3, 4, 9, 10, 12],
-        [5, 1, 4],
-        [5, 1, 2],
-        [5, 3, 2],
-        [0, 3, 4],
-        [0, 1, 4],
-        [0, 1, 2],
-        [0, 3, 2],
+        [1, 2, 4, 5, 10, 11, 13],
+        [10, 11, 13, 18, 19, 21, 22],
+        [9, 10, 12, 17, 18, 20, 21],
+        [3, 4, 6, 7, 12, 14, 15],
+        [4, 5, 7, 8, 13, 15, 16],
+        [13, 15, 16, 21, 22, 24, 25],
+        [12, 14, 15, 20, 21, 23, 24],
     ];
     
     private int[][] SideNodeVertIndexes =
     [
-        [6, 7, 2],
-        [5, 0, 2],
-        [6, 3, 1],
-        [7, 2, 0],
-        [0, 5, 7],
-        [1, 4, 6],
-        [2, 7, 5],
-        [3, 6, 4],
+        [6, 7, 2, 3, 5, 4, 1],
+        [6, 7, 2, 3, 5, 4, 0],
+        [6, 7, 3, 5, 4, 0, 1],
+        [6, 7, 2, 5, 4, 0, 1],
+        [6, 7, 2, 3, 5, 1, 0],
+        [6, 7, 2, 3, 4, 0, 1],
+        [7, 2, 3, 5, 4, 1, 0],
+        [6, 2, 3, 5, 4, 1, 0],
     ];
 
     private Dictionary<Symmetry, Vector3_1i[]>[] SymmetryOffsets =
@@ -160,11 +183,11 @@ public class ModelNode(ModelGridCell gridCell)
     }
 }
 
-public struct ModelQuad
+public struct OldModelQuad
 {
     public Vector3[] Vertices = new Vector3[4];
     
-    public ModelQuad(Vector3 a, Vector3 b, Vector3 c, Vector3 d)
+    public OldModelQuad(Vector3 a, Vector3 b, Vector3 c, Vector3 d)
     {
         Vertices[0] = a;
         Vertices[1] = b;
@@ -172,9 +195,9 @@ public struct ModelQuad
         Vertices[3] = d;
     }
     
-    public ModelQuad Copy()
+    public OldModelQuad Copy()
     {
-        ModelQuad quad = new ModelQuad(Vertices[0], Vertices[1], Vertices[2], Vertices[3]);
+        OldModelQuad quad = new OldModelQuad(Vertices[0], Vertices[1], Vertices[2], Vertices[3]);
         return quad;
     }
 }
@@ -189,4 +212,11 @@ public enum Symmetry
     XZ,
     YZ,
     XYZ
+}
+
+public enum SymmetryMode
+{
+    None,
+    Object,
+    World,
 }

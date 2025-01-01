@@ -39,6 +39,12 @@ public abstract class UiElement
     {
         Offset = offset;
     }
+    
+    public void SetPosition(Vector3 position)
+    {
+        Position = position;
+        Origin = position - HalfScale;
+    }
 }
 
 public enum AnchorType
@@ -57,5 +63,6 @@ public enum AnchorType
 public enum PositionType
 {
     Absolute,
-    Relative
+    Relative,
+    Free
 }
