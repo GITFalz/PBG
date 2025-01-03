@@ -98,7 +98,7 @@ public class ModelNode(ModelGridCell gridCell)
     private int[][] SideNodeVertIndexes =
     [
         [6, 7, 2, 3, 5, 4, 1],
-        [6, 7, 2, 3, 5, 4, 0],
+        [6, 7, 2,3, 5, 4, 0],
         [6, 7, 3, 5, 4, 0, 1],
         [6, 7, 2, 5, 4, 0, 1],
         [6, 7, 2, 3, 5, 1, 0],

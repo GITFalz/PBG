@@ -148,6 +148,26 @@ public class ModelMesh : BoxMesh
         }
     }
 
+    public void CheckUselessTriangles()
+    {
+        HashSet<Triangle> triangles = new HashSet<Triangle>();
+        HashSet<Triangle> toDelete = new HashSet<Triangle>();
+        
+        foreach (var vertex in VertexList)
+        {
+            if (vertex.ParentTriangle == null || triangles.Contains(vertex.ParentTriangle))
+                continue;
+            
+            if (vertex.ParentTriangle.TwoVertSamePosition())
+                toDelete.Add(vertex.ParentTriangle);
+        }
+        
+        foreach (var triangle in toDelete)
+        {
+            RemoveTriangle(triangle);
+        }
+    }
+
     public void RemoveVertex(Vertex vertex)
     {
         if (VertexList.Contains(vertex))

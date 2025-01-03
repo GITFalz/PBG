@@ -9,13 +9,10 @@ public class Vertex
     public bool WentThrough = false;
     
     public List<Vertex> SharedVertices = new List<Vertex>();
-    
-    private Vector3 _placeHolderPosition;
 
     public Vertex(Vector3 position, Triangle? parentTriangle = null)
     {
-        _placeHolderPosition = position;
-        Position = _placeHolderPosition;
+        Position = position;
         ParentTriangle = parentTriangle;
     }
     
@@ -112,26 +109,7 @@ public class Vertex
 
     public void MoveVertex(Vector3 offset)
     {
-        _placeHolderPosition += offset;
-        Position = _placeHolderPosition;
-        foreach (var sharedVertex in SharedVertices)
-        {
-            sharedVertex.Position = Position;
-        }
-    }
-    
-    public void MoveStep(Vector3 offset, float step)
-    {
-        if (step <= 0)
-            return;
-        
-        _placeHolderPosition += offset;
-        Position =
-        (
-            Mathf.Floor(_placeHolderPosition.X / step) * step,
-            Mathf.Floor(_placeHolderPosition.Y / step) * step,
-            Mathf.Floor(_placeHolderPosition.Z / step) * step
-        );
+        Position += offset;
         foreach (var sharedVertex in SharedVertices)
         {
             sharedVertex.Position = Position;
@@ -159,7 +137,6 @@ public class Vertex
     public void SetPosition(Vector3 pos)
     {
         Position = pos;
-        _placeHolderPosition = Position;
     }
 
     public void SetAllPosition(Vector3 position)
@@ -167,16 +144,6 @@ public class Vertex
         SetPosition(position);
         foreach (var vert in SharedVertices)
             vert.SetPosition(position);
-    }
-
-    public void ToPosition()
-    {
-        _placeHolderPosition = Position;
-    }
-    
-    public void ResetPosition()
-    {
-        Position = _placeHolderPosition;
     }
     
     public bool WentThroughOne()

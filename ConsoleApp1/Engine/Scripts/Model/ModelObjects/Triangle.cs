@@ -30,4 +30,9 @@ public class Triangle
     {
         (A, B) = (B, A);
     }
+    
+    public bool TwoVertSamePosition()
+    {
+        return A.Position == B.Position || A.Position == C.Position || B.Position == C.Position;
+    }
 }

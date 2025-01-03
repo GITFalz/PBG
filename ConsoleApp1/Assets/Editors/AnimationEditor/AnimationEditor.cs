@@ -77,6 +77,7 @@ public class AnimationEditor : Updateable
     public bool Snapping = false;
     public float SnappingFactor = 1;
     private int SnappingFactorIndex = 0;
+    private Vector3 SnappingOffset = new Vector3(0, 0, 0);
     
     
     
@@ -520,9 +521,9 @@ public class AnimationEditor : Updateable
         SnappingText = UI.CreateStaticText("snap: " + Snapping, 0.7f, AnchorType.TopLeft, PositionType.Absolute, 
             null, new Vector4(15, 10, 65, 10));
         SnappingButtonUp = UI.CreateStaticButton(AnchorType.TopRight, PositionType.Relative,
-            new Vector3(20, 20, 0), new Vector4(90, 10, 60, 10), null);
+            new Vector3(20, 20, 0), new Vector4(90, 90, 60, 10), null);
         SnappingButtonDown = UI.CreateStaticButton(AnchorType.TopRight, PositionType.Relative,
-            new Vector3(20, 20, 0), new Vector4(120, 10, 60, 10), null);
+            new Vector3(20, 20, 0), new Vector4(120, 65, 60, 10), null);
         SnappingButton = UI.CreateStaticButton(AnchorType.TopRight, PositionType.Relative,
             new Vector3(50, 20, 0), new Vector4(150, 10, 60, 10), null);
         SnappingButtonUp.TextureIndex = 0;
@@ -559,6 +560,7 @@ public class AnimationEditor : Updateable
                 SnappingFactorIndex++;
                 SnappingFactor = SnappingFactors[SnappingFactorIndex];
             }
+            UpdateSnappingText();
         };
         
         SnappingButtonDown.OnClick += () =>
@@ -568,22 +570,19 @@ public class AnimationEditor : Updateable
                 SnappingFactorIndex--;
                 SnappingFactor = SnappingFactors[SnappingFactorIndex];
             }
+            UpdateSnappingText();
         };
 
         SnappingButton.OnClick += () =>
         {
             Snapping = !Snapping;
-            if (Snapping)
-                SnappingText.SetText("snap: " + SnappingFactor.ToString("F2"));
-            else
-                SnappingText.SetText("snap: off");
-            SnappingText.Generate();
-            MainUi.Update();
+            UpdateSnappingText();
         };
         
         MainUi.AddStaticPanel(panel);
         MainUi.AddStaticText(MeshAlphaText);
         MainUi.AddStaticText(BackfaceCullingText);
+        MainUi.AddStaticText(SnappingText);
         MainUi.SetParentPanel(panel);
         MainUi.AddStaticButton(MeshAlphaButton);
         MainUi.AddStaticButton(BackfaceCullingButton);
@@ -795,26 +794,15 @@ public class AnimationEditor : Updateable
             }
         }
 
-        if (Input.IsKeyPressed(Keys.I))
+        if (Input.IsKeyDown(Keys.LeftControl))
         {
-            HashSet<Triangle> triangles = new HashSet<Triangle>();
-            
-            foreach (var vert in _selectedVertices)
+            // Flipping triangle
+            if (Input.IsKeyPressed(Keys.I))
             {
-                Triangle triangle;
-                
-                foreach (var svert in vert.SharedVertices)
+                HashSet<Triangle> triangles = GetSelectedFullTriangles();
+                if (triangles.Count > 0)
                 {
-                    if (svert.ParentTriangle == null || triangles.Contains(svert.ParentTriangle))
-                        continue;
-
-                    triangle = svert.ParentTriangle;
-
-                    if (
-                        SelectedContainsSharedVertex(triangle.A) &&
-                        SelectedContainsSharedVertex(triangle.B) &&
-                        SelectedContainsSharedVertex(triangle.C)
-                    )
+                    foreach (var triangle in triangles)
                     {
                         Vertex A = triangle.A;
                         Vertex B = triangle.B;
@@ -824,39 +812,35 @@ public class AnimationEditor : Updateable
                             _modelMesh.UpdateNormals(triangle);
                         }
                     }
-
-                    triangles.Add(triangle);
+                    _modelMesh.Init();
+                    _modelMesh.UpdateMesh();
                 }
-                
-                if (vert.ParentTriangle == null || triangles.Contains(vert.ParentTriangle))
-                    continue;
-
-                triangle = vert.ParentTriangle;
-
-                if (
-                    SelectedContainsSharedVertex(triangle.A) &&
-                    SelectedContainsSharedVertex(triangle.B) &&
-                    SelectedContainsSharedVertex(triangle.C)
-                )
-                {
-                    Vertex A = triangle.A;
-                    Vertex B = triangle.B;
-                    if (_modelMesh.SwapVertices(A, B))
-                    {
-                        triangle.Invert();
-                        _modelMesh.UpdateNormals(triangle);
-                    }
-                }
-
-                triangles.Add(triangle);
             }
             
-            _modelMesh.Init();
-            _modelMesh.UpdateMesh();
-        }
-
-        if (Input.IsKeyDown(Keys.LeftControl))
-        {
+            // Deleting triangle
+            if (Input.IsKeyPressed(Keys.D))
+            {
+                HashSet<Triangle> triangles = GetSelectedFullTriangles();
+                if (triangles.Count > 0)
+                {
+                    foreach (var triangle in triangles)
+                    {
+                        _modelMesh.RemoveTriangle(triangle);
+                    }
+                    _selectedVertices.Clear();
+                
+                    _modelMesh.CheckUselessTriangles();
+                
+                    _modelMesh.Init();
+                    _modelMesh.GenerateBuffers();
+                    _modelMesh.UpdateMesh();
+                
+                    Ui.Clear();
+                
+                    regenerateVertexUi = true;
+                }
+            }
+            
             // Merging
             if (Input.IsKeyPressed(Keys.K) && _selectedVertices.Count >= 2)
             {
@@ -898,6 +882,8 @@ public class AnimationEditor : Updateable
                 }
                 
                 _selectedVertices.Clear();
+                
+                _modelMesh.CheckUselessTriangles();
                 
                 _modelMesh.Init();
                 _modelMesh.GenerateBuffers();
@@ -959,21 +945,44 @@ public class AnimationEditor : Updateable
             if (Input.AreKeysDown(out int index, Keys.X, Keys.C, Keys.V))
                 move *= AxisIgnore[index];
             
-            if (Input.IsKeyDown(Keys.LeftShift))
+            if (Snapping)
             {
-                //Assuming that the keys are present in the dictionary
-                float step;
-                if (!Input.AreKeysDown(out Keys? key, Keys.D1, Keys.D2, Keys.D3, Keys.D4))
-                    step = 1f;
-                else
-                    step = StepDictionary[(Keys)key!];
-
-                MoveStepSelectedVertices(move, step);
+                Vector3 Offset = Vector3.Zero;
+                SnappingOffset += move;
+                if (SnappingOffset.X > SnappingFactor)
+                {
+                    Offset.X = SnappingFactor;
+                    SnappingOffset.X -= SnappingFactor;
+                }
+                if (SnappingOffset.X < -SnappingFactor)
+                {
+                    Offset.X = -SnappingFactor;
+                    SnappingOffset.X += SnappingFactor;
+                }
+                if (SnappingOffset.Y > SnappingFactor)
+                {
+                    Offset.Y = SnappingFactor;
+                    SnappingOffset.Y -= SnappingFactor;
+                }
+                if (SnappingOffset.Y < -SnappingFactor)
+                {
+                    Offset.Y = -SnappingFactor;
+                    SnappingOffset.Y += SnappingFactor;
+                }
+                if (SnappingOffset.Z > SnappingFactor)
+                {
+                    Offset.Z = SnappingFactor;
+                    SnappingOffset.Z -= SnappingFactor;
+                }
+                if (SnappingOffset.Z < -SnappingFactor)
+                {
+                    Offset.Z = -SnappingFactor;
+                    SnappingOffset.Z += SnappingFactor;
+                }
+                move = Offset;
             }
-            else
-            {
-                MoveSelectedVertices(move);
-            }
+ 
+            MoveSelectedVertices(move);
             
             _modelMesh.RecalculateNormals();
             _modelMesh.Init();
@@ -982,6 +991,7 @@ public class AnimationEditor : Updateable
 
         if (Input.IsKeyReleased(Keys.G) || Input.IsKeyReleased(Keys.E))
         {
+            SnappingOffset = Vector3.Zero;
             regenerateVertexUi = true;
         }
         
@@ -1004,6 +1014,9 @@ public class AnimationEditor : Updateable
             
             if (Input.IsMousePressed(MouseButton.Left))
             {
+                if (!Input.IsKeyDown(Keys.LeftShift))
+                    _selectedVertices.Clear();
+                
                 Vector2 mousePos = Input.GetMousePosition();
                 Vector2? closest = null;
                 Vertex? closestVert = null;
@@ -1184,14 +1197,6 @@ public class AnimationEditor : Updateable
             vert.MoveVertex(move);
         }
     }
-    
-    private void MoveStepSelectedVertices(Vector3 move, float step)
-    {
-        foreach (var vert in _selectedVertices)
-        {
-            vert.MoveStep(move, step);
-        }
-    }
 
     private void ModelFaceColor(int xy, int xz, int yz, int[] xyz)
     {
@@ -1216,6 +1221,35 @@ public class AnimationEditor : Updateable
                 break;
             }
         }
+    }
+
+    public HashSet<Triangle> GetSelectedFullTriangles()
+    {
+        HashSet<Triangle> triangles = new HashSet<Triangle>();
+        HashSet<Triangle> selectedTriangles = new HashSet<Triangle>();
+                
+        foreach (var vert in _selectedVertices)
+        {
+            IEnumerable<Vertex> vertToCheck = vert.SharedVertices.Concat([vert]);
+            
+            foreach (var svert in vertToCheck)
+            {
+                if (svert.ParentTriangle == null || !triangles.Add(svert.ParentTriangle))
+                    continue;
+
+                if (IsTriangleFullySelected(svert.ParentTriangle))
+                    selectedTriangles.Add(svert.ParentTriangle);
+            }
+        }
+        
+        return selectedTriangles;
+    }
+    
+    public bool IsTriangleFullySelected(Triangle triangle)
+    {
+        return SelectedContainsSharedVertex(triangle.A) &&
+               SelectedContainsSharedVertex(triangle.B) &&
+               SelectedContainsSharedVertex(triangle.C);
     }
 
     private void ModelCornerColor(int index, int color)
@@ -1263,6 +1297,17 @@ public class AnimationEditor : Updateable
         {
             ModelingHelperMesh.SetVoxelColor(indexes[i] + 1, color);
         }
+    }
+
+    public void UpdateSnappingText()
+    {
+        if (Snapping)
+            SnappingText.SetText("snap: " + SnappingFactor.ToString("F2"));
+        else
+            SnappingText.SetText("snap: off");
+        
+        SnappingText.Generate();
+        MainUi.Update();
     }
     
     
