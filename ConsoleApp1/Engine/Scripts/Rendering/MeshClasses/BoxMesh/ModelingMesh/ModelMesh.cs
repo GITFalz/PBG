@@ -207,6 +207,19 @@ public class ModelMesh : BoxMesh
         }
     }
     
+    public void SaveModel(string modelName)
+    {
+        string[] lines = new string[VertexList.Count];
+        
+        for (int i = 0; i < VertexList.Count; i++)
+        {
+            Vertex vertex = VertexList[i];
+            lines[i] = vertex.Position.ToString();
+        }
+        
+        //System.IO.File.WriteAllLines(path, lines);
+    }
+    
     public override void GenerateBuffers()
     {
         foreach (var t in VertexList)

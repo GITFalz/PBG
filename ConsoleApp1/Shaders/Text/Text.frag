@@ -19,7 +19,7 @@ void main()
     int char = texelFetch(charBuffer, index).r;
 
     if (TexCoord.x > (1 / sizeX) * Length.x || TexCoord.y > (1 / sizeY) || char == -1)
-    discard;
+        discard;
 
     vec2 uv = mod(vec2(TexCoord.x * sizeX, TexCoord.y * sizeY), 1.0);
     
@@ -35,24 +35,4 @@ void main()
     vec4 texColor = texture(texture0, atlasUV);
 
     FragColor = texColor;
-
-
-    //if (texColor.a < 0.01)
-    //discard;
-
-    //vec4 debugColor = vec4(atlasUV, 0.0, 1.0);
-    //FragColor = debugColor;
-    //FragColor = vec4(char / 400.0, 0, 0, 1);
-
-    /*
-    int index = int(TexCoord.x * Length.x) + Length.y;
-    int charIndex = texelFetch(charBuffer, index).r;
-
-    float color = 0;
-    
-    if (charIndex < 395)
-        color = charIndex / 400.0;
-
-    FragColor = vec4(color, 0, 0, 1);
-    */
 }

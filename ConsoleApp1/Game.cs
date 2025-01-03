@@ -21,12 +21,11 @@ public class Game : GameWindow
 
     public static string mainPath;
     public static string chunkPath;
+    public static string modelPath;
 
     private Camera _mainCamera;
     
     private WorldManager _worldManager;
-    
-    private UIManager _uiManager;
 
     private Action? _updateText;
     
@@ -67,6 +66,9 @@ public class Game : GameWindow
     public Scene? CurrentScene { get; private set; }
     
     
+    public static HashSet<Action> OnPressedKeys = new HashSet<Action>();
+    
+    
     public Game(int width, int height) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
     {
         Instance = this;
@@ -93,7 +95,6 @@ public class Game : GameWindow
         try
         {
             UIController.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, e.Width, e.Height, 0, -1, 1);
-            _uiManager.OnResize();
             _mainCamera.UpdateProjectionMatrix(e.Width, e.Height);
         }
         catch (Exception ex)
@@ -106,7 +107,7 @@ public class Game : GameWindow
     {
         // Scenes
         _worldScene.AddSceneSwitcher(new SceneSwitcherKey(Keys.RightShift, "Animation"));
-        _animationScene.AddSceneSwitcher(new SceneSwitcherKey(Keys.RightShift, "World"));
+        _animationScene.AddSceneSwitcher(new SceneSwitcherKeys([Keys.LeftControl, Keys.RightShift], "World"));
         
         // Utils
         stopwatch = new Stopwatch();
@@ -119,9 +120,12 @@ public class Game : GameWindow
         // File Paths
         mainPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VoxelGame");
         chunkPath = Path.Combine(mainPath, "Chunks");
+        modelPath = Path.Combine(mainPath, "Models");
         
         if (!Directory.Exists(chunkPath))
             Directory.CreateDirectory(chunkPath);
+        if (!Directory.Exists(modelPath))
+            Directory.CreateDirectory(modelPath);
         
         // Input
         MouseState mouse = MouseState;
@@ -181,7 +185,7 @@ public class Game : GameWindow
         // Animation Editor
         GameObject animationObject = new GameObject();
         
-        animationObject.AddComponent(new AnimationEditor());
+        animationObject.AddComponent(new ModelingEditor());
         
         _animationScene.AddGameObject(animationObject);
         
@@ -195,6 +199,18 @@ public class Game : GameWindow
         GL.Enable(EnableCap.DepthTest);
         
         base.OnLoad();
+    }
+    
+    protected override void OnKeyDown(KeyboardKeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        UIController.InputField(e.Key);
+    }
+    
+    protected override void OnKeyUp(KeyboardKeyEventArgs e)
+    {
+        base.OnKeyUp(e);
+        Input.RemovePressedKey(e.Key);
     }
     
     protected override void OnUnload()
@@ -256,6 +272,7 @@ public class Game : GameWindow
         base.OnRenderFrame(args);
     }
     
+    
     public static Matrix4 ClearTranslation(Matrix4 matrix)
     {
         matrix.Row3.X = 0; // Clear the X translation
@@ -275,7 +292,8 @@ public class Game : GameWindow
             
             if (time - totalTime >= GameTime.FixedDeltaTime)
             {
-                _worldScene.FixedUpdate();
+                if (_worldScene.Started)
+                    _worldScene.FixedUpdate();
                 
                 totalTime = time;
             }

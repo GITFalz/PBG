@@ -143,6 +143,8 @@ public class PlayerStateMachine : Updateable
             throw new System.Exception("Failed to get controller");
 
         go = new GameObject();
+        
+        Console.WriteLine("Player State Machine");
     }
     
     public override void Awake()

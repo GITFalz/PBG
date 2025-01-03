@@ -14,6 +14,8 @@ public class Scene : Updateable
         Name = name;
     }
     
+    public bool Started => _started;
+    
     public void AddSceneSwitcher(SceneSwitcher sceneSwitcher)
     {
         _sceneSwitchers.Add(sceneSwitcher);
@@ -93,12 +95,7 @@ public class Scene : Updateable
 public abstract class SceneSwitcher(string sceneName)
 {
     public readonly string SceneName = sceneName;
-
-    protected bool Equals(SceneSwitcher other)
-    {
-        return SceneName == other.SceneName;
-    }
-
+    
     public override int GetHashCode()
     {
         return SceneName.GetHashCode();
@@ -112,5 +109,13 @@ public class SceneSwitcherKey(Keys key, string sceneName) : SceneSwitcher(sceneN
     public override bool CanSwitch()
     {
         return Input.IsKeyPressed(key);
+    }
+}
+
+public class SceneSwitcherKeys(Keys[] keys, string sceneName) : SceneSwitcher(sceneName)
+{
+    public override bool CanSwitch()
+    {
+        return Input.AreAllKeysDown(keys);
     }
 }

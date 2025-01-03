@@ -1,13 +1,17 @@
-﻿public static class TextShaderHelper
+﻿using OpenTK.Windowing.GraphicsLibraryFramework;
+
+public static class TextShaderHelper
 {
-    public static int[] StringToIntArray(string text)
+    public static int GetChar(char character)
     {
-        int[] result = new int[text.Length];
-        for (int i = 0; i < text.Length; i++)
-        {
-            result[i] = CharPosition[text[i]];
-        }
-        return result;
+        if (CharPosition.TryGetValue(character, out var c))
+            return c;
+        return -1;
+    }
+    
+    public static bool CharExists(char character)
+    {
+        return CharPosition.ContainsKey(character);
     }
     
     public static readonly Dictionary<char, int> CharPosition = new Dictionary<char, int>()

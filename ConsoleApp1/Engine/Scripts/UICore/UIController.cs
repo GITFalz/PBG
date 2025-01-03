@@ -1,5 +1,7 @@
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class UIController
 {
@@ -9,6 +11,7 @@ public class UIController
     private List<DynamicButton> dynamicButtons = new List<DynamicButton>();
     private List<StaticText> staticTexts = new List<StaticText>();
     private List<StaticPanel> staticPanels = new List<StaticPanel>();
+    private List<StaticInputField> staticInputFields = new List<StaticInputField>();
     
     private static ShaderProgram _uiShader = new ShaderProgram("UI/UI.vert", "UI/UI.frag");
     private static TextureArray _uItexture = new TextureArray("UI_Atlas.png", 64, 64);
@@ -21,6 +24,8 @@ public class UIController
     private List<TextMesh> _textMeshes = new List<TextMesh>();
 
     private StaticPanel? _parentPanel = null;
+    
+    public static StaticInputField? activeInputField = null;
     
     public void AddStaticButton(StaticButton button)
     {
@@ -41,6 +46,21 @@ public class UIController
     {
         panel.SetMesh(_uiMesh);
         staticPanels.Add(panel);
+    }
+    
+    public void AddStaticPanelToParent(StaticPanel panel)
+    {
+        if (panel.PositionType == PositionType.Relative && _parentPanel != null)
+            _parentPanel.AddElement(panel);
+        
+        panel.SetMesh(_uiMesh);
+        staticPanels.Add(panel);
+    }
+    
+    public void AddStaticInputField(StaticInputField inputField)
+    {
+        _textMeshes.Add(inputField.Mesh);
+        staticInputFields.Add(inputField);
     }
     
     public void SetStaticPanelTexureIndex(int index, int textureIndex)
@@ -71,6 +91,11 @@ public class UIController
             text.Generate();
         }
         
+        foreach (var inputField in staticInputFields)
+        {
+            inputField.Generate();
+        }
+        
         foreach (var textMesh in _textMeshes)
         {
             textMesh.GenerateBuffers();
@@ -89,7 +114,8 @@ public class UIController
         
         foreach (var panel in staticPanels)
         {
-            panel.Generate();
+            if (panel.PositionType != PositionType.Relative)
+                panel.Generate();
         }
         
         _uiMesh.GenerateBuffers();
@@ -118,12 +144,35 @@ public class UIController
         _textMeshes.Clear();
     }
 
+    public void Test()
+    {
+        TestButtons();
+    }
+
     public void TestButtons()
     {
         foreach (var button in staticButtons)
         {
             button.ButtonTest();
         }
+    }
+
+    public static void InputField(Keys key)
+    {
+        if (activeInputField == null || key == Keys.LeftShift || key == Keys.RightShift)
+            return;
+        
+        if (key == Keys.Backspace)
+        {
+            activeInputField.RemoveCharacter();
+            return;
+        }
+        
+        if (!Char.GetChar(out char c, key, Input.AreKeysDown(Keys.LeftShift, Keys.RightShift), Input.AreKeysDown(Keys.LeftAlt)))
+            return;
+        
+        if (TextShaderHelper.CharExists(c))
+            activeInputField.AddCharacter(c);
     }
 
     public void Render()

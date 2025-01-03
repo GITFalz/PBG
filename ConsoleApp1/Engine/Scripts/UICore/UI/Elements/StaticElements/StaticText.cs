@@ -50,9 +50,10 @@ public class StaticText : StaticElement
         Mesh.SetQuad(Origin + new Vector3(0, 0, 1f), meshQuad);
         foreach (var character in Characters)
         {
-            Mesh.chars.Add(TextShaderHelper.CharPosition[character]);
+            Mesh.chars.Add(TextShaderHelper.GetChar(character));
         }
     }
+    
 
     public void UpdateText()
     {

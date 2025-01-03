@@ -7,7 +7,7 @@ public class ModelNode(ModelGridCell gridCell)
     
     public ModelGridCell GridCell = gridCell;
 
-    public static Symmetry Symmetry => AnimationEditor.symmetry;
+    public static Symmetry Symmetry => ModelingEditor.symmetry;
 
     public void MoveVert(int index, Vector3 offset)
     {

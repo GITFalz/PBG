@@ -8,6 +8,7 @@ public static class Input
     private static KeyboardState _previousKeyboardState;
     private static MouseState _previousMouseState;
     private static CursorState cursorState = CursorState.Normal;
+    private static HashSet<Keys> _pressedKeys = new HashSet<Keys>();
 
     public static void Start(KeyboardState keyboard, MouseState mouse)
     {
@@ -19,6 +20,16 @@ public static class Input
     {
         _previousKeyboardState = keyboard;
         _previousMouseState = mouse;
+    }
+    
+    public static bool AddPressedKey(Keys key)
+    {
+        return _pressedKeys.Add(key);
+    }
+    
+    public static void RemovePressedKey(Keys key)
+    {
+        _pressedKeys.Remove(key);
     }
 
     public static bool IsKeyPressed(KeyboardState keyboard, Keys key)
@@ -56,21 +67,6 @@ public static class Input
         return _previousKeyboardState.IsKeyDown(key);
     }
     
-    public static bool AreKeysDown(out Keys? key, params Keys[] keys)
-    {
-        foreach (var k in keys)
-        {
-            if (!_previousKeyboardState.IsKeyDown(k)) 
-                continue;
-            
-            key = k;
-            return true;
-        }
-
-        key = null;
-        return false;
-    }
-    
     public static bool AreKeysDown(out int index, params Keys[] keys)
     {
         index = 0;
@@ -83,6 +79,28 @@ public static class Input
 
         index = -1;
         return false;
+    }
+    
+    public static bool AreKeysDown(out Keys? key, params Keys[] keys)
+    {
+        if (AreKeysDown(out int index, keys))
+        {
+            key = keys[index];
+            return true;
+        }
+        
+        key = null;
+        return false;
+    }
+    
+    public static bool AreKeysDown(params Keys[] keys)
+    {
+        return AreKeysDown(out int _, keys);
+    }
+    
+    public static bool AreAllKeysDown(params Keys[] keys)
+    {
+        return keys.All(k => _previousKeyboardState.IsKeyDown(k));
     }
 
     public static Character GetPressedKey(KeyboardState keyboard)
@@ -101,21 +119,6 @@ public static class Input
     public static bool IsKeyReleased(Keys key)
     {
         return _previousKeyboardState.IsKeyReleased(key);
-    }
-    
-    public static List<Character> GetPressedKeys(KeyboardState keyboard)
-    {
-        List<Character> pressedKeys = new List<Character>();
-        
-        foreach (var key in PressedCharacters)
-        {
-            if (keyboard.IsKeyDown(key.Key))
-            {
-                pressedKeys.Add(key.Value);
-            }
-        }
-
-        return pressedKeys;
     }
     
     public static Vector2 GetMousePosition()
