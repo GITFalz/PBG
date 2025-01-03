@@ -6,10 +6,6 @@ public class Triangle
     public Vertex B;
     public Vertex C;
     
-    public Vector3 EnAb;
-    public Vector3 EnBc;
-    public Vector3 EnCa;
-    
     public Vector3 Normal;
     
     public Quad? ParentQuad;
@@ -28,20 +24,6 @@ public class Triangle
         Vector3 edge1 = B.Position - A.Position;
         Vector3 edge2 = C.Position - A.Position;
         Normal = Vector3.Cross(edge1, edge2);
-        
-        EnAb = CalcNormal(A.Position, B.Position, C.Position);
-        EnBc = CalcNormal(B.Position, C.Position, A.Position);
-        EnCa = CalcNormal(C.Position, A.Position, B.Position);
-    }
-
-    private Vector3 CalcNormal(Vector3 a, Vector3 b, Vector3 c)
-    {
-        Vector3 edge = b - a;
-        Vector3 edgeNormal = Vector3.Cross(Normal, edge);
-        Vector3 dir = c - a;
-        if (Vector3.Dot(edgeNormal, dir) < 0)
-            edgeNormal = -edgeNormal;
-        return Mathf.Normalize(edgeNormal);
     }
     
     public void Invert()

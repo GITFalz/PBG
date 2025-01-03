@@ -83,7 +83,8 @@ public class UIController
     {
         foreach (var button in staticButtons)
         {
-            button.Generate();
+            if (button.PositionType != PositionType.Relative)
+                button.Generate();
         }
         
         foreach (var panel in staticPanels)

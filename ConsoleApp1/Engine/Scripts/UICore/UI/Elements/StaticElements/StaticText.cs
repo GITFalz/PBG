@@ -3,6 +3,7 @@
 public class StaticText : StaticElement
 {
     public string Text;
+    public float FontSize;
     
     public char[] Characters;
     public int CharCount;
@@ -11,16 +12,11 @@ public class StaticText : StaticElement
     
     public TextMesh Mesh;
     
-    public StaticText(string text)
+    public StaticText(string text, float fontSize)
     {
         Name = "Static Panel";
         
-        Text = text;
-        
-        Characters = Text.ToCharArray();
-        CharCount = Characters.Length;
-        
-        TextSize = new Vector2(CharCount * 20, 20);
+        SetText(text, fontSize);
         
         AnchorType = AnchorType.MiddleCenter;
         PositionType = PositionType.Absolute;
@@ -31,6 +27,12 @@ public class StaticText : StaticElement
         Mesh = mesh;
     }
     
+    public void SetText(string text, float fontSize)
+    {
+        FontSize = fontSize;
+        SetText(text);
+    }
+    
     public void SetText(string text)
     {
         Text = text;
@@ -38,13 +40,13 @@ public class StaticText : StaticElement
         Characters = Text.ToCharArray();
         CharCount = Characters.Length;
         
-        TextSize = new Vector2(CharCount * 20, 20);
+        TextSize = new Vector2(CharCount * (20 * FontSize), 20 * FontSize);
     }
     
     public override void Generate()
     {
         Align(new Vector3(TextSize.X, TextSize.Y, 0));
-        MeshQuad meshQuad = MeshHelper.GenerateTextQuad(CharCount * 20, 20, 0, CharCount, 0);
+        MeshQuad meshQuad = MeshHelper.GenerateTextQuad(TextSize.X, TextSize.Y, 0, CharCount, 0);
         Mesh.SetQuad(Origin + new Vector3(0, 0, 1f), meshQuad);
         foreach (var character in Characters)
         {

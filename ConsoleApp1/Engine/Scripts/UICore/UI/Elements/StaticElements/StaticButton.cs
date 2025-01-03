@@ -52,34 +52,31 @@ public class StaticButton : StaticElement
     public override void Generate()
     {
         Align();
-        if (TextureIndex >= 0)
-        {
-            Panel panel = new Panel();
+        Panel panel = new Panel();
 
-            Vector3 position = Origin;
+        Vector3 position = Origin;
         
-            panel.Vertices.Add(new Vector3(0, 0, 0) + position);
-            panel.Vertices.Add(new Vector3(0, Scale.Y, 0) + position);
-            panel.Vertices.Add(new Vector3(Scale.X, Scale.Y, 0) + position);
-            panel.Vertices.Add(new Vector3(Scale.X, 0, 0) + position);
+        panel.Vertices.Add(new Vector3(0, 0, 0) + position);
+        panel.Vertices.Add(new Vector3(0, Scale.Y, 0) + position);
+        panel.Vertices.Add(new Vector3(Scale.X, Scale.Y, 0) + position);
+        panel.Vertices.Add(new Vector3(Scale.X, 0, 0) + position);
         
-            panel.Uvs.Add(new Vector2(0, 0));
-            panel.Uvs.Add(new Vector2(0, 1));
-            panel.Uvs.Add(new Vector2(1, 1));
-            panel.Uvs.Add(new Vector2(1, 0));
+        panel.Uvs.Add(new Vector2(0, 0));
+        panel.Uvs.Add(new Vector2(0, 1));
+        panel.Uvs.Add(new Vector2(1, 1));
+        panel.Uvs.Add(new Vector2(1, 0));
         
-            panel.TextUvs.Add(TextureIndex);
-            panel.TextUvs.Add(TextureIndex);
-            panel.TextUvs.Add(TextureIndex);
-            panel.TextUvs.Add(TextureIndex);
+        panel.TextUvs.Add(TextureIndex);
+        panel.TextUvs.Add(TextureIndex);
+        panel.TextUvs.Add(TextureIndex);
+        panel.TextUvs.Add(TextureIndex);
         
-            panel.UiSizes.Add(new Vector2(Scale.X, Scale.Y));
-            panel.UiSizes.Add(new Vector2(Scale.X, Scale.Y));
-            panel.UiSizes.Add(new Vector2(Scale.X, Scale.Y));
-            panel.UiSizes.Add(new Vector2(Scale.X, Scale.Y));
+        panel.UiSizes.Add(new Vector2(Scale.X, Scale.Y));
+        panel.UiSizes.Add(new Vector2(Scale.X, Scale.Y));
+        panel.UiSizes.Add(new Vector2(Scale.X, Scale.Y));
+        panel.UiSizes.Add(new Vector2(Scale.X, Scale.Y));
         
-            Mesh.AddPanel(panel);
-        }
+        Mesh.AddPanel(panel);
         
         Text?.Generate();
     }

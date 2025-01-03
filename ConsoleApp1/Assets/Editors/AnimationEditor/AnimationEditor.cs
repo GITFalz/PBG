@@ -63,8 +63,20 @@ public class AnimationEditor : Updateable
     public StaticText MeshAlphaText;
     public StaticButton MeshAlphaButton;
     
+    public StaticText BackfaceCullingText;
+    public StaticButton BackfaceCullingButton;
+
+    public StaticText SnappingText;
+    public StaticButton SnappingButton;
+    public StaticButton SnappingButtonUp;
+    public StaticButton SnappingButtonDown;
+    
     // Ui values
     public float MeshAlpha = 0.1f;
+    public bool BackfaceCulling = true;
+    public bool Snapping = false;
+    public float SnappingFactor = 1;
+    private int SnappingFactorIndex = 0;
     
     
     
@@ -74,6 +86,15 @@ public class AnimationEditor : Updateable
     
     
     private List<Vertex> _selectedVertices = new List<Vertex>();
+
+    private static readonly Dictionary<int, float> SnappingFactors = new Dictionary<int, float>()
+    {
+        { 0, 1f },
+        { 1, 0.5f },
+        { 2, 0.25f },
+        { 3, 0.2f },
+        { 4, 0.1f }
+    };
     
     
     public override void Awake()
@@ -479,12 +500,36 @@ public class AnimationEditor : Updateable
         Ui.AddStaticButton(buttonVert8Y);
         Ui.AddStaticButton(buttonVert8Z);
         */
+
+        StaticPanel panel = UI.CreateStaticPanel(AnchorType.TopLeft, PositionType.Absolute, 
+            new Vector3(300, 500, 0), new Vector4(5, 5, 5, 5), 
+            null);
         
-        StaticPanel panel = UI.CreateStaticPanel(AnchorType.TopLeft, PositionType.Absolute, new Vector3(200, 200, 0), new Vector4(5, 5, 5, 5), null);
+        MeshAlphaText = UI.CreateStaticText("alpha: " + MeshAlpha.ToString("F2"), 0.7f, AnchorType.TopLeft, PositionType.Absolute, 
+            null, new Vector4(15, 10, 15, 10));
+        MeshAlphaButton = UI.CreateStaticButton(AnchorType.TopRight, PositionType.Relative, 
+            new Vector3(50, 20, 0), new Vector4(150, 10, 10f, 10), null);
+        MeshAlphaButton.TextureIndex = 0;
         
-        MeshAlphaText = UI.CreateStaticText("alpha: " + MeshAlpha.ToString("F2"), AnchorType.TopLeft, PositionType.Absolute, null, new Vector4(15, 10, 10, 10));
-        MeshAlphaButton = UI.CreateStaticButton(AnchorType.TopLeft, PositionType.Absolute, new Vector3(100, 30, 0), new Vector4(150, 10, 5f, 10), null);
-        MeshAlphaButton.TextureIndex = -1;
+        BackfaceCullingText = UI.CreateStaticText("culling: " + BackfaceCulling, 0.7f, AnchorType.TopLeft, PositionType.Absolute, 
+            null, new Vector4(15, 10, 40, 10));
+        BackfaceCullingButton = UI.CreateStaticButton(AnchorType.TopRight, PositionType.Relative, 
+            new Vector3(50, 20, 0), new Vector4(150, 10, 35, 10), null);
+        BackfaceCullingButton.TextureIndex = 0;
+
+        SnappingText = UI.CreateStaticText("snap: " + Snapping, 0.7f, AnchorType.TopLeft, PositionType.Absolute, 
+            null, new Vector4(15, 10, 65, 10));
+        SnappingButtonUp = UI.CreateStaticButton(AnchorType.TopRight, PositionType.Relative,
+            new Vector3(20, 20, 0), new Vector4(90, 10, 60, 10), null);
+        SnappingButtonDown = UI.CreateStaticButton(AnchorType.TopRight, PositionType.Relative,
+            new Vector3(20, 20, 0), new Vector4(120, 10, 60, 10), null);
+        SnappingButton = UI.CreateStaticButton(AnchorType.TopRight, PositionType.Relative,
+            new Vector3(50, 20, 0), new Vector4(150, 10, 60, 10), null);
+        SnappingButtonUp.TextureIndex = 0;
+        SnappingButtonDown.TextureIndex = 0;
+        SnappingButton.TextureIndex = 0;
+        
+        
         
         MeshAlphaButton.OnHold += () =>
         {
@@ -499,9 +544,53 @@ public class AnimationEditor : Updateable
             MainUi.Update();
         };
         
+        BackfaceCullingButton.OnClick += () =>
+        {
+            BackfaceCulling = !BackfaceCulling;
+            BackfaceCullingText.SetText("culling: " + BackfaceCulling);
+            BackfaceCullingText.Generate();
+            MainUi.Update();
+        };
+
+        SnappingButtonUp.OnClick += () =>
+        {
+            if (SnappingFactorIndex + 1 < SnappingFactors.Count)
+            {
+                SnappingFactorIndex++;
+                SnappingFactor = SnappingFactors[SnappingFactorIndex];
+            }
+        };
+        
+        SnappingButtonDown.OnClick += () =>
+        {
+            if (SnappingFactorIndex > 0)
+            {
+                SnappingFactorIndex--;
+                SnappingFactor = SnappingFactors[SnappingFactorIndex];
+            }
+        };
+
+        SnappingButton.OnClick += () =>
+        {
+            Snapping = !Snapping;
+            if (Snapping)
+                SnappingText.SetText("snap: " + SnappingFactor.ToString("F2"));
+            else
+                SnappingText.SetText("snap: off");
+            SnappingText.Generate();
+            MainUi.Update();
+        };
+        
         MainUi.AddStaticPanel(panel);
         MainUi.AddStaticText(MeshAlphaText);
+        MainUi.AddStaticText(BackfaceCullingText);
+        MainUi.SetParentPanel(panel);
         MainUi.AddStaticButton(MeshAlphaButton);
+        MainUi.AddStaticButton(BackfaceCullingButton);
+        MainUi.AddStaticButton(SnappingButton);
+        MainUi.AddStaticButton(SnappingButtonUp);
+        MainUi.AddStaticButton(SnappingButtonDown);
+        
         
         MainUi.Generate();
         Ui.Generate();
@@ -712,27 +801,112 @@ public class AnimationEditor : Updateable
             
             foreach (var vert in _selectedVertices)
             {
+                Triangle triangle;
+                
+                foreach (var svert in vert.SharedVertices)
+                {
+                    if (svert.ParentTriangle == null || triangles.Contains(svert.ParentTriangle))
+                        continue;
+
+                    triangle = svert.ParentTriangle;
+
+                    if (
+                        SelectedContainsSharedVertex(triangle.A) &&
+                        SelectedContainsSharedVertex(triangle.B) &&
+                        SelectedContainsSharedVertex(triangle.C)
+                    )
+                    {
+                        Vertex A = triangle.A;
+                        Vertex B = triangle.B;
+                        if (_modelMesh.SwapVertices(A, B))
+                        {
+                            triangle.Invert();
+                            _modelMesh.UpdateNormals(triangle);
+                        }
+                    }
+
+                    triangles.Add(triangle);
+                }
+                
                 if (vert.ParentTriangle == null || triangles.Contains(vert.ParentTriangle))
                     continue;
-                
-                Triangle triangle = vert.ParentTriangle;
+
+                triangle = vert.ParentTriangle;
 
                 if (
                     SelectedContainsSharedVertex(triangle.A) &&
                     SelectedContainsSharedVertex(triangle.B) &&
                     SelectedContainsSharedVertex(triangle.C)
-                ) {
+                )
+                {
                     Vertex A = triangle.A;
                     Vertex B = triangle.B;
                     if (_modelMesh.SwapVertices(A, B))
+                    {
                         triangle.Invert();
+                        _modelMesh.UpdateNormals(triangle);
+                    }
                 }
-                
+
                 triangles.Add(triangle);
             }
             
             _modelMesh.Init();
             _modelMesh.UpdateMesh();
+        }
+
+        if (Input.IsKeyDown(Keys.LeftControl))
+        {
+            // Merging
+            if (Input.IsKeyPressed(Keys.K) && _selectedVertices.Count >= 2)
+            {
+                Console.WriteLine("Merging verts");
+                
+                Vertex s1 = _selectedVertices[0];
+                Vector3 position = s1.Position;
+
+                HashSet<Vertex> deletedVertices = new HashSet<Vertex>();
+                
+                for (int i = 1; i < _selectedVertices.Count; i++)
+                {
+                    Vertex vert = _selectedVertices[i];
+                    s1.AddSharedVertexToAll(s1.ToList(), vert);
+                    position += vert.Position;
+                    if (
+                        vert.GetTwoOtherVertex(out var a, out var b) && (
+                        SelectedContainsSharedVertex(a) || 
+                        SelectedContainsSharedVertex(b)
+                    )) {
+                        Console.WriteLine("Remove Triangle");
+                        _modelMesh.RemoveTriangle(vert.ParentTriangle);
+                        deletedVertices.Add(vert);
+                    }
+                }
+                
+                position /= _selectedVertices.Count;
+                s1.SetAllPosition(position);
+
+                foreach (var vert in deletedVertices)
+                {
+                    _selectedVertices.Remove(vert);
+                }
+                
+                for (int i = 1; i < _selectedVertices.Count; i++)
+                {
+                    _selectedVertices[i].AddSharedVertexToAll(_selectedVertices[i].ToList(), s1);
+                    _selectedVertices[i].SetAllPosition(position);
+                }
+                
+                _selectedVertices.Clear();
+                
+                _modelMesh.Init();
+                _modelMesh.GenerateBuffers();
+                _modelMesh.UpdateMesh();
+                
+                Ui.Clear();
+                
+                regenerateVertexUi = true;
+            }
         }
         
         if (Input.IsKeyPressed(Keys.E))
@@ -801,6 +975,7 @@ public class AnimationEditor : Updateable
                 MoveSelectedVertices(move);
             }
             
+            _modelMesh.RecalculateNormals();
             _modelMesh.Init();
             _modelMesh.UpdateMesh();
         }
@@ -861,26 +1036,17 @@ public class AnimationEditor : Updateable
 
     public override void Render()
     {
-        //GL.Disable(EnableCap.CullFace);
+        if (BackfaceCulling)
+            GL.Enable(EnableCap.CullFace);
+        else
+            GL.Disable(EnableCap.CullFace);
+        
         GL.Disable(EnableCap.DepthTest);
         
         _shaderProgram.Bind();
         
-        Matrix4 model = Matrix4.Identity;
-        Matrix4 view = camera.GetViewMatrix();
-        Matrix4 projection = camera.GetProjectionMatrix();
-
-        int modelLocation = GL.GetUniformLocation(_shaderProgram.ID, "model");
-        int viewLocation = GL.GetUniformLocation(_shaderProgram.ID, "view");
-        int projectionLocation = GL.GetUniformLocation(_shaderProgram.ID, "projection");
-        int colorAlphaLocation = GL.GetUniformLocation(_shaderProgram.ID, "colorAlpha");
-        
-        GL.UniformMatrix4(modelLocation, true, ref model);
-        GL.UniformMatrix4(viewLocation, true, ref view);
-        GL.UniformMatrix4(projectionLocation, true, ref projection);
-        GL.Uniform1(colorAlphaLocation, MeshAlpha);
-        
-        _modelMesh.RenderMesh();
+        MirrorRender(new Vector3(1, 1, 1));
+        //MirrorRender(new Vector3(-1, 1, 1));
         
         //_playerMesh.RenderMesh();
         //_modelMesh.RenderMesh();
@@ -923,6 +1089,25 @@ public class AnimationEditor : Updateable
         MainUi.Render();
         
         base.Render();
+    }
+
+    public void MirrorRender(Vector3 flipping)
+    {
+        Matrix4 model = Matrix4.CreateScale(flipping);
+        Matrix4 view = camera.GetViewMatrix();
+        Matrix4 projection = camera.GetProjectionMatrix();
+
+        int modelLocation = GL.GetUniformLocation(_shaderProgram.ID, "model");
+        int viewLocation = GL.GetUniformLocation(_shaderProgram.ID, "view");
+        int projectionLocation = GL.GetUniformLocation(_shaderProgram.ID, "projection");
+        int colorAlphaLocation = GL.GetUniformLocation(_shaderProgram.ID, "colorAlpha");
+        
+        GL.UniformMatrix4(modelLocation, true, ref model);
+        GL.UniformMatrix4(viewLocation, true, ref view);
+        GL.UniformMatrix4(projectionLocation, true, ref projection);
+        GL.Uniform1(colorAlphaLocation, MeshAlpha);
+        
+        _modelMesh.RenderMesh();
     }
 
     public override void Exit()

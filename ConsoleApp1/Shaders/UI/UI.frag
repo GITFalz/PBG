@@ -96,7 +96,12 @@ void main()
         {
             uv.x = mapRange(x1, x2, uv.x, mapSize);
             uv.y = mapRange(y1, y2, uv.y, mapSize);
-            }
+        }
+    }
+    else
+    {
+        uv.x = mapRange(x1, x2, uv.x, mapSize);
+        uv.y = mapRange(y1, y2, uv.y, mapSize);
     }
     
     FragColor = texture(textureArray, vec3(uv.xy, TexIndex));

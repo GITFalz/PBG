@@ -161,9 +161,9 @@ public class UI
         return button;
     }
     
-    public static StaticText CreateStaticText(string text, AnchorType? anchorType, PositionType? positionType, Vector3? scale, Vector4? offset)
+    public static StaticText CreateStaticText(string text, float fontSize, AnchorType? anchorType, PositionType? positionType, Vector3? scale, Vector4? offset)
     {
-        StaticText Text = new StaticText(text);
+        StaticText Text = new StaticText(text, fontSize);
         
         if (anchorType != null)
             Text.SetAnchorType((AnchorType)anchorType);

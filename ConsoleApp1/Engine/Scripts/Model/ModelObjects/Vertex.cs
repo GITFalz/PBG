@@ -42,13 +42,51 @@ public class Vertex
             sharedVertex.AddSharedVertex(vertex);
         }
     }
+
+    public bool GetTwoOtherVertex(out Vertex? a, out Vertex? b)
+    {
+        a = null;
+        b = null;
+        if (ParentTriangle == null)
+            return false;
+
+        if (ParentTriangle.A == this)
+        {
+            a = ParentTriangle.B;
+            b = ParentTriangle.C;
+        }
+        else if (ParentTriangle.B == this)
+        {
+            a = ParentTriangle.A;
+            b = ParentTriangle.C;
+        }
+        else if (ParentTriangle.C == this)
+        {
+            a = ParentTriangle.A;
+            b = ParentTriangle.B;
+        }
+
+        return true;
+    }    
     
     public void RemoveSharedVertex(Vertex vertex)
     {
-        if (SharedVertices.Contains(vertex))
-            SharedVertices.Remove(vertex);
+        SharedVertices.Remove(vertex);
         if (vertex.SharedVertices.Contains(this))
             vertex.SharedVertices.Remove(this);
+    }
+    
+    public void RemoveSingleSharedVertex(Vertex vertex)
+    {
+        SharedVertices.Remove(vertex);
+    }
+
+    public void RemoveInstanceFromAll()
+    {
+        foreach (var vert in SharedVertices)
+        {
+            vert.RemoveSingleSharedVertex(this);
+        }
     }
     
     public void RemoveSharedVertexFromAll(List<Vertex> list, Vertex vertex)
@@ -98,6 +136,37 @@ public class Vertex
         {
             sharedVertex.Position = Position;
         }
+    }
+    
+    public Vector3 GetNormal()
+    {
+        Vector3 normal = Vector3.UnitY;
+        if (ParentTriangle != null)
+            normal = ParentTriangle.Normal;
+        return normal;
+    }
+    
+    public Vector3 GetAverageNormal()
+    {
+        Vector3 normal = GetNormal();
+        foreach (var sharedVertex in SharedVertices)
+        {
+            normal += sharedVertex.GetNormal();
+        }
+        return normal / (SharedVertices.Count + 1);
+    }
+
+    public void SetPosition(Vector3 pos)
+    {
+        Position = pos;
+        _placeHolderPosition = Position;
+    }
+
+    public void SetAllPosition(Vector3 position)
+    {
+        SetPosition(position);
+        foreach (var vert in SharedVertices)
+            vert.SetPosition(position);
     }
 
     public void ToPosition()

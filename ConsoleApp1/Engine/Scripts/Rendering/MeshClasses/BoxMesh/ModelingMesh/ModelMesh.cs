@@ -13,6 +13,11 @@ public class ModelMesh : BoxMesh
     
     public List<Vertex> VertexList = new List<Vertex>();
     
+    public List<Vector3> Normals = new List<Vector3>();
+    public VBO _normalVbo;
+    
+    private bool smoothShading = true;
+    
     public ModelMesh()
     {
         _vao = new VAO();
@@ -57,9 +62,9 @@ public class ModelMesh : BoxMesh
 
     public void AddTriangle(Triangle triangle)
     {
-        Indices.Add((uint)VertexList.Count);
-        Indices.Add((uint)VertexList.Count + 1);
-        Indices.Add((uint)VertexList.Count + 2);
+        Normals.Add(triangle.Normal);
+        Normals.Add(triangle.Normal);
+        Normals.Add(triangle.Normal);
         
         VertexList.Add(triangle.A);
         VertexList.Add(triangle.B);
@@ -86,7 +91,19 @@ public class ModelMesh : BoxMesh
         VertexList[indexB] = A;
             
         return true;
+    }
 
+    public void UpdateNormals(Triangle triangle)
+    {
+        triangle.UpdateNormals();
+        
+        int indexA = VertexList.IndexOf(triangle.A);
+        int indexB = VertexList.IndexOf(triangle.B);
+        int indexC = VertexList.IndexOf(triangle.C);
+        
+        Normals[indexA] = triangle.Normal;
+        Normals[indexB] = triangle.Normal;
+        Normals[indexC] = triangle.Normal;
     }
     
     public void UpdateRotation(Quaternion rotation)
@@ -97,8 +114,67 @@ public class ModelMesh : BoxMesh
         }
     }
 
+    public void RecalculateNormals()
+    {
+        HashSet<Triangle> triangles = new HashSet<Triangle>(); 
+        for (int i = 0; i < VertexList.Count; i++)
+        {
+            Vertex vertex = VertexList[i];
+            if (vertex.ParentTriangle != null)
+            {
+                Triangle triangle = vertex.ParentTriangle;
+                triangles.Add(triangle);
+                triangle.UpdateNormals();
+            }
+            Normals[i] = vertex.GetNormal();
+        }
+    }
+
+    public void GenerateIndices()
+    {
+        Indices.Clear();
+        for (uint i = 0; i < VertexList.Count; i++)
+        {
+            Indices.Add(i);
+        }
+    }
+
+    public void SmoothShading()
+    {
+        for (int i = 0; i < VertexList.Count; i++)
+        {
+            Vertex vertex = VertexList[i];
+            Normals[i] = vertex.GetAverageNormal();
+        }
+    }
+
+    public void RemoveVertex(Vertex vertex)
+    {
+        if (VertexList.Contains(vertex))
+        {
+            int index = VertexList.IndexOf(vertex);
+            VertexList[index].RemoveInstanceFromAll();
+            VertexList.Remove(vertex);
+        }
+    }
+
+    public void RemoveTriangle(Triangle triangle)
+    {
+        if (Indices.Count < 3)
+            return;
+            
+        RemoveVertex(triangle.A);
+        RemoveVertex(triangle.B);
+        RemoveVertex(triangle.C);
+        
+        Indices.RemoveRange(Indices.Count - 3, 3);
+    }
+    
+    
+
     public override void UpdateMesh()
     {
+        _normalVbo.Update(Normals);
         _vertVbo.Update(_transformedVerts);
         _textureVbo.Update(TextureIndices);
     }
@@ -118,13 +194,17 @@ public class ModelMesh : BoxMesh
             _transformedVerts.Add(t.Position);
         }
         
+        GenerateIndices();
+        
         _vertVbo = new VBO(_transformedVerts);
         _uvVbo = new VBO(Uvs);
         _textureVbo = new VBO(TextureIndices);
+        _normalVbo = new VBO(Normals);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
         _vao.LinkToVAO(1, 2, _uvVbo);
         _vao.LinkToVAO(2, 1, _textureVbo);
+        _vao.LinkToVAO(3, 3, _normalVbo);
         
         _ibo = new IBO(Indices);
     }

@@ -2,20 +2,16 @@
 
 flat in int TexIndex;
 in vec2 TexCoord;
+in vec3 Normal;
 
-const float borderThickness = 2.0;
+const vec3 lightDirection = normalize(vec3(1.7, 2.0, 1.3));
 
 uniform float colorAlpha;
 
 void main() {
-    vec2 uvPixelSize = fwidth(TexCoord);
-
-    vec2 borderWidth = uvPixelSize * borderThickness;
-
-    if (TexIndex == 0)
-    gl_FragColor = vec4(1.0, 1.0, 1.0, colorAlpha);
-    else if (TexIndex == 1)
-    gl_FragColor = vec4(0.0, 0.0, 1.0, colorAlpha);
-    else if (TexIndex == 2)
-    gl_FragColor = vec4(1.0, 0.0, 0.0, colorAlpha);
+    vec3 color = vec3(1.0, 1.0, 1.0);
+    vec3 normal = normalize(Normal);
+    float light = dot(normal, lightDirection);
+    light = clamp(light, 0.4, 1.0);
+    gl_FragColor = vec4(color * light, colorAlpha);
 }
