@@ -5,6 +5,7 @@ public class GameObject
 {
     public Transform transform;
     public List<Component> components = new List<Component>();
+    public Scene Scene;
     
     public GameObject()
     {

@@ -8,9 +8,9 @@ public class StaticPanel : StaticElement
     
     public int TextureIndex = 0;
     
-    public StaticPanel()
+    public StaticPanel(string name)
     {
-        Name = "Static Panel";
+        Name = name;
         
         ChildElements = new List<StaticElement>();
         
@@ -18,7 +18,7 @@ public class StaticPanel : StaticElement
         PositionType = PositionType.Absolute;
     }
     
-    public void SetMesh(UiMesh mesh)
+    public override void SetMesh(UiMesh mesh)
     {
         Mesh = mesh;
     }
@@ -62,5 +62,41 @@ public class StaticPanel : StaticElement
         {
             element.Generate();
         }
+    }
+    
+    public override void ToFile(string path, int gap = 1)
+    {
+        File.WriteAllLines(path, ToLines(gap));
+    }
+
+    public override List<string> ToLines(int gap)
+    {
+        List<string> lines = new List<string>();
+        string gapString = "";
+        for (int i = 0; i < gap; i++)
+        {
+            gapString += "    ";
+        }
+        
+        lines.Add(gapString + "Static Panel");
+        lines.Add(gapString + "{");
+        lines.Add(gapString + "    Name: " + Name);
+        lines.Add(gapString + "    Position: " + Position);
+        lines.Add(gapString + "    Scale: " + Scale);
+        lines.Add(gapString + "    Offset: " + Offset);
+        lines.Add(gapString + "    AnchorType: " + (int)AnchorType);
+        lines.Add(gapString + "    PositionType: " + (int)PositionType);
+        lines.Add(gapString + "    TextureIndex: " + TextureIndex);
+        lines.Add(gapString + "    Elements: " + ChildElements.Count);
+        if (ChildElements.Count >= 1)
+        {
+            foreach (StaticElement element in ChildElements)
+            {
+                lines.AddRange(element.ToLines(gap + 1));
+            }
+        }
+        lines.Add(gapString + "}");
+        
+        return lines;
     }
 }

@@ -12,9 +12,9 @@ public class StaticText : StaticElement
     
     public TextMesh Mesh;
     
-    public StaticText(string text, float fontSize)
+    public StaticText(string name, string text, float fontSize)
     {
-        Name = "Static Panel";
+        Name = name;
         
         SetText(text, fontSize);
         
@@ -53,7 +53,30 @@ public class StaticText : StaticElement
             Mesh.chars.Add(TextShaderHelper.GetChar(character));
         }
     }
-    
+
+    public override List<string> ToLines(int gap)
+    {
+        List<string> lines = new List<string>();
+        string gapString = "";
+        for (int i = 0; i < gap; i++)
+        {
+            gapString += "    ";
+        }
+        
+        lines.Add(gapString + "Static Text");
+        lines.Add(gapString + "{");
+        lines.Add(gapString + "    Name: " + Name);
+        lines.Add(gapString + "    Text: " + Text);
+        lines.Add(gapString + "    FontSize: " + FontSize);
+        lines.Add(gapString + "    Position: " + Position);
+        lines.Add(gapString + "    Scale: " + Scale);
+        lines.Add(gapString + "    Offset: " + Offset);
+        lines.Add(gapString + "    AnchorType: " + (int)AnchorType);
+        lines.Add(gapString + "    PositionType: " + (int)PositionType);
+        lines.Add(gapString + "}");
+        
+        return lines;
+    }
 
     public void UpdateText()
     {

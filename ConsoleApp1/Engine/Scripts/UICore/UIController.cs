@@ -7,11 +7,7 @@ public class UIController
 {
     public static Matrix4 OrthographicProjection;
     
-    private List<StaticButton> staticButtons = new List<StaticButton>();
-    private List<DynamicButton> dynamicButtons = new List<DynamicButton>();
-    private List<StaticText> staticTexts = new List<StaticText>();
-    private List<StaticPanel> staticPanels = new List<StaticPanel>();
-    private List<StaticInputField> staticInputFields = new List<StaticInputField>();
+    private List<StaticElement> staticElements = new List<StaticElement>();
     
     private static ShaderProgram _uiShader = new ShaderProgram("UI/UI.vert", "UI/UI.frag");
     private static TextureArray _uItexture = new TextureArray("UI_Atlas.png", 64, 64);
@@ -27,40 +23,31 @@ public class UIController
     
     public static StaticInputField? activeInputField = null;
     
-    public void AddStaticButton(StaticButton button)
+    public void AddStaticElement(StaticElement element)
     {
-        if (button.PositionType == PositionType.Relative && _parentPanel != null)
-            _parentPanel.AddElement(button);
+        element.SetMesh(_uiMesh);
+        staticElements.Add(element);
         
-        button.SetMesh(_uiMesh);
-        staticButtons.Add(button);
+        if (element is StaticInputField inputField)
+        {
+            _textMeshes.Add(inputField.TextMesh);
+        }
+        else if (element is StaticText text)
+        {
+            _textMeshes.Add(text.Mesh);
+        }
+        else if (element is StaticPanel panel)
+        {
+            foreach (var child in panel.ChildElements)
+            {
+                AddStaticElement(child);
+            }
+        }
     }
     
-    public void AddStaticText(StaticText text)
+    public UiMesh GetUiMesh()
     {
-        _textMeshes.Add(text.Mesh);
-        staticTexts.Add(text);
-    }
-    
-    public void AddStaticPanel(StaticPanel panel)
-    {
-        panel.SetMesh(_uiMesh);
-        staticPanels.Add(panel);
-    }
-    
-    public void AddStaticPanelToParent(StaticPanel panel)
-    {
-        if (panel.PositionType == PositionType.Relative && _parentPanel != null)
-            _parentPanel.AddElement(panel);
-        
-        panel.SetMesh(_uiMesh);
-        staticPanels.Add(panel);
-    }
-    
-    public void AddStaticInputField(StaticInputField inputField)
-    {
-        _textMeshes.Add(inputField.Mesh);
-        staticInputFields.Add(inputField);
+        return _uiMesh;
     }
     
     public void SetStaticPanelTexureIndex(int index, int textureIndex)
@@ -74,8 +61,10 @@ public class UIController
 
     public StaticPanel? GetStaticPanel(int index)
     {
-        if (index < staticPanels.Count && index >= 0)
-            return staticPanels[index];
+        if (index >= staticElements.Count || index < 0) 
+            return null;
+        if (staticElements[index] is StaticPanel panel)
+            return panel;
         return null;
     }
     
@@ -86,39 +75,71 @@ public class UIController
     
     public void Generate()
     {
-        foreach (var text in staticTexts)
-        {
-            text.Generate();
-        }
-        
-        foreach (var inputField in staticInputFields)
-        {
-            inputField.Generate();
-        }
-        
-        foreach (var textMesh in _textMeshes)
-        {
-            textMesh.GenerateBuffers();
-        }
-        
         GenerateUi();
+        GenerateBuffers();
+    }
+    
+    public List<UiElement> GetUiElements()
+    {
+        List<UiElement> uiElements = new List<UiElement>();
+        foreach (var element in staticElements)
+        {
+            if (element.ParentElement == null)
+                uiElements.Add(element);
+            else if (element is StaticPanel panel)
+            {
+                foreach (var child in panel.ChildElements)
+                {
+                    uiElements.Add(child);
+                }
+            }
+        }
+
+        return uiElements;
+    }
+
+    public StaticText? GetText(string name)
+    {
+        foreach (var element in staticElements)
+        {
+            if (element is StaticText text && text.Name == name)
+            {
+                return text;
+            }
+        }
+
+        return null;
+    }
+    
+    public StaticInputField? GetInputField(string name)
+    {
+        foreach (var element in staticElements)
+        {
+            if (element is StaticInputField inputField && inputField.Name == name)
+            {
+                return inputField;
+            }
+        }
+
+        return null;
     }
 
     public void GenerateUi()
     {
-        foreach (var button in staticButtons)
+        foreach (var element in staticElements)
         {
-            if (button.PositionType != PositionType.Relative)
-                button.Generate();
+            if (element.PositionType != PositionType.Relative) 
+                element.Generate();
         }
-        
-        foreach (var panel in staticPanels)
-        {
-            if (panel.PositionType != PositionType.Relative)
-                panel.Generate();
-        }
-        
+    }
+
+    public void GenerateBuffers()
+    {
         _uiMesh.GenerateBuffers();
+        foreach (var textMesh in _textMeshes)
+        {
+            textMesh.GenerateBuffers();
+        }
     }
 
     public void Update()
@@ -137,9 +158,7 @@ public class UIController
 
     public void Clear()
     {
-        staticPanels.Clear();
-        staticButtons.Clear();
-        staticTexts.Clear();
+        staticElements.Clear();
         _uiMesh.Clear();
         _textMeshes.Clear();
     }
@@ -151,9 +170,9 @@ public class UIController
 
     public void TestButtons()
     {
-        foreach (var button in staticButtons)
+        foreach (var element in staticElements)
         {
-            button.ButtonTest();
+            element.Test();
         }
     }
 

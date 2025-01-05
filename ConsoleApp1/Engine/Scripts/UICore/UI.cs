@@ -3,9 +3,9 @@ using StbImageSharp;
 
 public class UI
 {
-    public static StaticButton CreateStaticButton(AnchorType anchorType, PositionType positionType, Vector3 scale, Vector4 offset, UiMesh? mesh)
+    public static StaticButton CreateStaticButton(string name, AnchorType anchorType, PositionType positionType, Vector3 scale, Vector4 offset, UiMesh? mesh)
     {
-        StaticButton button = new StaticButton();
+        StaticButton button = new StaticButton(name);
         
         button.SetAnchorType(anchorType);
         button.SetPositionType(positionType);
@@ -18,9 +18,9 @@ public class UI
         return button;
     }
     
-    public static StaticText CreateStaticText(string text, float fontSize, AnchorType? anchorType, PositionType? positionType, Vector3? scale, Vector4? offset)
+    public static StaticText CreateStaticText(string name, string text, float fontSize, AnchorType? anchorType, PositionType? positionType, Vector3? scale, Vector4? offset)
     {
-        StaticText Text = new StaticText(text, fontSize);
+        StaticText Text = new StaticText(name, text, fontSize);
         
         if (anchorType != null)
             Text.SetAnchorType((AnchorType)anchorType);
@@ -35,9 +35,9 @@ public class UI
         return Text;
     }
     
-    public static StaticInputField CreateStaticInputField(string text, float fontSize, AnchorType? anchorType, PositionType? positionType, Vector3? scale, Vector4? offset)
+    public static StaticInputField CreateStaticInputField(string name, string text, float fontSize, AnchorType? anchorType, PositionType? positionType, Vector3? scale, Vector4? offset)
     {
-        StaticInputField inputField = new StaticInputField(text, fontSize);
+        StaticInputField inputField = new StaticInputField(name, text, fontSize);
         
         if (anchorType != null)
             inputField.SetAnchorType((AnchorType)anchorType);
@@ -47,14 +47,13 @@ public class UI
             inputField.SetScale((Vector3)scale);
         if (offset != null)
             inputField.SetOffset((Vector4)offset);
-        inputField.SetMesh(new TextMesh());
         
         return inputField;
     }
     
-    public static StaticPanel CreateStaticPanel(AnchorType anchorType, PositionType? positionType, Vector3 scale, Vector4? offset, UiMesh? mesh)
+    public static StaticPanel CreateStaticPanel(string name, AnchorType anchorType, PositionType? positionType, Vector3 scale, Vector4? offset, UiMesh? mesh)
     {
-        StaticPanel panel = new StaticPanel();
+        StaticPanel panel = new StaticPanel(name);
         
         panel.SetAnchorType(anchorType);
         panel.SetScale(scale);

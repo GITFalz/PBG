@@ -155,109 +155,104 @@ public class ModelingEditor : Updateable
         _modelMesh.Init();
         _modelMesh.GenerateBuffers();
         _modelMesh.UpdateMesh();
+        
+        MeshAlphaText = UI.CreateStaticText("test" , "alpha: " + MeshAlpha.ToString("F2"), 0.7f, AnchorType.TopLeft, PositionType.Absolute, null, new Vector4(15, 10, 40, 10));
+        BackfaceCullingText = UI.CreateStaticText("test2", "culling: off", 0.7f, AnchorType.TopLeft, PositionType.Absolute, null, new Vector4(15, 10, 65, 10));
+        SnappingText = UI.CreateStaticText("test3", "snap: " + Snapping, 0.7f, AnchorType.TopLeft, PositionType.Absolute, null, new Vector4(15, 10, 90, 10));
+        
+        /*
+        MainUi.AddStaticElement(MeshAlphaText);
+        MainUi.AddStaticElement(BackfaceCullingText);
+        MainUi.AddStaticElement(SnappingText);
+        */
+        
+        gameObject.Scene.UiController = MainUi;
+        
+        gameObject.Scene.LoadUi();
 
-        StaticPanel panel = UI.CreateStaticPanel(AnchorType.TopLeft, PositionType.Absolute, 
-            new Vector3(300, 500, 0), new Vector4(5, 5, 5, 5), 
-            null);
+        StaticText? text = MainUi.GetText("CullingText");
         
-        MeshAlphaText = UI.CreateStaticText("alpha: " + MeshAlpha.ToString("F2"), 0.7f, AnchorType.TopLeft, PositionType.Absolute, 
-            null, new Vector4(15, 10, 15, 10));
-        MeshAlphaButton = UI.CreateStaticButton(AnchorType.TopRight, PositionType.Relative, 
-            new Vector3(50, 20, 0), new Vector4(150, 10, 10f, 10), null);
-        MeshAlphaButton.TextureIndex = 0;
-        
-        BackfaceCullingText = UI.CreateStaticText("culling: off", 0.7f, AnchorType.TopLeft, PositionType.Absolute, 
-            null, new Vector4(15, 10, 40, 10));
-        BackfaceCullingButton = UI.CreateStaticButton(AnchorType.TopRight, PositionType.Relative, 
-            new Vector3(50, 20, 0), new Vector4(150, 10, 35, 10), null);
-        BackfaceCullingButton.TextureIndex = 0;
-
-        SnappingText = UI.CreateStaticText("snap: " + Snapping, 0.7f, AnchorType.TopLeft, PositionType.Absolute, 
-            null, new Vector4(15, 10, 65, 10));
-        SnappingButtonUp = UI.CreateStaticButton(AnchorType.TopRight, PositionType.Relative,
-            new Vector3(20, 20, 0), new Vector4(90, 90, 60, 10), null);
-        SnappingButtonDown = UI.CreateStaticButton(AnchorType.TopRight, PositionType.Relative,
-            new Vector3(20, 20, 0), new Vector4(120, 65, 60, 10), null);
-        SnappingButton = UI.CreateStaticButton(AnchorType.TopRight, PositionType.Relative,
-            new Vector3(50, 20, 0), new Vector4(150, 10, 60, 10), null);
-        SnappingButtonUp.TextureIndex = 0;
-        SnappingButtonDown.TextureIndex = 0;
-        SnappingButton.TextureIndex = 0;
-        
-        InputField = UI.CreateStaticInputField("snap: " + Snapping, 0.7f, AnchorType.TopLeft, PositionType.Absolute, 
-            null, new Vector4(15, 10, 90, 10));
-        
-        
-        
-        MeshAlphaButton.OnHold += () =>
-        {
-            float mouseX = Input.GetMouseDelta().X;
-            if (mouseX == 0)
-                return;
-            
-            MeshAlpha += mouseX * GameTime.DeltaTime * 0.2f;
-            MeshAlpha = Mathf.Clamp(0, 1, MeshAlpha);
-            MeshAlphaText.SetText("alpha: " + MeshAlpha.ToString("F2"));
-            MeshAlphaText.Generate();
-            MainUi.Update();
-        };
-        
-        BackfaceCullingButton.OnClick += () =>
-        {
-            BackfaceCulling = !BackfaceCulling;
-            BackfaceCullingText.SetText("culling: " + BackfaceCulling);
-            BackfaceCullingText.Generate();
-            MainUi.Update();
-        };
-
-        SnappingButtonUp.OnClick += () =>
-        {
-            if (SnappingFactorIndex + 1 < SnappingFactors.Count)
-            {
-                SnappingFactorIndex++;
-                SnappingFactor = SnappingFactors[SnappingFactorIndex];
-            }
-            UpdateSnappingText();
-        };
-        
-        SnappingButtonDown.OnClick += () =>
-        {
-            if (SnappingFactorIndex > 0)
-            {
-                SnappingFactorIndex--;
-                SnappingFactor = SnappingFactors[SnappingFactorIndex];
-            }
-            UpdateSnappingText();
-        };
-
-        SnappingButton.OnClick += () =>
-        {
-            Snapping = !Snapping;
-            UpdateSnappingText();
-        };
-        
-        MainUi.AddStaticPanel(panel);
-        MainUi.AddStaticText(MeshAlphaText);
-        MainUi.AddStaticText(BackfaceCullingText);
-        MainUi.AddStaticText(SnappingText);
-        MainUi.AddStaticInputField(InputField);
-        MainUi.SetParentPanel(panel);
-        MainUi.AddStaticButton(MeshAlphaButton);
-        MainUi.AddStaticButton(BackfaceCullingButton);
-        MainUi.AddStaticButton(SnappingButton);
-        MainUi.AddStaticButton(SnappingButtonUp);
-        MainUi.AddStaticButton(SnappingButtonDown);
-        
-        UIController.activeInputField = InputField;
-        
+        if (text != null) 
+            BackfaceCullingText = text;
+        text = MainUi.GetText("AlphaText");
+        if (text != null) 
+            MeshAlphaText = text;
+        text = MainUi.GetText("SnappingText");
+        if (text != null) 
+            SnappingText = text;
         
         MainUi.Generate();
         Ui.Generate();
+        
+        //gameObject.Scene.SaveUi();
+    }
+    
+    public void AssignInputField(string test)
+    {
+        StaticInputField? inputField = MainUi.GetInputField(test);
+        if (inputField != null)
+            UIController.activeInputField = inputField;
+    }
+    
+    public void AlphaControl()
+    {
+        float mouseX = Input.GetMouseDelta().X;
+        if (mouseX == 0)
+            return;
+            
+        MeshAlpha += mouseX * GameTime.DeltaTime * 0.2f;
+        MeshAlpha = Mathf.Clamp(0, 1, MeshAlpha);
+        MeshAlphaText.SetText("alpha: " + MeshAlpha.ToString("F2"));
+        MeshAlphaText.Generate();
+        MainUi.Update();
+    }
+
+    public void BackFaceCullingSwitch()
+    {
+        BackfaceCulling = !BackfaceCulling;
+        BackfaceCullingText.SetText("culling: " + BackfaceCulling);
+        BackfaceCullingText.Generate();
+        MainUi.Update();
+    }
+
+    public void SnappingUpButton()
+    {
+        if (SnappingFactorIndex < 4)
+        {
+            SnappingFactorIndex++;
+            SnappingFactor = SnappingFactors[SnappingFactorIndex];
+        }
+
+        UpdateSnappingText();
+    }
+    
+    public void SnappingDownButton()
+    {
+        if (SnappingFactorIndex > 0)
+        {
+            SnappingFactorIndex--;
+            SnappingFactor = SnappingFactors[SnappingFactorIndex];
+        }
+        UpdateSnappingText();
+    }
+    
+    public void SnappingSwitchButton()
+    {
+        Snapping = !Snapping;
+        UpdateSnappingText();
     }
     
     public override void Update()
     {
         MainUi.Test();
+
+        if (UIController.activeInputField != null)
+        {
+            if (Input.IsKeyPressed(Keys.Escape))
+                UIController.activeInputField = null;
+            
+            return;
+        }
 
         if (Input.IsKeyPressed(Keys.Escape))
         {
@@ -620,7 +615,7 @@ public class ModelingEditor : Updateable
         */
         
         Ui.Render();
-        MainUi.Render();
+        //MainUi.Render();
         
         base.Render();
     }
@@ -670,11 +665,11 @@ public class ModelingEditor : Updateable
                 
             Vector2 pos = (Vector2)screenPos;
                 
-            StaticPanel panel = UI.CreateStaticPanel(AnchorType.TopLeft, PositionType.Free, new Vector3(20, 20, 0), new Vector4(0, 0, 0, 0), null);
+            StaticPanel panel = UI.CreateStaticPanel(pos.ToString(), AnchorType.TopLeft, PositionType.Free, new Vector3(20, 20, 0), new Vector4(0, 0, 0, 0), null);
             panel.SetPosition(new Vector3(pos.X, pos.Y, 0));
             panel.TextureIndex = SelectedContainsSharedVertex(vert) ? 2 : 1;
                 
-            Ui.AddStaticPanel(panel);
+            Ui.AddStaticElement(panel);
         }
         
         _modelMesh.ResetVertex();
@@ -685,6 +680,8 @@ public class ModelingEditor : Updateable
 
     public void GenerateVertexColor()
     {
+        Console.WriteLine("Generate Vertex Color");
+        
         Ui.ClearUiMesh();
         
         int i = 0;
@@ -701,7 +698,7 @@ public class ModelingEditor : Updateable
         
         _modelMesh.ResetVertex();
         
-        Ui.GenerateUi();
+        Ui.Generate();
         Ui.Update();
     }
     

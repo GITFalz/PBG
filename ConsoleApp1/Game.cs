@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
+using ConsoleApp1.Assets.Editors.UiEditor;
 using ConsoleApp1.Assets.Scripts.Inputs;
 using ConsoleApp1.Assets.Scripts.World.Blocks;
 using OpenTK.Graphics.OpenGL4;
@@ -19,9 +20,14 @@ public class Game : GameWindow
     public static int centerX;
     public static int centerY;
 
+    // User paths
     public static string mainPath;
     public static string chunkPath;
     public static string modelPath;
+    
+    // Compile time paths
+    public static string assetPath;
+    public static string uiPath;
 
     private Camera _mainCamera;
     
@@ -59,7 +65,8 @@ public class Game : GameWindow
 
 
     private Scene _worldScene = new Scene("World");
-    private Scene _animationScene = new Scene("Animation");
+    private Scene _animationScene = new Scene("Modeling");
+    private Scene _uiEditorScene = new Scene("UIEditor");
     private Scene _uiScene = new Scene("UI");
     
     
@@ -67,6 +74,11 @@ public class Game : GameWindow
     
     
     public static HashSet<Action> OnPressedKeys = new HashSet<Action>();
+    
+    
+    // Editor mode
+    public EditorMode EditorNode = new EditorMode();
+    public Action EditorUpdate;
     
     
     public Game(int width, int height) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
@@ -106,8 +118,10 @@ public class Game : GameWindow
     protected override void OnLoad()
     {
         // Scenes
-        _worldScene.AddSceneSwitcher(new SceneSwitcherKey(Keys.RightShift, "Animation"));
-        _animationScene.AddSceneSwitcher(new SceneSwitcherKeys([Keys.LeftControl, Keys.RightShift], "World"));
+        _worldScene.AddSceneSwitcher(new SceneSwitcherKey(Keys.RightShift, "Modeling"));
+        _animationScene.AddSceneSwitcher(new SceneSwitcherKeys([Keys.LeftControl, Keys.LeftShift, Keys.Z], "World"));
+        _animationScene.AddSceneSwitcher(new SceneSwitcherKeys([Keys.LeftControl, Keys.LeftShift, Keys.U], "UIEditor"));
+        _uiEditorScene.AddSceneSwitcher(new SceneSwitcherKeys([Keys.LeftControl, Keys.LeftShift, Keys.Semicolon], "Modeling"));
         
         // Utils
         stopwatch = new Stopwatch();
@@ -122,10 +136,20 @@ public class Game : GameWindow
         chunkPath = Path.Combine(mainPath, "Chunks");
         modelPath = Path.Combine(mainPath, "Models");
         
+        assetPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets");
+        uiPath = Path.Combine(assetPath, "UI");
+        
+        Console.WriteLine(uiPath);
+        
         if (!Directory.Exists(chunkPath))
             Directory.CreateDirectory(chunkPath);
         if (!Directory.Exists(modelPath))
             Directory.CreateDirectory(modelPath);
+        
+        if (!Directory.Exists(assetPath))
+            Directory.CreateDirectory(assetPath);
+        if (!Directory.Exists(uiPath))
+            Directory.CreateDirectory(uiPath);
         
         // Input
         MouseState mouse = MouseState;
@@ -182,16 +206,28 @@ public class Game : GameWindow
         _worldScene.AddGameObject(worldObject);
         
         
-        // Animation Editor
-        GameObject animationObject = new GameObject();
+        // Modeling Editor
+        ModelingEditor editorComponent = new ModelingEditor();
         
-        animationObject.AddComponent(new ModelingEditor());
+        GameObject animationObject = new GameObject();
+        SceneComponent animationComponent = new SceneComponent("ModelingEditor", editorComponent);
+        
+        animationObject.AddComponent(editorComponent);
         
         _animationScene.AddGameObject(animationObject);
+        _animationScene.AddComponent(animationComponent);
         
-        AddScenes(_worldScene, _animationScene, _uiScene);
+        // UI
+        GameObject uiObject = new GameObject();
+        UiEditor uiEditor = new UiEditor();
         
-        LoadScene("Animation");
+        uiObject.AddComponent(uiEditor);
+        
+        _uiEditorScene.AddGameObject(uiObject);
+        
+        AddScenes(_worldScene, _animationScene, _uiScene, _uiEditorScene);
+        
+        LoadScene("Modeling");
         
         _physicsThread = new Thread(PhysicsThread);
         _physicsThread.Start();
@@ -228,7 +264,8 @@ public class Game : GameWindow
     
     protected override void OnRenderFrame(FrameEventArgs args)
     {
-        GL.ClearColor(0.6f, 0.3f, 1f, 1f);
+        // Sky blue background
+        GL.ClearColor(0.4f, 0.6f, 0.98f, 1.0f);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         
         GL.Viewport(0, 0, width, height);
@@ -360,5 +397,15 @@ public class Game : GameWindow
             if (!Instance.Scenes.TryAdd(s.Name, s))
                 throw new Exception($"Failed to add {s.Name} Scene");
         }
+    }
+    
+    public Scene? GetScene(string name)
+    {
+        if (Scenes.TryGetValue(name, out Scene? scene))
+        {
+            return scene;
+        }
+        
+        return null;
     }
 }

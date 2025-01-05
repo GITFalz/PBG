@@ -83,6 +83,7 @@ public class UiMesh : Mesh
         Uvs.Clear();
         TextUvs?.Clear();
         Indices.Clear();
+        UiSizes?.Clear();
         
         transformedVertices.Clear();
         

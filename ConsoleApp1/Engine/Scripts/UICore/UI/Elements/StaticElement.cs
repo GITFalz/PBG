@@ -2,7 +2,11 @@
 
 public abstract class StaticElement : UiElement
 {
-    public StaticElement? ParentElement;
+    public StaticElement? ParentElement = null;
+    
+    public virtual void SetMesh(UiMesh uiMesh) {}
+
+    public virtual void Test() {}
 
     public override void Align()
     {

@@ -15,6 +15,8 @@ public abstract class UiElement
     
     public AnchorType AnchorType = AnchorType.MiddleCenter;
     public PositionType PositionType = PositionType.Absolute;
+    
+    public string SceneName = "";
 
     public abstract void Generate();
     public abstract void Align();
@@ -45,6 +47,9 @@ public abstract class UiElement
         Position = position;
         Origin = position - HalfScale;
     }
+    
+    public virtual void ToFile(string path, int gap = 1) {}
+    public virtual List<string> ToLines(int gap) { return new List<string>(); }
 }
 
 public enum AnchorType
