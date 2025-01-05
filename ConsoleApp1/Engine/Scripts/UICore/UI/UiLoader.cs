@@ -16,7 +16,7 @@ public static class UiLoader
             Console.WriteLine("Line: " + line);
             
             UiElement? element = null;
-
+            
             if (line.Trim() == "Static Panel")
             {
                 Console.WriteLine("Panel");
@@ -56,6 +56,8 @@ public static class UiLoader
     public static int TextToPanel(string[] lines, int index, UIController controller, out StaticPanel panel)
     {
         index+=2;
+        
+        Console.WriteLine(index + " " + lines[index]);
 
         string name = lines[index].Split(":")[1].Trim();
         Vector3 position = TextToVector3(lines[index + 1].Split(":")[1].Trim());
@@ -85,7 +87,7 @@ public static class UiLoader
                 
                 if (line.Trim() == "Static Panel")
                 {
-                    i = TextToPanel(lines, i, controller, out var staticPanel);
+                    index = TextToPanel(lines, index + 1, controller, out var staticPanel);
                     controller.SetParentPanel(staticPanel);
                     panel.AddElement(staticPanel);
                     element = staticPanel;
@@ -118,7 +120,6 @@ public static class UiLoader
                 }
             }
         }
-        
         return index;
     }
 
