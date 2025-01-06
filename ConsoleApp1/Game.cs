@@ -95,7 +95,6 @@ public class Game : GameWindow
     
     protected override void OnResize(ResizeEventArgs e)
     {
-        base.OnResize(e);
         GL.Viewport(0, 0, e.Width, e.Height);
         
         Game.width = e.Width;
@@ -113,6 +112,10 @@ public class Game : GameWindow
         {
             Console.WriteLine(ex.Message);
         }
+
+        CurrentScene?.OnResize();
+        
+        base.OnResize(e);
     }
     
     protected override void OnLoad()

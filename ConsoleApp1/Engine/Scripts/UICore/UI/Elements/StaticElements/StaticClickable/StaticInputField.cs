@@ -13,6 +13,9 @@ public class StaticInputField : StaticClickable
     public TextType TextType = TextType.All;
     
     public TextMesh TextMesh;
+
+    private int _uiIndex = 0;
+    private bool _generated = false;
     
     public void SetText(string text, float fontSize)
     {
@@ -80,7 +83,19 @@ public class StaticInputField : StaticClickable
         panel.UiSizes.Add(new Vector2(Scale.X, Scale.Y));
         panel.UiSizes.Add(new Vector2(Scale.X, Scale.Y));
         
-        UiMesh.AddPanel(panel);
+        if (!_generated)
+        {
+            UiMesh.AddPanel(panel, out _uiIndex);
+            _generated = true;
+        }
+        else
+            UiMesh.UpdatePanel(panel, _uiIndex);
+    }
+
+    public override void Reset()
+    {
+        _generated = false;
+        _uiIndex = 0;
     }
 
     public void UpdateText()
@@ -90,7 +105,8 @@ public class StaticInputField : StaticClickable
     
     public void AddCharacter(char character)
     {
-        if (!TextShaderHelper.CharExists(character)) return;
+        if (!TextShaderHelper.CharExists(character)) 
+            return;
         SetText(Format(Text + character));
         Generate();
         UpdateText();
@@ -155,10 +171,10 @@ public class StaticInputField : StaticClickable
         lines.Add(gapString + "    AnchorType: " + (int)AnchorType);
         lines.Add(gapString + "    PositionType: " + (int)PositionType);
         lines.Add(gapString + "    TextureIndex: " + TextureIndex);
-        lines.Add(gapString + "    OnClick: " + (OnClick == null ? "null" : SceneName + "." + OnClick.TargetName + "." + OnClick.MethodName));
-        lines.Add(gapString + "    OnHover: " + (OnHover == null ? "null" : SceneName + "." + OnHover.TargetName + "." + OnHover.MethodName));
-        lines.Add(gapString + "    OnHold: " + (OnHold == null ? "null" : SceneName + "." + OnHold.TargetName + "." + OnHold.MethodName));
-        lines.Add(gapString + "    OnRelease: " + (OnRelease == null ? "null" : SceneName + "." + OnRelease.TargetName + "." + OnRelease.MethodName));
+        lines.Add(gapString + "    OnClick: " + (OnClick == null ? "null" : SceneName + "." + OnClick.TargetName + "." + OnClick.MethodName + (OnClick.FixedParameter == null ? "" : $"({OnClick.FixedParameter})")));
+        lines.Add(gapString + "    OnHover: " + (OnHover == null ? "null" : SceneName + "." + OnHover.TargetName + "." + OnHover.MethodName + (OnHover.FixedParameter == null ? "" : $"({OnHover.FixedParameter})")));
+        lines.Add(gapString + "    OnHold: " + (OnHold == null ? "null" : SceneName + "." + OnHold.TargetName + "." + OnHold.MethodName + (OnHold.FixedParameter == null ? "" : $"({OnHold.FixedParameter})")));
+        lines.Add(gapString + "    OnRelease: " + (OnRelease == null ? "null" : SceneName + "." + OnRelease.TargetName + "." + OnRelease.MethodName + (OnRelease.FixedParameter == null ? "" : $"({OnRelease.FixedParameter})")));
         lines.Add(gapString + "}");
         
         return lines;

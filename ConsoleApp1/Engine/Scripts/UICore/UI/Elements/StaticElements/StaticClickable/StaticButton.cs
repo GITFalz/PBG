@@ -31,10 +31,10 @@ public class StaticButton : StaticClickable
         lines.Add(gapString + "    AnchorType: " + (int)AnchorType);
         lines.Add(gapString + "    PositionType: " + (int)PositionType);
         lines.Add(gapString + "    TextureIndex: " + TextureIndex);
-        lines.Add(gapString + "    OnClick: " + (OnClick == null ? "null" : SceneName + "." + OnClick.TargetName + "." + OnClick.MethodName));
-        lines.Add(gapString + "    OnHover: " + (OnHover == null ? "null" : SceneName + "." + OnHover.TargetName + "." + OnHover.MethodName));
-        lines.Add(gapString + "    OnHold: " + (OnHold == null ? "null" : SceneName + "." + OnHold.TargetName + "." + OnHold.MethodName));
-        lines.Add(gapString + "    OnRelease: " + (OnRelease == null ? "null" : SceneName + "." + OnRelease.TargetName + "." + OnRelease.MethodName));
+        lines.Add(gapString + "    OnClick: " + (OnClick == null ? "null" : SceneName + "." + OnClick.TargetName + "." + OnClick.MethodName + (OnClick.FixedParameter == null ? "" : $"({OnClick.FixedParameter})")));
+        lines.Add(gapString + "    OnHover: " + (OnHover == null ? "null" : SceneName + "." + OnHover.TargetName + "." + OnHover.MethodName + (OnHover.FixedParameter == null ? "" : $"({OnHover.FixedParameter})")));
+        lines.Add(gapString + "    OnHold: " + (OnHold == null ? "null" : SceneName + "." + OnHold.TargetName + "." + OnHold.MethodName + (OnHold.FixedParameter == null ? "" : $"({OnHold.FixedParameter})")));
+        lines.Add(gapString + "    OnRelease: " + (OnRelease == null ? "null" : SceneName + "." + OnRelease.TargetName + "." + OnRelease.MethodName + (OnRelease.FixedParameter == null ? "" : $"({OnRelease.FixedParameter})")));
         lines.Add(gapString + "}");
         
         return lines;

@@ -36,9 +36,9 @@ public abstract class StaticElement : UiElement
             offset.Y = ParentElement.Origin.X - offset.Y;
             offset.Z += ParentElement.Origin.Y;
             offset.W = ParentElement.Origin.Y - offset.W;
-            
-            Console.WriteLine("Offset : " + offset);
         }
+        
+        //Console.WriteLine("Width: " + width + " Height: " + height);
         
         Vector3 halfScale = scale / 2;
         
@@ -78,7 +78,45 @@ public abstract class StaticElement : UiElement
         {
             Position = new Vector3(width - halfScale.X, height - halfScale.Y, 0) + new Vector3(offset.Y, offset.W, 0);
         }
+        else if (AnchorType == AnchorType.ScaleLeft)
+        {
+            SetScale(new Vector3(Scale.X, height - (offset.Z + offset.W), 0));
+            halfScale = Scale / 2;
+            Position = new Vector3(halfScale.X, height / 2, 0) + new Vector3(offset.X, 0, 0);
+        }
+        else if (AnchorType == AnchorType.ScaleCenter)
+        {
+            SetScale(new Vector3(Scale.X, height - (offset.Z + offset.W), 0));
+            halfScale = Scale / 2;
+            Position = new Vector3(width / 2, height / 2, 0) + new Vector3(0, 0, 0);
+        }
+        else if (AnchorType == AnchorType.ScaleRight)
+        {
+            SetScale(new Vector3(Scale.X, height - (offset.Z + offset.W), 0));
+            halfScale = Scale / 2;
+            Position = new Vector3(width - halfScale.X, height / 2, 0) + new Vector3(-offset.Y, 0, 0);
+        }
+        else if (AnchorType == AnchorType.ScaleTop)
+        {
+            SetScale(new Vector3(width - (offset.X + offset.Y), Scale.Y, 0));
+            halfScale = Scale / 2;
+            Position = new Vector3(width / 2, halfScale.Y, 0) + new Vector3(0, offset.Z, 0);
+        }
+        else if (AnchorType == AnchorType.ScaleMiddle)
+        {
+            SetScale(new Vector3(width - (offset.X + offset.Y), Scale.Y, 0));
+            halfScale = Scale / 2;
+            Position = new Vector3(width / 2, height / 2, 0) + new Vector3(0, 0, 0);
+        }
+        else if (AnchorType == AnchorType.ScaleBottom)
+        {
+            SetScale(new Vector3(width - (offset.X + offset.Y), Scale.Y, 0));
+            halfScale = Scale / 2;
+            Position = new Vector3(width / 2, height - halfScale.Y, 0) + new Vector3(0, -offset.W, 0);
+        }
         
         Origin = Position - halfScale;
+        
+        //Console.WriteLine("Scale: " + Scale + " Position: " + Position);
     }
 }

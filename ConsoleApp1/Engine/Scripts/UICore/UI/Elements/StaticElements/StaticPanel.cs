@@ -4,9 +4,12 @@ using Vortice.Mathematics;
 public class StaticPanel : StaticElement
 {
     public List<StaticElement> ChildElements;
-    public UiMesh Mesh;
+    public UiMesh UiMesh;
     
     public int TextureIndex = 0;
+    
+    private int _uiIndex = 0;
+    private bool _generated = false;
     
     public StaticPanel(string name)
     {
@@ -20,7 +23,7 @@ public class StaticPanel : StaticElement
     
     public override void SetMesh(UiMesh mesh)
     {
-        Mesh = mesh;
+        UiMesh = mesh;
     }
     
     public void AddElement(StaticElement element)
@@ -56,12 +59,24 @@ public class StaticPanel : StaticElement
         panel.UiSizes.Add(new Vector2(Scale.X, Scale.Y));
         panel.UiSizes.Add(new Vector2(Scale.X, Scale.Y));
         
-        Mesh.AddPanel(panel);
+        if (!_generated)
+        {
+            UiMesh.AddPanel(panel, out _uiIndex);
+            _generated = true;
+        }
+        else
+            UiMesh.UpdatePanel(panel, _uiIndex);
         
         foreach (StaticElement element in ChildElements)
         {
             element.Generate();
         }
+    }
+    
+    public override void Reset()
+    {
+        _generated = false;
+        _uiIndex = 0;
     }
     
     public override void ToFile(string path, int gap = 1)

@@ -30,8 +30,15 @@ public class Scene : Updateable
         gameObject.Scene = this;
     }
 
+    public override void OnResize()
+    {
+        UiController?.Resize();
+    }
+
     public override void Awake()
     {
+        UiController?.Resize();
+        
         foreach (GameObject gameObject in _gameObjects)
         {
             gameObject.Awake();

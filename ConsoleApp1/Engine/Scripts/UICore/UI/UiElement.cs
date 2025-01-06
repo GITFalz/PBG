@@ -20,6 +20,7 @@ public abstract class UiElement
 
     public abstract void Generate();
     public abstract void Align();
+    public virtual void Reset() {}
     
     public void SetAnchorType(AnchorType anchor)
     {
@@ -62,7 +63,13 @@ public enum AnchorType
     MiddleRight,
     BottomLeft,
     BottomCenter,
-    BottomRight
+    BottomRight,
+    ScaleLeft,
+    ScaleCenter,
+    ScaleRight,
+    ScaleTop,
+    ScaleMiddle,
+    ScaleBottom
 }
 
 public enum PositionType

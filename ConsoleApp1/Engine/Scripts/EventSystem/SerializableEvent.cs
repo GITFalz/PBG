@@ -8,6 +8,7 @@ public class SerializableEvent
     
     [XmlIgnore]
     private Action? _action;
+    public string? FixedParameter = null;
     
     public SerializableEvent() {}
     
@@ -74,6 +75,7 @@ public class SerializableEvent
         MethodName = methodName;
         TargetName = targetType.Name;
 
+        FixedParameter = fixedParameter;
         _action = () => ((Action<string>)Delegate.CreateDelegate(typeof(Action<string>), target, methodInfo))(fixedParameter);
         return true;
     }

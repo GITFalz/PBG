@@ -5,41 +5,12 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class ModelingEditor : Updateable
 {
-    public static Symmetry symmetry = Symmetry.None;
-
     private Camera camera;
     
     private ShaderProgram _shaderProgram;
     private AnimationMesh _playerMesh;
     private ModelMesh _modelMesh;
     
-    private ModelNode node;
-    private ModelNode node2;
-    private ModelNode node3;
-    private ModelNode node4;
-    private ModelNode node5;
-    private ModelNode node6;
-    private ModelNode node7;
-    
-    //Text
-    public StaticText text;
-
-    public StaticText xText;
-    public StaticText yText;
-    public StaticText zText;
-    
-    public StaticText symmetryText;
-    public string? symmetryString = null;
-    
-    
-    private List<ModelNode> nodes = new List<ModelNode>();
-    
-    private ModelNode selectedNode;
-    
-    private GameObject go;
-    
-    public static bool clickedRotate = false;
-    public static bool clickedMove = false;
     private bool saveRotate = false;
     private bool saveMove = false;
     private bool regenerateVertexUi = true;
@@ -48,30 +19,14 @@ public class ModelingEditor : Updateable
 
     private int _selectedModel = 0;
     
-    private List<Undoable> undoables = new List<Undoable>();
-    
-    private ModelGrid modelGrid = ModelGrid.Instance;
-    
-    public VoxelMesh ModelingHelperMesh = new VoxelMesh();
-    public ShaderProgram ModelingHelperShader = new ShaderProgram("Model/ModelHelper.vert", "Model/ModelHelper.frag");
-    
     public UIController Ui = new UIController();
     public UIController MainUi = new UIController();
     
     
     // Ui
     public StaticText MeshAlphaText;
-    public StaticButton MeshAlphaButton;
-    
     public StaticText BackfaceCullingText;
-    public StaticButton BackfaceCullingButton;
-
     public StaticText SnappingText;
-    public StaticButton SnappingButton;
-    public StaticButton SnappingButtonUp;
-    public StaticButton SnappingButtonDown;
-    
-    public StaticInputField InputField;
     
     // Ui values
     public float MeshAlpha = 0.1f;
@@ -82,12 +37,8 @@ public class ModelingEditor : Updateable
     private Vector3 SnappingOffset = new Vector3(0, 0, 0);
     
     
-    
-    
     private float _mouseX = 0;
-    
     private bool _command = false;
-    
     
     private List<Vertex> _selectedVertices = new List<Vertex>();
 
@@ -99,8 +50,6 @@ public class ModelingEditor : Updateable
         { 3, 0.2f },
         { 4, 0.1f }
     };
-    
-    
     
     
     public override void Awake()
@@ -123,15 +72,13 @@ public class ModelingEditor : Updateable
     
     public override void Start()
     {
-        Console.WriteLine("Animation Editor");
+        Console.WriteLine("Animation Editor Start");
         
         camera = new Camera(Game.width, Game.height, new Vector3(0, 0, 5));
         
         _shaderProgram = new ShaderProgram("Model/Model.vert", "Model/Model.frag");
         
         transform.Position = new Vector3(0, 0, 0);
-        
-        go = new GameObject();
 
         _modelMesh = new ModelMesh();
 
@@ -156,36 +103,27 @@ public class ModelingEditor : Updateable
         _modelMesh.GenerateBuffers();
         _modelMesh.UpdateMesh();
         
-        MeshAlphaText = UI.CreateStaticText("test" , "alpha: " + MeshAlpha.ToString("F2"), 0.7f, AnchorType.TopLeft, PositionType.Absolute, null, new Vector4(15, 10, 40, 10));
-        BackfaceCullingText = UI.CreateStaticText("test2", "culling: off", 0.7f, AnchorType.TopLeft, PositionType.Absolute, null, new Vector4(15, 10, 65, 10));
-        SnappingText = UI.CreateStaticText("test3", "snap: " + Snapping, 0.7f, AnchorType.TopLeft, PositionType.Absolute, null, new Vector4(15, 10, 90, 10));
-        
-        /*
-        MainUi.AddStaticElement(MeshAlphaText);
-        MainUi.AddStaticElement(BackfaceCullingText);
-        MainUi.AddStaticElement(SnappingText);
-        */
-        
         gameObject.Scene.UiController = MainUi;
         
         gameObject.Scene.LoadUi();
 
-        StaticText? text = MainUi.GetText("CullingText");
-        
-        if (text != null) 
-            BackfaceCullingText = text;
-        text = MainUi.GetText("AlphaText");
-        if (text != null) 
-            MeshAlphaText = text;
-        text = MainUi.GetText("SnappingText");
-        if (text != null) 
-            SnappingText = text;
+        var t = MainUi.GetText("CullingText");
+        if (t != null) 
+            BackfaceCullingText = t;
+        t = MainUi.GetText("AlphaText");
+        if (t != null) 
+            MeshAlphaText = t;
+        t = MainUi.GetText("SnappingText");
+        if (t != null) 
+            SnappingText = t;
         
         MainUi.Generate();
         Ui.Generate();
         
-        //gameObject.Scene.SaveUi();
+        gameObject.Scene.SaveUi();
     }
+    
+    #region Saved ui functions (Do not delete)
     
     public void AssignInputField(string test)
     {
@@ -241,6 +179,8 @@ public class ModelingEditor : Updateable
         Snapping = !Snapping;
         UpdateSnappingText();
     }
+    
+    #endregion
     
     public override void Update()
     {
@@ -406,103 +346,102 @@ public class ModelingEditor : Updateable
                 
                 regenerateVertexUi = true;
             }
-            
-            // Extruding
-            if (Input.IsKeyPressed(Keys.E))
+        }
+        
+        if (Input.IsKeyPressed(Keys.E))
+        {
+            Console.WriteLine("Extruding verts");
+        
+            Ui.Clear();
+        
+            if (_selectedVertices.Count < 2)
+                return;
+        
+            Vertex s1 = _selectedVertices[0];
+            Vertex s2 = _selectedVertices[1];
+
+            Vertex v1 = new Vertex(s1);
+            Vertex v2 = new Vertex(s1);
+            Vertex v3 = new Vertex(s2);
+            Vertex v4 = new Vertex(s2);
+
+            Quad quad = new Quad(v1, v2, v3, v4);
+        
+            Console.WriteLine(quad);
+        
+            _modelMesh.AddTriangle(quad.A);
+            _modelMesh.AddTriangle(quad.B);
+        
+            _modelMesh.Init();
+            _modelMesh.GenerateBuffers();
+            _modelMesh.UpdateMesh();
+        
+            _selectedVertices.Clear();
+
+            s1.AddSharedVertexToAll(s1.ToList(), v1);
+            s2.AddSharedVertexToAll(s2.ToList(), v3);
+        
+            _selectedVertices.Add(v2);
+            _selectedVertices.Add(v4);
+        }
+
+        // Move start
+        if (Input.IsKeyPressed(Keys.G))
+        {
+            Ui.Clear();
+        }
+        
+        // Moving
+        if (Input.IsKeyDown(Keys.E) || Input.IsKeyDown(Keys.G))
+        {
+            Vector2 mouseDelta = Input.GetMouseDelta() * (GameTime.DeltaTime * 10);
+            Vector3 move = camera.right * mouseDelta.X + camera.up * -mouseDelta.Y;
+
+            if (Input.AreKeysDown(out int index, Keys.X, Keys.C, Keys.V))
+                move *= AxisIgnore[index];
+        
+            if (Snapping)
             {
-                Console.WriteLine("Extruding verts");
-            
-                Ui.Clear();
-            
-                if (_selectedVertices.Count < 2)
-                    return;
-            
-                Vertex s1 = _selectedVertices[0];
-                Vertex s2 = _selectedVertices[1];
-
-                Vertex v1 = new Vertex(s1);
-                Vertex v2 = new Vertex(s1);
-                Vertex v3 = new Vertex(s2);
-                Vertex v4 = new Vertex(s2);
-
-                Quad quad = new Quad(v1, v2, v3, v4);
-            
-                Console.WriteLine(quad);
-            
-                _modelMesh.AddTriangle(quad.A);
-                _modelMesh.AddTriangle(quad.B);
-            
-                _modelMesh.Init();
-                _modelMesh.GenerateBuffers();
-                _modelMesh.UpdateMesh();
-            
-                _selectedVertices.Clear();
-
-                s1.AddSharedVertexToAll(s1.ToList(), v1);
-                s2.AddSharedVertexToAll(s2.ToList(), v3);
-            
-                _selectedVertices.Add(v2);
-                _selectedVertices.Add(v4);
-            }
-
-            // Move start
-            if (Input.IsKeyPressed(Keys.G))
-            {
-                Ui.Clear();
-            }
-            
-            // Moving
-            if (Input.IsKeyDown(Keys.E) || Input.IsKeyDown(Keys.G))
-            {
-                Vector2 mouseDelta = Input.GetMouseDelta() * (GameTime.DeltaTime * 10);
-                Vector3 move = camera.right * mouseDelta.X + camera.up * -mouseDelta.Y;
-
-                if (Input.AreKeysDown(out int index, Keys.X, Keys.C, Keys.V))
-                    move *= AxisIgnore[index];
-            
-                if (Snapping)
+                Vector3 Offset = Vector3.Zero;
+                SnappingOffset += move;
+                if (SnappingOffset.X > SnappingFactor)
                 {
-                    Vector3 Offset = Vector3.Zero;
-                    SnappingOffset += move;
-                    if (SnappingOffset.X > SnappingFactor)
-                    {
-                        Offset.X = SnappingFactor;
-                        SnappingOffset.X -= SnappingFactor;
-                    }
-                    if (SnappingOffset.X < -SnappingFactor)
-                    {
-                        Offset.X = -SnappingFactor;
-                        SnappingOffset.X += SnappingFactor;
-                    }
-                    if (SnappingOffset.Y > SnappingFactor)
-                    {
-                        Offset.Y = SnappingFactor;
-                        SnappingOffset.Y -= SnappingFactor;
-                    }
-                    if (SnappingOffset.Y < -SnappingFactor)
-                    {
-                        Offset.Y = -SnappingFactor;
-                        SnappingOffset.Y += SnappingFactor;
-                    }
-                    if (SnappingOffset.Z > SnappingFactor)
-                    {
-                        Offset.Z = SnappingFactor;
-                        SnappingOffset.Z -= SnappingFactor;
-                    }
-                    if (SnappingOffset.Z < -SnappingFactor)
-                    {
-                        Offset.Z = -SnappingFactor;
-                        SnappingOffset.Z += SnappingFactor;
-                    }
-                    move = Offset;
+                    Offset.X = SnappingFactor;
+                    SnappingOffset.X -= SnappingFactor;
                 }
- 
-                MoveSelectedVertices(move);
-            
-                _modelMesh.RecalculateNormals();
-                _modelMesh.Init();
-                _modelMesh.UpdateMesh();
+                if (SnappingOffset.X < -SnappingFactor)
+                {
+                    Offset.X = -SnappingFactor;
+                    SnappingOffset.X += SnappingFactor;
+                }
+                if (SnappingOffset.Y > SnappingFactor)
+                {
+                    Offset.Y = SnappingFactor;
+                    SnappingOffset.Y -= SnappingFactor;
+                }
+                if (SnappingOffset.Y < -SnappingFactor)
+                {
+                    Offset.Y = -SnappingFactor;
+                    SnappingOffset.Y += SnappingFactor;
+                }
+                if (SnappingOffset.Z > SnappingFactor)
+                {
+                    Offset.Z = SnappingFactor;
+                    SnappingOffset.Z -= SnappingFactor;
+                }
+                if (SnappingOffset.Z < -SnappingFactor)
+                {
+                    Offset.Z = -SnappingFactor;
+                    SnappingOffset.Z += SnappingFactor;
+                }
+                move = Offset;
             }
+
+            MoveSelectedVertices(move);
+        
+            _modelMesh.RecalculateNormals();
+            _modelMesh.Init();
+            _modelMesh.UpdateMesh();
         }
 
         if (Input.IsKeyReleased(Keys.G) || Input.IsKeyReleased(Keys.E))
@@ -511,7 +450,7 @@ public class ModelingEditor : Updateable
             regenerateVertexUi = true;
         }
         
-        //Generate panels on top of eahc vertex
+        //Generate panels on top of each vertex
         if (freeCamera && !regenerateVertexUi)
         {
             Console.WriteLine("Clear Vertex UI");
@@ -716,31 +655,6 @@ public class ModelingEditor : Updateable
         }
     }
 
-    private void ModelFaceColor(int xy, int xz, int yz, int[] xyz)
-    {
-        switch (symmetry)
-        {
-            case Symmetry.XY:
-                ModelingHelperMesh.SetFaceColor(0, xy, 3);
-                break;
-            case Symmetry.XZ:
-                ModelingHelperMesh.SetFaceColor(0, xz, 3);
-                break;
-            case Symmetry.YZ:
-                ModelingHelperMesh.SetFaceColor(0, yz, 3);
-                break;
-            case Symmetry.XYZ:
-            {
-                foreach (var t in xyz)
-                {
-                    ModelingHelperMesh.SetFaceColor(0, t, 3);
-                }
-
-                break;
-            }
-        }
-    }
-
     public HashSet<Triangle> GetSelectedFullTriangles()
     {
         HashSet<Triangle> triangles = new HashSet<Triangle>();
@@ -770,53 +684,6 @@ public class ModelingEditor : Updateable
                SelectedContainsSharedVertex(triangle.C);
     }
 
-    private void ModelCornerColor(int index, int color)
-    {
-        //index is vertex index
-        if (index is < 0 or > 8)
-            return;
-        
-        //index is displaced by 1 in mesh
-        
-        ModelingHelperMesh.SetVoxelColor(index + 1, color);
-
-        int[] indexes = [];
-        
-        if (symmetry == Symmetry.X)
-        {
-            indexes = ModelData.SymmetryHelper[index][0];
-        }
-        else if (symmetry == Symmetry.Y)
-        {
-            indexes = ModelData.SymmetryHelper[index][1];
-        }
-        else if (symmetry == Symmetry.Z)
-        {
-            indexes = ModelData.SymmetryHelper[index][2];
-        }
-        else if (symmetry == Symmetry.XY)
-        {
-            indexes = ModelData.SymmetryHelper[index][3];
-        }
-        else if (symmetry == Symmetry.XZ)
-        {
-            indexes = ModelData.SymmetryHelper[index][4];
-        }
-        else if (symmetry == Symmetry.YZ)
-        {
-            indexes = ModelData.SymmetryHelper[index][5];
-        }
-        else if (symmetry == Symmetry.XYZ)
-        {
-            indexes = ModelData.SymmetryHelper[index][6];
-        }
-        
-        for (int i = 0; i < indexes.Length; i++)
-        {
-            ModelingHelperMesh.SetVoxelColor(indexes[i] + 1, color);
-        }
-    }
-
     public void UpdateSnappingText()
     {
         if (Snapping)
@@ -827,15 +694,6 @@ public class ModelingEditor : Updateable
         SnappingText.Generate();
         MainUi.Update();
     }
-    
-    
-    private readonly Dictionary<Keys, float> StepDictionary = new()
-    {
-        {Keys.D1, 0.1f},
-        {Keys.D2, 0.25f},
-        {Keys.D3, 0.5f},
-        {Keys.D4, 1f},
-    };
     
     private readonly List<Vector3> AxisIgnore = new()
     {
@@ -853,9 +711,4 @@ public abstract class Undoable
 public class AngleUndo(Vector3 oldAngle) : Undoable
 {
     public Vector3 OldAngle = oldAngle;
-}
-
-public class ModelUndo(ModelNode oldNode) : Undoable
-{
-    public ModelNode OldNode = oldNode;
 }

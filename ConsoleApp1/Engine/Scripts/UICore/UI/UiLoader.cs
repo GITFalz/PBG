@@ -13,32 +13,33 @@ public static class UiLoader
         {
             string line = lines[i];
             
-            Console.WriteLine("Line: " + line);
-            
             UiElement? element = null;
             
             if (line.Trim() == "Static Panel")
             {
-                Console.WriteLine("Panel");
+                Console.WriteLine("Static panel found: " + i);
                 i = TextToPanel(lines, i, controller, out var staticPanel);
-                controller.SetParentPanel(staticPanel);
+                //controller.SetParentPanel(staticPanel);
                 controller.AddStaticElement(staticPanel);
                 element = staticPanel;
             }
             else if (line.Trim() == "Static Button")
             {
+                Console.WriteLine("Static button found: " + i);
                 i = TextToButton(lines, i, out var staticButton);
                 controller.AddStaticElement(staticButton);
                 element = staticButton;
             }
             else if (line.Trim() == "Static Input Field")
             {
+                Console.WriteLine("Static input field found: " + i);
                 i = TextToInputField(lines, i, out var staticInputField);
                 controller.AddStaticElement(staticInputField);
                 element = staticInputField;
             }
             else if (line.Trim() == "Static Text")
             {
+                Console.WriteLine("Static text found: " + i);
                 i = TextToStaticText(lines, i, out var staticText);
                 controller.AddStaticElement(staticText);
                 element = staticText;
@@ -57,8 +58,6 @@ public static class UiLoader
     {
         index+=2;
         
-        Console.WriteLine(index + " " + lines[index]);
-
         string name = lines[index].Split(":")[1].Trim();
         Vector3 position = TextToVector3(lines[index + 1].Split(":")[1].Trim());
         int textureIndex = int.Parse(lines[index + 6].Split(":")[1].Trim());
@@ -74,50 +73,59 @@ public static class UiLoader
         panel.Position = position;
         panel.TextureIndex = textureIndex;
         
-        index += 7;
+        controller.SetParentPanel(panel);
         
-        int elements = int.Parse(lines[index].Split(":")[1].Trim());
+        int elements = int.Parse(lines[index + 7].Split(":")[1].Trim());
+        
+        index += 8;
+        
         if (elements >= 1)
         {
             for (int i = 0; i < elements; i++)
             {
-                string line = lines[index + 1];
+                string line = lines[index];
+                
+                Console.WriteLine("Line: " + line);
                 
                 UiElement? element = null;
                 
                 if (line.Trim() == "Static Panel")
                 {
-                    index = TextToPanel(lines, index + 1, controller, out var staticPanel);
-                    controller.SetParentPanel(staticPanel);
+                    Console.WriteLine("Static panel found: " + index);
+                    index = TextToPanel(lines, index, controller, out var staticPanel);
+                    controller.SetParentPanel(panel);
                     panel.AddElement(staticPanel);
                     element = staticPanel;
                 }
                 if (line.Trim() == "Static Button")
                 {
-                    index = TextToButton(lines, index + 1, out var button);
-                    Console.WriteLine("Button added: " + button);
+                    Console.WriteLine("Static button found: " + index);
+                    index = TextToButton(lines, index, out var button);
                     panel.AddElement(button);
                     element = button;
                 }
                 else if (line.Trim() == "Static Input Field")
                 {
-                    index = TextToInputField(lines, index + 1, out var inputField);
-                    Console.WriteLine("Input Field added: " + inputField);
+                    Console.WriteLine("Static input field found: " + index);
+                    index = TextToInputField(lines, index, out var inputField);
                     panel.AddElement(inputField);
                     element = inputField;
                 }
                 else if (line.Trim() == "Static Text")
                 {
-                    index = TextToStaticText(lines, index + 1, out var staticText);
-                    Console.WriteLine("Static Text added: " + staticText);
+                    Console.WriteLine("Static text found: " + index);
+                    index = TextToStaticText(lines, index, out var staticText);
                     panel.AddElement(staticText);
                     element = staticText;
                 }
                 
                 if (element != null)
                 {
+                    Console.WriteLine("The element is called: " + element.Name);
                     element.SceneName = sceneName;
                 }
+
+                index++;
             }
         }
         return index;
@@ -179,7 +187,7 @@ public static class UiLoader
     public static int TextToInputField(string[] lines, int index, out StaticInputField inputField)
     {
         index += 2;
-
+        
         string name = lines[index].Split(":")[1].Trim();
         string text = lines[index + 1].Split(new[] { ": " }, 2, StringSplitOptions.None)[1].Trim();
         float fontSize = float.Parse(lines[index + 2].Split(":")[1].Trim());

@@ -15,6 +15,9 @@ public abstract class StaticClickable : StaticElement
     
     public int TextureIndex = 0;
     
+    private int _uiIndex = 0;
+    private bool _generated = false;
+    
     public override void SetMesh(UiMesh uiMesh)
     {
         UiMesh = uiMesh;
@@ -47,7 +50,19 @@ public abstract class StaticClickable : StaticElement
         panel.UiSizes.Add(new Vector2(Scale.X, Scale.Y));
         panel.UiSizes.Add(new Vector2(Scale.X, Scale.Y));
         
-        UiMesh.AddPanel(panel);
+        if (!_generated)
+        {
+            UiMesh.AddPanel(panel, out _uiIndex);
+            _generated = true;
+        }
+        else
+            UiMesh.UpdatePanel(panel, _uiIndex);
+    }
+    
+    public override void Reset()
+    {
+        _generated = false;
+        _uiIndex = 0;
     }
     
     public bool IsMouseOver()

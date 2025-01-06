@@ -22,6 +22,18 @@ public class UiMesh : Mesh
         
         transformedVertices = new List<Vector3>();
     }
+
+    public void Init()
+    {
+        transformedVertices.Clear();
+        
+        int i = 0;
+        foreach (var t in Vertices)
+        {
+            transformedVertices.Add(t + Position + new Vector3(0, 0, 0.01f) * (int)(i / 4));
+            i++;
+        }
+    }
     
     public override void GenerateBuffers()
     {
@@ -33,7 +45,7 @@ public class UiMesh : Mesh
         int i = 0;
         foreach (var t in Vertices)
         {
-            transformedVertices.Add(t + Position + new Vector3(0, 0, 0.01f) * (int)(i / 36));
+            transformedVertices.Add(t + Position + new Vector3(0, 0, 0.01f) * (int)(i / 4));
             i++;
         }
         
@@ -48,8 +60,11 @@ public class UiMesh : Mesh
         _ibo = new IBO(Indices);
     }
     
-    public void AddPanel(Panel panel)
+    public void AddPanel(Panel panel, out int index)
     {
+        Console.WriteLine("Adding element");
+        index = elementCount;
+        
         for (int i = 0; i < 4; i++)
         {
             Vertices.Add(panel.Vertices[i]);
@@ -73,6 +88,22 @@ public class UiMesh : Mesh
         Indices.Add((uint) (offset));
         
         elementCount++;
+    }
+    
+    public void UpdatePanel(Panel panel, int index)
+    {
+        int offset = index * 4;
+        Console.WriteLine(index + " " + elementCount + " " + offset);
+        
+        for (int i = 0; i < 4; i++)
+        {
+            Vertices[offset + i] = panel.Vertices[i];
+            Uvs[offset + i] = (panel.Uvs[i]);
+            TextUvs[offset + i] = (panel.TextUvs[i]);
+            UiSizes[offset + i] = (panel.UiSizes[i]);
+        }
+
+        Init();
     }
     
     

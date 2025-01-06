@@ -78,6 +78,18 @@ public class UIController
         GenerateUi();
         GenerateBuffers();
     }
+
+    public void Resize()
+    {
+        ClearUiMesh();
+        foreach (var element in staticElements)
+        {
+            element.Align();
+        }
+        GenerateUi();
+        _uiMesh.Init();
+        Update();
+    }
     
     public List<UiElement> GetUiElements()
     {
@@ -153,6 +165,11 @@ public class UIController
     
     public void ClearUiMesh()
     {
+        foreach (var element in staticElements)
+        {
+            element.Reset();
+        }
+        
         _uiMesh.Clear();
     }
 

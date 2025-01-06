@@ -2,13 +2,6 @@
 
 public static class Char
 {
-    public static bool GetChar(out char c, Keys key, bool shift = false, bool alt = false)
-    {
-        c = '\0';
-        int index = (int)key + (shift ? 1000 : 0) + (alt ? 2000 : 0);
-        return AzertyChar.TryGetValue(index, out c);
-    }
-    
     private static readonly Dictionary<int, char> AzertyChar = new Dictionary<int, char>()
     {
         { 32, ' '},
@@ -121,4 +114,25 @@ public static class Char
         { 47, '!'},
         { 1047, '§'}
     };
+    
+    private static Dictionary<int, char> _keyboardLayout = AzertyChar;
+    
+    public static bool GetChar(out char c, Keys key, bool shift = false, bool alt = false)
+    {
+        c = '\0';
+        int index = (int)key + (shift ? 1000 : 0) + (alt ? 2000 : 0);
+        return _keyboardLayout.TryGetValue(index, out c);
+    }
+
+    public static void SetKeyboardLayout(KeyboardLayout layout)
+    {
+        if (layout == KeyboardLayout.Azerty)
+            _keyboardLayout = AzertyChar;
+    }
+}
+
+public enum KeyboardLayout
+{
+    Azerty = 0,
+    Qwerty = 1,
 }
