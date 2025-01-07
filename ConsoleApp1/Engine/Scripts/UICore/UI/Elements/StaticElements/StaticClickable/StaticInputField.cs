@@ -10,7 +10,7 @@ public class StaticInputField : StaticClickable
     
     public Vector2 TextSize;
     
-    public TextType TextType = TextType.All;
+    public TextType TextType = TextType.Alphabetic;
     
     public TextMesh TextMesh;
 
@@ -32,7 +32,7 @@ public class StaticInputField : StaticClickable
         CharCount = Characters.Length;
         
         TextSize = new Vector2(CharCount * (20 * FontSize), 20 * FontSize);
-        Scale = new Vector3(TextSize.X, TextSize.Y, 0);
+        //Scale = new Vector3(TextSize.X, TextSize.Y, 0);
     }
 
     
@@ -58,38 +58,6 @@ public class StaticInputField : StaticClickable
         {
             TextMesh.chars.Add(TextShaderHelper.GetChar(character));
         }
-        
-        Panel panel = new Panel();
-
-        Vector3 position = Origin;
-        
-        panel.Vertices.Add(new Vector3(0, 0, 0) + position);
-        panel.Vertices.Add(new Vector3(0, Scale.Y, 0) + position);
-        panel.Vertices.Add(new Vector3(Scale.X, Scale.Y, 0) + position);
-        panel.Vertices.Add(new Vector3(Scale.X, 0, 0) + position);
-        
-        panel.Uvs.Add(new Vector2(0, 0));
-        panel.Uvs.Add(new Vector2(0, 1));
-        panel.Uvs.Add(new Vector2(1, 1));
-        panel.Uvs.Add(new Vector2(1, 0));
-        
-        panel.TextUvs.Add(TextureIndex);
-        panel.TextUvs.Add(TextureIndex);
-        panel.TextUvs.Add(TextureIndex);
-        panel.TextUvs.Add(TextureIndex);
-        
-        panel.UiSizes.Add(new Vector2(Scale.X, Scale.Y));
-        panel.UiSizes.Add(new Vector2(Scale.X, Scale.Y));
-        panel.UiSizes.Add(new Vector2(Scale.X, Scale.Y));
-        panel.UiSizes.Add(new Vector2(Scale.X, Scale.Y));
-        
-        if (!_generated)
-        {
-            UiMesh.AddPanel(panel, out _uiIndex);
-            _generated = true;
-        }
-        else
-            UiMesh.UpdatePanel(panel, _uiIndex);
     }
 
     public override void Reset()
@@ -129,8 +97,7 @@ public class StaticInputField : StaticClickable
         else if (TextType == TextType.Decimal)
         {
             int dotCount = 0;
-            return new string(text.Where(c =>
-            {
+            return new string(text.Where(c => {
                 if (c != '.') 
                     return char.IsDigit(c);
                 dotCount++;

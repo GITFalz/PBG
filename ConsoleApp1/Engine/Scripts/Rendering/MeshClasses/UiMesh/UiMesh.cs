@@ -62,7 +62,6 @@ public class UiMesh : Mesh
     
     public void AddPanel(Panel panel, out int index)
     {
-        Console.WriteLine("Adding element");
         index = elementCount;
         
         for (int i = 0; i < 4; i++)
@@ -93,7 +92,6 @@ public class UiMesh : Mesh
     public void UpdatePanel(Panel panel, int index)
     {
         int offset = index * 4;
-        Console.WriteLine(index + " " + elementCount + " " + offset);
         
         for (int i = 0; i < 4; i++)
         {

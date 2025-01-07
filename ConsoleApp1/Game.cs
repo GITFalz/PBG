@@ -137,10 +137,10 @@ public class Game : GameWindow
         // File Paths
         mainPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VoxelGame");
         chunkPath = Path.Combine(mainPath, "Chunks");
-        modelPath = Path.Combine(mainPath, "Models");
         
         assetPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets");
         uiPath = Path.Combine(assetPath, "UI");
+        modelPath = Path.Combine(assetPath, "Models");
         
         Console.WriteLine(uiPath);
         
@@ -254,8 +254,6 @@ public class Game : GameWindow
     
     protected override void OnUnload()
     {
-        base.OnUnload();
-        
         _worldManager.Delete();
         
         GC.Collect();
@@ -263,6 +261,10 @@ public class Game : GameWindow
         
         isRunning = false;
         _physicsThread.Join();
+        
+        CurrentScene?.Exit();
+        
+        base.OnUnload();
     }
     
     protected override void OnRenderFrame(FrameEventArgs args)

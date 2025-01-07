@@ -110,13 +110,13 @@ public class UIController
         return uiElements;
     }
 
-    public StaticText? GetText(string name)
+    public T? GetElement<T>(string name) where T : UiElement
     {
         foreach (var element in staticElements)
         {
-            if (element is StaticText text && text.Name == name)
+            if (element is T matchedElement && matchedElement.Name == name)
             {
-                return text;
+                return matchedElement;
             }
         }
 

@@ -189,7 +189,13 @@ public static class UiLoader
         index += 2;
         
         string name = lines[index].Split(":")[1].Trim();
-        string text = lines[index + 1].Split(new[] { ": " }, 2, StringSplitOptions.None)[1].Trim();
+        string text = "";
+        try {
+            text = lines[index + 1].Split(new[] { ": " }, 2, StringSplitOptions.None)[1].Trim();
+        }
+        catch (Exception e) {
+            Console.WriteLine("Setting inputField to default");
+        }
         float fontSize = float.Parse(lines[index + 2].Split(":")[1].Trim());
         Vector3 position = TextToVector3(lines[index + 3].Split(":")[1].Trim());
         int textureIndex = int.Parse(lines[index + 8].Split(":")[1].Trim());
@@ -273,6 +279,12 @@ public static class UiLoader
     {
         var vectorParts = TextToFloatArray(value);
         return new Vector3(vectorParts[0], vectorParts[1], vectorParts[2]);
+    }
+
+    public static Vector2 TextToVector2(string value)
+    {
+        var vectorParts = TextToFloatArray(value);
+        return new Vector2(vectorParts[0], vectorParts[1]);
     }
 
     public static Vector4 TextToVector4(string value)

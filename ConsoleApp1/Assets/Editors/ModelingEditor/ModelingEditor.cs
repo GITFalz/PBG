@@ -27,6 +27,8 @@ public class ModelingEditor : Updateable
     public StaticText MeshAlphaText;
     public StaticText BackfaceCullingText;
     public StaticText SnappingText;
+
+    public StaticInputField InputField;
     
     // Ui values
     public float MeshAlpha = 0.1f;
@@ -81,49 +83,56 @@ public class ModelingEditor : Updateable
         transform.Position = new Vector3(0, 0, 0);
 
         _modelMesh = new ModelMesh();
-
-        Vertex vertex1 = new Vertex((0, 0, 0));
-        Vertex vertex2 = new Vertex((2, 0, 0));
-        Vertex vertex3 = new Vertex((0, 2, 0));
-        
-        Vertex vertex4 = new Vertex((0, 2, 0));
-        Vertex vertex5 = new Vertex((2, 0, 0));
-        Vertex vertex6 = new Vertex((2, 2, 0));
-        
-        vertex2.AddSharedVertex(vertex5);
-        vertex3.AddSharedVertex(vertex4);
-        
-        Triangle triangle = new Triangle(vertex1, vertex2, vertex3);
-        Triangle triangle2 = new Triangle(vertex4, vertex5, vertex6);
-        
-        _modelMesh.AddTriangle(triangle);
-        _modelMesh.AddTriangle(triangle2);
-        
-        _modelMesh.Init();
-        _modelMesh.GenerateBuffers();
-        _modelMesh.UpdateMesh();
         
         gameObject.Scene.UiController = MainUi;
         
         gameObject.Scene.LoadUi();
 
-        var t = MainUi.GetText("CullingText");
-        if (t != null) 
-            BackfaceCullingText = t;
-        t = MainUi.GetText("AlphaText");
-        if (t != null) 
-            MeshAlphaText = t;
-        t = MainUi.GetText("SnappingText");
-        if (t != null) 
-            SnappingText = t;
+        var t = MainUi.GetElement<StaticText>("CullingText");
+
+        BackfaceCullingText = t ?? throw new NotFoundException("CullingText");
+        BackfaceCulling = bool.Parse(BackfaceCullingText.Text.Split(' ')[1].Trim());
+        
+        t = MainUi.GetElement<StaticText>("AlphaText");
+        
+        MeshAlphaText = t ?? throw new NotFoundException("AlphaText");
+        MeshAlpha = float.Parse(MeshAlphaText.Text.Split(' ')[1].Trim());
+        
+        t = MainUi.GetElement<StaticText>("SnappingText");
+        
+        SnappingText = t ?? throw new NotFoundException("SnappingText");
+        Snapping = SnappingText.Text.Split(' ')[1].Trim() != "off";
+
+        StaticInputField? inputField = MainUi.GetElement<StaticInputField>("FileName");
+        InputField = inputField ?? throw new NotFoundException("inputField");
+
+        LoadModel();
         
         MainUi.Generate();
         Ui.Generate();
-        
-        gameObject.Scene.SaveUi();
     }
     
     #region Saved ui functions (Do not delete)
+
+    public void SaveModel()
+    {
+        string modelName = InputField.Text;
+        _modelMesh.SaveModel(modelName);
+        
+        _modelMesh.Init();
+        _modelMesh.GenerateBuffers();
+        _modelMesh.UpdateMesh();
+    }
+    
+    public void LoadModel()
+    {
+        string modelName = InputField.Text;
+        _modelMesh.LoadModel(modelName);
+        
+        _modelMesh.Init();
+        _modelMesh.GenerateBuffers();
+        _modelMesh.UpdateMesh();
+    }
     
     public void AssignInputField(string test)
     {
@@ -222,229 +231,44 @@ public class ModelingEditor : Updateable
 
         if (Input.IsKeyDown(Keys.LeftControl))
         {
+            // Select all
+            if (Input.IsKeyPressed(Keys.A)) Handle_SelectAllVertices();
+            
             // New Face
-            if (Input.IsKeyPressed(Keys.F))
-            {
-                if (_selectedVertices.Count == 3)
-                {
-                    Vertex s1 = _selectedVertices[0];
-                    Vertex s2 = _selectedVertices[1];
-                    Vertex s3 = _selectedVertices[2];
-                
-                    Vertex v1 = new Vertex(s1);
-                    Vertex v2 = new Vertex(s2);
-                    Vertex v3 = new Vertex(s3);
-                
-                    Triangle triangle = new Triangle(v1, v2, v3);
-                
-                    s1.AddSharedVertexToAll(s1.ToList(), v1);
-                    s2.AddSharedVertexToAll(s2.ToList(), v2);
-                    s3.AddSharedVertexToAll(s3.ToList(), v3);
-                
-                    _modelMesh.AddTriangle(triangle);
-                
-                    _modelMesh.Init();
-                    _modelMesh.GenerateBuffers();
-                    _modelMesh.UpdateMesh();
-                }
-            }
+            if (Input.IsKeyPressed(Keys.F)) Handle_GenerateNewFace();
             
             // Flipping triangle
-            if (Input.IsKeyPressed(Keys.I))
-            {
-                HashSet<Triangle> triangles = GetSelectedFullTriangles();
-                if (triangles.Count > 0)
-                {
-                    foreach (var triangle in triangles)
-                    {
-                        Vertex A = triangle.A;
-                        Vertex B = triangle.B;
-                        if (_modelMesh.SwapVertices(A, B))
-                        {
-                            triangle.Invert();
-                            _modelMesh.UpdateNormals(triangle);
-                        }
-                    }
-                    _modelMesh.Init();
-                    _modelMesh.UpdateMesh();
-                }
-            }
+            if (Input.IsKeyPressed(Keys.I)) Handle_FlipTriangleNormal();
             
             // Deleting triangle
-            if (Input.IsKeyPressed(Keys.D))
-            {
-                HashSet<Triangle> triangles = GetSelectedFullTriangles();
-                if (triangles.Count > 0)
-                {
-                    foreach (var triangle in triangles)
-                    {
-                        _modelMesh.RemoveTriangle(triangle);
-                    }
-                    _selectedVertices.Clear();
-                
-                    _modelMesh.CheckUselessTriangles();
-                
-                    _modelMesh.Init();
-                    _modelMesh.GenerateBuffers();
-                    _modelMesh.UpdateMesh();
-                
-                    Ui.Clear();
-                
-                    regenerateVertexUi = true;
-                }
-            }
+            if (Input.IsKeyPressed(Keys.D)) Handle_TriangleDeletion();
             
             // Merging
-            if (Input.IsKeyPressed(Keys.K) && _selectedVertices.Count >= 2)
-            {
-                Console.WriteLine("Merging verts");
-                
-                Vertex s1 = _selectedVertices[0];
-                Vector3 position = s1.Position;
-
-                HashSet<Vertex> deletedVertices = new HashSet<Vertex>();
-                
-                for (int i = 1; i < _selectedVertices.Count; i++)
-                {
-                    Vertex vert = _selectedVertices[i];
-                    s1.AddSharedVertexToAll(s1.ToList(), vert);
-                    position += vert.Position;
-                    if (
-                        vert.GetTwoOtherVertex(out var a, out var b) && (
-                        SelectedContainsSharedVertex(a) || 
-                        SelectedContainsSharedVertex(b)
-                    )) {
-                        Console.WriteLine("Remove Triangle");
-                        _modelMesh.RemoveTriangle(vert.ParentTriangle);
-                        deletedVertices.Add(vert);
-                    }
-                }
-                
-                position /= _selectedVertices.Count;
-                s1.SetAllPosition(position);
-
-                foreach (var vert in deletedVertices)
-                {
-                    _selectedVertices.Remove(vert);
-                }
-                
-                for (int i = 1; i < _selectedVertices.Count; i++)
-                {
-                    _selectedVertices[i].AddSharedVertexToAll(_selectedVertices[i].ToList(), s1);
-                    _selectedVertices[i].SetAllPosition(position);
-                }
-                
-                _selectedVertices.Clear();
-                
-                _modelMesh.CheckUselessTriangles();
-                
-                _modelMesh.Init();
-                _modelMesh.GenerateBuffers();
-                _modelMesh.UpdateMesh();
-                
-                Ui.Clear();
-                
-                regenerateVertexUi = true;
-            }
+            if (Input.IsKeyPressed(Keys.K) && _selectedVertices.Count >= 2) Handle_VertexMerging();
         }
         
-        if (Input.IsKeyPressed(Keys.E))
-        {
-            Console.WriteLine("Extruding verts");
-        
-            Ui.Clear();
-        
-            if (_selectedVertices.Count < 2)
-                return;
-        
-            Vertex s1 = _selectedVertices[0];
-            Vertex s2 = _selectedVertices[1];
-
-            Vertex v1 = new Vertex(s1);
-            Vertex v2 = new Vertex(s1);
-            Vertex v3 = new Vertex(s2);
-            Vertex v4 = new Vertex(s2);
-
-            Quad quad = new Quad(v1, v2, v3, v4);
-        
-            Console.WriteLine(quad);
-        
-            _modelMesh.AddTriangle(quad.A);
-            _modelMesh.AddTriangle(quad.B);
-        
-            _modelMesh.Init();
-            _modelMesh.GenerateBuffers();
-            _modelMesh.UpdateMesh();
-        
-            _selectedVertices.Clear();
-
-            s1.AddSharedVertexToAll(s1.ToList(), v1);
-            s2.AddSharedVertexToAll(s2.ToList(), v3);
-        
-            _selectedVertices.Add(v2);
-            _selectedVertices.Add(v4);
-        }
+        // Extrude
+        if (Input.IsKeyPressed(Keys.E)) Handle_FaceExtrusion();
 
         // Move start
-        if (Input.IsKeyPressed(Keys.G))
-        {
-            Ui.Clear();
-        }
+        if (Input.IsKeyPressed(Keys.G)) Ui.Clear();
         
         // Moving
-        if (Input.IsKeyDown(Keys.E) || Input.IsKeyDown(Keys.G))
+        if (Input.IsKeyDown(Keys.E) || Input.IsKeyDown(Keys.G)) Handle_MovingSelectedVertices();
+
+        if (Input.IsKeyReleased(Keys.E))
         {
-            Vector2 mouseDelta = Input.GetMouseDelta() * (GameTime.DeltaTime * 10);
-            Vector3 move = camera.right * mouseDelta.X + camera.up * -mouseDelta.Y;
-
-            if (Input.AreKeysDown(out int index, Keys.X, Keys.C, Keys.V))
-                move *= AxisIgnore[index];
-        
-            if (Snapping)
-            {
-                Vector3 Offset = Vector3.Zero;
-                SnappingOffset += move;
-                if (SnappingOffset.X > SnappingFactor)
-                {
-                    Offset.X = SnappingFactor;
-                    SnappingOffset.X -= SnappingFactor;
-                }
-                if (SnappingOffset.X < -SnappingFactor)
-                {
-                    Offset.X = -SnappingFactor;
-                    SnappingOffset.X += SnappingFactor;
-                }
-                if (SnappingOffset.Y > SnappingFactor)
-                {
-                    Offset.Y = SnappingFactor;
-                    SnappingOffset.Y -= SnappingFactor;
-                }
-                if (SnappingOffset.Y < -SnappingFactor)
-                {
-                    Offset.Y = -SnappingFactor;
-                    SnappingOffset.Y += SnappingFactor;
-                }
-                if (SnappingOffset.Z > SnappingFactor)
-                {
-                    Offset.Z = SnappingFactor;
-                    SnappingOffset.Z -= SnappingFactor;
-                }
-                if (SnappingOffset.Z < -SnappingFactor)
-                {
-                    Offset.Z = -SnappingFactor;
-                    SnappingOffset.Z += SnappingFactor;
-                }
-                move = Offset;
-            }
-
-            MoveSelectedVertices(move);
-        
+            _modelMesh.CheckUselessTriangles();
+            _modelMesh.CombineDuplicateVertices();
             _modelMesh.RecalculateNormals();
             _modelMesh.Init();
             _modelMesh.UpdateMesh();
+            
+            SnappingOffset = Vector3.Zero;
+            regenerateVertexUi = true;
         }
 
-        if (Input.IsKeyReleased(Keys.G) || Input.IsKeyReleased(Keys.E))
+        if (Input.IsKeyReleased(Keys.G))
         {
             SnappingOffset = Vector3.Zero;
             regenerateVertexUi = true;
@@ -502,63 +326,329 @@ public class ModelingEditor : Updateable
         }
     }
 
+    private void Handle_MovingSelectedVertices()
+    {
+        Vector2 mouseDelta = Input.GetMouseDelta() * (GameTime.DeltaTime * 10);
+        Vector3 move = camera.right * mouseDelta.X + camera.up * -mouseDelta.Y;
+
+        if (Input.AreKeysDown(out int index, Keys.X, Keys.C, Keys.V))
+            move *= AxisIgnore[index];
+        
+        if (Snapping)
+        {
+            Vector3 Offset = Vector3.Zero;
+            SnappingOffset += move;
+            if (SnappingOffset.X > SnappingFactor)
+            {
+                Offset.X = SnappingFactor;
+                SnappingOffset.X -= SnappingFactor;
+            }
+            if (SnappingOffset.X < -SnappingFactor)
+            {
+                Offset.X = -SnappingFactor;
+                SnappingOffset.X += SnappingFactor;
+            }
+            if (SnappingOffset.Y > SnappingFactor)
+            {
+                Offset.Y = SnappingFactor;
+                SnappingOffset.Y -= SnappingFactor;
+            }
+            if (SnappingOffset.Y < -SnappingFactor)
+            {
+                Offset.Y = -SnappingFactor;
+                SnappingOffset.Y += SnappingFactor;
+            }
+            if (SnappingOffset.Z > SnappingFactor)
+            {
+                Offset.Z = SnappingFactor;
+                SnappingOffset.Z -= SnappingFactor;
+            }
+            if (SnappingOffset.Z < -SnappingFactor)
+            {
+                Offset.Z = -SnappingFactor;
+                SnappingOffset.Z += SnappingFactor;
+            }
+            move = Offset;
+        }
+
+        MoveSelectedVertices(move);
+        
+        _modelMesh.RecalculateNormals();
+        _modelMesh.Init();
+        _modelMesh.UpdateMesh();
+    }
+
+    private void Handle_FaceExtrusion()
+    {
+        Console.WriteLine("Extruding verts");
+        
+        if (_selectedVertices.Count < 2)
+            return;
+        
+        Ui.Clear();
+        
+        List<Vertex> selectedVerts = new List<Vertex>();
+        HashSet<Triangle> triangles = GetSelectedFullTriangles();
+        foreach (var triangle in triangles)
+        {
+            _selectedVertices.Remove(triangle.A);
+            _selectedVertices.Remove(triangle.B);
+            _selectedVertices.Remove(triangle.C);
+
+            ExtrudeVerts(triangle.A, triangle.B, out var _, out var v21, out _, out var v41);
+            ExtrudeVerts(triangle.B, triangle.C, out _, out var v22, out _, out var v42);
+            ExtrudeVerts(triangle.C, triangle.A, out _, out var v23, out _, out var v43);
+            
+            selectedVerts.Add(v21);
+            selectedVerts.Add(v22);
+            selectedVerts.Add(v23);
+            
+            v21.AddSharedVertexToAll(v21.ToList(), v43);
+            v22.AddSharedVertexToAll(v22.ToList(), v41);
+            v23.AddSharedVertexToAll(v23.ToList(), v42);
+        }
+        
+        _modelMesh.Init();
+        _modelMesh.GenerateBuffers();
+        _modelMesh.UpdateMesh();
+        
+        _selectedVertices = selectedVerts;
+        
+        /*
+        Ui.Clear();
+        
+        if (_selectedVertices.Count < 2)
+            return;
+        
+        Vertex s1 = _selectedVertices[0];
+        Vertex s2 = _selectedVertices[1];
+
+        Vertex v1 = new Vertex(s1);
+        Vertex v2 = new Vertex(s1);
+        Vertex v3 = new Vertex(s2);
+        Vertex v4 = new Vertex(s2);
+
+        Quad quad = new Quad(v1, v2, v3, v4);
+        
+        _modelMesh.AddTriangle(quad.A);
+        _modelMesh.AddTriangle(quad.B);
+        
+        _modelMesh.Init();
+        _modelMesh.GenerateBuffers();
+        _modelMesh.UpdateMesh();
+        
+        _selectedVertices.Clear();
+
+        s1.AddSharedVertexToAll(s1.ToList(), v1);
+        s2.AddSharedVertexToAll(s2.ToList(), v3);
+        
+        _selectedVertices.Add(v2);
+        _selectedVertices.Add(v4);
+        */
+    }
+
+    public void ExtrudeVerts(Vertex A, Vertex B, out Vertex v1, out Vertex v2, out Vertex v3, out Vertex v4)
+    {
+        Vertex s1 = A;
+        Vertex s2 = B;
+
+        v1 = new Vertex(s1);
+        v2 = new Vertex(s1);
+        v3 = new Vertex(s2);
+        v4 = new Vertex(s2);
+
+        Quad quad = new Quad(v1, v2, v3, v4);
+        
+        _modelMesh.AddTriangle(quad.A);
+        _modelMesh.AddTriangle(quad.B);
+
+        s1.AddSharedVertexToAll(s1.ToList(), v1);
+        s2.AddSharedVertexToAll(s2.ToList(), v3);
+    }
+
+    private void Handle_VertexMerging()
+    {
+        Console.WriteLine("Merging verts");
+                
+        Vertex s1 = _selectedVertices[0];
+        Vector3 position = s1.Position;
+
+        HashSet<Vertex> deletedVertices = new HashSet<Vertex>();
+                
+        for (int i = 1; i < _selectedVertices.Count; i++)
+        {
+            Vertex vert = _selectedVertices[i];
+            s1.AddSharedVertexToAll(s1.ToList(), vert);
+            position += vert.Position;
+            if (
+                vert.GetTwoOtherVertex(out var a, out var b) && (
+                    SelectedContainsSharedVertex(a) || 
+                    SelectedContainsSharedVertex(b)
+                )) {
+                _modelMesh.RemoveTriangle(vert.ParentTriangle);
+                deletedVertices.Add(vert);
+            }
+        }
+                
+        position /= _selectedVertices.Count;
+        s1.SetAllPosition(position);
+
+        foreach (var vert in deletedVertices)
+        {
+            _selectedVertices.Remove(vert);
+        }
+                
+        for (int i = 1; i < _selectedVertices.Count; i++)
+        {
+            _selectedVertices[i].AddSharedVertexToAll(_selectedVertices[i].ToList(), s1);
+            _selectedVertices[i].SetAllPosition(position);
+        }
+                
+        _selectedVertices.Clear();
+                
+        _modelMesh.CheckUselessTriangles();
+                
+        _modelMesh.Init();
+        _modelMesh.GenerateBuffers();
+        _modelMesh.UpdateMesh();
+                
+        Ui.Clear();
+                
+        regenerateVertexUi = true;
+    }
+
+    private void Handle_TriangleDeletion()
+    {
+        HashSet<Triangle> triangles = GetSelectedFullTriangles();
+        if (triangles.Count > 0)
+        {
+            foreach (var triangle in triangles)
+            {
+                _modelMesh.RemoveTriangle(triangle);
+            }
+            _selectedVertices.Clear();
+                
+            _modelMesh.CheckUselessTriangles();
+                
+            _modelMesh.Init();
+            _modelMesh.GenerateBuffers();
+            _modelMesh.UpdateMesh();
+                
+            Ui.Clear();
+                
+            regenerateVertexUi = true;
+        }
+    }
+
+    private void Handle_FlipTriangleNormal()
+    {
+        HashSet<Triangle> triangles = GetSelectedFullTriangles();
+        if (triangles.Count > 0)
+        {
+            foreach (var triangle in triangles)
+            {
+                Vertex A = triangle.A;
+                Vertex B = triangle.B;
+                if (_modelMesh.SwapVertices(A, B))
+                {
+                    triangle.Invert();
+                    _modelMesh.UpdateNormals(triangle);
+                }
+            }
+            _modelMesh.Init();
+            _modelMesh.UpdateMesh();
+        }
+    }
+
+    private void Handle_GenerateNewFace()
+    {
+        if (_selectedVertices.Count == 3)
+        {
+            Vertex s1 = _selectedVertices[0];
+            Vertex s2 = _selectedVertices[1];
+            Vertex s3 = _selectedVertices[2];
+                
+            Vertex v1 = new Vertex(s1);
+            Vertex v2 = new Vertex(s2);
+            Vertex v3 = new Vertex(s3);
+                
+            Triangle triangle = new Triangle(v1, v2, v3);
+                
+            s1.AddSharedVertexToAll(s1.ToList(), v1);
+            s2.AddSharedVertexToAll(s2.ToList(), v2);
+            s3.AddSharedVertexToAll(s3.ToList(), v3);
+                
+            _modelMesh.AddTriangle(triangle);
+                
+            _modelMesh.Init();
+            _modelMesh.GenerateBuffers();
+            _modelMesh.UpdateMesh();
+        }
+    }
+
+    private void Handle_SelectAllVertices()
+    {
+        Console.WriteLine("Select all");
+        _selectedVertices.Clear();
+                
+        foreach (var vert in _modelMesh.VertexList)
+        {
+            if (vert.WentThroughOne())
+                continue;
+                    
+            vert.WentThrough = true;
+                    
+            _selectedVertices.Add(vert);
+        }
+                
+        _modelMesh.ResetVertex();
+        GenerateVertexColor();
+    }
+    
+    private void UpdateSelection()
+    {
+        Console.WriteLine("Select all");
+        List<Vertex> newSelected = new List<Vertex>();
+                
+        foreach (var vert in _selectedVertices)
+        {
+            if (vert.WentThroughOne())
+                continue;
+                    
+            vert.WentThrough = true;
+                    
+            newSelected.Add(vert);
+        }
+        
+        _selectedVertices = newSelected;
+                
+        _modelMesh.ResetVertex();
+        GenerateVertexColor();
+    }
+
     public override void Render()
     {
         if (BackfaceCulling)
+        {
             GL.Enable(EnableCap.CullFace);
+            GL.Enable(EnableCap.DepthTest);
+        }
         else
+        {
             GL.Disable(EnableCap.CullFace);
-        
-        GL.Disable(EnableCap.DepthTest);
+            GL.Disable(EnableCap.DepthTest);
+        }
         
         _shaderProgram.Bind();
         
         MirrorRender(new Vector3(1, 1, 1));
-        //MirrorRender(new Vector3(-1, 1, 1));
-        
-        //_playerMesh.RenderMesh();
-        //_modelMesh.RenderMesh();
         
         _shaderProgram.Unbind();
         
-        /*
-        GL.Viewport(-70, -30, 320, 220);
-        
-        ModelingHelperShader.Bind();
-
-        model = Matrix4.CreateTranslation(0, 0, 0);
-        view = Matrix4.LookAt(new Vector3(0, 0, 0), new Vector3(0, 0, -1f), Vector3.UnitY);
-        projection = Matrix4.CreatePerspectiveFieldOfView(
-            MathHelper.DegreesToRadians(60),
-            160f / 110f, 
-            0.1f, 
-            1000f
-        );
-        
-        int modelModelLoc = GL.GetUniformLocation(ModelingHelperShader.ID, "model");
-        int modelViewLoc = GL.GetUniformLocation(ModelingHelperShader.ID, "view");
-        int modelProjectionLoc = GL.GetUniformLocation(ModelingHelperShader.ID, "projection");
-        
-        GL.UniformMatrix4(modelModelLoc, true, ref model);
-        GL.UniformMatrix4(modelViewLoc, true, ref view);
-        GL.UniformMatrix4(modelProjectionLoc, true, ref projection);
-        
-        ModelingHelperMesh.RenderMesh();
-        
-        ModelingHelperShader.Unbind();
-        
-        GL.Enable(EnableCap.DepthTest);
-        GL.Enable(EnableCap.CullFace);
-        
-        GL.Viewport(0, 0, Game.width, Game.height);
-        */
-        
         Ui.Render();
-        //MainUi.Render();
         
         base.Render();
     }
-
     public void MirrorRender(Vector3 flipping)
     {
         Matrix4 model = Matrix4.CreateScale(flipping);
@@ -582,6 +672,8 @@ public class ModelingEditor : Updateable
     {
         camera.SetSmoothFactor(true);
         camera.SetPositionSmoothFactor(true);
+        
+        gameObject.Scene.SaveUi();
         
         base.Exit();
     }
@@ -607,7 +699,7 @@ public class ModelingEditor : Updateable
             StaticPanel panel = UI.CreateStaticPanel(pos.ToString(), AnchorType.TopLeft, PositionType.Free, new Vector3(20, 20, 0), new Vector4(0, 0, 0, 0), null);
             panel.SetPosition(new Vector3(pos.X, pos.Y, 0));
             panel.TextureIndex = SelectedContainsSharedVertex(vert) ? 2 : 1;
-                
+            
             Ui.AddStaticElement(panel);
         }
         
@@ -646,6 +738,17 @@ public class ModelingEditor : Updateable
         return vertex.SharedVertices.Any(vert => _selectedVertices.Contains(vert)) || _selectedVertices.Contains(vertex);
     }
     
+    private void RemoveSelectedVertex(Vertex vertex)
+    {
+        // Iterate through all shared vertices and remove them
+        foreach (var vert in vertex.SharedVertices)
+        {
+            if (_selectedVertices.Remove(vert))
+                return;
+        }
+        _selectedVertices.Remove(vertex);
+    }
+    
     private void MoveSelectedVertices(Vector3 move)
     {
         
@@ -669,8 +772,8 @@ public class ModelingEditor : Updateable
                 if (svert.ParentTriangle == null || !triangles.Add(svert.ParentTriangle))
                     continue;
 
-                if (IsTriangleFullySelected(svert.ParentTriangle))
-                    selectedTriangles.Add(svert.ParentTriangle);
+                if (VertexTriangleIsSelected(svert, out var triangle) && triangle != null)
+                    selectedTriangles.Add(triangle);
             }
         }
         
@@ -682,6 +785,27 @@ public class ModelingEditor : Updateable
         return SelectedContainsSharedVertex(triangle.A) &&
                SelectedContainsSharedVertex(triangle.B) &&
                SelectedContainsSharedVertex(triangle.C);
+    }
+    
+    public bool VertexTriangleIsSelected(Vertex vertex, out Triangle? triangle)
+    {
+        foreach (var vert in vertex.SharedVertices)
+        {
+            if (vert.ParentTriangle != null && IsTriangleFullySelected(vert.ParentTriangle))
+            {
+                triangle = vert.ParentTriangle;
+                return true;
+            }
+        }
+        
+        if (vertex.ParentTriangle != null && IsTriangleFullySelected(vertex.ParentTriangle))
+        {
+            triangle = vertex.ParentTriangle;
+            return true;
+        }
+
+        triangle = null;
+        return false;
     }
 
     public void UpdateSnappingText()

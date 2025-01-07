@@ -29,13 +29,13 @@ public class Vertex
 
     public void AddSharedVertexToAll(List<Vertex> list, Vertex vertex)
     {
-        foreach (var sharedVertex in list)
+        for (int i = 0; i < list.Count; i++)
         {
-            foreach (var vert in vertex.SharedVertices)
+            var sharedVertex = list[i];
+            for (int j = 0; j < vertex.SharedVertices.Count; j++)
             {
-                sharedVertex.AddSharedVertex(vert);    
+                sharedVertex.AddSharedVertex(vertex.SharedVertices[j]);
             }
-            
             sharedVertex.AddSharedVertex(vertex);
         }
     }
@@ -66,6 +66,30 @@ public class Vertex
         return true;
     }    
     
+    public bool SharesTriangleWith(Vertex vertex)
+    {
+        List<Vertex> sharedVertices = [
+            ..SharedVertices,
+            this
+        ];
+
+        List<Vertex> sharedVerticesVertex = [
+            ..vertex.SharedVertices,
+            vertex
+        ];
+
+        foreach (var sharedVertex in sharedVertices)
+        {
+            foreach (var sharedVertexVertex in sharedVerticesVertex)
+            {
+                if (sharedVertexVertex.ParentTriangle == sharedVertex.ParentTriangle)
+                    return true;
+            }
+        }
+
+        return false;
+    }
+    
     public void RemoveSharedVertex(Vertex vertex)
     {
         SharedVertices.Remove(vertex);
@@ -80,9 +104,9 @@ public class Vertex
 
     public void RemoveInstanceFromAll()
     {
-        foreach (var vert in SharedVertices)
+        for (int i = 0; i < SharedVertices.Count; i++)
         {
-            vert.RemoveSingleSharedVertex(this);
+            SharedVertices[i].RemoveSingleSharedVertex(this);
         }
     }
     

@@ -1,0 +1,1 @@
+﻿public class NotFoundException(string message) : Exception($"Could not find {message}");

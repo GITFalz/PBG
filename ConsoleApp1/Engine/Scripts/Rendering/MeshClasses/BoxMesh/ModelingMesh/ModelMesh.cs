@@ -37,7 +37,6 @@ public class ModelMesh : BoxMesh
         foreach (var t in VertexList)
         {
             _transformedVerts.Add(t.Position);
-            //Console.WriteLine(t.Position);
         }
     }
     
@@ -105,14 +104,6 @@ public class ModelMesh : BoxMesh
         Normals[indexB] = triangle.Normal;
         Normals[indexC] = triangle.Normal;
     }
-    
-    public void UpdateRotation(Quaternion rotation)
-    {
-        for (int i = 0; i < Vertices.Count; i++)
-        {
-            _transformedVerts[i] = Mathf.RotateAround(_transformedVerts[i], new Vector3(0, 0, 0), rotation);  
-        }
-    }
 
     public void RecalculateNormals()
     {
@@ -168,6 +159,28 @@ public class ModelMesh : BoxMesh
         }
     }
 
+    public void CombineDuplicateVertices()
+    {
+        CombineDuplicateVertices(VertexList);
+    }
+    
+    public void CombineDuplicateVertices(List<Vertex> vertices)
+    {
+        for (int i = 0; i < vertices.Count; i++)
+        {
+            Vertex vertex1 = vertices[i];
+            
+            for (int j = i + 1; j < vertices.Count; j++)
+            {
+                Vertex vertex2 = vertices[j];
+                if (vertex1.Position == vertex2.Position)
+                {
+                    vertex1.AddSharedVertexToAll(vertex1.ToList(), vertex2);
+                }
+            }
+        }
+    }
+
     public void RemoveVertex(Vertex vertex)
     {
         if (VertexList.Contains(vertex))
@@ -209,15 +222,96 @@ public class ModelMesh : BoxMesh
     
     public void SaveModel(string modelName)
     {
-        string[] lines = new string[VertexList.Count];
+        List<string> lines = new List<string>();
+
+        string path = Path.Combine(Game.modelPath, $"{modelName}.model");
         
-        for (int i = 0; i < VertexList.Count; i++)
+        lines.Add(VertexList.Count.ToString());
+        foreach (var vertex in VertexList)
         {
-            Vertex vertex = VertexList[i];
-            lines[i] = vertex.Position.ToString();
+            lines.Add(vertex.Position.ToString());
         }
         
-        //System.IO.File.WriteAllLines(path, lines);
+        lines.Add(Uvs.Count.ToString());
+        foreach (var uv in Uvs)
+        {
+            lines.Add(uv.ToString());
+        }
+        
+        lines.Add((Normals.Count / 3).ToString());
+        for (int i = 0; i < Normals.Count; i += 3)
+        {
+            lines.Add(Normals[i].ToString());
+        }
+        
+        lines.Add((TextureIndices.Count / 3).ToString());
+        for (int i = 0; i < TextureIndices.Count; i += 3)
+        {
+            lines.Add(TextureIndices[i].ToString());
+        }
+        
+        File.WriteAllLines(path, lines);
+    }
+
+    public bool LoadModel(string modelName)
+    {
+        string path = Path.Combine(Game.modelPath, $"{modelName}.model");
+        if (!File.Exists(path))
+            return false;
+
+        string[] lines = File.ReadAllLines(path);
+
+        int vertCount = int.Parse(lines[0]);
+
+        int uvIndex = vertCount + 1;
+        int uvCount = int.Parse(lines[uvIndex]);
+
+        int normalIndex = vertCount + uvCount + 2;
+        int normalCount = int.Parse(lines[normalIndex]);
+
+        int textureIndex = vertCount + uvCount + normalCount + 3;
+        int textureCount = int.Parse(lines[textureIndex]);
+
+        VertexList = new List<Vertex>();
+        Uvs = new List<Vector2>();
+        Normals = new List<Vector3>();
+        TextureIndices = new List<int>();
+
+        for (int i = 0; i < vertCount; i+=3)
+        {
+            Vertex A = new Vertex(UiLoader.TextToVector3(lines[i + 1]));
+            Vertex B = new Vertex(UiLoader.TextToVector3(lines[i + 2]));
+            Vertex C = new Vertex(UiLoader.TextToVector3(lines[i + 3]));
+            new Triangle(A, B, C);
+            VertexList.Add(A);
+            VertexList.Add(B);
+            VertexList.Add(C);
+        }
+        
+        for (int i = 0; i < uvCount; i++)
+        {
+            Uvs.Add(UiLoader.TextToVector2(lines[i+uvIndex+1]));
+        }
+        
+        for (int i = 0; i < normalCount; i++)
+        {
+            int index = i + normalIndex + 1;
+            Normals.Add(UiLoader.TextToVector3(lines[index]));
+            Normals.Add(UiLoader.TextToVector3(lines[index]));
+            Normals.Add(UiLoader.TextToVector3(lines[index]));
+        }
+        
+        for (int i = 0; i < textureCount; i++)
+        {
+            int index = i + textureIndex + 1;
+            TextureIndices.Add(int.Parse(lines[index]));
+            TextureIndices.Add(int.Parse(lines[index]));
+            TextureIndices.Add(int.Parse(lines[index]));
+        }
+
+        CombineDuplicateVertices(VertexList);
+
+        return true;
     }
     
     public override void GenerateBuffers()
