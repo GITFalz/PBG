@@ -23,11 +23,11 @@ public class Game : GameWindow
     // User paths
     public static string mainPath;
     public static string chunkPath;
-    public static string modelPath;
     
     // Compile time paths
     public static string assetPath;
     public static string uiPath;
+    public static string modelPath;
 
     private Camera _mainCamera;
     
@@ -138,7 +138,7 @@ public class Game : GameWindow
         mainPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VoxelGame");
         chunkPath = Path.Combine(mainPath, "Chunks");
         
-        assetPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets");
+        assetPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Saves");
         uiPath = Path.Combine(assetPath, "UI");
         modelPath = Path.Combine(assetPath, "Models");
         
