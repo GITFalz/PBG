@@ -20,6 +20,7 @@
 
     <ItemGroup>
       <Folder Include="Assets\Editors\ModelingEditor\Utility\" />
+      <Folder Include="Saves\" />
     </ItemGroup>
 
 </Project>

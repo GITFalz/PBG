@@ -39,6 +39,28 @@ public class ModelMesh : BoxMesh
             _transformedVerts.Add(t.Position);
         }
     }
+
+    public void ApplyMirror(Vector3i mirror)
+    {
+        List<Vertex> currentVertices = new List<Vertex>(VertexList);
+        
+        Vector3[] flip = ModelingEditor.Mirroring[mirror];
+        for (int j = 1; j < flip.Length; j++)
+        {
+            for (int i = 0; i < currentVertices.Count; i+=3)
+            {
+                Vertex A = new Vertex(currentVertices[i].Position * flip[j]);
+                Vertex B = new Vertex(currentVertices[i + 1].Position * flip[j]);
+                Vertex C = new Vertex(currentVertices[i + 2].Position * flip[j]);
+                
+                Triangle triangle = new Triangle(A, B, C);
+                
+                AddTriangle(triangle);
+            }
+        }
+        
+        CombineDuplicateVertices();
+    }
     
     public void Center()
     {

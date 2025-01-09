@@ -27,6 +27,7 @@ public class ModelingEditor : Updateable
     public StaticText MeshAlphaText;
     public StaticText BackfaceCullingText;
     public StaticText SnappingText;
+    public StaticText MirrorText;
 
     public StaticInputField InputField;
     
@@ -37,6 +38,8 @@ public class ModelingEditor : Updateable
     public float SnappingFactor = 1;
     private int SnappingFactorIndex = 0;
     private Vector3 SnappingOffset = new Vector3(0, 0, 0);
+    
+    private Vector3i mirror = new Vector3i(0, 0, 0);
     
     
     private float _mouseX = 0;
@@ -102,6 +105,17 @@ public class ModelingEditor : Updateable
         
         SnappingText = t ?? throw new NotFoundException("SnappingText");
         Snapping = SnappingText.Text.Split(' ')[1].Trim() != "off";
+        
+        t = MainUi.GetElement<StaticText>("MirrorText");
+        
+        MirrorText = t ?? throw new NotFoundException("MirrorText");
+        string mirrorValues = MirrorText.Text.Split(' ')[1].Trim();
+        
+        mirror = new Vector3i(
+            mirrorValues[0] == 'X' ? 1 : 0,
+            mirrorValues[1] == 'Y' ? 1 : 0,
+            mirrorValues[2] == 'Z' ? 1 : 0
+        );
 
         StaticInputField? inputField = MainUi.GetElement<StaticInputField>("FileName");
         InputField = inputField ?? throw new NotFoundException("inputField");
@@ -114,6 +128,38 @@ public class ModelingEditor : Updateable
     
     #region Saved ui functions (Do not delete)
 
+    public void SwitchMirror(string axis)
+    {
+        switch (axis)
+        {
+            case "X":
+                mirror.X = mirror.X == 0 ? 1 : 0;
+                break;
+            case "Y":
+                mirror.Y = mirror.Y == 0 ? 1 : 0;
+                break;
+            case "Z":
+                mirror.Z = mirror.Z == 0 ? 1 : 0;
+                break;
+        }
+        
+        UpdateMirrorText();
+    }
+    
+    public void ApplyMirror()
+    {
+        _modelMesh.ApplyMirror(mirror);
+        
+        _modelMesh.Init();
+        _modelMesh.GenerateBuffers();
+        _modelMesh.UpdateMesh();
+        
+        regenerateVertexUi = true;
+        
+        mirror = new Vector3i(0, 0, 0);
+        UpdateMirrorText();
+    }
+    
     public void SaveModel()
     {
         string modelName = InputField.Text;
@@ -190,6 +236,18 @@ public class ModelingEditor : Updateable
     }
     
     #endregion
+    
+    private void UpdateMirrorText()
+    {
+        string text = "";
+        text += mirror.X == 1 ? "X" : "-";
+        text += mirror.Y == 1 ? "Y" : "-";
+        text += mirror.Z == 1 ? "Z" : "-";
+        
+        MirrorText.SetText("mirror: " + text);
+        MirrorText.Generate();
+        MainUi.Update();
+    }
     
     public override void Update()
     {
@@ -636,12 +694,15 @@ public class ModelingEditor : Updateable
         else
         {
             GL.Disable(EnableCap.CullFace);
-            GL.Disable(EnableCap.DepthTest);
+            //GL.Disable(EnableCap.DepthTest);
         }
         
         _shaderProgram.Bind();
-        
-        MirrorRender(new Vector3(1, 1, 1));
+
+        foreach (var flip in Mirroring[mirror])
+        {
+            MirrorRender(flip);
+        }
         
         _shaderProgram.Unbind();
         
@@ -824,6 +885,18 @@ public class ModelingEditor : Updateable
         new Vector3(0, 1, 1), // X
         new Vector3(1, 0, 1), // Y
         new Vector3(1, 1, 0), // Z
+    };
+
+    public static readonly Dictionary<Vector3i, Vector3[]> Mirroring = new Dictionary<Vector3i, Vector3[]>()
+    {
+        { (0, 0, 0), [(1, 1, 1)] },
+        { (1, 0, 0), [(1, 1, 1), (-1, 1, 1)] },
+        { (0, 1, 0), [(1, 1, 1), (1, -1, 1)] },
+        { (0, 0, 1), [(1, 1, 1), (1, 1, -1)] },
+        { (1, 1, 0), [(1, 1, 1), (-1, 1, 1), (1, -1, 1), (-1, -1, 1)] },
+        { (1, 0, 1), [(1, 1, 1), (-1, 1, 1), (1, 1, -1), (-1, 1, -1)] },
+        { (0, 1, 1), [(1, 1, 1), (1, -1, 1), (1, 1, -1), (1, -1, -1)] },
+        { (1, 1, 1), [(1, 1, 1), (-1, 1, 1), (1, -1, 1), (-1, -1, 1), (1, 1, -1), (-1, 1, -1), (1, -1, -1), (-1, -1, -1)] }
     };
 }
 

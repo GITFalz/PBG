@@ -1,0 +1,35 @@
+Scene: UIEditor
+
+Static Panel
+{
+    Name: MainPanel
+    Position: (160, 160, 0)
+    Scale: (300, 300, 0)
+    Offset: (10, 10, 10, 10)
+    AnchorType: 9
+    PositionType: 0
+    TextureIndex: 0
+    Elements: 0
+}
+Static Panel
+{
+    Name: MainPanel
+    Position: (160, 160, 0)
+    Scale: (300, 300, 0)
+    Offset: (10, 10, 10, 10)
+    AnchorType: 10
+    PositionType: 0
+    TextureIndex: 0
+    Elements: 0
+}
+Static Panel
+{
+    Name: MainPanel
+    Position: (160, 160, 0)
+    Scale: (300, 300, 0)
+    Offset: (10, 10, 10, 10)
+    AnchorType: 11
+    PositionType: 0
+    TextureIndex: 0
+    Elements: 0
+}
