@@ -1,6 +1,6 @@
 using OpenTK.Mathematics;
 
-public class Animation
+public class OldAnimation
 {
     public List<AnimationKeyframe> Keyframes = new List<AnimationKeyframe>();
     
@@ -17,12 +17,12 @@ public class Animation
         AnimationKeyframe keyframe1 = Keyframes[index];
         AnimationKeyframe keyframe2 = Keyframes[index + 1];
         
-        float t = (elapsedTime - index * AnimationController.frameTime) / AnimationController.frameTime;
+        float t = (elapsedTime - index * OldAnimationController.frameTime) / OldAnimationController.frameTime;
         
         keyframe = keyframe1.Lerp(keyframe2, t);
 
         elapsedTime += GameTime.DeltaTime;
-        index = (int)(elapsedTime / AnimationController.frameTime);
+        index = (int)(elapsedTime / OldAnimationController.frameTime);
 
         return true;
     }
