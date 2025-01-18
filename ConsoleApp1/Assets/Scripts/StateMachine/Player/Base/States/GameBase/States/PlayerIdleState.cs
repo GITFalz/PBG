@@ -7,7 +7,7 @@ public class PlayerIdleState : PlayerGameBaseState
     {
         Console.WriteLine("Entering idle state");
 
-        AnimationManager.Instance.LoopAnimation("Player", "idle");
+        OldAnimationManager.Instance.LoopAnimation("Player", "idle");
     }
 
     public override void Update(PlayerGameState playerGameState)

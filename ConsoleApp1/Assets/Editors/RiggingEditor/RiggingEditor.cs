@@ -1,39 +1,54 @@
-﻿using OpenTK.Graphics.OpenGL4;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-public class ModelingEditor : BaseEditor
+public class RiggingEditor : BaseEditor
 {
-    public bool _started = false;
+    public Camera camera;
+    public ShaderProgram _shaderProgram;
+    public UIController BoneUi = new UIController();
+    public Model model;
+
+    private bool _started = false;
 
     public override void Start(GeneralModelingEditor editor)
     {
-        Console.WriteLine("Start Modeling Editor");
+        Console.WriteLine("Start Rigging Editor");
 
-        editor.model.SwitchState("Modeling");
-
+        editor.model.SwitchState("Rigging");
+        
         if (!_started)
         {
+            model = editor.model;
+            Bone rootBone = new Bone("root");
+            rootBone.Pivot = (1, 0, -1);
+            rootBone.End = (1, 2, -1);
+            //model.Bones.Add(rootBone);
+
+            BoneUi.Generate();
             _started = true;
         }
     }
 
     public override void Awake(GeneralModelingEditor editor)
     {
-        
+
     }
     
+    public override void Render(GeneralModelingEditor editor)
+    {
+        editor.RenderRigging();
+        
+        BoneUi.Render();
+    }
+
     public override void Update(GeneralModelingEditor editor)
     {
-        if (UIController.activeInputField != null)
-        {
-            if (Input.IsKeyPressed(Keys.Escape) || Input.IsKeyPressed(Keys.Enter))
-                UIController.activeInputField = null;
-            
-            return;
-        }
-
         if (Input.IsKeyPressed(Keys.Escape))
         {
             editor.freeCamera = !editor.freeCamera;
@@ -49,67 +64,16 @@ public class ModelingEditor : BaseEditor
             }
         }
 
-        if (Input.IsKeyPressed(Keys.Delete))
-        {
-            editor._selectedVertices.Clear();
-            editor.GenerateVertexColor();
-        }
-        
         if (editor.freeCamera)
         {
             editor.camera.Update();
         }
 
-        if (Input.IsKeyDown(Keys.LeftControl))
-        {
-            // Select all
-            if (Input.IsKeyPressed(Keys.A)) editor.Handle_SelectAllVertices();
-            
-            // New Face
-            if (Input.IsKeyPressed(Keys.F)) editor.Handle_GenerateNewFace();
-            
-            // Flipping triangle
-            if (Input.IsKeyPressed(Keys.I)) editor.Handle_FlipTriangleNormal();
-            
-            // Deleting triangle
-            if (Input.IsKeyPressed(Keys.D)) editor.Handle_TriangleDeletion();
-            
-            // Merging
-            if (Input.IsKeyPressed(Keys.K) && editor._selectedVertices.Count >= 2) editor.Handle_VertexMerging();
-        }
-        
-        // Extrude
-        if (Input.IsKeyPressed(Keys.E)) editor.Handle_FaceExtrusion();
-
-        // Move start
-        if (Input.IsKeyPressed(Keys.G)) editor.Ui.Clear();
-        
-        // Moving
-        if (Input.IsKeyDown(Keys.E) || Input.IsKeyDown(Keys.G)) editor.Handle_MovingSelectedVertices();
-
-        if (Input.IsKeyReleased(Keys.E))
-        {
-            editor.model.Mesh.CheckUselessTriangles();
-            editor.model.Mesh.CombineDuplicateVertices();
-            editor.model.Mesh.RecalculateNormals();
-            editor.model.Mesh.InitModel();
-            editor.model.Mesh.UpdateMesh();
-            
-            editor.SnappingOffset = Vector3.Zero;
-            editor.regenerateVertexUi = true;
-        }
-
-        if (Input.IsKeyReleased(Keys.G))
-        {
-            editor.SnappingOffset = Vector3.Zero;
-            editor.regenerateVertexUi = true;
-        }
-        
-        //Generate panels on top of each vertex
         if (editor.freeCamera && !editor.regenerateVertexUi)
         {
             Console.WriteLine("Clear Vertex UI");
             editor.Ui.Clear();
+            BoneUi.Clear();
             editor.regenerateVertexUi = true;
         }
         
@@ -119,6 +83,25 @@ public class ModelingEditor : BaseEditor
             {
                 Console.WriteLine("Regenerate Vertex UI");
                 editor.GenerateVertexPanels();
+                // Bone Selection
+                var links = editor.GetLinkPositions(model.Bones);
+                foreach (var link in links)
+                {
+                    BoneUi.AddStaticElement(editor.GeneratePanelLink(link.A, link.B));
+
+                    StaticPanel panel1 = UI.CreateStaticPanel(link.A.ToString(), AnchorType.TopLeft, PositionType.Free, new Vector3(20, 20, 0), new Vector4(0, 0, 0, 0), null);
+                    panel1.SetPosition(new Vector3(link.A.X, link.A.Y, 0));
+                    panel1.TextureIndex = 3;
+
+                    StaticPanel panel2 = UI.CreateStaticPanel(link.B.ToString(), AnchorType.TopLeft, PositionType.Free, new Vector3(20, 20, 0), new Vector4(0, 0, 0, 0), null);
+                    panel2.SetPosition(new Vector3(link.B.X, link.B.Y, 0));
+                    panel2.TextureIndex = 3;
+                    
+                    BoneUi.AddStaticElement(panel1);
+                    BoneUi.AddStaticElement(panel2); 
+                }
+                
+                BoneUi.Generate();
                 editor.regenerateVertexUi = false;
             }
             
@@ -127,6 +110,7 @@ public class ModelingEditor : BaseEditor
                 if (!Input.IsKeyDown(Keys.LeftShift))
                     editor._selectedVertices.Clear();
                 
+                // Vertex Selection
                 Vector2 mousePos = Input.GetMousePosition();
                 Vector2? closest = null;
                 Vertex? closestVert = null;
@@ -151,32 +135,18 @@ public class ModelingEditor : BaseEditor
 
                 if (closestVert != null && !editor._selectedVertices.Remove(closestVert))
                     editor._selectedVertices.Add(closestVert);
-                
+
                 editor.GenerateVertexColor();
             }
         }
     }
 
-    public override void Render(GeneralModelingEditor editor)
-    {
-        editor.RenderModel();
-    }
-
     public override void Exit(GeneralModelingEditor editor)
     {
-        editor.camera.SetSmoothFactor(true);
-        editor.camera.SetPositionSmoothFactor(true);
-        
-        editor.gameObject.Scene.SaveUi();
+        editor.model.CurrentAnimation = null;
     }
-}
 
-public abstract class Undoable
-{
-    
-}
 
-public class AngleUndo(Vector3 oldAngle) : Undoable
-{
-    public Vector3 OldAngle = oldAngle;
+    private void VertexPanels()
+    {}
 }

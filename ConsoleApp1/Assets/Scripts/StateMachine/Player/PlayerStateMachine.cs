@@ -36,19 +36,19 @@ public class PlayerStateMachine : Updateable
     private EntityMesh _mesh;
     
     // Animation
-    private AnimationMesh _playerMesh;
-    private AnimationMesh _swordMesh;
+    private OldAnimationMesh _playerMesh;
+    private OldAnimationMesh _swordMesh;
     
-    private AnimationMesh _testMesh;
+    private OldAnimationMesh _testMesh;
     
-    private AnimationController? _playerAnimationController;
-    private AnimationController? _swordAnimationController;
+    private OldAnimationController? _playerAnimationController;
+    private OldAnimationController? _swordAnimationController;
     
     
     private ShaderProgram _shaderProgram;
     public PhysicsBody physicsBody;
     
-    public Animation currentAnimation;
+    public OldAnimation CurrentOldAnimation;
 
     public GameObject go;
     
@@ -88,7 +88,7 @@ public class PlayerStateMachine : Updateable
         VoxelData.GetEntityBoxMesh(_mesh, new Vector3(1, 2, 1), new Vector3(0, 0, 0), 0);
         _mesh.GenerateBuffers();
         
-        _swordMesh = new AnimationMesh();
+        _swordMesh = new OldAnimationMesh();
         VoxelData.GenerateStandardMeshBox(_swordMesh,
             new Vector3(0.3f, 0.2f, 0.2f), 
             new Vector3(0, 0, 0), 
@@ -102,7 +102,7 @@ public class PlayerStateMachine : Updateable
             0
         );
         
-        _playerMesh = new AnimationMesh();
+        _playerMesh = new OldAnimationMesh();
         VoxelData.GenerateStandardMeshBox(_playerMesh, 
             new Vector3(1, 2, 1), 
             new Vector3(-0.5f, 0, -0.5f), 
@@ -110,7 +110,7 @@ public class PlayerStateMachine : Updateable
             1
         );
         
-        _testMesh = new AnimationMesh();
+        _testMesh = new OldAnimationMesh();
         VoxelData.GenerateStandardMeshBox(_testMesh, 
             new Vector3(1, 2, 1), 
             new Vector3(-0.5f, 0, -0.5f), 
@@ -130,16 +130,16 @@ public class PlayerStateMachine : Updateable
         _playerMesh.UpdateMesh();
         
         //Animation
-        if (!AnimationManager.Instance.SetMesh("Player", _playerMesh))
+        if (!OldAnimationManager.Instance.SetMesh("Player", _playerMesh))
             throw new System.Exception("Failed to set mesh");
         
-        if (!AnimationManager.Instance.SetMesh("Sword", _swordMesh))
+        if (!OldAnimationManager.Instance.SetMesh("Sword", _swordMesh))
             throw new System.Exception("Failed to set mesh");
         
-        if (!AnimationManager.Instance.GetController("Player", out _playerAnimationController) || _playerAnimationController == null)
+        if (!OldAnimationManager.Instance.GetController("Player", out _playerAnimationController) || _playerAnimationController == null)
             throw new System.Exception("Failed to get controller");
         
-        if (!AnimationManager.Instance.GetController("Sword", out _swordAnimationController) || _swordAnimationController == null)
+        if (!OldAnimationManager.Instance.GetController("Sword", out _swordAnimationController) || _swordAnimationController == null)
             throw new System.Exception("Failed to get controller");
 
         go = new GameObject();

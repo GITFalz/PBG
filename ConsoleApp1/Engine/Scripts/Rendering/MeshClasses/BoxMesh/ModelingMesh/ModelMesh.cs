@@ -44,7 +44,7 @@ public class ModelMesh : BoxMesh
     {
         List<Vertex> currentVertices = new List<Vertex>(VertexList);
         
-        Vector3[] flip = ModelingEditor.Mirroring[mirror];
+        Vector3[] flip = ModelSettings.Mirrors;
         for (int j = 1; j < flip.Length; j++)
         {
             for (int i = 0; i < currentVertices.Count; i+=3)
@@ -210,6 +210,9 @@ public class ModelMesh : BoxMesh
             int index = VertexList.IndexOf(vertex);
             VertexList[index].RemoveInstanceFromAll();
             VertexList.Remove(vertex);
+            Uvs.RemoveAt(index);
+            Normals.RemoveAt(index);
+            TextureIndices.RemoveAt(index);
         }
     }
 
@@ -254,20 +257,20 @@ public class ModelMesh : BoxMesh
             lines.Add(vertex.Position.ToString());
         }
         
-        lines.Add(Uvs.Count.ToString());
-        foreach (var uv in Uvs)
+        lines.Add(VertexList.Count.ToString());
+        for (int i = 0; i < VertexList.Count; i++)
         {
-            lines.Add(uv.ToString());
+            lines.Add(Uvs[i].ToString());
         }
         
-        lines.Add((Normals.Count / 3).ToString());
-        for (int i = 0; i < Normals.Count; i += 3)
+        lines.Add((VertexList.Count / 3).ToString());
+        for (int i = 0; i < VertexList.Count; i += 3)
         {
             lines.Add(Normals[i].ToString());
         }
         
-        lines.Add((TextureIndices.Count / 3).ToString());
-        for (int i = 0; i < TextureIndices.Count; i += 3)
+        lines.Add((VertexList.Count / 3).ToString());
+        for (int i = 0; i < VertexList.Count; i += 3)
         {
             lines.Add(TextureIndices[i].ToString());
         }
@@ -344,6 +347,11 @@ public class ModelMesh : BoxMesh
         }
         
         GenerateIndices();
+        
+        Console.WriteLine("Vertices: " + VertexList.Count);
+        Console.WriteLine("Uvs: " + Uvs.Count);
+        Console.WriteLine("Normals: " + Normals.Count);
+        Console.WriteLine("Indices: " + Indices.Count);
         
         _vertVbo = new VBO(_transformedVerts);
         _uvVbo = new VBO(Uvs);

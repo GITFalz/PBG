@@ -3,15 +3,32 @@
 public abstract class StaticElement : UiElement
 {
     public StaticElement? ParentElement = null;
+    public UiMesh UiMesh;
+    
+    public int TextureIndex = 0;
     
     public virtual void SetMesh(UiMesh uiMesh) {}
 
     public virtual void Test() {}
+    public virtual void Test(Vector2 offset) {}
 
     public override void Align()
     {
         Align(Scale);
     }
+    
+    public void SetRotation(Vector3 pivot, float angle)
+    {
+        Pivot = pivot;
+        Rotation = Quaternion.FromAxisAngle(Vector3.UnitZ, MathHelper.DegreesToRadians(angle));
+    }
+    
+    public void SetOriginType(OriginType originType)
+    {
+        OriginType = originType;
+
+    }
+    
     public void Align(Vector3 scale)
     {
         if (PositionType == PositionType.Free)
@@ -24,8 +41,8 @@ public abstract class StaticElement : UiElement
         
         if (PositionType == PositionType.Absolute || ParentElement == null)
         {
-            width = Game.width;
-            height = Game.height;
+            width = Game.width - (ScreenOffset.X + ScreenOffset.Y);
+            height = Game.height - (ScreenOffset.Z + ScreenOffset.W);
         }
         else
         {
@@ -37,8 +54,6 @@ public abstract class StaticElement : UiElement
             offset.Z += ParentElement.Origin.Y;
             offset.W = ParentElement.Origin.Y - offset.W;
         }
-        
-        //Console.WriteLine("Width: " + width + " Height: " + height);
         
         Vector3 halfScale = scale / 2;
         
@@ -116,7 +131,5 @@ public abstract class StaticElement : UiElement
         }
         
         Origin = Position - halfScale;
-        
-        //Console.WriteLine("Scale: " + Scale + " Position: " + Position);
     }
 }

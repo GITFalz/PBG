@@ -14,9 +14,9 @@ Static Text
 Static Text
 {
     Name: CullingText
-    Text: culling: False
+    Text: culling: True
     FontSize: 0.7
-    Position: (118, 82, 0)
+    Position: (111, 82, 0)
     Scale: (100, 100, 0)
     Offset: (20, 10, 75, 10)
     AnchorType: 0
@@ -36,7 +36,7 @@ Static Text
 Static Text
 {
     Name: MirrorText
-    Text: mirror: X--
+    Text: mirror: ---
     FontSize: 0.7
     Position: (97, 132, 0)
     Scale: (100, 100, 0)
@@ -53,7 +53,7 @@ Static Panel
     AnchorType: 0
     PositionType: 0
     TextureIndex: 0
-    Elements: 13
+    Elements: 20
     Static Panel
     {
         Name: InputFieldPanel
@@ -75,11 +75,13 @@ Static Panel
         Offset: (10, 10, 12, 10)
         AnchorType: 0
         PositionType: 1
+        TextType: 2
         TextureIndex: 0
-        OnClick: Modeling.ModelingEditor.AssignInputField(FileName)
+        OnClick: Static.UIController.AssignInputField(FileName)
         OnHover: null
         OnHold: null
         OnRelease: null
+        OnTextChange: null
     }
     Static Button
     {
@@ -92,7 +94,7 @@ Static Panel
         TextureIndex: 0
         OnClick: null
         OnHover: null
-        OnHold: Modeling.ModelingEditor.SaveModel
+        OnHold: Modeling.GeneralModelingEditor.SaveModel
         OnRelease: null
     }
     Static Button
@@ -106,7 +108,7 @@ Static Panel
         TextureIndex: 0
         OnClick: null
         OnHover: null
-        OnHold: Modeling.ModelingEditor.LoadModel
+        OnHold: Modeling.GeneralModelingEditor.LoadModel
         OnRelease: null
     }
     Static Button
@@ -120,7 +122,7 @@ Static Panel
         TextureIndex: 0
         OnClick: null
         OnHover: null
-        OnHold: Modeling.ModelingEditor.AlphaControl
+        OnHold: Modeling.GeneralModelingEditor.AlphaControl
         OnRelease: null
     }
     Static Button
@@ -132,7 +134,7 @@ Static Panel
         AnchorType: 2
         PositionType: 1
         TextureIndex: 0
-        OnClick: Modeling.ModelingEditor.BackFaceCullingSwitch
+        OnClick: Modeling.GeneralModelingEditor.BackFaceCullingSwitch
         OnHover: null
         OnHold: null
         OnRelease: null
@@ -146,7 +148,7 @@ Static Panel
         AnchorType: 2
         PositionType: 1
         TextureIndex: 0
-        OnClick: Modeling.ModelingEditor.SnappingDownButton
+        OnClick: Modeling.GeneralModelingEditor.SnappingDownButton
         OnHover: null
         OnHold: null
         OnRelease: null
@@ -160,7 +162,7 @@ Static Panel
         AnchorType: 2
         PositionType: 1
         TextureIndex: 0
-        OnClick: Modeling.ModelingEditor.SnappingUpButton
+        OnClick: Modeling.GeneralModelingEditor.SnappingUpButton
         OnHover: null
         OnHold: null
         OnRelease: null
@@ -174,7 +176,7 @@ Static Panel
         AnchorType: 2
         PositionType: 1
         TextureIndex: 0
-        OnClick: Modeling.ModelingEditor.SnappingSwitchButton
+        OnClick: Modeling.GeneralModelingEditor.SnappingSwitchButton
         OnHover: null
         OnHold: null
         OnRelease: null
@@ -182,13 +184,13 @@ Static Panel
     Static Button
     {
         Name: MirrorXButton
-        Position: (45, 160, 0)
-        Scale: (50, 20, 0)
+        Position: (42.5, 160, 0)
+        Scale: (45, 20, 0)
         Offset: (10, 66, 140, 10)
         AnchorType: 0
         PositionType: 1
         TextureIndex: 0
-        OnClick: Modeling.ModelingEditor.SwitchMirror(X)
+        OnClick: Modeling.GeneralModelingEditor.SwitchMirror(X)
         OnHover: null
         OnHold: null
         OnRelease: null
@@ -196,13 +198,13 @@ Static Panel
     Static Button
     {
         Name: MirrorYButton
-        Position: (100, 160, 0)
-        Scale: (50, 20, 0)
-        Offset: (65, 38, 140, 10)
+        Position: (102.5, 160, 0)
+        Scale: (45, 20, 0)
+        Offset: (70, 38, 140, 10)
         AnchorType: 0
         PositionType: 1
         TextureIndex: 0
-        OnClick: Modeling.ModelingEditor.SwitchMirror(Y)
+        OnClick: Modeling.GeneralModelingEditor.SwitchMirror(Y)
         OnHover: null
         OnHold: null
         OnRelease: null
@@ -210,27 +212,120 @@ Static Panel
     Static Button
     {
         Name: MirrorZButton
-        Position: (155, 160, 0)
-        Scale: (50, 20, 0)
-        Offset: (120, 10, 140, 10)
+        Position: (162.5, 160, 0)
+        Scale: (45, 20, 0)
+        Offset: (130, 10, 140, 10)
         AnchorType: 0
         PositionType: 1
         TextureIndex: 0
-        OnClick: Modeling.ModelingEditor.SwitchMirror(Z)
+        OnClick: Modeling.GeneralModelingEditor.SwitchMirror(Z)
         OnHover: null
         OnHold: null
         OnRelease: null
     }
     Static Button
     {
-        Name: MirrorZButton
+        Name: ApplyMirrorButton
         Position: (247, 147.5, 0)
         Scale: (106, 45, 0)
         Offset: (120, 10, 115, 10)
         AnchorType: 2
         PositionType: 1
         TextureIndex: 0
-        OnClick: Modeling.ModelingEditor.ApplyMirror
+        OnClick: Modeling.GeneralModelingEditor.ApplyMirror
+        OnHover: null
+        OnHold: null
+        OnRelease: null
+    }
+    Static Panel
+    {
+        Name: BonePositionXPanel
+        Position: (42.5, 190, 0)
+        Scale: (55, 30, 0)
+        Offset: (5, 5, 165, 5)
+        AnchorType: 0
+        PositionType: 1
+        TextureIndex: 10
+        Elements: 0
+    }
+    Static Panel
+    {
+        Name: BonePositionYPanel
+        Position: (102.5, 190, 0)
+        Scale: (55, 30, 0)
+        Offset: (65, 5, 165, 5)
+        AnchorType: 0
+        PositionType: 1
+        TextureIndex: 10
+        Elements: 0
+    }
+    Static Panel
+    {
+        Name: BonePositionZPanel
+        Position: (162.5, 190, 0)
+        Scale: (55, 30, 0)
+        Offset: (125, 5, 165, 5)
+        AnchorType: 0
+        PositionType: 1
+        TextureIndex: 10
+        Elements: 0
+    }
+    Static Input Field
+    {
+        Name: BonePivotX
+        Text: 
+        FontSize: 0.7
+        Position: (45, 197, 0)
+        Scale: (50, 30, 0)
+        Offset: (10, 10, 172, 10)
+        AnchorType: 0
+        PositionType: 1
+        TextType: 1
+        TextureIndex: 0
+        OnClick: null
+        OnHover: null
+        OnHold: null
+        OnRelease: null
+        OnTextChange: null
+    }
+    Static Button
+    {
+        Name: SwitchToModelingButton
+        Position: (42.5, 217, 0)
+        Scale: (45, 20, 0)
+        Offset: (10, 10, 197, 10)
+        AnchorType: 0
+        PositionType: 1
+        TextureIndex: 0
+        OnClick: Modeling.GeneralModelingEditor.SwitchScene(Modeling)
+        OnHover: null
+        OnHold: null
+        OnRelease: null
+    }
+    Static Button
+    {
+        Name: SwitchToAnimationButton
+        Position: (102.5, 217, 0)
+        Scale: (45, 20, 0)
+        Offset: (70, 10, 197, 10)
+        AnchorType: 0
+        PositionType: 1
+        TextureIndex: 0
+        OnClick: Modeling.GeneralModelingEditor.SwitchScene(Animation)
+        OnHover: null
+        OnHold: null
+        OnRelease: null
+    }
+    Static Button
+    {
+        Name: SwitchToRiggingButton
+        Position: (162.5, 217, 0)
+        Scale: (45, 20, 0)
+        Offset: (130, 10, 197, 10)
+        AnchorType: 0
+        PositionType: 1
+        TextureIndex: 0
+        OnClick: Modeling.GeneralModelingEditor.SwitchScene(Rigging)
         OnHover: null
         OnHold: null
         OnRelease: null

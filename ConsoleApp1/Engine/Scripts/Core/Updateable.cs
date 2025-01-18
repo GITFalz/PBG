@@ -1,6 +1,4 @@
-﻿using OpenTK.Windowing.Common;
-
-public abstract class Updateable : Component
+﻿public abstract class Updateable : Component
 {
     
 }

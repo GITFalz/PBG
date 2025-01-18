@@ -5,10 +5,17 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class UIController
 {
+    public static HashSet<StaticInputField> InputFields = new HashSet<StaticInputField>();
+    public static StaticInputField? activeInputField = null;
+    private static bool _isInit = false;
+    
+    
+    
     public static Matrix4 OrthographicProjection;
     
     private List<StaticElement> staticElements = new List<StaticElement>();
     
+    // Load UI
     private static ShaderProgram _uiShader = new ShaderProgram("UI/UI.vert", "UI/UI.frag");
     private static TextureArray _uItexture = new TextureArray("UI_Atlas.png", 64, 64);
         
@@ -17,20 +24,29 @@ public class UIController
     private static Texture _textTexture = new Texture("text.png");
     
     private UiMesh _uiMesh = new UiMesh();
+    private UiMesh _maskMesh = new UiMesh();
+    private UiMesh _maskedUiMesh = new UiMesh();
     private List<TextMesh> _textMeshes = new List<TextMesh>();
 
     private StaticPanel? _parentPanel = null;
     
-    public static StaticInputField? activeInputField = null;
+    public StaticPanel panel;
     
     public void AddStaticElement(StaticElement element)
     {
-        element.SetMesh(_uiMesh);
+        AddStaticElement(element, _uiMesh);
+    }
+    
+    private void AddStaticElement(StaticElement element, UiMesh uiMesh)
+    {
+        element.SetMesh(uiMesh);
         staticElements.Add(element);
         
         if (element is StaticInputField inputField)
         {
             _textMeshes.Add(inputField.TextMesh);
+            if (!InputFieldExists(inputField.Name))
+                InputFields.Add(inputField);
         }
         else if (element is StaticText text)
         {
@@ -40,14 +56,50 @@ public class UIController
         {
             foreach (var child in panel.ChildElements)
             {
-                AddStaticElement(child);
+                AddStaticElement(child, uiMesh);
+            }
+        }
+        else if (element is StaticScrollView scrollView)
+        {
+            scrollView.SetMesh(_maskedUiMesh, _maskMesh);
+            foreach (var child in scrollView.ChildElements)
+            {
+                AddStaticElement(child, _maskedUiMesh);
             }
         }
     }
     
-    public UiMesh GetUiMesh()
+    public static bool InputFieldExists(string name)
     {
-        return _uiMesh;
+        foreach (var inputField in InputFields)
+        {
+            if (inputField.Name == name)
+                return true;
+        }
+
+        return false;
+    }
+    
+    public static StaticInputField? GetStaticInputField(string name)
+    {
+        foreach (var inputField in InputFields)
+        {
+            if (inputField.Name == name)
+                return inputField;
+        }
+
+        return null;
+    }
+    
+    public static void AssignInputField(string name)
+    {
+        Console.WriteLine("Assigning: " + name);
+        
+        StaticInputField? inputField = GetStaticInputField(name);
+        if (inputField == null)
+            return;
+        
+        activeInputField = inputField;
     }
     
     public void SetStaticPanelTexureIndex(int index, int textureIndex)
@@ -98,7 +150,7 @@ public class UIController
         {
             if (element.ParentElement == null)
                 uiElements.Add(element);
-            else if (element is StaticPanel panel)
+            else if (element is StaticPanel panel && panel.PositionType != PositionType.Relative)
             {
                 foreach (var child in panel.ChildElements)
                 {
@@ -136,8 +188,22 @@ public class UIController
         return null;
     }
 
-    public void GenerateUi()
+    public void SetElementScreenOffset(Vector4 offset)
     {
+        foreach (var element in staticElements)
+        {
+            element.ScreenOffset = offset;
+        }
+    }
+
+    public void GenerateUi()
+    {   
+        _maskMesh.Clear();
+        //panel = UI.CreateStaticPanel("testPanel", AnchorType.MiddleCenter, PositionType.Absolute, new Vector3(1000, 1000, 0), new Vector4(0, 0, 0, 0), _maskMesh);
+        //panel.TextureIndex = 12;
+        //panel.Generate();
+        _maskMesh.GenerateBuffers();
+            
         foreach (var element in staticElements)
         {
             if (element.PositionType != PositionType.Relative) 
@@ -192,6 +258,54 @@ public class UIController
             element.Test();
         }
     }
+    
+    public void TestButtons(Vector2 offset)
+    {
+        foreach (var element in staticElements)
+        {
+            element.Test(offset);
+        }
+    }
+    
+    public void LoadUi(string fileName)
+    {
+        Console.WriteLine(Path.Combine("Load: " + Game.uiPath, $"{fileName}.ui"));
+
+        string[] lines;
+        try
+        {
+            lines = File.ReadAllLines(Path.Combine(Game.uiPath, $"{fileName}.ui"));
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Error loading file {fileName}.ui with exception: " + e);
+            return;
+        }
+        
+        if (lines.Length == 0 || lines[0].Split(":")[1].Trim() != fileName)
+            return;
+        
+        UiLoader.Load(this, lines);
+    }
+    
+    public void SaveUi(string fileName)
+    {
+        List<string> lines = new List<string>() { "File: " + fileName, ""};
+        
+        foreach (var element in GetUiElements())
+        {
+            lines.AddRange(element.ToLines(0));
+        }
+        
+        try
+        {
+            File.WriteAllLines(Path.Combine(Game.uiPath, $"{fileName}.ui"), lines);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Error saving file {fileName}.ui with exception: " + e);
+        }
+    }
 
     public static void InputField(Keys key)
     {
@@ -208,7 +322,69 @@ public class UIController
             return;
         
         if (TextShaderHelper.CharExists(c))
+        {
             activeInputField.AddCharacter(c);
+            activeInputField.OnTextChange?.Invoke();
+        }
+    }
+    
+    public UiElement? IsMouseOverIgnore(List<UiElement> alreadySelected)
+    {
+        foreach (var element in staticElements)
+        {
+            if (element.IsMouseOver() && !alreadySelected.Contains(element))
+            {
+                return element;
+            }
+        }
+
+        return null;
+    }
+    
+    public UiElement? IsMouseOverIgnore(List<UiElement> alreadySelected, Vector2 offset)
+    {
+        foreach (var element in staticElements)
+        {
+            if (element.IsMouseOver(offset) && !alreadySelected.Contains(element) && !IsElementChildInList(element, alreadySelected))
+            {
+                return element;
+            }
+        }
+
+        return null;
+    }
+    
+    public bool IsElementChildInList(UiElement element, List<UiElement> selected)
+    {
+        foreach (var parent in selected)
+        {
+            if (parent.HasChild(element))
+                return true;
+        }
+
+        return false;
+    }
+    
+    public UiElement? IsMouseOver()
+    {
+        foreach (var element in staticElements)
+        {
+            if (element.IsMouseOver())
+                return element;
+        }
+
+        return null;
+    }
+    
+    public UiElement? IsMouseOver(Vector2 offset)
+    {
+        foreach (var element in staticElements)
+        {
+            if (element.IsMouseOver(offset))
+                return element;
+        }
+
+        return null;
     }
 
     public void Render()
@@ -219,13 +395,32 @@ public class UIController
         GL.Disable(EnableCap.CullFace);
         GL.FrontFace(FrontFaceDirection.Ccw);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-
+        
+        GL.Enable(EnableCap.StencilTest);
+        GL.Clear(ClearBufferMask.StencilBufferBit);  // Clear previous stencil values
+        GL.StencilFunc(StencilFunction.Always, 1, 0xFF);  // Always write 1 to stencil
+        GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace); 
+        
         _uiShader.Bind();
         _uItexture.Bind();
+        
+        _maskMesh.RenderMesh();
         
         int projectionLoc = GL.GetUniformLocation(_uiShader.ID, "projection");
         GL.UniformMatrix4(projectionLoc, true, ref OrthographicProjection);
         
+        GL.StencilFunc(StencilFunction.Equal, 1, 0xFF);
+        GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
+
+        //Render masked Ui (not implemented)
+
+        GL.Disable(EnableCap.StencilTest);
+        
+        GL.DepthMask(true);
+        GL.Enable(EnableCap.DepthTest);
+        GL.DepthFunc(DepthFunction.Lequal);
+        
+        //Render unmasked Ui
         _uiMesh.RenderMesh();
         
         _uiShader.Unbind();
@@ -247,9 +442,5 @@ public class UIController
         
         _textShader.Unbind();
         _textTexture.Unbind();
-        
-        GL.DepthMask(true);
-        GL.Enable(EnableCap.DepthTest);
-        
     }
 }

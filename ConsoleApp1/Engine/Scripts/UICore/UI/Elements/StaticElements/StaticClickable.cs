@@ -4,16 +4,12 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public abstract class StaticClickable : StaticElement
 {
-    public UiMesh UiMesh;
-
     public SerializableEvent? OnHover;
     public SerializableEvent? OnClick;
     public SerializableEvent? OnHold;
     public SerializableEvent? OnRelease;
     
     private bool _clicked = false;
-    
-    public int TextureIndex = 0;
     
     private int _uiIndex = 0;
     private bool _generated = false;
@@ -23,12 +19,21 @@ public abstract class StaticClickable : StaticElement
         UiMesh = uiMesh;
     }
     
+    public override void Generate(Vector3 offset)
+    {
+        Align();
+        Create(Origin + offset);
+    }
+    
     public override void Generate()
     {
         Align();
-        Panel panel = new Panel();
+        Create(Origin);
+    }
 
-        Vector3 position = Origin;
+    public override void Create(Vector3 position)
+    {
+        Panel panel = new Panel();
         
         panel.Vertices.Add(new Vector3(0, 0, 0) + position);
         panel.Vertices.Add(new Vector3(0, Scale.Y, 0) + position);
@@ -64,17 +69,19 @@ public abstract class StaticClickable : StaticElement
         _generated = false;
         _uiIndex = 0;
     }
-    
-    public bool IsMouseOver()
-    {
-        Vector2 pos = Input.GetMousePosition();
-        return pos.X >= Origin.X && pos.X <= Origin.X + Scale.X && pos.Y >= Origin.Y && pos.Y <= Origin.Y + Scale.Y;
-    }
 
     public override void Test()
     {
-        bool mouseOver = IsMouseOver();
-        
+        TestButtons(IsMouseOver());
+    }
+    
+    public override void Test(Vector2 offset)
+    {
+        TestButtons(IsMouseOver(offset));
+    }
+
+    private void TestButtons(bool mouseOver)
+    {
         if (mouseOver)
         {
             OnHover?.Invoke();
@@ -98,6 +105,11 @@ public abstract class StaticClickable : StaticElement
             OnRelease?.Invoke();
             _clicked = false;
         }
+    }
+    
+    public string GetMethodString(SerializableEvent? e)
+    {
+        return e == null ? "null" : (e.IsStatic ? "Static" : SceneName) + "." + e.TargetName + "." + e.MethodName + (e.FixedParameter == null ? "" : $"({e.FixedParameter})");
     }
 
     public override void ToFile(string path, int gap = 1)

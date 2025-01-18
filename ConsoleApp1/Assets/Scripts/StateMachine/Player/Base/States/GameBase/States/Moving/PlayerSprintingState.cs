@@ -16,7 +16,7 @@ public class PlayerSprintingState : PlayerGameBaseState
         playerGameState.NextMovingState = playerGameState.SprintingState;
         playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Sprint);
         
-        AnimationManager.Instance.LoopAnimation("Player", "running");
+        OldAnimationManager.Instance.LoopAnimation("Player", "running");
         
         Camera.SetFOV(55);
     }

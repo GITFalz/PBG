@@ -20,129 +20,129 @@ public class OldAnimationManager
         OldAnimation playerBase = new OldAnimation();
         playerController.BaseOldAnimation = playerBase;
         
-        playerBase.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
-        playerBase.SetKeyframe(5, new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        playerBase.Keyframes.Add(new OldAnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        playerBase.SetKeyframe(5, new OldAnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
         
         OldAnimation playerAttack1 = new OldAnimation();
         playerController.Animations.Add("attack1", playerAttack1);
         
-        playerAttack1.Keyframes.Add(new AnimationKeyframe(Vector3.One, (5, -10, 0), (0, 0, 0.1f)));
-        playerAttack1.SetKeyframe(2, new AnimationKeyframe(Vector3.One, (10, -10, 0), (0, 0, 0.1f)));
-        playerAttack1.SetKeyframe(6, new AnimationKeyframe(Vector3.One, (7, 0, 7), (0.1f, 0, 0.1f)));
-        playerAttack1.SetKeyframe(8, new AnimationKeyframe(Vector3.One, (7, 10, 7), (0.1f, 0, -0.1f)));
-        playerAttack1.SetKeyframe(15, new AnimationKeyframe(Vector3.One, (7, 10, 7), (0.1f, 0, 0.1f)));
-        playerAttack1.SetKeyframe(20, new AnimationKeyframe(Vector3.One, (10, 0, 0), (0, 0, 0.1f)));
-        playerAttack1.SetKeyframe(25, new AnimationKeyframe(Vector3.One, (5, -10, 0), (0, 0, 0.1f)));
+        playerAttack1.Keyframes.Add(new OldAnimationKeyframe(Vector3.One, (5, -10, 0), (0, 0, 0.1f)));
+        playerAttack1.SetKeyframe(2, new OldAnimationKeyframe(Vector3.One, (10, -10, 0), (0, 0, 0.1f)));
+        playerAttack1.SetKeyframe(6, new OldAnimationKeyframe(Vector3.One, (7, 0, 7), (0.1f, 0, 0.1f)));
+        playerAttack1.SetKeyframe(8, new OldAnimationKeyframe(Vector3.One, (7, 10, 7), (0.1f, 0, -0.1f)));
+        playerAttack1.SetKeyframe(15, new OldAnimationKeyframe(Vector3.One, (7, 10, 7), (0.1f, 0, 0.1f)));
+        playerAttack1.SetKeyframe(20, new OldAnimationKeyframe(Vector3.One, (10, 0, 0), (0, 0, 0.1f)));
+        playerAttack1.SetKeyframe(25, new OldAnimationKeyframe(Vector3.One, (5, -10, 0), (0, 0, 0.1f)));
         
         OldAnimation playerAttack2 = new OldAnimation();
         playerController.Animations.Add("attack2", playerAttack2);
         
-        playerAttack2.Keyframes.Add(new AnimationKeyframe(Vector3.One, (7, 10, 7), (0.1f, 0, -0.1f)));
-        playerAttack2.SetKeyframe(2, new AnimationKeyframe(Vector3.One, (7, 10, 7), (0.1f, 0, -0.1f)));
-        playerAttack2.SetKeyframe(6, new AnimationKeyframe(Vector3.One, (-10, 0, 0), (0, 0, 0.1f)));
-        playerAttack2.SetKeyframe(8, new AnimationKeyframe(Vector3.One, (-10, -10, 0), (0, 0, 0.1f)));
-        playerAttack2.SetKeyframe(20, new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        playerAttack2.Keyframes.Add(new OldAnimationKeyframe(Vector3.One, (7, 10, 7), (0.1f, 0, -0.1f)));
+        playerAttack2.SetKeyframe(2, new OldAnimationKeyframe(Vector3.One, (7, 10, 7), (0.1f, 0, -0.1f)));
+        playerAttack2.SetKeyframe(6, new OldAnimationKeyframe(Vector3.One, (-10, 0, 0), (0, 0, 0.1f)));
+        playerAttack2.SetKeyframe(8, new OldAnimationKeyframe(Vector3.One, (-10, -10, 0), (0, 0, 0.1f)));
+        playerAttack2.SetKeyframe(20, new OldAnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
         
         OldAnimation playerAttack3 = new OldAnimation();
         playerController.Animations.Add("attack3", playerAttack3);
         
-        playerAttack3.Keyframes.Add(new AnimationKeyframe(Vector3.One, (5, -10, 0), (0, 0, 0.1f)));
-        playerAttack3.SetKeyframe(2, new AnimationKeyframe(Vector3.One, (10, -10, 0), (0, 0, 0.1f)));
-        playerAttack3.SetKeyframe(6, new AnimationKeyframe(Vector3.One, (7, 0, 7), (0.1f, 0, 0.1f)));
-        playerAttack3.SetKeyframe(8, new AnimationKeyframe(Vector3.One, (7, 10, 7), (0.1f, 0, -0.1f)));
-        playerAttack3.SetKeyframe(15, new AnimationKeyframe(Vector3.One, (7, 10, 7), (0.1f, 0, 0.1f)));
-        playerAttack3.SetKeyframe(20, new AnimationKeyframe(Vector3.One, (10, 0, 0), (0, 0, 0.1f)));
-        playerAttack3.SetKeyframe(25, new AnimationKeyframe(Vector3.One, (5, -10, 0), (0, 0, 0.1f)));
+        playerAttack3.Keyframes.Add(new OldAnimationKeyframe(Vector3.One, (5, -10, 0), (0, 0, 0.1f)));
+        playerAttack3.SetKeyframe(2, new OldAnimationKeyframe(Vector3.One, (10, -10, 0), (0, 0, 0.1f)));
+        playerAttack3.SetKeyframe(6, new OldAnimationKeyframe(Vector3.One, (7, 0, 7), (0.1f, 0, 0.1f)));
+        playerAttack3.SetKeyframe(8, new OldAnimationKeyframe(Vector3.One, (7, 10, 7), (0.1f, 0, -0.1f)));
+        playerAttack3.SetKeyframe(15, new OldAnimationKeyframe(Vector3.One, (7, 10, 7), (0.1f, 0, 0.1f)));
+        playerAttack3.SetKeyframe(20, new OldAnimationKeyframe(Vector3.One, (10, 0, 0), (0, 0, 0.1f)));
+        playerAttack3.SetKeyframe(25, new OldAnimationKeyframe(Vector3.One, (5, -10, 0), (0, 0, 0.1f)));
         
         OldAnimation playerAttack4 = new OldAnimation();
         playerController.Animations.Add("attack4", playerAttack4);
         
-        playerAttack4.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
-        playerAttack4.SetKeyframe(7, new AnimationKeyframe(Vector3.One, (20, 100, 40), (0, 0.3f, -0.5f)));
-        playerAttack4.SetKeyframe(12, new AnimationKeyframe(Vector3.One, (30, 240, 10), (0, 0.4f, -0.5f)));
-        playerAttack4.SetKeyframe(14, new AnimationKeyframe(Vector3.One, (0, 10, 10), (0, 0, 0)));
-        playerAttack4.SetKeyframe(17, new AnimationKeyframe(Vector3.One, (0, 5, 15), (0, 0, 0)));
-        playerAttack4.SetKeyframe(25, new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        playerAttack4.Keyframes.Add(new OldAnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        playerAttack4.SetKeyframe(7, new OldAnimationKeyframe(Vector3.One, (20, 100, 40), (0, 0.3f, -0.5f)));
+        playerAttack4.SetKeyframe(12, new OldAnimationKeyframe(Vector3.One, (30, 240, 10), (0, 0.4f, -0.5f)));
+        playerAttack4.SetKeyframe(14, new OldAnimationKeyframe(Vector3.One, (0, 10, 10), (0, 0, 0)));
+        playerAttack4.SetKeyframe(17, new OldAnimationKeyframe(Vector3.One, (0, 5, 15), (0, 0, 0)));
+        playerAttack4.SetKeyframe(25, new OldAnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
         
         
         OldAnimation playerJumping = new OldAnimation();
         playerController.Animations.Add("jumping", playerJumping);
         
-        playerJumping.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
-        playerJumping.SetKeyframe(1, new AnimationKeyframe(Vector3.One, (0, 0, 10), (0, -0.1f, 0)));
-        playerJumping.SetKeyframe(5, new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        playerJumping.Keyframes.Add(new OldAnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        playerJumping.SetKeyframe(1, new OldAnimationKeyframe(Vector3.One, (0, 0, 10), (0, -0.1f, 0)));
+        playerJumping.SetKeyframe(5, new OldAnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
         
         OldAnimation playerWalking = new OldAnimation();
         playerController.Animations.Add("walking", playerWalking);
         
-        playerWalking.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 10), (0, 0, 0)));
-        playerWalking.SetKeyframe(5, new AnimationKeyframe(Vector3.One, (1, 0, 11), (0, 0, 0)));
-        playerWalking.SetKeyframe(10, new AnimationKeyframe(Vector3.One, (0, 0, 10), (0, 0, 0)));
-        playerWalking.SetKeyframe(15, new AnimationKeyframe(Vector3.One, (-1, 0, 11), (0, 0, 0)));
-        playerWalking.SetKeyframe(20, new AnimationKeyframe(Vector3.One, (0, 0, 10), (0, 0, 0)));
+        playerWalking.Keyframes.Add(new OldAnimationKeyframe(Vector3.One, (0, 0, 10), (0, 0, 0)));
+        playerWalking.SetKeyframe(5, new OldAnimationKeyframe(Vector3.One, (1, 0, 11), (0, 0, 0)));
+        playerWalking.SetKeyframe(10, new OldAnimationKeyframe(Vector3.One, (0, 0, 10), (0, 0, 0)));
+        playerWalking.SetKeyframe(15, new OldAnimationKeyframe(Vector3.One, (-1, 0, 11), (0, 0, 0)));
+        playerWalking.SetKeyframe(20, new OldAnimationKeyframe(Vector3.One, (0, 0, 10), (0, 0, 0)));
         
         OldAnimation playerRunning = new OldAnimation();
         playerController.Animations.Add("running", playerRunning);
         
-        playerRunning.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 30), (0, 0, 0)));
-        playerRunning.SetKeyframe(5, new AnimationKeyframe(Vector3.One, (1f, 0, 31), (0f, 0.1f, 0.1f)));
-        playerRunning.SetKeyframe(10, new AnimationKeyframe(Vector3.One, (0, 0, 30), (0, 0, 0)));
-        playerRunning.SetKeyframe(15, new AnimationKeyframe(Vector3.One, (-1, 0, 31), (0, 0.1f, -0.1f)));
-        playerRunning.SetKeyframe(20, new AnimationKeyframe(Vector3.One, (0, 0, 30), (0, 0, 0)));
+        playerRunning.Keyframes.Add(new OldAnimationKeyframe(Vector3.One, (0, 0, 30), (0, 0, 0)));
+        playerRunning.SetKeyframe(5, new OldAnimationKeyframe(Vector3.One, (1f, 0, 31), (0f, 0.1f, 0.1f)));
+        playerRunning.SetKeyframe(10, new OldAnimationKeyframe(Vector3.One, (0, 0, 30), (0, 0, 0)));
+        playerRunning.SetKeyframe(15, new OldAnimationKeyframe(Vector3.One, (-1, 0, 31), (0, 0.1f, -0.1f)));
+        playerRunning.SetKeyframe(20, new OldAnimationKeyframe(Vector3.One, (0, 0, 30), (0, 0, 0)));
         
         OldAnimation playerDashing = new OldAnimation();
         playerController.Animations.Add("dashing", playerDashing);
         
-        playerDashing.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 40), (0, 0, 0)));
-        playerDashing.SetKeyframe(4, new AnimationKeyframe(Vector3.One, (0, 0, 40), (0, 0, 0)));
-        playerDashing.SetKeyframe(10, new AnimationKeyframe(Vector3.One, (0, 0, 25), (0, 0, 0)));
+        playerDashing.Keyframes.Add(new OldAnimationKeyframe(Vector3.One, (0, 0, 40), (0, 0, 0)));
+        playerDashing.SetKeyframe(4, new OldAnimationKeyframe(Vector3.One, (0, 0, 40), (0, 0, 0)));
+        playerDashing.SetKeyframe(10, new OldAnimationKeyframe(Vector3.One, (0, 0, 25), (0, 0, 0)));
         
         OldAnimation playerIdle = new OldAnimation();
         playerController.Animations.Add("idle", playerIdle);
         
-        playerIdle.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
-        playerIdle.SetKeyframe(15, new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0.03f, 0f)));
-        playerIdle.SetKeyframe(30, new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        playerIdle.Keyframes.Add(new OldAnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        playerIdle.SetKeyframe(15, new OldAnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0.03f, 0f)));
+        playerIdle.SetKeyframe(30, new OldAnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
         
         
         OldAnimation playerGrappleIn = new OldAnimation();
         playerController.Animations.Add("grappleIn", playerGrappleIn);
         
-        playerGrappleIn.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
-        playerGrappleIn.SetKeyframe(7, new AnimationKeyframe(Vector3.One, (0, 0, 45), (0, 0, 0)));
+        playerGrappleIn.Keyframes.Add(new OldAnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        playerGrappleIn.SetKeyframe(7, new OldAnimationKeyframe(Vector3.One, (0, 0, 45), (0, 0, 0)));
         
         OldAnimation playerGrapple = new OldAnimation();
         playerController.Animations.Add("grapple", playerGrapple);
 
-        playerGrapple.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 45), (0, 0, 0)));
-        playerGrapple.SetKeyframe(10, new AnimationKeyframe(Vector3.One, (0, 0, 43), (0, 0, 0)));
-        playerGrapple.SetKeyframe(20, new AnimationKeyframe(Vector3.One, (0, 0, 45), (0, 0, 0)));
+        playerGrapple.Keyframes.Add(new OldAnimationKeyframe(Vector3.One, (0, 0, 45), (0, 0, 0)));
+        playerGrapple.SetKeyframe(10, new OldAnimationKeyframe(Vector3.One, (0, 0, 43), (0, 0, 0)));
+        playerGrapple.SetKeyframe(20, new OldAnimationKeyframe(Vector3.One, (0, 0, 45), (0, 0, 0)));
         
         OldAnimation playerGrappleSwingOut = new OldAnimation();
         playerController.Animations.Add("grappleSwingOut", playerGrappleSwingOut);
         
-        playerGrappleSwingOut.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 45), (0, 0, 0)));
-        playerGrappleSwingOut.SetKeyframe(20, new AnimationKeyframe(Vector3.One, (0, 0, -50), (0, 0, 0)));
+        playerGrappleSwingOut.Keyframes.Add(new OldAnimationKeyframe(Vector3.One, (0, 0, 45), (0, 0, 0)));
+        playerGrappleSwingOut.SetKeyframe(20, new OldAnimationKeyframe(Vector3.One, (0, 0, -50), (0, 0, 0)));
         
         OldAnimation playerGrappleSwingEnd = new OldAnimation();
         playerController.Animations.Add("grappleSwingEnd", playerGrappleSwingEnd);
         
-        playerGrappleSwingEnd.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, -50), (0, 0, 0)));
-        playerGrappleSwingEnd.SetKeyframe(12, new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        playerGrappleSwingEnd.Keyframes.Add(new OldAnimationKeyframe(Vector3.One, (0, 0, -50), (0, 0, 0)));
+        playerGrappleSwingEnd.SetKeyframe(12, new OldAnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
         
         OldAnimation playerGrappleOut = new OldAnimation();
         playerController.Animations.Add("grappleOut", playerGrappleOut);
         
-        playerGrappleOut.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 45), (0, 0, 0)));
-        playerGrappleOut.SetKeyframe(7, new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        playerGrappleOut.Keyframes.Add(new OldAnimationKeyframe(Vector3.One, (0, 0, 45), (0, 0, 0)));
+        playerGrappleOut.SetKeyframe(7, new OldAnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
         
         
         OldAnimation playerFalling = new OldAnimation();
         playerController.Animations.Add("falling", playerFalling);
         
-        playerFalling.Keyframes.Add(new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
-        playerFalling.SetKeyframe(5, new AnimationKeyframe(Vector3.One, (2, 0, 0), (0, 0, 0)));
-        playerFalling.SetKeyframe(10, new AnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        playerFalling.Keyframes.Add(new OldAnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
+        playerFalling.SetKeyframe(5, new OldAnimationKeyframe(Vector3.One, (2, 0, 0), (0, 0, 0)));
+        playerFalling.SetKeyframe(10, new OldAnimationKeyframe(Vector3.One, (0, 0, 0), (0, 0, 0)));
         
         
         //Sword
@@ -154,9 +154,9 @@ public class OldAnimationManager
         swordController.BaseOldAnimation = new OldAnimation();
         swordController.Animations.Add("idle", swordController.BaseOldAnimation);
 
-        swordController.BaseOldAnimation.Keyframes.Add(new AnimationKeyframe(Vector3.One, (95, 0, -90), (0.5f, 0, -1)));
-        swordController.BaseOldAnimation.SetKeyframe(20, new AnimationKeyframe(Vector3.One, (95, 0, -95), (0.5f, 0, -1)));
-        swordController.BaseOldAnimation.SetKeyframe(40, new AnimationKeyframe(Vector3.One, (95, 0, -90), (0.5f, 0, -1)));
+        swordController.BaseOldAnimation.Keyframes.Add(new OldAnimationKeyframe(Vector3.One, (95, 0, -90), (0.5f, 0, -1)));
+        swordController.BaseOldAnimation.SetKeyframe(20, new OldAnimationKeyframe(Vector3.One, (95, 0, -95), (0.5f, 0, -1)));
+        swordController.BaseOldAnimation.SetKeyframe(40, new OldAnimationKeyframe(Vector3.One, (95, 0, -90), (0.5f, 0, -1)));
         
         swordController.BaseAnimation();
         swordController.loop = true;
@@ -256,7 +256,7 @@ public class OldAnimationManager
         }
     }
     
-    public bool SetMesh(string controller, AnimationMesh mesh)
+    public bool SetMesh(string controller, OldAnimationMesh mesh)
     {
         if (AnimationControllers.TryGetValue(controller, out var animController))
         {

@@ -23,8 +23,8 @@ public class PlayerAttack4State : PlayerGameBaseState
         playerGameState.PlayerStateMachine.physicsBody.doGravity = true;
         playerGameState.PlayerStateMachine.physicsBody.AddForce(Camera.FrontYto0() * 0.1f);
         
-        AnimationManager.Instance.SetAnimation("Sword", "attack4");
-        AnimationManager.Instance.SetAnimation("Player", "attack4");
+        OldAnimationManager.Instance.SetAnimation("Sword", "attack4");
+        OldAnimationManager.Instance.SetAnimation("Player", "attack4");
     }
 
     public override void Update(PlayerGameState playerGameState)

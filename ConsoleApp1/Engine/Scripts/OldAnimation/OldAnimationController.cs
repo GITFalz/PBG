@@ -17,7 +17,7 @@ public class OldAnimationController
     public OldAnimation BaseOldAnimation;
     public OldAnimation? currentAnimation = null;
     
-    public AnimationMesh mesh;
+    public OldAnimationMesh mesh;
     
     public bool loop = false;
     
@@ -103,7 +103,7 @@ public class OldAnimationController
         }
     }
 
-    public static AnimationKeyframe? PlayAnimation(OldAnimation oldAnimation)
+    public static OldAnimationKeyframe? PlayAnimation(OldAnimation oldAnimation)
     {
         oldAnimation.GetFrame(out var keyframe);
         return keyframe;

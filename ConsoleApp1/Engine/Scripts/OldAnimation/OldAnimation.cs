@@ -2,20 +2,20 @@ using OpenTK.Mathematics;
 
 public class OldAnimation
 {
-    public List<AnimationKeyframe> Keyframes = new List<AnimationKeyframe>();
+    public List<OldAnimationKeyframe> Keyframes = new List<OldAnimationKeyframe>();
     
     int index = 0;
     float elapsedTime = 0;
     
-    public bool GetFrame(out AnimationKeyframe? keyframe)
+    public bool GetFrame(out OldAnimationKeyframe? keyframe)
     {
         keyframe = null;
 
         if (index >= Keyframes.Count - 1)
             return false;
         
-        AnimationKeyframe keyframe1 = Keyframes[index];
-        AnimationKeyframe keyframe2 = Keyframes[index + 1];
+        OldAnimationKeyframe keyframe1 = Keyframes[index];
+        OldAnimationKeyframe keyframe2 = Keyframes[index + 1];
         
         float t = (elapsedTime - index * OldAnimationController.frameTime) / OldAnimationController.frameTime;
         
@@ -38,7 +38,7 @@ public class OldAnimation
         elapsedTime = 0;
     }
 
-    public void SetKeyframe(int index, AnimationKeyframe keyframe)
+    public void SetKeyframe(int index, OldAnimationKeyframe keyframe)
     {
         if (index < 0 || index >= Keyframes.Count)
         {
@@ -54,7 +54,7 @@ public class OldAnimation
     }
 }
 
-public class AnimationKeyframe
+public class OldAnimationKeyframe
 {
     public Vector3 Scale = Vector3.One;
     public Quaternion Rotation = Quaternion.Identity;
@@ -63,7 +63,7 @@ public class AnimationKeyframe
     public Vector3 Forward => Vector3.Transform((0, 0, 1), Rotation);
     public Vector3 Up => Vector3.Transform((0, 1, 0), Rotation);
     
-    public AnimationKeyframe(Vector3 scale, Vector3 rotation, Vector3 position)
+    public OldAnimationKeyframe(Vector3 scale, Vector3 rotation, Vector3 position)
     {
         Scale = scale;
         
@@ -75,16 +75,16 @@ public class AnimationKeyframe
         Position = position;
     }
     
-    public AnimationKeyframe(Vector3 scale, Quaternion rotation, Vector3 position)
+    public OldAnimationKeyframe(Vector3 scale, Quaternion rotation, Vector3 position)
     {
         Scale = scale;
         Rotation = rotation;
         Position = position;
     }
 
-    public AnimationKeyframe Lerp(AnimationKeyframe keyframe, float t)
+    public OldAnimationKeyframe Lerp(OldAnimationKeyframe keyframe, float t)
     {
-        return new AnimationKeyframe(
+        return new OldAnimationKeyframe(
             Vector3.Lerp(Scale, keyframe.Scale, t),
             Quaternion.Slerp(Rotation, keyframe.Rotation, t),
             Vector3.Lerp(Position, keyframe.Position, t)

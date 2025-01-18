@@ -18,7 +18,7 @@ public class PlayerFallingState : PlayerGameBaseState
         
         Camera = playerGameState.PlayerStateMachine.camera;
         
-        AnimationManager.Instance.LoopAnimation("Player", "falling");
+        OldAnimationManager.Instance.LoopAnimation("Player", "falling");
         
         right = Vector3.Zero;
         forward = Vector3.Zero;

@@ -1,13 +1,13 @@
 ﻿using OpenTK.Mathematics;
 
-public class AnimationMesh : BoxMesh
+public class OldAnimationMesh : BoxMesh
 {
     private VBO _textureVbo;
     
     public Vector3 WorldPosition = Vector3.Zero;
     public Quaternion LastRotation = Quaternion.Identity;
     
-    public AnimationMesh()
+    public OldAnimationMesh()
     {
         _vao = new VAO();
         

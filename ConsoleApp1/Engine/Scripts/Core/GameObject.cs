@@ -73,6 +73,14 @@ public class GameObject
 
         throw new NullReferenceException("Component not found. [Called from GameObject.GetComponent<T>()]");
     }
+
+    public void Resize()
+    {
+        foreach (Component component in components)
+        {
+            component.OnResize();
+        }
+    }
     
     public void Awake()
     {

@@ -5,7 +5,7 @@ public class Vertex
     public Vector3 Position;
     public Triangle? ParentTriangle;
     public int Index = -1;
-    
+    public int BoneIndex = 0;
     public bool WentThrough = false;
     
     public List<Vertex> SharedVertices = new List<Vertex>();

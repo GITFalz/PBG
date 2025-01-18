@@ -1,4 +1,4 @@
-﻿#version 330 core
+﻿#version 460 core
 
 flat in int TexIndex;
 in vec2 TexCoord;

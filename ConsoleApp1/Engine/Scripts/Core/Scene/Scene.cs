@@ -12,6 +12,8 @@ public class Scene : Updateable
 
     private bool _started = false;
 
+    public bool Resize = false;
+
     public Scene(string name)
     {
         Name = name;
@@ -33,6 +35,11 @@ public class Scene : Updateable
     public override void OnResize()
     {
         UiController?.Resize();
+        
+        foreach (var go in _gameObjects)
+        {
+            go.Resize();
+        }
     }
 
     public override void Awake()
@@ -99,6 +106,8 @@ public class Scene : Updateable
 
     public override void Render()
     {
+        UiController?.Render();
+        
         foreach (GameObject gameObject in _gameObjects)
         {
             foreach (Component component in gameObject.components)
@@ -106,8 +115,6 @@ public class Scene : Updateable
                 component.Render();
             }
         }
-
-        UiController?.Render();
     }
 
     public override void Exit()
@@ -149,7 +156,8 @@ public class Scene : Updateable
         Console.WriteLine(Path.Combine("Load: " + Game.uiPath, $"{Name}.ui"));
         
         string[] lines = File.ReadAllLines(Path.Combine(Game.uiPath, $"{Name}.ui"));
-        if (lines[0].Split(":")[1].Trim() != Name)
+        
+        if (lines.Length == 0 || lines[0].Split(":")[1].Trim() != Name)
             return;
 
         UIController? controller;

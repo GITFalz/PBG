@@ -12,6 +12,13 @@ public class VBO
         GL.BufferData(BufferTarget.ArrayBuffer, data.Count * Vector3.SizeInBytes, data.ToArray(), BufferUsageHint.StaticDraw);
     }
 
+    public VBO(List<Vector4> data)
+    {
+        ID = GL.GenBuffer();
+        GL.BindBuffer(BufferTarget.ArrayBuffer, ID);
+        GL.BufferData(BufferTarget.ArrayBuffer, data.Count * Vector4.SizeInBytes, data.ToArray(), BufferUsageHint.StaticDraw);
+    }
+
     public VBO(List<Vector2> data)
     {
         ID = GL.GenBuffer();
@@ -40,6 +47,13 @@ public class VBO
     {
         Bind();
         GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, newData.Count * Vector3.SizeInBytes, newData.ToArray());
+        Unbind();
+    }
+
+    public void Update(List<Vector4> newData)
+    {
+        Bind();
+        GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, newData.Count * Vector4.SizeInBytes, newData.ToArray());
         Unbind();
     }
     

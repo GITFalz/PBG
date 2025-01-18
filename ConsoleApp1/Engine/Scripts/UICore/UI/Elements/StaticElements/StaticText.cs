@@ -42,12 +42,23 @@ public class StaticText : StaticElement
         
         TextSize = new Vector2(CharCount * (20 * FontSize), 20 * FontSize);
     }
+
+    public override void Generate(Vector3 offset)
+    {
+        Align(new Vector3(TextSize.X, TextSize.Y, 0));
+        Create(Origin + offset);
+    }
     
     public override void Generate()
     {
         Align(new Vector3(TextSize.X, TextSize.Y, 0));
+        Create(Origin);
+    }
+
+    public override void Create(Vector3 position)
+    {
         MeshQuad meshQuad = MeshHelper.GenerateTextQuad(TextSize.X, TextSize.Y, 0, CharCount, 0);
-        Mesh.SetQuad(Origin + new Vector3(0, 0, 1f), meshQuad);
+        Mesh.SetQuad(position + new Vector3(0, 0, 1f), meshQuad);
         foreach (var character in Characters)
         {
             Mesh.chars.Add(TextShaderHelper.GetChar(character));

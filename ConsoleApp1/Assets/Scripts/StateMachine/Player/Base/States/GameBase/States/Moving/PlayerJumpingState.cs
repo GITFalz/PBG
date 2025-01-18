@@ -19,7 +19,7 @@ public class PlayerJumpingState : PlayerGameBaseState
         
         playerGameState.PlayerStateMachine.physicsBody.AddForce(new Vector3(velocity.X, PlayerStateMachine.JUMP_SPEED, velocity.Z));
         
-        AnimationManager.Instance.SetAnimation("Player", "jumping");
+        OldAnimationManager.Instance.SetAnimation("Player", "jumping");
     }
 
     public override void Update(PlayerGameState playerGameState)

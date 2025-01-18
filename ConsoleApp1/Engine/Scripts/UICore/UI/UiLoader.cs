@@ -79,54 +79,55 @@ public static class UiLoader
         
         index += 8;
         
-        if (elements >= 1)
+        if (elements == 0)
+            return index;
+        
+        // While not end of lines
+        while (lines.Length > index)
         {
-            for (int i = 0; i < elements; i++)
+            string line = lines[index];
+                
+            Console.WriteLine("Line: " + line);
+                
+            UiElement? element = null;
+                
+            if (line.Trim() == "Static Panel")
             {
-                string line = lines[index];
-                
-                Console.WriteLine("Line: " + line);
-                
-                UiElement? element = null;
-                
-                if (line.Trim() == "Static Panel")
-                {
-                    Console.WriteLine("Static panel found: " + index);
-                    index = TextToPanel(lines, index, controller, out var staticPanel);
-                    controller.SetParentPanel(panel);
-                    panel.AddElement(staticPanel);
-                    element = staticPanel;
-                }
-                if (line.Trim() == "Static Button")
-                {
-                    Console.WriteLine("Static button found: " + index);
-                    index = TextToButton(lines, index, out var button);
-                    panel.AddElement(button);
-                    element = button;
-                }
-                else if (line.Trim() == "Static Input Field")
-                {
-                    Console.WriteLine("Static input field found: " + index);
-                    index = TextToInputField(lines, index, out var inputField);
-                    panel.AddElement(inputField);
-                    element = inputField;
-                }
-                else if (line.Trim() == "Static Text")
-                {
-                    Console.WriteLine("Static text found: " + index);
-                    index = TextToStaticText(lines, index, out var staticText);
-                    panel.AddElement(staticText);
-                    element = staticText;
-                }
-                
-                if (element != null)
-                {
-                    Console.WriteLine("The element is called: " + element.Name);
-                    element.SceneName = sceneName;
-                }
-
-                index++;
+                Console.WriteLine("Static panel found: " + index);
+                index = TextToPanel(lines, index, controller, out var staticPanel);
+                controller.SetParentPanel(panel);
+                panel.AddElement(staticPanel);
+                element = staticPanel;
             }
+            if (line.Trim() == "Static Button")
+            {
+                Console.WriteLine("Static button found: " + index);
+                index = TextToButton(lines, index, out var button);
+                panel.AddElement(button);
+                element = button;
+            }
+            else if (line.Trim() == "Static Input Field")
+            {
+                Console.WriteLine("Static input field found: " + index);
+                index = TextToInputField(lines, index, out var inputField);
+                panel.AddElement(inputField);
+                element = inputField;
+            }
+            else if (line.Trim() == "Static Text")
+            {
+                Console.WriteLine("Static text found: " + index);
+                index = TextToStaticText(lines, index, out var staticText);
+                panel.AddElement(staticText);
+                element = staticText;
+            }
+                
+            if (element != null)
+            {
+                Console.WriteLine("The element is called: " + element.Name);
+                element.SceneName = sceneName;
+            }
+
+            index++;
         }
         return index;
     }
@@ -198,7 +199,8 @@ public static class UiLoader
         }
         float fontSize = float.Parse(lines[index + 2].Split(":")[1].Trim());
         Vector3 position = TextToVector3(lines[index + 3].Split(":")[1].Trim());
-        int textureIndex = int.Parse(lines[index + 8].Split(":")[1].Trim());
+        TextType textType = (TextType)int.Parse(lines[index + 8].Split(":")[1].Trim());
+        int textureIndex = int.Parse(lines[index + 9].Split(":")[1].Trim());
         
         inputField = UI.CreateStaticInputField(
             name,
@@ -211,38 +213,46 @@ public static class UiLoader
         );
 
         inputField.Position = position;
+        inputField.TextType = textType;
         inputField.TextureIndex = textureIndex;
         
-        string targetMethod = lines[index + 9].Split(":")[1].Trim();
+        string targetMethod = lines[index + 10].Split(":")[1].Trim();
         if (targetMethod != "null")
         {
             inputField.OnClick = new SerializableEvent();
             if (!BindButton(inputField.OnClick, targetMethod))
                 Console.WriteLine("Failed to bind button click event: " + targetMethod);
         }
-        targetMethod = lines[index + 10].Split(":")[1].Trim();
+        targetMethod = lines[index + 11].Split(":")[1].Trim();
         if (targetMethod != "null")
         {
             inputField.OnHover = new SerializableEvent();
             if (!BindButton(inputField.OnHover, targetMethod))
                 Console.WriteLine("Failed to bind button hover event: " + targetMethod);
         }
-        targetMethod = lines[index + 11].Split(":")[1].Trim();
+        targetMethod = lines[index + 12].Split(":")[1].Trim();
         if (targetMethod != "null")
         {
             inputField.OnHold = new SerializableEvent();
             if (!BindButton(inputField.OnHold, targetMethod))
                 Console.WriteLine("Failed to bind button hold event: " + targetMethod);
         }
-        targetMethod = lines[index + 12].Split(":")[1].Trim();
+        targetMethod = lines[index + 13].Split(":")[1].Trim();
         if (targetMethod != "null")
         {
             inputField.OnRelease = new SerializableEvent();
             if (!BindButton(inputField.OnRelease, targetMethod))
                 Console.WriteLine("Failed to bind button release event: " + targetMethod);
         }
+        targetMethod = lines[index + 14].Split(":")[1].Trim();
+        if (targetMethod != "null")
+        {
+            inputField.OnTextChange = new SerializableEvent();
+            if (!BindButton(inputField.OnTextChange, targetMethod))
+                Console.WriteLine("Failed to bind button on text change event: " + targetMethod);
+        }
 
-        index += 13;
+        index += 15;
         return index;
     }
 
@@ -303,30 +313,36 @@ public static class UiLoader
         Console.WriteLine("Scene: " + sceneName);
         Console.WriteLine("Class: " + targetClass);
         Console.WriteLine("Function: " + targetFunction);
+        
+        bool isStatic = sceneName == "Static";
+        
+        Console.WriteLine("Is static: " + isStatic);
 
         if (targetFunction.Contains('('))
         {
             string[] function = targetFunction.Split(['(', ')']);
             targetFunction = function[0];
             string parameter = function[1];
+
+            if (isStatic) 
+                return buttonEvent.BindStaticMethod(targetFunction, targetClass, parameter);
             
             Scene? scene = Game.Instance.GetScene(sceneName);
-            if (scene == null)
-                return false;
-            if (!scene.GetClass(targetClass, out object? component))
-                return false;
-            buttonEvent.BindMethod(targetFunction, component, parameter);
-            return true;
+            if (scene == null) return false;
+            return scene.GetClass(targetClass, out object? component) && buttonEvent.BindMethod(targetFunction, component, parameter);
         }
         else
         {
+            if (isStatic) 
+                return buttonEvent.BindStaticMethod(targetFunction, targetClass);
+            
             Scene? scene = Game.Instance.GetScene(sceneName);
-            if (scene == null)
-                return false;
-            if (!scene.GetClass(targetClass, out object? component))
-                return false;
-            buttonEvent.BindMethod(targetFunction, component);
-            return true;
+
+            scene.GetClass(targetClass, out object? c);
+            Console.WriteLine("Scene: " + (c == null));
+            
+            if (scene == null) return false;
+            return scene.GetClass(targetClass, out object? component) && buttonEvent.BindMethod(targetFunction, component);
         }
     }
 }

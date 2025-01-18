@@ -165,6 +165,15 @@ public static class Mathf
     {
         return new System.Numerics.Vector2(vector.X, vector.Y);
     }
+
+    public static Vector3 DegreesToRadians(Vector3 degrees)
+    {
+        return new Vector3(
+            MathHelper.DegreesToRadians(degrees.X),
+            MathHelper.DegreesToRadians(degrees.Y),
+            MathHelper.DegreesToRadians(degrees.Z)
+        );
+    }
     
     public static Vector3 RotateAround(Vector3 point, Vector3 center, Vector3 axis, float angleDegrees)
     {
@@ -193,7 +202,7 @@ public static class Mathf
         System.Numerics.Matrix4x4 projMatrix = projectionMatrix;
 
         System.Numerics.Vector4 viewSpace = System.Numerics.Vector4.Transform(
-            new System.Numerics.Vector4(Mathf.ToNumericsVector3(worldPosition), 1.0f),
+            new System.Numerics.Vector4(ToNumericsVector3(worldPosition), 1.0f),
             viewMatrix
         );
 
@@ -212,27 +221,54 @@ public static class Mathf
 
         return screenPos;
     }
-
-    public static Vector3 Cross(Vector3 a, Vector3 b)
+    
+    public static List<Vector2> GetVertexScreenPositions(List<Vector3> vertices, Camera camera)
     {
-        return 
-        (
-            a.Y * b.Z - a.Z * b.Y,
-            a.Z * b.X - a.X * b.Z,
-            a.X * b.Y - a.Y * b.X
-        );
+        System.Numerics.Matrix4x4 projection = camera.GetNumericsProjectionMatrix();
+        System.Numerics.Matrix4x4 view = camera.GetNumericsViewMatrix();
+        
+        HashSet<Vector3> uniqueVertices = new HashSet<Vector3>();
+        List<Vector2> screenPositions = new List<Vector2>();
+        
+        foreach (var vert in vertices)
+        {
+            if (!uniqueVertices.Add(vert))
+                continue;
+            
+            Vector2? screenPos = WorldToScreen(vert, projection, view);
+            if (screenPos == null)
+                continue;
+            
+            screenPositions.Add(screenPos.Value);
+        }
+        
+        return screenPositions;
     }
-
-    /// <summary>
-    /// Function that maps the vector "from" on the vector "to"
-    /// </summary>
-    /// <param name="from"></param>
-    /// <param name="to"></param>
-    /// <returns></returns>
-    public static Vector3 Map(Vector3 from, Vector3 to)
+    
+    public static float GetAngleBetweenPoints(Vector2 from, Vector2 to)
     {
-        float uv = from.X * to.X + from.Y * to.Y + from.Z + to.Z;
-        float vSq = to.X * to.X + to.Y * to.Y + to.Z * to.Z;
-        return vSq == 0 ? (0, 0, 0) : (uv / vSq) * to;
+        Vector2 direction = to - from;
+        float angleRadians = MathF.Atan2(direction.X, direction.Y);
+        float angleDegrees = angleRadians * (180f / MathF.PI);
+        if (angleDegrees < 0) 
+            angleDegrees += 360f;
+        return angleDegrees;
+    }
+    
+    
+    public static bool IsPointNearLine(Link<Vector2> link, Vector2 point, float distance)
+    {
+        return IsPointNearLine(link.A, link.B, point, distance);
+    }
+    
+    public static bool IsPointNearLine(Vector2 pointA, Vector2 pointB, Vector2 point, float distance)
+    {
+        Vector2 lineDirection = pointB - pointA;
+        Vector2 pointToStart = point - pointA;
+        float lineLengthSq = lineDirection.LengthSquared;
+        float dot = Vector2.Dot(pointToStart, lineDirection);
+        float t = MathHelper.Clamp(dot / lineLengthSq, 0f, 1f);
+        Vector2 closestPoint = pointA + (lineDirection * t);
+        return (point - closestPoint).LengthSquared <= distance * distance;
     }
 }

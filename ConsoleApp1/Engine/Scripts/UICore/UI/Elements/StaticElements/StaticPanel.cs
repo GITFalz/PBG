@@ -1,5 +1,4 @@
 ﻿using OpenTK.Mathematics;
-using Vortice.Mathematics;
 
 public class StaticPanel : StaticElement
 {
@@ -31,18 +30,46 @@ public class StaticPanel : StaticElement
         element.ParentElement = this;
         ChildElements.Add(element);
     }
+
+    public override bool HasChild(UiElement element)
+    {
+        foreach (StaticElement child in ChildElements)
+        {
+            if (Equals(child, element))
+                return true;
+            if (child.HasChild(element))
+                return true;
+        }
+        return false;
+    }
+    
+    public override void Generate(Vector3 offset)
+    {
+        Align();
+        var position = OriginType == OriginType.Pivot ? Position : Origin;
+        Create(position + offset);
+    }
     
     public override void Generate()
     {
         Align();
-        Panel panel = new Panel();
+        var position = OriginType == OriginType.Pivot ? Position : Origin;
+        Create(position);
+    }
 
-        Vector3 position = Origin;
+    public override void Create(Vector3 position)
+    {
+        Panel panel = new Panel();
         
-        panel.Vertices.Add(new Vector3(0, 0, 0) + position);
-        panel.Vertices.Add(new Vector3(0, Scale.Y, 0) + position);
-        panel.Vertices.Add(new Vector3(Scale.X, Scale.Y, 0) + position);
-        panel.Vertices.Add(new Vector3(Scale.X, 0, 0) + position);
+        Vector3 position1 = Mathf.RotateAround(position, Pivot, Rotation);
+        Vector3 position2 = Mathf.RotateAround(position + new Vector3(0, Scale.Y, 0), Pivot, Rotation);
+        Vector3 position3 = Mathf.RotateAround(position + new Vector3(Scale.X, Scale.Y, 0), Pivot, Rotation);
+        Vector3 position4 = Mathf.RotateAround(position + new Vector3(Scale.X, 0, 0), Pivot, Rotation);
+        
+        panel.Vertices.Add(position1);
+        panel.Vertices.Add(position2);
+        panel.Vertices.Add(position3);
+        panel.Vertices.Add(position4);
         
         panel.Uvs.Add(new Vector2(0, 0));
         panel.Uvs.Add(new Vector2(0, 1));
@@ -114,4 +141,10 @@ public class StaticPanel : StaticElement
         
         return lines;
     }
+}
+
+public enum OriginType
+{
+    Pivot,
+    Center
 }

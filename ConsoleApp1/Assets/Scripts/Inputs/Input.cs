@@ -2,6 +2,7 @@
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using MouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
+using Vector3 = System.Numerics.Vector3;
 
 public static class Input
 {
@@ -9,6 +10,8 @@ public static class Input
     private static MouseState _previousMouseState;
     private static CursorState cursorState = CursorState.Normal;
     private static HashSet<Keys> _pressedKeys = new HashSet<Keys>();
+    
+    private static Vector2 _oldMousePosition;
 
     public static void Start(KeyboardState keyboard, MouseState mouse)
     {
@@ -18,6 +21,8 @@ public static class Input
     
     public static void Update(KeyboardState keyboard, MouseState mouse)
     {
+        _oldMousePosition = GetMousePosition();
+        
         _previousKeyboardState = keyboard;
         _previousMouseState = mouse;
     }
@@ -65,6 +70,11 @@ public static class Input
     public static bool IsKeyDown(Keys key)
     {
         return _previousKeyboardState.IsKeyDown(key);
+    }
+    
+    public static bool AreKeysPressed(params Keys[] keys)
+    {
+        return keys.All(IsKeyPressed);
     }
     
     public static bool AreKeysDown(out int index, params Keys[] keys)
@@ -129,6 +139,11 @@ public static class Input
     public static Vector2 GetMouseDelta()
     {
         return _previousMouseState.Delta;
+    }
+
+    public static Vector2 GetOldMousePosition()
+    {
+        return _oldMousePosition;
     }
     
     public static void SwitchCursor(CursorState state)

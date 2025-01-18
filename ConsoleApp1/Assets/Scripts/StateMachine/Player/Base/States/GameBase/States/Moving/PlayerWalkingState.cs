@@ -12,7 +12,7 @@ public class PlayerWalkingState : PlayerGameBaseState
         
         playerGameState.NextMovingState = playerGameState.WalkingState;
         
-        AnimationManager.Instance.LoopAnimation("Player", "walking");
+        OldAnimationManager.Instance.LoopAnimation("Player", "walking");
     }
 
     public override void Update(PlayerGameState playerGameState)

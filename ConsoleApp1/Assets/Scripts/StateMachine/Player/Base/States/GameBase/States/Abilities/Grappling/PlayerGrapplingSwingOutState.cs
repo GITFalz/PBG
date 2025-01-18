@@ -15,8 +15,8 @@ public class PlayerGrapplingSwingOutState : PlayerGameBaseState
         playerGameState.PlayerStateMachine.physicsBody.doGravity = true;
         playerGameState.PlayerStateMachine.physicsBody.gravity = 20f;
         
-        AnimationManager.Instance.SetAnimation("Player", "grappleSwingOut");
-        AnimationManager.Instance.QueueAnimation("Player", "grappleSwingEnd");
+        OldAnimationManager.Instance.SetAnimation("Player", "grappleSwingOut");
+        OldAnimationManager.Instance.QueueAnimation("Player", "grappleSwingEnd");
 
         direction = Camera.FrontYto0();
     }

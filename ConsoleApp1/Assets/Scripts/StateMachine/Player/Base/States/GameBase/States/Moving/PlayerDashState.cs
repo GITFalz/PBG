@@ -18,8 +18,8 @@ public class PlayerDashState : PlayerGameBaseState
         Vector3 forward = playerGameState.PlayerStateMachine.forward;
         playerGameState.PlayerStateMachine.physicsBody.AddForce(forward * 0.5f);
         
-        AnimationManager.Instance.SetAnimation("Player", "dashing");
-        AnimationManager.Instance.QueueLoopAnimation("Player", "running");
+        OldAnimationManager.Instance.SetAnimation("Player", "dashing");
+        OldAnimationManager.Instance.QueueLoopAnimation("Player", "running");
 
         Camera.SetFOV(65);
     }

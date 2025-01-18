@@ -1,29 +1,89 @@
-﻿using OpenTK.Windowing.GraphicsLibraryFramework;
+﻿using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
-public class AnimationEditor : Updateable
+public class AnimationEditor : BaseEditor
 {
-    public override void Awake()
+    public UIController BoneUi = new UIController();
+
+    private bool freeCamera = false;
+    private bool regenerateUi = false;
+    private bool _started = false;
+    
+    public override void Start(GeneralModelingEditor editor)
+    {
+        Console.WriteLine("Start Animation Editor");
+
+        editor.model.SwitchState("Animation");
+        
+        if (!_started)
+        {
+            BoneUi.Generate();
+            _started = true;
+        }
+
+        editor.Ui.Clear();
+    }
+
+    public override void Awake(GeneralModelingEditor editor)
     {
 
     }
     
-    public override void Start()
+    public override void Update(GeneralModelingEditor editor)
     {
+        if (Input.IsKeyPressed(Keys.Escape))
+        {
+            freeCamera = !freeCamera;
+            
+            if (freeCamera)
+            {
+                Game.Instance.CursorState = CursorState.Grabbed;
+                editor.camera.firstMove = true;
+            }
+            else
+            {
+                Game.Instance.CursorState = CursorState.Normal;
+            }
+        }
+        
+        if (freeCamera)
+        {
+            editor.camera.Update();
+            
+            if (!regenerateUi)
+            {
+                BoneUi.Clear();
+                regenerateUi = true;
+            }
+        }
+        else
+        {
+            foreach (var pos in editor.GetLinkPositions([new Link<Vector3>((1, 0, -1), (1, 2, -1))]))
+            {
+                var panel = editor.GeneratePanelLink(pos.A, pos.B);
+                BoneUi.AddStaticElement(panel);
+            }
+        
+            BoneUi.Generate();
+            regenerateUi = false;
+        }
+        
+        editor.model.Update();
+    }
 
+    public override void Render(GeneralModelingEditor editor)
+    {
+        editor.RenderAnimation();
+        
+        BoneUi.Render();
     }
     
-    public override void Update()
+
+    public override void Exit(GeneralModelingEditor editor)
     {
-
-    }
-
-    public override void Render()
-    {
-
-    }
-
-    public override void Exit()
-    {
-        base.Exit();
+        editor.model.Mesh.InitModel();
+        editor.model.Mesh.UpdateMesh();
     }
 }

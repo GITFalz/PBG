@@ -21,8 +21,8 @@ public class PlayerGrapplingState : PlayerGameBaseState
         timer = 0;
         grappleDirection = Camera.Front();
         
-        AnimationManager.Instance.SetAnimation("Player", "grappleIn");
-        AnimationManager.Instance.QueueLoopAnimation("Player", "grapple");
+        OldAnimationManager.Instance.SetAnimation("Player", "grappleIn");
+        OldAnimationManager.Instance.QueueLoopAnimation("Player", "grapple");
     }
 
     public override void Update(PlayerGameState playerGameState)
@@ -37,7 +37,7 @@ public class PlayerGrapplingState : PlayerGameBaseState
 
         if (timer > 1f)
         {
-            AnimationManager.Instance.SetAnimation("Player", "grappleOut");
+            OldAnimationManager.Instance.SetAnimation("Player", "grappleOut");
             playerGameState.SwitchState(playerGameState.FallingState);
             return;
         }

@@ -1,6 +1,5 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using ConsoleApp1.Assets.Editors.UiEditor;
 using ConsoleApp1.Assets.Scripts.Inputs;
 using ConsoleApp1.Assets.Scripts.World.Blocks;
 using OpenTK.Graphics.OpenGL4;
@@ -65,7 +64,7 @@ public class Game : GameWindow
 
 
     private Scene _worldScene = new Scene("World");
-    private Scene _animationScene = new Scene("Modeling");
+    private Scene _modelingScene = new Scene("Modeling");
     private Scene _uiEditorScene = new Scene("UIEditor");
     private Scene _uiScene = new Scene("UI");
     
@@ -81,7 +80,12 @@ public class Game : GameWindow
     public Action EditorUpdate;
     
     
-    public Game(int width, int height) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
+    public Game(int width, int height) : base(GameWindowSettings.Default, new NativeWindowSettings
+        {
+            APIVersion = new Version(4, 6),
+            Profile = ContextProfile.Core,
+            Title = "OpenGL 4.6"
+        })
     {
         Instance = this;
         
@@ -114,6 +118,12 @@ public class Game : GameWindow
         }
 
         CurrentScene?.OnResize();
+
+        foreach (var (_, scene) in Scenes)
+        {
+            if (scene != CurrentScene)
+                scene.Resize = true;
+        }
         
         base.OnResize(e);
     }
@@ -122,8 +132,8 @@ public class Game : GameWindow
     {
         // Scenes
         _worldScene.AddSceneSwitcher(new SceneSwitcherKey(Keys.RightShift, "Modeling"));
-        _animationScene.AddSceneSwitcher(new SceneSwitcherKeys([Keys.LeftControl, Keys.LeftShift, Keys.Z], "World"));
-        _animationScene.AddSceneSwitcher(new SceneSwitcherKeys([Keys.LeftControl, Keys.LeftShift, Keys.U], "UIEditor"));
+        _modelingScene.AddSceneSwitcher(new SceneSwitcherKeys([Keys.LeftControl, Keys.LeftShift, Keys.Z], "World"));
+        _modelingScene.AddSceneSwitcher(new SceneSwitcherKeys([Keys.LeftControl, Keys.LeftShift, Keys.U], "UIEditor"));
         _uiEditorScene.AddSceneSwitcher(new SceneSwitcherKeys([Keys.LeftControl, Keys.LeftShift, Keys.Semicolon], "Modeling"));
         
         // Utils
@@ -183,7 +193,7 @@ public class Game : GameWindow
         //BlockManager.Add(stone);
         
         // Animation
-        new AnimationManager().Start();
+        new OldAnimationManager().Start();
 
         // GameObjects
         GameObject playerObject = new GameObject();
@@ -210,25 +220,28 @@ public class Game : GameWindow
         
         
         // Modeling Editor
-        ModelingEditor editorComponent = new ModelingEditor();
+        GeneralModelingEditor editorComponent = new GeneralModelingEditor();
         
         GameObject animationObject = new GameObject();
         SceneComponent animationComponent = new SceneComponent("ModelingEditor", editorComponent);
         
         animationObject.AddComponent(editorComponent);
         
-        _animationScene.AddGameObject(animationObject);
-        _animationScene.AddComponent(animationComponent);
+        _modelingScene.AddGameObject(animationObject);
+        _modelingScene.AddComponent(animationComponent);
         
         // UI
-        GameObject uiObject = new GameObject();
         UiEditor uiEditor = new UiEditor();
+        
+        GameObject uiObject = new GameObject();
+        SceneComponent uiEditorComponent = new SceneComponent("UIEditor", uiEditor);
         
         uiObject.AddComponent(uiEditor);
         
         _uiEditorScene.AddGameObject(uiObject);
+        _uiEditorScene.AddComponent(uiEditorComponent);
         
-        AddScenes(_worldScene, _animationScene, _uiScene, _uiEditorScene);
+        AddScenes(_worldScene, _modelingScene, _uiScene, _uiEditorScene);
         
         LoadScene("Modeling");
         
@@ -392,6 +405,11 @@ public class Game : GameWindow
             Instance.CurrentScene = scene;
             scene.Start();
             scene.Awake();
+            if (scene.Resize)
+            {
+                scene.OnResize();
+                scene.Resize = false;
+            }
         }
     }
     
