@@ -1,9 +1,9 @@
 ﻿using OpenTK.Mathematics;
 
-public class StaticPanel : StaticElement
+public class StaticPanel : UiPanel
 {
-    public List<StaticElement> ChildElements;
-    public UiMesh UiMesh;
+    public List<UiPanel> ChildElements;
+    public OldUiMesh UiMesh;
     
     public int TextureIndex = 0;
     
@@ -14,18 +14,18 @@ public class StaticPanel : StaticElement
     {
         Name = name;
         
-        ChildElements = new List<StaticElement>();
+        ChildElements = new List<UiPanel>();
         
         AnchorType = AnchorType.MiddleCenter;
         PositionType = PositionType.Absolute;
     }
     
-    public override void SetMesh(UiMesh mesh)
+    public override void SetMesh(OldUiMesh mesh)
     {
         UiMesh = mesh;
     }
     
-    public void AddElement(StaticElement element)
+    public void AddElement(UiPanel element)
     {
         element.ParentElement = this;
         ChildElements.Add(element);
@@ -33,7 +33,7 @@ public class StaticPanel : StaticElement
 
     public override bool HasChild(UiElement element)
     {
-        foreach (StaticElement child in ChildElements)
+        foreach (UiPanel child in ChildElements)
         {
             if (Equals(child, element))
                 return true;
@@ -47,6 +47,7 @@ public class StaticPanel : StaticElement
     {
         Align();
         var position = OriginType == OriginType.Pivot ? Position : Origin;
+        position.X = Origin.X;
         Create(position + offset);
     }
     
@@ -54,6 +55,7 @@ public class StaticPanel : StaticElement
     {
         Align();
         var position = OriginType == OriginType.Pivot ? Position : Origin;
+        position.X = Origin.X;
         Create(position);
     }
 
@@ -94,7 +96,7 @@ public class StaticPanel : StaticElement
         else
             UiMesh.UpdatePanel(panel, _uiIndex);
         
-        foreach (StaticElement element in ChildElements)
+        foreach (UiPanel element in ChildElements)
         {
             element.Generate();
         }
@@ -132,7 +134,7 @@ public class StaticPanel : StaticElement
         lines.Add(gapString + "    Elements: " + ChildElements.Count);
         if (ChildElements.Count >= 1)
         {
-            foreach (StaticElement element in ChildElements)
+            foreach (UiPanel element in ChildElements)
             {
                 lines.AddRange(element.ToLines(gap + 1));
             }

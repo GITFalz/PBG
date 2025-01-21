@@ -12,7 +12,7 @@ public class StaticInputField : StaticClickable
     
     public TextType TextType = TextType.Alphabetic;
     
-    public TextMesh TextMesh;
+    public OldTextMesh TextMesh;
     
     public SerializableEvent? OnTextChange = null;
 
@@ -47,7 +47,7 @@ public class StaticInputField : StaticClickable
         AnchorType = AnchorType.MiddleCenter;
         PositionType = PositionType.Absolute;
         
-        TextMesh = new TextMesh();  
+        TextMesh = new OldTextMesh();  
     }
     
     public override void Generate()

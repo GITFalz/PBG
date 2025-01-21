@@ -3,7 +3,7 @@ using StbImageSharp;
 
 public class UI
 {
-    public static StaticButton CreateStaticButton(string name, AnchorType anchorType, PositionType positionType, Vector3 scale, Vector4 offset, UiMesh? mesh)
+    public static StaticButton CreateStaticButton(string name, AnchorType anchorType, PositionType positionType, Vector3 scale, Vector4 offset, OldUiMesh? mesh)
     {
         StaticButton button = new StaticButton(name);
         
@@ -30,7 +30,7 @@ public class UI
             Text.SetScale((Vector3)scale);
         if (offset != null)
             Text.SetOffset((Vector4)offset);
-        Text.SetMesh(new TextMesh());
+        Text.SetMesh(new OldTextMesh());
         
         return Text;
     }
@@ -51,7 +51,7 @@ public class UI
         return inputField;
     }
     
-    public static StaticPanel CreateStaticPanel(string name, AnchorType anchorType, PositionType? positionType, Vector3 scale, Vector4? offset, UiMesh? mesh)
+    public static StaticPanel CreateStaticPanel(string name, AnchorType anchorType, PositionType? positionType, Vector3 scale, Vector4? offset, OldUiMesh? mesh)
     {
         StaticPanel panel = new StaticPanel(name);
         
@@ -70,8 +70,8 @@ public class UI
 
 public class Panel
 {
-    public List<Vector3> Vertices = new();
-    public List<Vector2> Uvs = new();
-    public List<int> TextUvs = new();
-    public List<Vector2> UiSizes = new();
+    public List<Vector3> Vertices = [];
+    public List<Vector2> Uvs = [];
+    public List<int> TextUvs = [];
+    public List<Vector2> UiSizes = [];
 }

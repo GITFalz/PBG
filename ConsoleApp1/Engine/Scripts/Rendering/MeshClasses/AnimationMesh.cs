@@ -12,7 +12,7 @@ public class AnimationMesh
     public List<uint> Indices = new List<uint>();
     public List<int> TextureIndices = new List<int>();
     public List<Vector3> Normals = new List<Vector3>();
-    public List<Vector4> BoneIndices = new List<Vector4>();
+    public List<Vector4i> BoneIndices = new List<Vector4i>();
     public List<Matrix4> BoneMatrices = new List<Matrix4>();  
     private VAO _vao = new VAO();
     private IBO _ibo = new IBO([]);

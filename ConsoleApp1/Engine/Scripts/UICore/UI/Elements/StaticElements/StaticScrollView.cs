@@ -1,14 +1,14 @@
 ﻿using OpenTK.Mathematics;
 
-public class StaticScrollView : StaticElement
+public class StaticScrollView : UiPanel
 {
-    public UiMesh maskMesh;
+    public OldUiMesh maskMesh;
     
     private bool _generated = false;
     private int _uiIndex = 0;
     private int _maskIndex = 0;
     
-    public List<StaticElement> ChildElements = new List<StaticElement>();
+    public List<UiPanel> ChildElements = new List<UiPanel>();
     public Vector2 scrollPosition = Vector2.Zero;
     
     public StaticScrollView(string name)
@@ -19,13 +19,13 @@ public class StaticScrollView : StaticElement
         PositionType = PositionType.Absolute;
     }
 
-    public void SetMesh(UiMesh uiMesh, UiMesh mask)
+    public void SetMesh(OldUiMesh uiMesh, OldUiMesh mask)
     {
         base.SetMesh(uiMesh);
         maskMesh = mask;
     }
     
-    public void AddElement(StaticElement element)
+    public void AddElement(UiPanel element)
     {
         element.ParentElement = this;
         ChildElements.Add(element);
@@ -33,7 +33,7 @@ public class StaticScrollView : StaticElement
     
     public override bool HasChild(UiElement element)
     {
-        foreach (StaticElement child in ChildElements)
+        foreach (UiPanel child in ChildElements)
         {
             if (Equals(child, element))
                 return true;
@@ -120,7 +120,7 @@ public class StaticScrollView : StaticElement
         lines.Add(gapString + "    Elements: " + ChildElements.Count);
         if (ChildElements.Count >= 1)
         {
-            foreach (StaticElement element in ChildElements)
+            foreach (UiPanel element in ChildElements)
             {
                 lines.AddRange(element.ToLines(gap + 1));
             }

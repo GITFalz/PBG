@@ -1,111 +1,98 @@
-﻿using OpenTK.Graphics.OpenGL4;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-public class TextMesh : Mesh
+public class TextMesh
 {
-    public List<Vector2i> TextUvs;
-    
-    public VBO _textUvVbo;
-    public TBO _textTbo;
+    public List<Vector3> Vertices = [];
+    public List<Vector2> Uvs = [];
+    public List<uint> Indices = [];
+    public List<int> TransformationIndex = [];
+    public List<Matrix4> TransformationMatrices = [];  
+    public List<Vector2i> TextUvs = [];
+    public List<int> chars = [];
+    private VAO _vao = new VAO();
+    private IBO _ibo = new IBO([]);
+    private VBO _vertVbo = new VBO(new List<Vector3>());
+    private VBO _uvVbo = new VBO(new List<Vector2>());
+    private VBO _transformationVbo = new VBO(new List<int>());
+    public VBO _textUvVbo = new VBO(new List<Vector2i>());
+    private SSBO _transformationSsbo = new SSBO([]);
+    public TBO _textTbo = new TBO([]);
+    public int ElementCount = 0;
 
-    public List<int> chars;
-    public int CharCount;
-    
-    public TextMesh()
+    public void AddTextElement(UIText element, ref int uiIndex)
     {
-        _vao = new VAO();
-        
-        Vertices = new List<Vector3>(4);
-        Uvs = new List<Vector2>(4);
-        Indices = new List<uint>(6);
-        TextUvs = new List<Vector2i>(4);
-        
-        transformedVertices = new List<Vector3>();
-        
-        chars = new List<int>();
+        uiIndex = ElementCount;
+        var textQuad = element.textQuad;
+
+        Vertices.AddRange(textQuad.Vertices);
+        Uvs.AddRange(textQuad.Uvs);
+        TextUvs.AddRange(textQuad.TextSize);
+        chars.AddRange(element.Chars);
+
+        TransformationIndex.AddRange([ElementCount, ElementCount, ElementCount, ElementCount]);
+        TransformationMatrices.Add(element.Transformation);
+
+        ElementCount++;
     }
-    
-    public override void GenerateBuffers()
+
+    public void GenerateBuffers()
     {
+        GenerateIndices();
+
+        _vertVbo = new VBO(Vertices);
+        _uvVbo = new VBO(Uvs);
+        _transformationVbo = new VBO(TransformationIndex);
         _textUvVbo = new VBO(TextUvs);
+        _transformationSsbo = new SSBO(TransformationMatrices);
         _textTbo = new TBO(chars);
-        CharCount = chars.Count;
         
-        base.GenerateBuffers();
+        _vao.LinkToVAO(0, 3, _vertVbo);
+        _vao.LinkToVAO(1, 2, _uvVbo);
+        _vao.LinkToVAO(4, 1, _transformationVbo);
+        _vao.LinkToVAO(5, 2, _textUvVbo);
         
-        _vao.LinkToVAO(2, 2, _textUvVbo);
+        _ibo = new IBO(Indices);
     }
-    
-    public void SetQuad(Vector3 position, MeshQuad meshQuad)
+
+    public void Render()
+    {
+        _vao.Bind();
+        _ibo.Bind();
+        _transformationSsbo.Bind(0);
+        _textTbo.Bind(TextureUnit.Texture1);
+
+        GL.DrawElements(PrimitiveType.Triangles, Indices.Count, DrawElementsType.UnsignedInt, 0);
+
+        _vao.Unbind();
+        _ibo.Unbind();
+        _transformationSsbo.Unbind();
+        _textTbo.Unbind();
+    }
+
+    public void UpdateMatrices()
+    {
+        _transformationSsbo.Update(TransformationMatrices, 0);
+    }
+
+    public void Clear()
     {
         Vertices.Clear();
         Uvs.Clear();
         Indices.Clear();
-        TextUvs.Clear();
-        transformedVertices.Clear();
-        chars.Clear();
-        
-        foreach (Vector3 v in meshQuad.Vertices)
-        {
-            Vertices.Add(v + position);
-            transformedVertices.Add(v + position);
-        }
-        
-        foreach (int i in meshQuad.Indices)
-        {
-            Indices.Add((uint)i);
-        }
-        
-        foreach (Vector2 uv in meshQuad.Uvs)
-        {
-            Uvs.Add(uv);
-        }
-        
-        foreach (Vector2i uv in meshQuad.TextureUvs)
-        {
-            TextUvs.Add(uv);
-        }
-    }
-    
-    public void MoveUiElement(Vector3 position)
-    {
-        for (int i = 0; i < 4; i++)
-        {
-            transformedVertices[i] = Vertices[i] + position;
-        }
+        TransformationIndex.Clear();
+        TransformationMatrices.Clear();
+        ElementCount = 0;
     }
 
-    public override void UpdateMesh()
+    public void GenerateIndices()
     {
-        if (chars.Count != CharCount)
-        {
-            _textTbo = new TBO(chars);
-            CharCount = chars.Count;
-            _textUvVbo.Update(TextUvs);
-        }
-        _textTbo.Update(chars);
-        base.UpdateMesh();
-    }
-    
-    public override void RenderMesh()
-    {
-        _textTbo.Bind(TextureUnit.Texture1);
-        base.RenderMesh();
-        _textTbo.Unbind();
-    }
-    
-    public override void Delete()
-    {
-        _textUvVbo.Delete();
-        
-        base.Delete();
-    }
+        Indices.Clear();
 
-    public override void Clear()
-    {
-        base.Clear();
-        
-        TextUvs.Clear();
-        chars.Clear();
+        for (uint i = 0; i < ElementCount; i++)
+        {
+            uint index = i * 4;
+            Indices.AddRange([index, index + 1, index + 2, index + 2, index + 3, index]);
+        }
     }
 }

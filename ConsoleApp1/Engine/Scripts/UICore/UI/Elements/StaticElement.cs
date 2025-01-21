@@ -1,13 +1,13 @@
 ﻿using OpenTK.Mathematics;
 
-public abstract class StaticElement : UiElement
+public abstract class UiPanel : UiElement
 {
-    public StaticElement? ParentElement = null;
-    public UiMesh UiMesh;
+    public UiPanel? ParentElement = null;
+    public OldUiMesh UiMesh;
     
     public int TextureIndex = 0;
     
-    public virtual void SetMesh(UiMesh uiMesh) {}
+    public virtual void SetMesh(OldUiMesh uiMesh) {}
 
     public virtual void Test() {}
     public virtual void Test(Vector2 offset) {}
@@ -21,6 +21,7 @@ public abstract class StaticElement : UiElement
     {
         Pivot = pivot;
         Rotation = Quaternion.FromAxisAngle(Vector3.UnitZ, MathHelper.DegreesToRadians(angle));
+        Rotated = true;
     }
     
     public void SetOriginType(OriginType originType)
@@ -131,5 +132,7 @@ public abstract class StaticElement : UiElement
         }
         
         Origin = Position - halfScale;
+        Position.Z = Depth;
+        Origin.Z = Depth;
     }
 }

@@ -28,19 +28,11 @@ public class Game : GameWindow
     public static string uiPath;
     public static string modelPath;
 
-    private Camera _mainCamera;
-    
-    private WorldManager _worldManager;
 
-    private Action? _updateText;
-    
-    
-    private FBO _fbo;
-    
+    private Camera _mainCamera;
+    private WorldManager _worldManager;
     
     public ConcurrentDictionary<string, Scene> Scenes = new ConcurrentDictionary<string, Scene>();
-    
-    public static bool cameraMove = false;
     private KeyboardSwitch _visibleCursorSwitch;
 
 
@@ -70,9 +62,9 @@ public class Game : GameWindow
     
     
     public Scene? CurrentScene { get; private set; }
-    
-    
-    public static HashSet<Action> OnPressedKeys = new HashSet<Action>();
+
+    // Miscaleanous Ui
+    private PopUp _popUp;
     
     
     // Editor mode
@@ -109,7 +101,7 @@ public class Game : GameWindow
         
         try
         {
-            UIController.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, e.Width, e.Height, 0, -1, 1);
+            UIController.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, e.Width, e.Height, 0, -2, 2);
             _mainCamera.UpdateProjectionMatrix(e.Width, e.Height);
         }
         catch (Exception ex)
@@ -242,6 +234,8 @@ public class Game : GameWindow
         _uiEditorScene.AddComponent(uiEditorComponent);
         
         AddScenes(_worldScene, _modelingScene, _uiScene, _uiEditorScene);
+
+        _popUp = new PopUp();
         
         LoadScene("Modeling");
         
@@ -256,7 +250,7 @@ public class Game : GameWindow
     protected override void OnKeyDown(KeyboardKeyEventArgs e)
     {
         base.OnKeyDown(e);
-        UIController.InputField(e.Key);
+        OldUIController.InputField(e.Key);
     }
     
     protected override void OnKeyUp(KeyboardKeyEventArgs e)
@@ -316,6 +310,8 @@ public class Game : GameWindow
         GL.DepthMask(true);
         GL.DepthFunc(DepthFunction.Less);
         */
+
+        _popUp.Render();
         
         GL.Enable(EnableCap.CullFace);
         GL.FrontFace(FrontFaceDirection.Ccw);
@@ -367,6 +363,8 @@ public class Game : GameWindow
 
         if (Input.IsKeyPressed(Keys.LeftAlt))
             MoveTest = !MoveTest;
+
+        _popUp.Update();
         
         CurrentScene?.Update();
         

@@ -70,12 +70,6 @@ public class RigMesh : BoxMesh
         _ibo.Unbind();
     }
 
-    public void Reset()
-    {
-        RootBone.ResetRotation();
-        RootBone.ResetTransformedVertices();
-    }
-
     public override void Delete()
     {
         _textureVbo.Delete();
@@ -91,7 +85,7 @@ public class RigMesh : BoxMesh
         foreach (var vert in VertexList)
         {
             animationMesh.Vertices.Add(vert.Position);
-            animationMesh.BoneIndices.Add((vert.BoneIndex < boneCount ? vert.BoneIndex : -1, -1, -1, -1));
+            animationMesh.BoneIndices.Add((vert.BoneIndex < boneCount ? vert.BoneIndex : -1, -1, -1, -1)); //
         }
 
         animationMesh.Uvs = [.. Uvs];

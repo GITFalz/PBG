@@ -26,10 +26,10 @@ public class ModelingEditor : BaseEditor
     
     public override void Update(GeneralModelingEditor editor)
     {
-        if (UIController.activeInputField != null)
+        if (OldUIController.activeInputField != null)
         {
             if (Input.IsKeyPressed(Keys.Escape) || Input.IsKeyPressed(Keys.Enter))
-                UIController.activeInputField = null;
+                OldUIController.activeInputField = null;
             
             return;
         }
@@ -95,13 +95,13 @@ public class ModelingEditor : BaseEditor
             editor.model.Mesh.InitModel();
             editor.model.Mesh.UpdateMesh();
             
-            editor.SnappingOffset = Vector3.Zero;
+            ModelSettings.SnappingOffset = Vector3.Zero;
             editor.regenerateVertexUi = true;
         }
 
         if (Input.IsKeyReleased(Keys.G))
         {
-            editor.SnappingOffset = Vector3.Zero;
+            ModelSettings.SnappingOffset = Vector3.Zero;
             editor.regenerateVertexUi = true;
         }
         

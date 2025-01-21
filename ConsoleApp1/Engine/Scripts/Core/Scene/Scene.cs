@@ -7,7 +7,7 @@ public class Scene : Updateable
     private HashSet<SceneSwitcher> _sceneSwitchers = new HashSet<SceneSwitcher>();
     private List<GameObject> _gameObjects = new List<GameObject>();
 
-    public UIController? UiController = null;
+    public OldUIController? UiController = null;
     public Dictionary<string, SceneComponent> Components = new Dictionary<string, SceneComponent>();
 
     private bool _started = false;
@@ -160,7 +160,7 @@ public class Scene : Updateable
         if (lines.Length == 0 || lines[0].Split(":")[1].Trim() != Name)
             return;
 
-        UIController? controller;
+        OldUIController? controller;
         try
         {
             controller = UiController;

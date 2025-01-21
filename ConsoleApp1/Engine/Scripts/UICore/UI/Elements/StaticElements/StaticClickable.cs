@@ -2,7 +2,7 @@
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-public abstract class StaticClickable : StaticElement
+public abstract class StaticClickable : UiPanel
 {
     public SerializableEvent? OnHover;
     public SerializableEvent? OnClick;
@@ -14,7 +14,7 @@ public abstract class StaticClickable : StaticElement
     private int _uiIndex = 0;
     private bool _generated = false;
     
-    public override void SetMesh(UiMesh uiMesh)
+    public override void SetMesh(OldUiMesh uiMesh)
     {
         UiMesh = uiMesh;
     }

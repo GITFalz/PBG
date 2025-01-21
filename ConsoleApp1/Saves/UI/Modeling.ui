@@ -68,7 +68,7 @@ Static Panel
     Static Input Field
     {
         Name: FileName
-        Text: cube
+        Text: animationTest
         FontSize: 0.7
         Position: (135, 37, 0)
         Scale: (230, 30, 0)
@@ -77,7 +77,7 @@ Static Panel
         PositionType: 1
         TextType: 2
         TextureIndex: 0
-        OnClick: Static.UIController.AssignInputField(FileName)
+        OnClick: Modeling..
         OnHover: null
         OnHold: null
         OnRelease: null

@@ -1,128 +1,99 @@
-﻿using OpenTK.Mathematics;
+using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 
-public class UiMesh : Mesh
+public class UIMesh
 {
-    public List<int> TextUvs;
-    public VBO _textUvVbo;
+    public List<Vector3> Vertices = [];
+    public List<Vector2> Uvs = [];
+    public List<uint> Indices = [];
+    public List<int> TextureIndices = [];
+    public List<Vector2> UiSizes = [];
+    public List<int> TransformationIndex = [];
+    public List<Matrix4> TransformationMatrices = [];  
+    private VAO _vao = new VAO();
+    private IBO _ibo = new IBO([]);
+    private VBO _vertVbo = new VBO(new List<Vector3>());
+    private VBO _uvVbo = new VBO(new List<Vector2>());
+    private VBO _textureVbo = new VBO(new List<int>());
+    public VBO _uiSizeVbo = new VBO(new List<Vector2>());
+    private VBO _transformationVbo = new VBO(new List<int>());
+    private SSBO _transformationSsbo = new SSBO([]);
+    public int ElementCount = 0;
 
-    public List<Vector2> UiSizes;
-    public VBO _uiSizeVbo;
-    
-    public int elementCount = 0;
-    
-    public UiMesh()
+    public void AddElement(UIElement element, ref int uiIndex)
     {
-        _vao = new VAO();
-        
-        Vertices = new List<Vector3>();
-        Uvs = new List<Vector2>();
-        Indices = new List<uint>();
-        TextUvs = new List<int>();
-        UiSizes = new List<Vector2>();
-        
-        transformedVertices = new List<Vector3>();
+        uiIndex = ElementCount;
+        var panel = element.panel;
+
+        Vertices.AddRange(panel.Vertices);
+        Uvs.AddRange(panel.Uvs);
+        TextureIndices.AddRange(panel.TextUvs);
+        UiSizes.AddRange(panel.UiSizes);
+
+        TransformationIndex.AddRange([ElementCount, ElementCount, ElementCount, ElementCount]);
+        TransformationMatrices.Add(element.Transformation);
+
+        ElementCount++;
     }
 
-    public void Init()
+    public void GenerateBuffers()
     {
-        transformedVertices.Clear();
-        
-        int i = 0;
-        foreach (var t in Vertices)
-        {
-            transformedVertices.Add(t + Position + new Vector3(0, 0, 0.01f) * (int)(i / 4));
-            i++;
-        }
-    }
-    
-    public override void GenerateBuffers()
-    {
-        _textUvVbo = new VBO(TextUvs);
-        _uiSizeVbo = new VBO(UiSizes);
-        
-        transformedVertices.Clear();
+        GenerateIndices();
 
-        int i = 0;
-        foreach (var t in Vertices)
-        {
-            transformedVertices.Add(t + Position + new Vector3(0, 0, 0.01f) * (int)(i / 4));
-            i++;
-        }
-        
-        _vertVbo = new VBO(transformedVertices);
+        _vertVbo = new VBO(Vertices);
         _uvVbo = new VBO(Uvs);
+        _textureVbo = new VBO(TextureIndices);
+        _uiSizeVbo = new VBO(UiSizes);
+        _transformationVbo = new VBO(TransformationIndex);
+        _transformationSsbo = new SSBO(TransformationMatrices);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
         _vao.LinkToVAO(1, 2, _uvVbo);
-        _vao.LinkToVAO(2, 1, _textUvVbo);
+        _vao.LinkToVAO(2, 1, _textureVbo);
         _vao.LinkToVAO(3, 2, _uiSizeVbo);
+        _vao.LinkToVAO(4, 1, _transformationVbo);
         
         _ibo = new IBO(Indices);
     }
-    
-    public void AddPanel(Panel panel, out int index)
-    {
-        index = elementCount;
-        
-        for (int i = 0; i < 4; i++)
-        {
-            Vertices.Add(panel.Vertices[i]);
-            Uvs.Add(panel.Uvs[i]);
-            TextUvs.Add(panel.TextUvs[i]);
-            UiSizes.Add(panel.UiSizes[i]);
-        }
-        
-        foreach (var t in Vertices)
-        {
-            transformedVertices.Add(t + Position);
-        }
-        
-        int offset = elementCount * 4;
-            
-        Indices.Add((uint) (offset));
-        Indices.Add((uint) (offset + 1));
-        Indices.Add((uint) (offset + 2));
-        Indices.Add((uint) (offset + 2));
-        Indices.Add((uint) (offset + 3));
-        Indices.Add((uint) (offset));
-        
-        elementCount++;
-    }
-    
-    public void UpdatePanel(Panel panel, int index)
-    {
-        int offset = index * 4;
-        
-        for (int i = 0; i < 4; i++)
-        {
-            Vertices[offset + i] = panel.Vertices[i];
-            Uvs[offset + i] = (panel.Uvs[i]);
-            TextUvs[offset + i] = (panel.TextUvs[i]);
-            UiSizes[offset + i] = (panel.UiSizes[i]);
-        }
 
-        Init();
+    public void Render()
+    {
+        _vao.Bind();
+        _ibo.Bind();
+        _transformationSsbo.Bind(0);
+
+        GL.DrawElements(PrimitiveType.Triangles, Indices.Count, DrawElementsType.UnsignedInt, 0);
+
+        _vao.Unbind();
+        _ibo.Unbind();
+        _transformationSsbo.Unbind();
     }
-    
-    
-    
-    public override void Clear()
+
+    public void UpdateMatrices()
+    {
+        _transformationSsbo.Update(TransformationMatrices, 0);
+    }
+
+    public void Clear()
     {
         Vertices.Clear();
         Uvs.Clear();
-        TextUvs?.Clear();
         Indices.Clear();
-        UiSizes?.Clear();
-        
-        transformedVertices.Clear();
-        
-        elementCount = 0;
+        TextureIndices.Clear();
+        UiSizes.Clear();
+        TransformationIndex.Clear();
+        TransformationMatrices.Clear();
+        ElementCount = 0;
     }
-    
-    public override void Delete()
+
+    public void GenerateIndices()
     {
-        _textUvVbo.Delete();
-        
-        base.Delete();
+        Indices.Clear();
+
+        for (uint i = 0; i < ElementCount; i++)
+        {
+            uint index = i * 4;
+            Indices.AddRange([index, index + 1, index + 2, index + 2, index + 3, index]);
+        }
     }
 }

@@ -3,19 +3,12 @@
 public class Bone
 {
     public Bone RootBone;
-    public string Name;
+    public readonly string Name;
     public List<Bone> Children = new List<Bone>();
     
     // Base values
     public Vector3 Pivot = Vector3.Zero;
     public Vector3 End = (0, 2, 0);
-    public List<Vector3> Vertices = new List<Vector3>();
-    
-    // Transformed values
-    public Quaternion TransformedRotation;
-    public Vector3 TransformedPivot;
-    public Vector3 TransformedEnd;
-    public List<Vector3> TransformedVertices = new List<Vector3>();
 
     public Matrix4 localTransform;
     public Matrix4 globalTransform;
@@ -36,57 +29,17 @@ public class Bone
         Name = name;
     }
 
-    public void SetVertices(List<Vector3> vertices)
+    public Bone AddChild(Bone child)
     {
-        Vertices = vertices;
-        TransformedVertices = [.. vertices];
-    }
-    
-    public void Rotate(Quaternion rotation, Vector3 pivot)
-    {
-        ApplyRotation(rotation, pivot);
-
-        foreach (var child in Children)
+        var names = RootBone.GetChildNames(); 
+        string newName = child.Name;
+        while (names.Contains(newName))
         {
-            child.RotateChildren(rotation, pivot);
+            newName += $"{names.Count}";
         }
-    }
-
-    public void Rotate(Quaternion rotation)
-    {
-        Rotate(rotation, TransformedPivot);
-    }
-
-    private void RotateChildren(Quaternion rotation, Vector3 pivot)
-    {
-        ApplyRotation(rotation, pivot);
-
-        foreach (var child in Children)
-        {
-            child.RotateChildren(rotation, pivot);
-        }
-    }
-    
-    private void ApplyRotation(Quaternion rotation, Vector3 pivot)
-    {
-        TransformedPivot = Mathf.RotateAround(TransformedPivot, pivot, rotation);
-        TransformedEnd = Mathf.RotateAround(TransformedEnd, pivot, rotation);
-
-        for (int i = 0; i < TransformedVertices.Count; i++)
-        {
-            TransformedVertices[i] = Mathf.RotateAround(TransformedVertices[i], pivot, rotation);
-        }
-    }
-
-    public void AddChild(Bone child)
-    {
-        var names = RootBone.GetChildNames();
-        while (names.Contains(child.Name))
-        {
-            child.Name += $"{names.Count}";
-        }
+        child = child.Copy(RootBone, newName);
         Children.Add(child);
-        child.RootBone = this;
+        return child;
     }
 
     public bool IsRoot()
@@ -107,19 +60,6 @@ public class Bone
     public void SetPivot(Vector3 pivot)
     {
         Pivot = pivot;
-        TransformedPivot = pivot;
-    }
-
-    public void ResetRotation()
-    {
-        TransformedRotation = Quaternion.Identity;
-        TransformedPivot = Pivot;
-        TransformedEnd = End;
-
-        foreach (var child in Children)
-        {
-            child.ResetRotation();
-        }
     }
 
     public void CalculateGlobalTransform()
@@ -130,24 +70,6 @@ public class Bone
         }
     }
 
-    public void ResetTransformedVertices()
-    {
-        TransformedVertices = [.. Vertices];
-
-        foreach (var child in Children)
-        {
-            child.ResetTransformedVertices();
-        }
-    }
-    
-    public List<Vector3> GetTransformedVertices()
-    {
-        List<Vector3> vertices = [];
-        foreach (var vertex in TransformedVertices) { vertices.Add(vertex); }
-        foreach (var child in Children) { vertices.AddRange(child.GetTransformedVertices()); }
-        return vertices;
-    }
-
     public List<Bone> GetBones()
     {
         List<Bone> bones = [this];
@@ -156,5 +78,51 @@ public class Bone
             bones.AddRange(child.GetBones());
         }
         return bones;
+    }
+
+    private Bone Copy(Bone rootBone, string name)
+    {
+        Bone bone = new(rootBone, name);
+
+        bone.Pivot = Pivot;
+        bone.End = End;
+        bone.localTransform = localTransform;
+        bone.globalTransform = globalTransform;
+
+        foreach (var child in Children)
+        {
+            bone.Children.Add(child.Copy(rootBone, child.Name));
+        }
+
+        return bone;
+    }
+
+
+    public override bool Equals(object? obj)
+    {
+        if (obj == null || GetType() != obj.GetType())
+        {
+            return false;
+        }
+
+        Bone bone = (Bone) obj;
+        return Name == bone.Name;
+    }
+
+    public override int GetHashCode()
+    {
+        return Name.GetHashCode();
+    }
+}
+
+public struct BoneSelection
+{
+    public bool PivotSelected;
+    public bool EndSelected;
+
+    public BoneSelection(bool pivotSelected, bool endSelected)
+    {
+        PivotSelected = pivotSelected;
+        EndSelected = endSelected;
     }
 }

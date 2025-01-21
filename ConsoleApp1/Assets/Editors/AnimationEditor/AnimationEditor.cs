@@ -5,11 +5,12 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class AnimationEditor : BaseEditor
 {
-    public UIController BoneUi = new UIController();
+    public OldUIController BoneUi = new OldUIController();
 
     private bool freeCamera = false;
     private bool regenerateUi = false;
     private bool _started = false;
+    public Model model;
     
     public override void Start(GeneralModelingEditor editor)
     {
@@ -19,6 +20,7 @@ public class AnimationEditor : BaseEditor
         
         if (!_started)
         {
+            model = editor.model;
             BoneUi.Generate();
             _started = true;
         }
@@ -33,6 +35,8 @@ public class AnimationEditor : BaseEditor
     
     public override void Update(GeneralModelingEditor editor)
     {
+        var links = editor.GetLinkPositions(model.Bones);
+
         if (Input.IsKeyPressed(Keys.Escape))
         {
             freeCamera = !freeCamera;
@@ -60,9 +64,9 @@ public class AnimationEditor : BaseEditor
         }
         else
         {
-            foreach (var pos in editor.GetLinkPositions([new Link<Vector3>((1, 0, -1), (1, 2, -1))]))
+            foreach (var pos in links)
             {
-                var panel = editor.GeneratePanelLink(pos.A, pos.B);
+                var panel = editor.GeneratePanelLink(pos.A, pos.B, 3);
                 BoneUi.AddStaticElement(panel);
             }
         

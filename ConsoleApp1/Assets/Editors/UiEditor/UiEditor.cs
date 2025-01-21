@@ -4,8 +4,8 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class UiEditor : Updateable
 {
-    public UIController MainUi = new UIController();
-    public UIController EditUi = new UIController();
+    public OldUIController MainUi = new OldUIController();
+    public OldUIController EditUi = new OldUIController();
     
     private List<UiElement> _selectedElements = new List<UiElement>();
 
@@ -47,7 +47,7 @@ public class UiEditor : Updateable
         EditUi.TestButtons(mouseOffset);
         
         if (Input.AreKeysPressed(Keys.Escape, Keys.Enter))
-            UIController.activeInputField = null;
+            OldUIController.activeInputField = null;
         
         if (Input.IsMousePressed(MouseButton.Left))
         {
@@ -102,7 +102,7 @@ public class UiEditor : Updateable
         Game.width = width - 440;
         Game.centerX = Game.width / 2;
         
-        UIController.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, Game.width, Game.height, 0, -1, 1);
+        OldUIController.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, Game.width, Game.height, 0, -1, 1);
 
         EditUi.Render();
         
@@ -110,7 +110,7 @@ public class UiEditor : Updateable
         Game.width = width;
         Game.centerX = Game.width / 2;
         
-        UIController.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, Game.width, Game.height, 0, -1, 1);
+        OldUIController.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, Game.width, Game.height, 0, -1, 1);
     }
 
     public override void Exit()

@@ -1,6 +1,6 @@
 ﻿using OpenTK.Mathematics;
 
-public class StaticText : StaticElement
+public class StaticText : UiPanel
 {
     public string Text;
     public float FontSize;
@@ -10,7 +10,7 @@ public class StaticText : StaticElement
     
     public Vector2 TextSize;
     
-    public TextMesh Mesh;
+    public OldTextMesh Mesh;
     
     public StaticText(string name, string text, float fontSize)
     {
@@ -22,7 +22,7 @@ public class StaticText : StaticElement
         PositionType = PositionType.Absolute;
     }
     
-    public void SetMesh(TextMesh mesh)
+    public void SetMesh(OldTextMesh mesh)
     {
         Mesh = mesh;
     }

@@ -55,6 +55,11 @@ public class Model
         CurrentModel.Init(this);
     }
 
+    public void UpdateBones()
+    {
+        Bones = Mesh.RootBone.GetBones();
+    }
+
     public void SetCurrentAnimation(string animationName)
     {
         if (Animations.TryGetValue(animationName, out var animation))
@@ -138,7 +143,7 @@ public class ModelAnimation : ModelBase
                 continue;
 
             var bone = Bones[i];
-            bone.localTransform = Model.GetRotationMatrix(Bones[i].TransformedPivot, (Quaternion)frame);
+            bone.localTransform = Model.GetRotationMatrix(Bones[i].Pivot, (Quaternion)frame);
         }
 
         Mesh.RootBone.CalculateGlobalTransform();
@@ -270,7 +275,16 @@ public class ModelModeling : ModelBase
 public static class ModelSettings
 {
     public static Camera? Camera;
+
+    // Ui values
     public static float MeshAlpha = 1.0f;
+    public static bool BackfaceCulling = true;
+    public static bool Snapping = false;
+    public static float SnappingFactor = 1;
+    public static int SnappingFactorIndex = 0;
+    public static Vector3 SnappingOffset = new Vector3(0, 0, 0);
+
+
     public static Vector3i mirror = (0, 0, 0);
     public static Vector3[] Mirrors => Mirroring[mirror];
     public static readonly Dictionary<Vector3i, Vector3[]> Mirroring = new Dictionary<Vector3i, Vector3[]>()

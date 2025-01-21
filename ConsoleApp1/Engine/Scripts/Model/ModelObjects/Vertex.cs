@@ -65,6 +65,15 @@ public class Vertex
 
         return true;
     }    
+
+    public void SetBoneIndexForAll(int index)
+    {
+        BoneIndex = index;
+        foreach (var sharedVertex in SharedVertices)
+        {
+            sharedVertex.BoneIndex = index;
+        }
+    }
     
     public bool SharesTriangleWith(Vertex vertex)
     {

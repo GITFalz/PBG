@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -17,20 +13,17 @@ public class GeneralModelingEditor : Updateable
     public Camera camera;
 
     public StaticText BackfaceCullingText;
-    public bool BackfaceCulling;
 
     public StaticText MeshAlphaText;
-    public float MeshAlpha;
 
     public StaticText SnappingText;
-    public bool Snapping;
 
     public StaticText MirrorText;
     public StaticInputField InputField;
 
 
-    public UIController MainUi = new UIController();
-    public UIController Ui = new UIController();
+    public OldUIController MainUi = new OldUIController();
+    public OldUIController Ui = new OldUIController();
 
 
     public Model model = new Model();
@@ -42,7 +35,7 @@ public class GeneralModelingEditor : Updateable
 
     public bool regenerateVertexUi = false;
     
-    public UIController BoneUi = new UIController();
+    public OldUIController BoneUi = new OldUIController();
     
     public Bone? _selectedBone = null;
     
@@ -54,12 +47,6 @@ public class GeneralModelingEditor : Updateable
     public StaticInputField BoneEndY;
     public StaticInputField BoneEndZ;
     
-    public float SnappingFactor = 1;
-    public int SnappingFactorIndex = 0;
-    public Vector3 SnappingOffset = new Vector3(0, 0, 0);
-    
-    public float _mouseX = 0;
-    public bool _command = false;
     
     public List<Vertex> _selectedVertices = new List<Vertex>();
 
@@ -91,17 +78,17 @@ public class GeneralModelingEditor : Updateable
         var t = MainUi.GetElement<StaticText>("CullingText");
 
         BackfaceCullingText = t ?? throw new NotFoundException("CullingText");
-        BackfaceCulling = bool.Parse(BackfaceCullingText.Text.Split(' ')[1].Trim());
+        ModelSettings.BackfaceCulling = bool.Parse(BackfaceCullingText.Text.Split(' ')[1].Trim());
         
         t = MainUi.GetElement<StaticText>("AlphaText");
         
         MeshAlphaText = t ?? throw new NotFoundException("AlphaText");
-        MeshAlpha = float.Parse(MeshAlphaText.Text.Split(' ')[1].Trim());
+        ModelSettings.MeshAlpha = float.Parse(MeshAlphaText.Text.Split(' ')[1].Trim());
         
         t = MainUi.GetElement<StaticText>("SnappingText");
         
         SnappingText = t ?? throw new NotFoundException("SnappingText");
-        Snapping = SnappingText.Text.Split(' ')[1].Trim() != "off";
+        ModelSettings.Snapping = SnappingText.Text.Split(' ')[1].Trim() != "off";
         
         t = MainUi.GetElement<StaticText>("MirrorText");
         
@@ -207,7 +194,7 @@ public class GeneralModelingEditor : Updateable
         GL.Enable(EnableCap.Blend);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
-        MeshAlpha = 1f;
+        ModelSettings.MeshAlpha = 1f;
         model.Render();
 
         Ui.Render();
@@ -215,7 +202,7 @@ public class GeneralModelingEditor : Updateable
 
     public void RenderModel()
     {
-        if (BackfaceCulling)
+        if (ModelSettings.BackfaceCulling)
         {
             GL.Enable(EnableCap.CullFace);
             GL.Enable(EnableCap.DepthTest);
@@ -291,7 +278,7 @@ public class GeneralModelingEditor : Updateable
     {
         StaticInputField? inputField = MainUi.GetInputField(test);
         if (inputField != null)
-            UIController.activeInputField = inputField;
+            OldUIController.activeInputField = inputField;
     }
     
     public void AlphaControl()
@@ -300,27 +287,27 @@ public class GeneralModelingEditor : Updateable
         if (mouseX == 0)
             return;
             
-        MeshAlpha += mouseX * GameTime.DeltaTime * 0.2f;
-        MeshAlpha = Mathf.Clamp(0, 1, MeshAlpha);
-        MeshAlphaText.SetText("alpha: " + MeshAlpha.ToString("F2"));
+        ModelSettings.MeshAlpha += mouseX * GameTime.DeltaTime * 0.2f;
+        ModelSettings.MeshAlpha = Mathf.Clamp(0, 1, ModelSettings.MeshAlpha);
+        MeshAlphaText.SetText("alpha: " + ModelSettings.MeshAlpha.ToString("F2"));
         MeshAlphaText.Generate();
         MainUi.Update();
     }
 
     public void BackFaceCullingSwitch()
     {
-        BackfaceCulling = !BackfaceCulling;
-        BackfaceCullingText.SetText("culling: " + BackfaceCulling);
+        ModelSettings.BackfaceCulling = !ModelSettings.BackfaceCulling;
+        BackfaceCullingText.SetText("culling: " + ModelSettings.BackfaceCulling);
         BackfaceCullingText.Generate();
         MainUi.Update();
     }
 
     public void SnappingUpButton()
     {
-        if (SnappingFactorIndex < 4)
+        if (ModelSettings.SnappingFactorIndex < 4)
         {
-            SnappingFactorIndex++;
-            SnappingFactor = SnappingFactors[SnappingFactorIndex];
+            ModelSettings.SnappingFactorIndex++;
+            ModelSettings.SnappingFactor = SnappingFactors[ModelSettings.SnappingFactorIndex];
         }
 
         UpdateSnappingText();
@@ -328,17 +315,17 @@ public class GeneralModelingEditor : Updateable
     
     public void SnappingDownButton()
     {
-        if (SnappingFactorIndex > 0)
+        if (ModelSettings.SnappingFactorIndex > 0)
         {
-            SnappingFactorIndex--;
-            SnappingFactor = SnappingFactors[SnappingFactorIndex];
+            ModelSettings.SnappingFactorIndex--;
+            ModelSettings.SnappingFactor = SnappingFactors[ModelSettings.SnappingFactorIndex];
         }
         UpdateSnappingText();
     }
     
     public void SnappingSwitchButton()
     {
-        Snapping = !Snapping;
+        ModelSettings.Snapping = !ModelSettings.Snapping;
         UpdateSnappingText();
     }
     
@@ -436,18 +423,28 @@ public class GeneralModelingEditor : Updateable
         return panel;
     }
     
-    public StaticPanel GeneratePanelLink(Vector2 pos1, Vector2 pos2)
+    public StaticPanel GeneratePanelLink(Vector2 pos1, Vector2 pos2, int textureIndex)
     {
         float distance = Vector2.Distance(pos1, pos2);
-        StaticPanel panel = UI.CreateStaticPanel(pos1.ToString(), AnchorType.MiddleCenter, PositionType.Free, new Vector3(20, distance, 0), new Vector4(0, 0, 0, 0), null);
+        StaticPanel panel = UI.CreateStaticPanel(pos1.ToString(), AnchorType.TopLeft, PositionType.Free, new Vector3(20, distance, 0), new Vector4(0, 0, 0, 0), null);
         panel.SetPosition(new Vector3(pos1.X, pos1.Y, 0));
         panel.SetRotation(new Vector3(pos1.X, pos1.Y, 0), -Mathf.GetAngleBetweenPoints(pos1, pos2));
         panel.SetOriginType(OriginType.Pivot);
-        panel.TextureIndex = 3;
+        panel.TextureIndex = textureIndex;
         return panel;
     }
 
     public void Handle_MovingSelectedVertices()
+    {
+        Vector3 move = GetSnappingMovement();
+        MoveSelectedVertices(move);
+        
+        model.Mesh.RecalculateNormals();
+        model.Mesh.InitModel();
+        model.Mesh.UpdateMesh();
+    }
+
+    public Vector3 GetSnappingMovement()
     {
         Vector2 mouseDelta = Input.GetMouseDelta() * (GameTime.DeltaTime * 10);
         Vector3 move = camera.right * mouseDelta.X + camera.up * -mouseDelta.Y;
@@ -455,9 +452,13 @@ public class GeneralModelingEditor : Updateable
         if (Input.AreKeysDown(out int index, Keys.X, Keys.C, Keys.V))
             move *= AxisIgnore[index];
         
-        if (Snapping)
+        if (ModelSettings.Snapping)
         {
             Vector3 Offset = Vector3.Zero;
+
+            Vector3 SnappingOffset = ModelSettings.SnappingOffset;
+            float SnappingFactor = ModelSettings.SnappingFactor;
+
             SnappingOffset += move;
             if (SnappingOffset.X > SnappingFactor)
             {
@@ -489,14 +490,14 @@ public class GeneralModelingEditor : Updateable
                 Offset.Z = -SnappingFactor;
                 SnappingOffset.Z += SnappingFactor;
             }
+
+            ModelSettings.SnappingOffset = SnappingOffset;
+            ModelSettings.SnappingFactor = SnappingFactor;
+        
             move = Offset;
         }
 
-        MoveSelectedVertices(move);
-        
-        model.Mesh.RecalculateNormals();
-        model.Mesh.InitModel();
-        model.Mesh.UpdateMesh();
+        return move;
     }
 
     public void Handle_FaceExtrusion()
@@ -826,8 +827,8 @@ public class GeneralModelingEditor : Updateable
 
     public void UpdateSnappingText()
     {
-        if (Snapping)
-            SnappingText.SetText("snap: " + SnappingFactor.ToString("F2"));
+        if (ModelSettings.Snapping)
+            SnappingText.SetText("snap: " + ModelSettings.SnappingFactor.ToString("F2"));
         else
             SnappingText.SetText("snap: off");
         

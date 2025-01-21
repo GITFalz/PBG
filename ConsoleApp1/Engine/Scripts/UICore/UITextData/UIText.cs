@@ -1,6 +1,6 @@
 ﻿using OpenTK.Mathematics;
 
-public static class UIText
+public static class UiText
 {
     public const float Cw = 1f / 18f;
     

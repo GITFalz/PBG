@@ -14,9 +14,11 @@ public abstract class UiElement
     public Vector3 HalfScale = new Vector3(50, 50, 0);
     
     public Vector4 ScreenOffset = new Vector4(0, 0, 0, 0);
+    public float Depth = 0;
     
     public Vector3 Pivot;
     public Quaternion Rotation = Quaternion.Identity;
+    public bool Rotated = false;
     
     public OriginType OriginType = OriginType.Center;
     
@@ -65,13 +67,30 @@ public abstract class UiElement
     public bool IsMouseOver()
     {
         Vector2 pos = Input.GetMousePosition();
-        return pos.X >= Origin.X && pos.X <= Origin.X + Scale.X && pos.Y >= Origin.Y && pos.Y <= Origin.Y + Scale.Y;
+        return MouseOver(pos, Origin.Xy, Scale.Xy);
     }
     
     public bool IsMouseOver(Vector2 offset)
     {
         Vector2 pos = Input.GetMousePosition();
-        return pos.X >= Origin.X + offset.X && pos.X <= Origin.X + offset.X + Scale.X && pos.Y >= Origin.Y + offset.Y && pos.Y <= Origin.Y + offset.Y + Scale.Y;
+        return MouseOver(pos, Origin.Xy + offset, Scale.Xy);
+    }
+
+    private bool MouseOver(Vector2 pos, Vector2 origin, Vector2 scale)
+    {
+        if (Rotated)
+        {
+            Vector3 point1 = Mathf.RotateAround((origin.X, origin.Y, 0), Pivot, Rotation);
+            Vector3 point2 = Mathf.RotateAround((origin.X + scale.X, origin.Y, 0), Pivot, Rotation);
+            Vector3 point3 = Mathf.RotateAround((origin.X + scale.X, origin.Y + scale.Y, 0), Pivot, Rotation);
+            Vector3 point4 = Mathf.RotateAround((origin.X, origin.Y + scale.Y, 0), Pivot, Rotation);
+
+            return IsPointInRotatedRectangle(pos, [point1.Xy, point2.Xy, point3.Xy, point4.Xy]);
+        }
+        else
+        {
+            return pos.X >= origin.X && pos.X <= origin.X + scale.X && pos.Y >= origin.Y && pos.Y <= origin.Y + scale.Y;
+        }
     }
 
     public override bool Equals(object? obj)
@@ -107,25 +126,45 @@ public abstract class UiElement
         { AnchorType.ScaleMiddle, (element, offset) => { element.Offset += (0, 0, offset.Z, offset.W); } },
         { AnchorType.ScaleBottom, (element, offset) => { element.Offset += (0, 0, offset.Z, offset.W); } }
     };
+
+    private static bool IsPointInRotatedRectangle(Vector2 point, Vector2[] rectanglePoints)
+    {
+        if (rectanglePoints.Length != 4)
+            return false;
+
+        Vector2 edge1 = rectanglePoints[1] - rectanglePoints[0];
+        Vector2 edge2 = rectanglePoints[3] - rectanglePoints[0];
+
+        Vector2 pointRelative = point - rectanglePoints[0];
+
+        float dot1 = Vector2.Dot(pointRelative, edge1);
+        float dot2 = Vector2.Dot(pointRelative, edge2);
+
+        float edge1LengthSq = Vector2.Dot(edge1, edge1);
+        float edge2LengthSq = Vector2.Dot(edge2, edge2);
+
+        return dot1 >= 0 && dot1 <= edge1LengthSq &&
+               dot2 >= 0 && dot2 <= edge2LengthSq;
+    }
 }
 
 public enum AnchorType
 {
-    TopLeft,
-    TopCenter,
-    TopRight,
-    MiddleLeft,
-    MiddleCenter,
-    MiddleRight,
-    BottomLeft,
-    BottomCenter,
-    BottomRight,
-    ScaleLeft,
-    ScaleCenter,
-    ScaleRight,
-    ScaleTop,
-    ScaleMiddle,
-    ScaleBottom
+    TopLeft = 0,
+    TopCenter = 1,
+    TopRight = 2,
+    MiddleLeft = 3,
+    MiddleCenter = 4,
+    MiddleRight = 5,
+    BottomLeft = 6, 
+    BottomCenter = 7,
+    BottomRight = 8, 
+    ScaleLeft = 9,
+    ScaleCenter = 10,
+    ScaleRight = 11,
+    ScaleTop = 12,
+    ScaleMiddle = 13,
+    ScaleBottom = 14
 }
 
 public enum PositionType

@@ -3,7 +3,7 @@
 public static class UiLoader
 {
     public static string sceneName = "";
-    public static void Load(UIController controller, string[] lines)
+    public static void Load(OldUIController controller, string[] lines)
     {
         sceneName = lines[0].Split(":")[1].Trim();
         
@@ -54,7 +54,7 @@ public static class UiLoader
         controller.Generate();
     }
     
-    public static int TextToPanel(string[] lines, int index, UIController controller, out StaticPanel panel)
+    public static int TextToPanel(string[] lines, int index, OldUIController controller, out StaticPanel panel)
     {
         index+=2;
         
