@@ -12,7 +12,6 @@ const float charSize = 1.0 / 20.0;
 
 void main()
 {
-    /*
     float sizeX = Length.x;
     float sizeY = 1;
 
@@ -35,8 +34,8 @@ void main()
 
     vec4 texColor = texture(texture0, atlasUV);
 
-    FragColor = texColor;
-    */
+    if (texColor.a < 0.1)
+        discard;
 
-    FragColor = vec4(0, 0, 0, 1.0)
+    FragColor = texColor;
 }

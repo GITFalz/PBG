@@ -10,7 +10,7 @@ public class PopUp : Updateable
     private static ShaderProgram _uiShader = new ShaderProgram("NewUI/UI.vert", "NewUI/UI.frag");
     private static TextureArray _uItexture = OldUIController._uItexture;
 
-    private bool isShowing = true;
+    private bool isShowing = false;
 
     public PopUp()
     {
@@ -19,13 +19,16 @@ public class PopUp : Updateable
 
         Instance = this;
 
-        //UIPanel panel = new(AnchorType.MiddleCenter, 0, (0, 0, 0), (100, 100), (10, 10, 10, 10), 0, 0, null);
-        UIText text = new(AnchorType.MiddleCenter, 0, (0, 0, 0), (100, 100), (10, 10, 10, 10), 0, 0, null);
+        UIPanel panel = new("testPanel", AnchorType.MiddleCenter, PositionType.Absolute, (0, 0, 0), (100, 100), (10, 10, 10, 10), 0, 0, null);
+        UIInputField inputField = new("testInputfield", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (10, 10, 10, 10), 0, 0, null);
 
-        text.SetText("Test", 2);
+        panel.AddChild(inputField);
 
-        //PopUpUi.AddElement(panel);
-        PopUpUi.AddElement(text);
+        inputField.MaxCharCount = 5;
+        inputField.SetText("Hello", 0.7f);
+
+        PopUpUi.AddElement(panel);
+        PopUpUi.AddElement(inputField);
 
         PopUpUi.GenerateBuffers();
     }

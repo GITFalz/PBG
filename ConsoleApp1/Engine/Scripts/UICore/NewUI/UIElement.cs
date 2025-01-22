@@ -3,20 +3,21 @@ using OpenTK.Mathematics;
 public abstract class UIElement
 {
     public string Name = "UI Element";
+    public string SceneName = "Scene";
     public static Vector3 _rotationAxis = new Vector3(0, 0, 1);
 
     public UIElement? ParentElement = null;
     public Vector3 Origin = (0, 0, 0);
-    public Vector3 Center = (50, 50, 0);
     public Vector3 Pivot = (0, 0, 0);
     public Vector2 Scale = (100, 100);
     public Vector4 Offset = (0, 0, 0, 0);  
     public float Rotation = 0f;
     public int TextureIndex = 0;
     public int ElementIndex = 0;
+    public float Depth = 0;
 
-    public AnchorType anchorType = AnchorType.MiddleCenter;
-    public PositionType positionType = PositionType.Absolute;
+    public AnchorType AnchorType = AnchorType.MiddleCenter;
+    public PositionType PositionType = PositionType.Absolute;
 
     public float Width = 0;
     public float Height = 0;
@@ -27,10 +28,11 @@ public abstract class UIElement
     public UIMesh? uIMesh;
     public Panel panel = new();
 
-    public UIElement(AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, UIMesh? uIMesh)
+    public UIElement(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, UIMesh? uIMesh)
     {
-        this.anchorType = anchorType;
-        this.positionType = positionType;
+        Name = name;
+        this.AnchorType = anchorType;
+        this.PositionType = positionType;
         this.Pivot = pivot;
         this.Scale = scale;
         this.Offset = offset;
@@ -45,10 +47,10 @@ public abstract class UIElement
 
         panel = new Panel();
 
-        Vector3 position1 = Mathf.RotateAround(Origin, Pivot, _rotationAxis, Rotation);
-        Vector3 position2 = Mathf.RotateAround(Origin + new Vector3(0, Scale.Y, 0), Pivot, _rotationAxis, Rotation);
-        Vector3 position3 = Mathf.RotateAround(Origin + new Vector3(Scale.X, Scale.Y, 0), Pivot, _rotationAxis, Rotation);
-        Vector3 position4 = Mathf.RotateAround(Origin + new Vector3(Scale.X, 0, 0), Pivot, _rotationAxis, Rotation);
+        Vector3 position1 = Mathf.RotateAround(Origin + (0, 0, Depth),              Pivot, _rotationAxis, Rotation);
+        Vector3 position2 = Mathf.RotateAround(Origin + (0, Scale.Y, Depth),        Pivot, _rotationAxis, Rotation);
+        Vector3 position3 = Mathf.RotateAround(Origin + (Scale.X, Scale.Y, Depth),  Pivot, _rotationAxis, Rotation);
+        Vector3 position4 = Mathf.RotateAround(Origin + (Scale.X, 0, Depth),        Pivot, _rotationAxis, Rotation);
         
         panel.Vertices.Add(position1);
         panel.Vertices.Add(position2);
@@ -74,13 +76,14 @@ public abstract class UIElement
     }
 
     public virtual void Generate(ref int offset) {}
+    public virtual List<string> ToLines(int gap){ return []; }
 
     public void Align()
     {
-        if (positionType == PositionType.Free)
+        if (PositionType == PositionType.Free)
             return;
 
-        if (positionType == PositionType.Relative && ParentElement != null)
+        if (PositionType == PositionType.Relative && ParentElement != null)
         {
             Width = ParentElement.Scale.X;
             Height = ParentElement.Scale.Y;
@@ -96,16 +99,42 @@ public abstract class UIElement
         }
     }
 
+    public string GetMethodString(SerializableEvent? e)
+    {
+        return e == null ? "null" : (e.IsStatic ? "Static" : SceneName) + "." + e.TargetName + "." + e.MethodName + (e.FixedParameter == null ? "" : $"({e.FixedParameter})");
+    }
+
     public Vector4 GetTransformedOffset()
     {
-        int index = (int)anchorType;
+        int index = (int)AnchorType;
         return index >= offsets.Length ? (0, 0, 0, 0) : offsets[index](Offset);
     }
 
     public Vector3 GetTransformedOrigin()
     {
-        int index = (int)anchorType;
+        int index = (int)AnchorType;
         return index >= origins.Length ? (0, 0, 0) : origins[index](Width, Height, Scale, Origin, GetTransformedOffset());
+    }
+
+    public List<string> GetBasicDisplayLines(int gap)
+    {
+        List<string> lines = [];
+        string gapString = "";
+        for (int i = 0; i < gap; i++)
+        {
+            gapString += "    ";
+        }
+        
+        lines.Add(gapString + "    Name: " + Name);
+        lines.Add(gapString + "    Pivot: " + Pivot);
+        lines.Add(gapString + "    Scale: " + Scale);
+        lines.Add(gapString + "    Offset: " + Offset);
+        lines.Add(gapString + "    Rotation: " + Rotation);
+        lines.Add(gapString + "    AnchorType: " + (int)AnchorType);
+        lines.Add(gapString + "    PositionType: " + (int)PositionType);
+        lines.Add(gapString + "}");
+        
+        return lines;
     }
 
     private static readonly Func<Vector4, Vector4>[] offsets =

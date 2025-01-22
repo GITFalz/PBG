@@ -16,12 +16,12 @@ public class OldUIController
     public List<UiPanel> staticElements = new List<UiPanel>();
     
     // Load UI
-    public static ShaderProgram _uiShader;// = new ShaderProgram("UI/UI.vert", "UI/UI.frag");
-    public static TextureArray _uItexture;// = new TextureArray("UI_Atlas.png", 64, 64);
+    public static ShaderProgram _uiShader = new ShaderProgram("UI/UI.vert", "UI/UI.frag");
+    public static TextureArray _uItexture = new TextureArray("UI_Atlas.png", 64, 64);
         
     // Load Text
-    private static ShaderProgram _textShader;// = new ShaderProgram("NewText/Text.vert", "NewText/Text.frag");
-    private static Texture _textTexture;// = new Texture("text.png");
+    private static ShaderProgram _textShader = new ShaderProgram("Text/Text.vert", "Text/Text.frag");
+    private static Texture _textTexture = new Texture("text.png");
     
     private OldUiMesh _uiMesh = new OldUiMesh();
     private OldUiMesh _maskMesh = new OldUiMesh();
@@ -386,7 +386,6 @@ public class OldUIController
 
     public void Render()
     {
-        /*
         GL.Disable(EnableCap.DepthTest);
         GL.DepthMask(false);
         GL.Enable(EnableCap.Blend);
@@ -453,6 +452,5 @@ public class OldUIController
         
         _textShader.Unbind();
         _textTexture.Unbind();
-        */
     }
 }

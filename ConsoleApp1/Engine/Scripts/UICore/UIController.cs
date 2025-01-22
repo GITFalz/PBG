@@ -1,20 +1,23 @@
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class UIController : Updateable
 {
     public UIMesh uIMesh = new();
     public TextMesh textMesh = new();
-    public static ShaderProgram _uiShader = new ShaderProgram("NewUI/UI.vert", "NewUI/UI.frag");
-    public static TextureArray _uItexture = new TextureArray("UI_Atlas.png", 64, 64);
-    public static ShaderProgram _textShader = new ShaderProgram("NewUI/Text.vert", "NewUI/Text.frag");
-    public static Texture _textTexture = new Texture("text.png");
+    public static ShaderProgram _uiShader;// = new ShaderProgram("NewUI/UI.vert", "NewUI/UI.frag");
+    public static TextureArray _uItexture;// = new TextureArray("UI_Atlas.png", 64, 64);
+    public static ShaderProgram _textShader;// = new ShaderProgram("NewText/Text.vert", "NewText/Text.frag");
+    public static Texture _textTexture;// = new Texture("text.png");
 
     public static Matrix4 OrthographicProjection = Matrix4.Identity;
 
-
     public List<UIElement> UIElements = [];
     public List<UIElement> TextElements = [];
+    public static List<UIInputField> InputFields = [];
+
+    public static UIInputField? activeInputField = null;
 
     public void AddElement(UIElement element)
     {
@@ -30,8 +33,54 @@ public class UIController : Updateable
 
         if (element is UIText textElement)
         {
+            if (textElement is UIInputField inputField)
+                InputFields.Add(inputField);
+
             textElement.textMesh = textMesh;
             TextElements.Add(textElement);
+        }
+    }
+
+    public static UIInputField? GetStaticInputField(string name)
+    {
+        foreach (var inputField in InputFields)
+        {
+            if (inputField.Name == name)
+                return inputField;
+        }
+
+        return null;
+    }
+
+    public static void AssignInputField(string name)
+    {
+        Console.WriteLine("Assigning: " + name);
+        
+        UIInputField? inputField = GetStaticInputField(name);
+        if (inputField == null)
+            return;
+        
+        activeInputField = inputField;
+    }
+
+    public static void InputField(Keys key)
+    {
+        if (activeInputField == null || key == Keys.LeftShift || key == Keys.RightShift)
+            return;
+        
+        if (key == Keys.Backspace)
+        {
+            activeInputField.RemoveCharacter();
+            return;
+        }
+        
+        if (!Char.GetChar(out char c, key, Input.AreKeysDown(Keys.LeftShift, Keys.RightShift), Input.AreKeysDown(Keys.LeftAlt)))
+            return;
+        
+        if (TextShaderHelper.CharExists(c))
+        {
+            activeInputField.AddCharacter(c);
+            activeInputField.OnTextChange?.Invoke();
         }
     }
 
@@ -65,13 +114,13 @@ public class UIController : Updateable
 
     public override void Render()
     {
-        GL.Disable(EnableCap.DepthTest);
-        GL.DepthMask(false);
+        GL.DepthMask(true);
+        GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         GL.Disable(EnableCap.CullFace);
         GL.FrontFace(FrontFaceDirection.Ccw);
-        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-        
+
         _uiShader.Bind();
         _uItexture.Bind();
 
@@ -83,18 +132,11 @@ public class UIController : Updateable
         GL.UniformMatrix4(modelLoc, true, ref model);
         GL.UniformMatrix4(projectionLoc, true, ref OrthographicProjection);
         
-        GL.DepthMask(true);
-        GL.Enable(EnableCap.DepthTest);
-        GL.DepthFunc(DepthFunction.Lequal);
-        
-        
         //Render unmasked Ui
         uIMesh.Render();
+        //textMesh.Render();
 
         //Console.WriteLine(uIMesh.TransformationMatrices[0]);
-
-        GL.Disable(EnableCap.StencilTest);
-        GL.Clear(ClearBufferMask.StencilBufferBit);
         
         _uiShader.Unbind();
         _uItexture.Unbind();
@@ -116,5 +158,7 @@ public class UIController : Updateable
         
         _textShader.Unbind();
         _textTexture.Unbind();
+
+        GL.Enable(EnableCap.DepthTest);
     }
 }

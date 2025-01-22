@@ -1,22 +1,16 @@
 using OpenTK.Mathematics;
 
-public class UIText : UIElement
+public class UIText(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, TextMesh? textMesh) : UIElement(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex, null)
 {
     public int MaxCharCount = 20;
     public string Text = "";
     public float FontSize = 1.5f;
     public char[] Characters = [];
     public int CharCount = 0;
-    public Vector2 TextSize = (0, 0);
     public List<int> Chars = [];
-    public TextMesh? textMesh = null;
+    public TextMesh? textMesh = textMesh;
     public TextQuad textQuad = new TextQuad();
-
-
-    public UIText(AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, TextMesh? textMesh) : base(anchorType, positionType, pivot, scale, offset, rotation, textureIndex, null)
-    {
-        Name = "UI Panel";
-    }
+    public TextType TextType = TextType.Alphabetic;
 
     public void SetText(string text, float fontSize)
     {
@@ -33,7 +27,7 @@ public class UIText : UIElement
 
         ClampText();
 
-        TextSize = new Vector2(MaxCharCount * (20 * FontSize), 20 * FontSize);
+        Scale = new Vector2(MaxCharCount * (20 * FontSize), 20 * FontSize);
     }
 
     public override void Generate(ref int offset)
@@ -62,12 +56,12 @@ public class UIText : UIElement
         textQuad.TextSize.Add((MaxCharCount, offset));
         textQuad.TextSize.Add((MaxCharCount, offset));
 
-        textMesh?.AddTextElement(this, ref ElementIndex);
-
         foreach (var character in Characters)
         {
             Chars.Add(TextShaderHelper.GetChar(character));
         }
+
+        textMesh?.AddTextElement(this, ref ElementIndex);
 
         offset += MaxCharCount;
     }
@@ -85,6 +79,24 @@ public class UIText : UIElement
 
         CharCount = MaxCharCount;
         Characters = Text.ToCharArray();
+    }
+
+    public override List<string> ToLines(int gap)
+    {
+        List<string> lines = new List<string>();
+        string gapString = "";
+        for (int i = 0; i < gap; i++)
+        {
+            gapString += "    ";
+        }
+        
+        lines.Add(gapString + "Text");
+        lines.Add(gapString + "{");
+        lines.Add(gapString + "    Text: " + Text);
+        lines.Add(gapString + "    FontSize: " + FontSize);
+        lines.AddRange(GetBasicDisplayLines(gap));
+        
+        return lines;
     }
 }
 

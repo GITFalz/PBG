@@ -250,13 +250,12 @@ public class Game : GameWindow
     protected override void OnKeyDown(KeyboardKeyEventArgs e)
     {
         base.OnKeyDown(e);
-        OldUIController.InputField(e.Key);
+        UIController.InputField(e.Key);
     }
     
     protected override void OnKeyUp(KeyboardKeyEventArgs e)
     {
         base.OnKeyUp(e);
-        Input.RemovePressedKey(e.Key);
     }
     
     protected override void OnUnload()
@@ -362,7 +361,18 @@ public class Game : GameWindow
         GameTime.Update(args);
 
         if (Input.IsKeyPressed(Keys.LeftAlt))
+        {
             MoveTest = !MoveTest;
+
+            if (MoveTest)
+            {
+                Game.SetCursorState(CursorState.Grabbed);
+            }
+            else
+            {
+                Game.SetCursorState(CursorState.Normal);
+            }
+        }
 
         _popUp.Update();
         

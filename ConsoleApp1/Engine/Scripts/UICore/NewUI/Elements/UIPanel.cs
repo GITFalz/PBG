@@ -4,19 +4,31 @@ using System.Linq;
 using System.Threading.Tasks;
 using OpenTK.Mathematics;
 
-public class UIPanel : UIElement
+public class UIPanel(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, UIMesh? uIMesh) : UIElement(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex, uIMesh)
 {
-    public UIPanel(AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, UIMesh? uIMesh) : base(anchorType, positionType, pivot, scale, offset, rotation, textureIndex, uIMesh)
-    {
-        Name = "UI Panel";
-    }
-
     public List<UIElement> Children = [];
 
     public void AddChild(UIElement child)
     {
-        child.positionType = PositionType.Relative;
+        child.PositionType = PositionType.Relative;
         Children.Add(child);
         child.ParentElement = this;
+    }
+
+    public override List<string> ToLines(int gap)
+    {
+        List<string> lines = new List<string>();
+        string gapString = "";
+        for (int i = 0; i < gap; i++)
+        {
+            gapString += "    ";
+        }
+        
+        lines.Add(gapString + "Panel");
+        lines.Add(gapString + "{");
+        lines.Add(gapString + "    Count: " + Children.Count);
+        lines.AddRange(GetBasicDisplayLines(gap));
+        
+        return lines;
     }
 }

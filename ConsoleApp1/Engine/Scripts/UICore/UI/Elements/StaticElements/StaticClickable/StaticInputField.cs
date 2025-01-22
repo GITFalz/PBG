@@ -161,12 +161,3 @@ public class StaticInputField : StaticClickable
         return lines;
     }
 }
-
-public enum TextType
-{
-    Numeric,
-    Decimal,
-    Alphabetic,
-    Alphanumeric,
-    All
-}

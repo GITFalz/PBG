@@ -42,15 +42,35 @@ public class TextMesh
 
         _vertVbo = new VBO(Vertices);
         _uvVbo = new VBO(Uvs);
-        _transformationVbo = new VBO(TransformationIndex);
         _textUvVbo = new VBO(TextUvs);
+        _transformationVbo = new VBO(TransformationIndex);
         _transformationSsbo = new SSBO(TransformationMatrices);
         _textTbo = new TBO(chars);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
         _vao.LinkToVAO(1, 2, _uvVbo);
-        _vao.LinkToVAO(4, 1, _transformationVbo);
-        _vao.LinkToVAO(5, 2, _textUvVbo);
+        _vao.LinkToVAO(2, 2, _textUvVbo);
+        _vao.LinkToVAO(3, 1, _transformationVbo);
+        
+        foreach (var vert in Vertices)
+        {
+            Console.WriteLine(vert);
+        }
+
+        foreach (var uv in Uvs)
+        {
+            Console.WriteLine(uv);
+        }
+
+        foreach (var index in Indices)
+        {
+            Console.WriteLine(index);
+        }
+
+        foreach (var tuv in TextUvs)
+        {
+            Console.WriteLine(tuv);
+        }
         
         _ibo = new IBO(Indices);
     }
@@ -73,6 +93,11 @@ public class TextMesh
     public void UpdateMatrices()
     {
         _transformationSsbo.Update(TransformationMatrices, 0);
+    }
+
+    public void UpdateText()
+    {
+        _textTbo.Update(chars);
     }
 
     public void Clear()
