@@ -1,6 +1,6 @@
 using OpenTK.Mathematics;
 
-public class UIText(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, TextMesh? textMesh) : UIElement(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex, null)
+public class UIText(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, TextMesh? textMesh) : UIElement(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex)
 {
     public int MaxCharCount = 20;
     public string Text = "";
@@ -11,6 +11,11 @@ public class UIText(string name, AnchorType anchorType, PositionType positionTyp
     public TextMesh? textMesh = textMesh;
     public TextQuad textQuad = new TextQuad();
     public TextType TextType = TextType.Alphabetic;
+
+    public override void SetTextMesh(TextMesh textMesh)
+    {
+        this.textMesh = textMesh;
+    }
 
     public void SetText(string text, float fontSize)
     {
@@ -33,7 +38,22 @@ public class UIText(string name, AnchorType anchorType, PositionType positionTyp
     public override void Generate(ref int offset)
     {
         Align();
+        GenerateChars();
+        GenerateQuad(ref offset);
+    }
 
+    public void GenerateChars()
+    {
+        Chars.Clear();
+        foreach (var character in Characters)
+        {
+            Chars.Add(TextShaderHelper.GetChar(character));
+        }
+        textMesh?.SetCharacters(Chars);
+    }
+
+    public void GenerateQuad(ref int offset)
+    {
         textQuad = new TextQuad();
 
         Vector3 position1 = Mathf.RotateAround(Origin, Pivot, _rotationAxis, Rotation);
@@ -55,11 +75,6 @@ public class UIText(string name, AnchorType anchorType, PositionType positionTyp
         textQuad.TextSize.Add((MaxCharCount, offset));
         textQuad.TextSize.Add((MaxCharCount, offset));
         textQuad.TextSize.Add((MaxCharCount, offset));
-
-        foreach (var character in Characters)
-        {
-            Chars.Add(TextShaderHelper.GetChar(character));
-        }
 
         textMesh?.AddTextElement(this, ref ElementIndex);
 

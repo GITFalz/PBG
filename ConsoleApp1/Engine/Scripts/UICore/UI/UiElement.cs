@@ -147,29 +147,3 @@ public abstract class UiElement
                dot2 >= 0 && dot2 <= edge2LengthSq;
     }
 }
-
-public enum AnchorType
-{
-    TopLeft = 0,
-    TopCenter = 1,
-    TopRight = 2,
-    MiddleLeft = 3,
-    MiddleCenter = 4,
-    MiddleRight = 5,
-    BottomLeft = 6, 
-    BottomCenter = 7,
-    BottomRight = 8, 
-    ScaleLeft = 9,
-    ScaleCenter = 10,
-    ScaleRight = 11,
-    ScaleTop = 12,
-    ScaleMiddle = 13,
-    ScaleBottom = 14
-}
-
-public enum PositionType
-{
-    Absolute,
-    Relative,
-    Free
-}

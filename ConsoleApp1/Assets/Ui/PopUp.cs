@@ -7,10 +7,8 @@ public class PopUp : Updateable
     public List<string> messages = [];
 
     public UIController PopUpUi = new();
-    private static ShaderProgram _uiShader = new ShaderProgram("NewUI/UI.vert", "NewUI/UI.frag");
-    private static TextureArray _uItexture = OldUIController._uItexture;
 
-    private bool isShowing = false;
+    private bool isShowing = true;
 
     public PopUp()
     {
@@ -28,14 +26,14 @@ public class PopUp : Updateable
         inputField.SetText("Hello", 0.7f);
 
         PopUpUi.AddElement(panel);
-        PopUpUi.AddElement(inputField);
 
         PopUpUi.GenerateBuffers();
     }
 
     public override void Update()
     {
-        base.Update();
+        if (isShowing)
+            PopUpUi.Update();
     }
 
     public override void Render()

@@ -7,7 +7,7 @@ public abstract class UiPanel : UiElement
     
     public int TextureIndex = 0;
     
-    public virtual void SetMesh(OldUiMesh uiMesh) {}
+    public virtual void SetMesh(OldUiMesh uiMesh) { UiMesh = uiMesh; }
 
     public virtual void Test() {}
     public virtual void Test(Vector2 offset) {}

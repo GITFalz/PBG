@@ -1,8 +1,37 @@
 using OpenTK.Mathematics;
 
-public class UIInputField(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, TextMesh? text) : UIText(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex, text)
+public class UIInputField : UIText
 {
+    public UIInputField(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, TextMesh? text) : base(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex, text)
+    {
+        button = new UIButton(name + "Button", anchorType, positionType, pivot, scale, offset, rotation, textureIndex, null, UIState.InvisibleInteractable);
+        button.OnClick = new SerializableEvent();
+        button.OnClick.SetAction(() => UIController.AssignInputField(Name));
+    }
+
+    public UIButton button;
     public SerializableEvent? OnTextChange = null;
+
+    public override void SetUIMesh(UIMesh uIMesh)
+    {
+        
+        button.SetUIMesh(uIMesh);
+    }
+
+    private void UpdateButton()
+    {
+        button.Transformation = Transformation;
+        button.Width = Width;
+        button.Height = Height;
+    }
+
+    public override void Generate(ref int offset)
+    {
+        Align();
+        UpdateButton();
+        GenerateChars();
+        GenerateQuad(ref offset);
+    }
 
     public void UpdateText()
     {
@@ -11,19 +40,33 @@ public class UIInputField(string name, AnchorType anchorType, PositionType posit
 
     public void AddCharacter(char character)
     {
+        Console.WriteLine("InputField: " + character);
         if (!TextShaderHelper.CharExists(character)) 
             return;
         SetText(Format(Text + character));
-        Generate();
+        GenerateChars();
         UpdateText();
     }
     
     public void RemoveCharacter()
     {
         if (Text.Length <= 0) return;
-        SetText(Text[..^1]);
-        Generate();
+        SetText(SetLastCharToSpace(Text));
+        GenerateChars();
         UpdateText();
+    }
+
+    public static string SetLastCharToSpace(string Text)
+    {
+        for (int i = Text.Length - 1; i >= 0; i--)
+        {
+            if (Text[i] != ' ')
+            {
+                Text = Text.Remove(i, 1).Insert(i, " ");
+                break;
+            }
+        }
+        return Text;
     }
     
     public string Format(string text)

@@ -6,24 +6,29 @@ public class UIController : Updateable
 {
     public UIMesh uIMesh = new();
     public TextMesh textMesh = new();
-    public static ShaderProgram _uiShader;// = new ShaderProgram("NewUI/UI.vert", "NewUI/UI.frag");
-    public static TextureArray _uItexture;// = new TextureArray("UI_Atlas.png", 64, 64);
-    public static ShaderProgram _textShader;// = new ShaderProgram("NewText/Text.vert", "NewText/Text.frag");
-    public static Texture _textTexture;// = new Texture("text.png");
+    public static ShaderProgram _uiShader = UIData.UiShader;
+    public static TextureArray _uItexture = UIData.UiTexture;
+    public static ShaderProgram _textShader = UIData.TextShader;
+    public static Texture _textTexture = UIData.TextTexture;
 
     public static Matrix4 OrthographicProjection = Matrix4.Identity;
 
-    public List<UIElement> UIElements = [];
-    public List<UIElement> TextElements = [];
+    public List<UIPanel> UIElements = [];
+    public List<UIText> TextElements = [];
+    public List<UIButton> Buttons = [];
+    public List<UIElement> Elements = [];
     public static List<UIInputField> InputFields = [];
 
     public static UIInputField? activeInputField = null;
 
     public void AddElement(UIElement element)
     {
+        Elements.Add(element);
+
         if (element is UIPanel panel)
         {
-            panel.uIMesh = uIMesh;
+            Console.WriteLine("Adding panel");
+            panel.SetUIMesh(uIMesh);
             UIElements.Add(panel);
             foreach (var child in panel.Children)
             {
@@ -31,13 +36,40 @@ public class UIController : Updateable
             }
         }
 
+        if (element is UIButton button)
+        {
+            Console.WriteLine("Adding button");
+            button.SetUIMesh(uIMesh);
+            Buttons.Add(button);
+        }
+
         if (element is UIText textElement)
         {
+            Console.WriteLine("Adding text");
             if (textElement is UIInputField inputField)
+            {
                 InputFields.Add(inputField);
+                AddElement(inputField.button);
+            }
 
-            textElement.textMesh = textMesh;
+            textElement.SetTextMesh(textMesh);
             TextElements.Add(textElement);
+        }
+    }
+
+    public void Test()
+    {
+        foreach (var element in Elements)
+        {
+            element.Test();
+        }
+    }
+
+    public void Test(Vector2 offset)
+    {
+        foreach (var element in Elements)
+        {
+            element.Test(offset);
         }
     }
 
@@ -109,6 +141,7 @@ public class UIController : Updateable
 
     public override void Update()
     {
+        Test();
         base.Update();
     }
 
@@ -131,15 +164,12 @@ public class UIController : Updateable
 
         GL.UniformMatrix4(modelLoc, true, ref model);
         GL.UniformMatrix4(projectionLoc, true, ref OrthographicProjection);
-        
-        //Render unmasked Ui
-        uIMesh.Render();
-        //textMesh.Render();
 
-        //Console.WriteLine(uIMesh.TransformationMatrices[0]);
+        uIMesh.Render();
         
         _uiShader.Unbind();
         _uItexture.Unbind();
+
 
         _textShader.Bind();
         _textTexture.Bind();
