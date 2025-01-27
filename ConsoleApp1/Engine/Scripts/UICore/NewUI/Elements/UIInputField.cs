@@ -2,40 +2,20 @@ using OpenTK.Mathematics;
 
 public class UIInputField : UIText
 {
+    public SerializableEvent? OnTextChange = null;
+    public UIButton Button;
+
     public UIInputField(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, TextMesh? text) : base(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex, text)
     {
-        button = new UIButton(name + "Button", anchorType, positionType, pivot, scale, offset, rotation, textureIndex, null, UIState.InvisibleInteractable);
-        button.OnClick = new SerializableEvent();
-        button.OnClick.SetAction(() => UIController.AssignInputField(Name));
-    }
-
-    public UIButton button;
-    public SerializableEvent? OnTextChange = null;
-
-    public override void SetUIMesh(UIMesh uIMesh)
-    {
-        
-        button.SetUIMesh(uIMesh);
-    }
-
-    private void UpdateButton()
-    {
-        button.Transformation = Transformation;
-        button.Width = Width;
-        button.Height = Height;
+        Button = new UIButton(name + "Button", anchorType, positionType, pivot, scale, offset, rotation, textureIndex, null, UIState.InvisibleInteractable);
+        Button.OnClick = new SerializableEvent(() => UIController.AssignInputField(Name));
     }
 
     public override void Generate(ref int offset)
     {
         Align();
-        UpdateButton();
         GenerateChars();
         GenerateQuad(ref offset);
-    }
-
-    public void UpdateText()
-    {
-        textMesh?.UpdateText();
     }
 
     public void AddCharacter(char character)
@@ -102,17 +82,14 @@ public class UIInputField : UIText
     public override List<string> ToLines(int gap)
     {
         List<string> lines = new List<string>();
-        string gapString = "";
-        for (int i = 0; i < gap; i++)
-        {
-            gapString += "    ";
-        }
+        string gapString = new(' ', gap * 4);
         
         lines.Add(gapString + "Inputfield");
         lines.Add(gapString + "{");
+        lines.AddRange(GetBasicDisplayLines(gapString));
         lines.Add(gapString + "    Text: " + Text);
         lines.Add(gapString + "    FontSize: " + FontSize);
-        lines.AddRange(GetBasicDisplayLines(gap));
+        lines.Add(gapString + "}");
         
         return lines;
     }

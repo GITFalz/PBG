@@ -9,30 +9,27 @@ public class UIButton : UIElement
     public UIButton(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, UIMesh? uIMesh, UIState state) : base(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex)
     {
         State = state;
+        this.uIMesh = uIMesh;
+        test = true;
     }
-
-    public SerializableEvent? OnHover = null;
-    public SerializableEvent? OnClick = null;
-    public SerializableEvent? OnHold = null;
-    public SerializableEvent? OnRelease = null;
-
-    private bool _clicked = false;
 
     public override void SetUIMesh(UIMesh uIMesh)
     {
         this.uIMesh = uIMesh;
     }
 
-    public override bool Test()
+    public override void UpdateTexture()
     {
-        TestButtons(IsMouseOver());
-        return true;
+        if (uIMesh == null)
+            return;
+        uIMesh.UpdateElementTexture(this);
     }
-    
-    public override bool Test(Vector2 offset)
+
+    public override void UpdateTransformation()
     {
-        TestButtons(IsMouseOver(offset));
-        return true;
+        if (uIMesh == null)
+            return;
+        uIMesh.UpdateElementTransformation(this);
     }
 
     public override void Generate()
@@ -43,30 +40,20 @@ public class UIButton : UIElement
         GenerateUIQuad(out panel, uIMesh);
     }
 
-    private void TestButtons(bool mouseOver)
+    public override List<string> ToLines(int gap)
     {
-        if (mouseOver)
-        {
-            OnHover?.Invoke();
-            
-            if ( Input.IsMousePressed(MouseButton.Left) && !_clicked)
-            {
-                OnClick?.Invoke();
-                _clicked = true;
-            }
-        }
+        List<string> lines = new List<string>();
+        string gapString = new(' ', gap * 4);
         
-        if (_clicked)
-        {
-            Game.SetCursorState(CursorState.Grabbed);
-            OnHold?.Invoke();
-        }
-            
-        if (Input.IsMouseReleased(MouseButton.Left) && _clicked)
-        {
-            Game.SetCursorState(CursorState.Normal);
-            OnRelease?.Invoke();
-            _clicked = false;
-        }
+        lines.Add(gapString + "Inputfield");
+        lines.Add(gapString + "{");
+        lines.AddRange(GetBasicDisplayLines(gapString));
+        lines.Add(gapString + "    OnHover: " + GetMethodString(OnHover));
+        lines.Add(gapString + "    OnClick: " + GetMethodString(OnClick));
+        lines.Add(gapString + "    OnHold: " + GetMethodString(OnHold));
+        lines.Add(gapString + "    OnRelease: " + GetMethodString(OnRelease));
+        lines.Add(gapString + "}");
+        
+        return lines;
     }
 }

@@ -4,10 +4,15 @@ using System.Linq;
 using System.Threading.Tasks;
 using OpenTK.Mathematics;
 
-public class UIPanel(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, UIMesh? uIMesh) : UIElement(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex)
+public class UIPanel : UIElement
 {
-    public List<UIElement> Children = [];
+    public List<UIElement> Children = new List<UIElement>();
     public UIMesh? uIMesh;
+
+    public UIPanel(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, UIMesh? uIMesh) : base(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex)
+    {
+        this.uIMesh = uIMesh;
+    }
 
     public void AddChild(UIElement child)
     {
@@ -29,19 +34,54 @@ public class UIPanel(string name, AnchorType anchorType, PositionType positionTy
         GenerateUIQuad(out panel, uIMesh);
     }
 
+    public override void UpdateTransformation()
+    {
+        if (uIMesh == null)
+            return;
+        uIMesh.UpdateElementTransformation(this);
+    }
+
+    public void UpdateAllTransformation()
+    {
+        UpdateTransformation();
+        foreach (var child in Children)
+        {
+            child.UpdateTransformation();
+        }
+    }
+
+    public override void UpdateTexture()
+    {
+        if (uIMesh == null)
+            return;
+        uIMesh.UpdateElementTexture(this);
+    }
+
+    public void AlignAll()
+    {
+        Align();
+        foreach (var child in Children)
+        {
+            child.Align();
+        }
+    }
+
     public override List<string> ToLines(int gap)
     {
         List<string> lines = new List<string>();
-        string gapString = "";
-        for (int i = 0; i < gap; i++)
-        {
-            gapString += "    ";
-        }
+        string gapString = new(' ', gap * 4);
         
         lines.Add(gapString + "Panel");
         lines.Add(gapString + "{");
+        lines.AddRange(GetBasicDisplayLines(gapString));
         lines.Add(gapString + "    Count: " + Children.Count);
-        lines.AddRange(GetBasicDisplayLines(gap));
+
+        foreach (var child in Children)
+        {
+            lines.AddRange(child.ToLines(gap + 1));
+        }
+
+        lines.Add(gapString + "}");
         
         return lines;
     }

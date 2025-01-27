@@ -41,6 +41,11 @@ public class TextMesh
         ElementCount++;
     }
 
+    public void UpdateElementTransformation(UIText element)
+    {
+        TransformationMatrices[element.ElementIndex] = element.Transformation;
+    }
+
     public void GenerateBuffers()
     {
         GenerateIndices();

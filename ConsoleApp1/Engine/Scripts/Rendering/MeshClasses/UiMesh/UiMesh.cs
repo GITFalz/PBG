@@ -36,6 +36,20 @@ public class UIMesh
         ElementCount++;
     }
 
+    public void UpdateElementTransformation(UIElement element)
+    {
+        TransformationMatrices[element.ElementIndex] = element.Transformation;
+    }
+
+    public void UpdateElementTexture(UIElement element)
+    {
+        int index = element.ElementIndex * 4;
+        for (int i = 0; i < 4; i++)
+        {
+            TextureIndices[index + i] = element.TextureIndex;
+        }
+    }
+
     public void GenerateBuffers()
     {
         GenerateIndices();
@@ -72,6 +86,11 @@ public class UIMesh
     public void UpdateMatrices()
     {
         _transformationSsbo.Update(TransformationMatrices, 0);
+    }
+
+    public void UpdateTexture()
+    {
+        _textureVbo.Update(TextureIndices);
     }
 
     public void Clear()

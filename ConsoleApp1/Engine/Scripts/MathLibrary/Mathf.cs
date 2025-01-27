@@ -37,6 +37,16 @@ public static class Mathf
         return value < 0 ? 0 : value > 1 ? 1 : value;
     }
 
+    public static float Pow(float value, float power)
+    {
+        return (float)Math.Pow(value, power);
+    }
+
+    public static double Pow(double value, double power)
+    {
+        return Math.Pow(value, power);
+    }
+
     public static float Floor(float value)
     {
         return (float)Math.Floor(value);
@@ -50,6 +60,11 @@ public static class Mathf
     public static Vector3i FloorToInt(Vector3 value)
     {
         return new Vector3i(FloorToInt(value.X), FloorToInt(value.Y), FloorToInt(value.Z));
+    }
+
+    public static Vector3 Transform(Vector3 value, Matrix4 matrix)
+    {
+        return ToOpenTKVector3(System.Numerics.Vector3.Transform(ToNumericsVector3(value), ToNumericsMatrix4(matrix)));
     }
     
     public static Vector3 Normalize(Vector3 value)
@@ -159,6 +174,11 @@ public static class Mathf
     public static System.Numerics.Vector3 ToNumericsVector3(OpenTK.Mathematics.Vector3 vector)
     {
         return new System.Numerics.Vector3(vector.X, vector.Y, vector.Z);
+    }
+
+    public static Vector3 ToOpenTKVector3(System.Numerics.Vector3 vector)
+    {
+        return new Vector3(vector.X, vector.Y, vector.Z);
     }
     
     public static System.Numerics.Vector2 ToNumericsVector2(OpenTK.Mathematics.Vector2 vector)

@@ -20,13 +20,13 @@ public class Game : GameWindow
     public static int centerY;
 
     // User paths
-    public static string mainPath;
-    public static string chunkPath;
+    public static string mainPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VoxelGame");
+    public static string chunkPath = Path.Combine(mainPath, "Chunks");
     
     // Compile time paths
-    public static string assetPath;
-    public static string uiPath;
-    public static string modelPath;
+    public static string assetPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Saves");
+    public static string uiPath = Path.Combine(assetPath, "UI");
+    public static string modelPath = Path.Combine(assetPath, "Models");
 
 
     private Camera _mainCamera;
@@ -55,13 +55,13 @@ public class Game : GameWindow
     private Mesh _skyboxMesh;
 
 
-    private Scene _worldScene = new Scene("World");
-    private Scene _modelingScene = new Scene("Modeling");
-    private Scene _uiEditorScene = new Scene("UIEditor");
-    private Scene _uiScene = new Scene("UI");
+    private static Scene _worldScene = new Scene("World");
+    private static Scene _modelingScene = new Scene("Modeling");
+    private static Scene _uiEditorScene = new Scene("UIEditor");
+    private static Scene _uiScene = new Scene("UI");
     
     
-    public Scene? CurrentScene { get; private set; }
+    public static Scene? CurrentScene;
 
     // Miscaleanous Ui
     private PopUp _popUp;
@@ -103,6 +103,7 @@ public class Game : GameWindow
         {
             UIController.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, e.Width, e.Height, 0, -2, 2);
             _mainCamera.UpdateProjectionMatrix(e.Width, e.Height);
+            ModelSettings.Camera?.UpdateProjectionMatrix(e.Width, e.Height);
         }
         catch (Exception ex)
         {
@@ -135,16 +136,6 @@ public class Game : GameWindow
         // Camera
         _mainCamera = new Camera(width, height, new Vector3(0, 20, 0));
         _mainCamera.Start();
-        
-        // File Paths
-        mainPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VoxelGame");
-        chunkPath = Path.Combine(mainPath, "Chunks");
-        
-        assetPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Saves");
-        uiPath = Path.Combine(assetPath, "UI");
-        modelPath = Path.Combine(assetPath, "Models");
-        
-        Console.WriteLine(uiPath);
         
         if (!Directory.Exists(chunkPath))
             Directory.CreateDirectory(chunkPath);
@@ -183,54 +174,42 @@ public class Game : GameWindow
         //BlockManager.Add(grass);
         //BlockManager.Add(dirt);
         //BlockManager.Add(stone);
+
+        _skyboxMesh = new SkyboxMesh();
+        _skyboxShader = new ShaderProgram("Sky/Default.vert", "Sky/Default.frag");
         
         // Animation
         new OldAnimationManager().Start();
 
         // GameObjects
-        GameObject playerObject = new GameObject();
-        
+
+        // Player
         PlayerStateMachine player = new PlayerStateMachine();
         PhysicsBody playerPhysics = new PhysicsBody();
         
         playerPhysics.doGravity = false;
         
-        playerObject.AddComponent(player);
-        playerObject.AddComponent(playerPhysics);
-        
-        
-        _skyboxMesh = new SkyboxMesh();
-        _skyboxShader = new ShaderProgram("Sky/Default.vert", "Sky/Default.frag");
-        
         // World setup
-        GameObject worldObject = new GameObject();
         _worldManager = new WorldManager();
-        worldObject.AddComponent(_worldManager);
         
-        _worldScene.AddGameObject(playerObject);
-        _worldScene.AddGameObject(worldObject);
+        _worldScene.AddGameObject(["Root"], player, playerPhysics);
+        _worldScene.AddGameObject(["Root"], _worldManager);
         
         
         // Modeling Editor
         GeneralModelingEditor editorComponent = new GeneralModelingEditor();
-        
-        GameObject animationObject = new GameObject();
+
         SceneComponent animationComponent = new SceneComponent("ModelingEditor", editorComponent);
         
-        animationObject.AddComponent(editorComponent);
-        
-        _modelingScene.AddGameObject(animationObject);
+        _modelingScene.AddGameObject(["Root"], editorComponent);
         _modelingScene.AddComponent(animationComponent);
         
         // UI
         UiEditor uiEditor = new UiEditor();
         
-        GameObject uiObject = new GameObject();
         SceneComponent uiEditorComponent = new SceneComponent("UIEditor", uiEditor);
         
-        uiObject.AddComponent(uiEditor);
-        
-        _uiEditorScene.AddGameObject(uiObject);
+        _uiEditorScene.AddGameObject(["Root"], uiEditor);
         _uiEditorScene.AddComponent(uiEditorComponent);
         
         AddScenes(_worldScene, _modelingScene, _uiScene, _uiEditorScene);
@@ -333,7 +312,6 @@ public class Game : GameWindow
 
     public void PhysicsThread()
     {
-        int seconds = 0;
         double totalTime = 0;
         
         while (isRunning)
@@ -409,8 +387,8 @@ public class Game : GameWindow
     {
         if (Instance.Scenes.TryGetValue(sceneName, out Scene? scene))
         {
-            Instance.CurrentScene?.Exit();
-            Instance.CurrentScene = scene;
+            CurrentScene?.Exit();
+            CurrentScene = scene;
             scene.Start();
             scene.Awake();
             if (scene.Resize)

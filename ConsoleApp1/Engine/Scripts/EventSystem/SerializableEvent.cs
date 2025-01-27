@@ -6,7 +6,8 @@ public class SerializableEvent
 {
     public string MethodName = null!;
     public string TargetName = null!;
-    public bool IsStatic = false;
+    public string SceneName = null!;
+    public bool IsStatic = true;
     
     [XmlIgnore]
     private Action? _action;
@@ -80,5 +81,11 @@ public class SerializableEvent
         else
             _action = () => ((Action<string>)Delegate.CreateDelegate(typeof(Action<string>), target, methodInfo))(fixedParameter);
         return true;
+    }
+
+
+    public string GetMethodString()
+    {
+        return $"{(IsStatic ? "Static" : SceneName)}.{TargetName}.{MethodName}{(FixedParameter == null ? "" : $"({FixedParameter})")}";
     }
 }

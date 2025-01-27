@@ -7,7 +7,7 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using Veldrid;
 
-public class PlayerStateMachine : Updateable
+public class PlayerStateMachine : Component
 {
     public const float WALK_SPEED = 7 * 250;
     public const float SPRINT_SPEED = 22 * 250;
@@ -49,8 +49,6 @@ public class PlayerStateMachine : Updateable
     public PhysicsBody physicsBody;
     
     public OldAnimation CurrentOldAnimation;
-
-    public GameObject go;
     
     public float yaw;
     
@@ -141,8 +139,6 @@ public class PlayerStateMachine : Updateable
         
         if (!OldAnimationManager.Instance.GetController("Sword", out _swordAnimationController) || _swordAnimationController == null)
             throw new System.Exception("Failed to get controller");
-
-        go = new GameObject();
         
         Console.WriteLine("Player State Machine");
     }

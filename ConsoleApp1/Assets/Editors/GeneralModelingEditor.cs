@@ -2,7 +2,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-public class GeneralModelingEditor : Updateable
+public class GeneralModelingEditor : Component
 {
     public BaseEditor CurrentEditor;
     public ModelingEditor modelingEditor = new ModelingEditor();
@@ -12,21 +12,24 @@ public class GeneralModelingEditor : Updateable
 
     public Camera camera;
 
-    public StaticText BackfaceCullingText;
+    //public StaticText BackfaceCullingText;
 
-    public StaticText MeshAlphaText;
+    //public StaticText MeshAlphaText;
 
-    public StaticText SnappingText;
+    //public StaticText SnappingText;
 
-    public StaticText MirrorText;
-    public StaticInputField InputField;
-
-
-    public OldUIController MainUi = new OldUIController();
-    public OldUIController Ui = new OldUIController();
+    //public StaticText MirrorText;
+    //public StaticInputField InputField;
 
 
-    public Model model = new Model();
+    //public OldUIController MainUi = new OldUIController();
+    //public OldUIController Ui = new OldUIController();
+
+    public UIController MainUi = new UIController();
+    public UIController Ui = new UIController();
+
+
+    public Model model;
 
     
     public bool freeCamera = false;
@@ -35,20 +38,21 @@ public class GeneralModelingEditor : Updateable
 
     public bool regenerateVertexUi = false;
     
-    public OldUIController BoneUi = new OldUIController();
+    //public OldUIController BoneUi = new OldUIController();
     
     public Bone? _selectedBone = null;
     
-    public StaticInputField BonePivotX;
-    public StaticInputField BonePivotY;
-    public StaticInputField BonePivotZ;
+    //public StaticInputField BonePivotX;
+    //public StaticInputField BonePivotY;
+    //public StaticInputField BonePivotZ;
     
-    public StaticInputField BoneEndX;
-    public StaticInputField BoneEndY;
-    public StaticInputField BoneEndZ;
+    //public StaticInputField BoneEndX;
+    //public StaticInputField BoneEndY;
+    //public StaticInputField BoneEndZ;
     
     
     public List<Vertex> _selectedVertices = new List<Vertex>();
+    public Dictionary<Vertex, UIPanel> _vertexPanels = new Dictionary<Vertex, UIPanel>();
 
     public ShaderProgram _shaderProgram;
 
@@ -75,22 +79,23 @@ public class GeneralModelingEditor : Updateable
         gameObject.Scene.UiController = MainUi;
         gameObject.Scene.LoadUi();
 
-        var t = MainUi.GetElement<StaticText>("CullingText");
+        var t = MainUi.GetElement<UIText>("CullingText");
 
+        /*
         BackfaceCullingText = t ?? throw new NotFoundException("CullingText");
         ModelSettings.BackfaceCulling = bool.Parse(BackfaceCullingText.Text.Split(' ')[1].Trim());
         
-        t = MainUi.GetElement<StaticText>("AlphaText");
+        t = MainUi.GetElement<UIText>("AlphaText");
         
         MeshAlphaText = t ?? throw new NotFoundException("AlphaText");
         ModelSettings.MeshAlpha = float.Parse(MeshAlphaText.Text.Split(' ')[1].Trim());
         
-        t = MainUi.GetElement<StaticText>("SnappingText");
+        t = MainUi.GetElement<UIText>("SnappingText");
         
         SnappingText = t ?? throw new NotFoundException("SnappingText");
         ModelSettings.Snapping = SnappingText.Text.Split(' ')[1].Trim() != "off";
         
-        t = MainUi.GetElement<StaticText>("MirrorText");
+        t = MainUi.GetElement<UIText>("MirrorText");
         
         MirrorText = t ?? throw new NotFoundException("MirrorText");
         string mirrorValues = MirrorText.Text.Split(' ')[1].Trim();
@@ -103,14 +108,17 @@ public class GeneralModelingEditor : Updateable
 
         StaticInputField? inputField = MainUi.GetElement<StaticInputField>("FileName");
         InputField = inputField ?? throw new NotFoundException("inputField");
+        */
+
+        model = ModelSettings.Model;
 
         Bone rootBone = new Bone("bone1");
         rootBone.Pivot = (1, 0, -1);
         rootBone.End = (1, 2, -1);
         model.Init(rootBone, "cube");
         
-        MainUi.Generate();
-        Ui.Generate();
+        MainUi.GenerateBuffers();
+        Ui.GenerateBuffers();
 
         camera.SetCameraMode(CameraMode.Free);
         
@@ -219,6 +227,7 @@ public class GeneralModelingEditor : Updateable
 
     #region Saved ui functions (Do not delete)
 
+    /*
     public void SwitchMirror(string axis)
     {
         switch (axis)
@@ -251,6 +260,7 @@ public class GeneralModelingEditor : Updateable
         UpdateMirrorText();
     }
     
+    
     public void SaveModel()
     {
         string modelName = InputField.Text;
@@ -272,13 +282,6 @@ public class GeneralModelingEditor : Updateable
         model.Mesh.InitModel();
         model.Mesh.GenerateBuffers();
         model.Mesh.UpdateMesh();
-    }
-    
-    public void AssignInputField(string test)
-    {
-        StaticInputField? inputField = MainUi.GetInputField(test);
-        if (inputField != null)
-            OldUIController.activeInputField = inputField;
     }
     
     public void AlphaControl()
@@ -366,9 +369,11 @@ public class GeneralModelingEditor : Updateable
                 break;
         }
     }
+    */
 
     #endregion
     
+
     public void UpdateMirrorText()
     {
         string text = "";
@@ -376,8 +381,8 @@ public class GeneralModelingEditor : Updateable
         text += ModelSettings.mirror.Y == 1 ? "Y" : "-";
         text += ModelSettings.mirror.Z == 1 ? "Z" : "-";
         
-        MirrorText.SetText("mirror: " + text);
-        MirrorText.Generate();
+        //MirrorText.SetText("mirror: " + text);
+        //MirrorText.Generate();
         MainUi.Update();
     }
 
@@ -507,7 +512,7 @@ public class GeneralModelingEditor : Updateable
         if (_selectedVertices.Count < 2)
             return;
         
-        Ui.Clear();
+        //Ui.show();
         
         List<Vertex> selectedVerts = new List<Vertex>();
         HashSet<Triangle> triangles = GetSelectedFullTriangles();
@@ -697,6 +702,9 @@ public class GeneralModelingEditor : Updateable
 
     public void GenerateVertexPanels()
     {
+        Ui.Clear();
+        _vertexPanels.Clear();
+
         System.Numerics.Matrix4x4 projection = camera.GetNumericsProjectionMatrix();
         System.Numerics.Matrix4x4 view = camera.GetNumericsViewMatrix();
         
@@ -713,46 +721,36 @@ public class GeneralModelingEditor : Updateable
                 
             Vector2 pos = (Vector2)screenPos;
                 
-            StaticPanel panel = UI.CreateStaticPanel(pos.ToString(), AnchorType.TopLeft, PositionType.Free, new Vector3(20, 20, 0), new Vector4(0, 0, 0, 0), null);
-            panel.SetPosition(new Vector3(pos.X, pos.Y, 0));
-            panel.TextureIndex = SelectedContainsSharedVertex(vert) ? 2 : 1;
-            
-            Ui.AddStaticElement(panel);
+            UIPanel panel = new(pos.ToString(), AnchorType.TopLeft, PositionType.Free, (0, 0, 0), (20, 20), (0, 0, 0, 0), 0, SelectedContainsSharedVertex(vert) ? 2 : 1, null);
+            panel.SetPosition(new Vector3(pos.X - 10, pos.Y - 10, 0));
+            Ui.AddElement(panel);
+
+            _vertexPanels.Add(vert, panel);
         }
         
         model.Mesh.ResetVertex();
             
-        Ui.Generate();
+        Ui.GenerateBuffers();
         Ui.Update();
     }
 
     public void GenerateVertexColor()
     {
-        Console.WriteLine("Generate Vertex Color");
+        Console.WriteLine("Generate Vertex Color: " + _vertexPanels.Count + " " + _selectedVertices.Count + " " + Ui.Elements.Count);
         
-        Ui.ClearUiMesh();
-        
-        int i = 0;
-        foreach (var vert in model.Mesh.VertexList)
+        foreach (var (vert, panel) in _vertexPanels)
         {
-            if (vert.WentThroughOne())
-                continue;
-            
-            vert.WentThrough = true;
-            
-            Ui.SetStaticPanelTexureIndex(i, _selectedVertices.Contains(vert) ? 2 : 1);
-            i++;
+            bool selected = SelectedContainsSharedVertex(vert);
+            panel.TextureIndex = selected ? 2 : 1;
+            panel.UpdateTexture();
         }
-        
-        model.Mesh.ResetVertex();
-        
-        Ui.Generate();
-        Ui.Update();
+
+        Ui.UpdateTextures();
     }
     
     public bool SelectedContainsSharedVertex(Vertex vertex)
     {
-        return vertex.SharedVertices.Any(vert => _selectedVertices.Contains(vert)) || _selectedVertices.Contains(vertex);
+        return vertex.SharedVertices.Any(_selectedVertices.Contains) || _selectedVertices.Contains(vertex);
     }
     
     public void RemoveSelectedVertex(Vertex vertex)
@@ -825,6 +823,7 @@ public class GeneralModelingEditor : Updateable
         return false;
     }
 
+    /*
     public void UpdateSnappingText()
     {
         if (ModelSettings.Snapping)
@@ -835,6 +834,7 @@ public class GeneralModelingEditor : Updateable
         SnappingText.Generate();
         MainUi.Update();
     }
+    */
     
     public readonly List<Vector3> AxisIgnore = new()
     {

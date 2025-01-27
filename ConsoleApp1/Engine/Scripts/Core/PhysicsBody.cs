@@ -1,7 +1,7 @@
 ﻿using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-public class PhysicsBody : Updateable
+public class PhysicsBody : Component
 {
     public float gravity = 50f;
     public float maxFallSpeed = 150f;

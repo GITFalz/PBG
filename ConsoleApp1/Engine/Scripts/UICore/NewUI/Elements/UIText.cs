@@ -1,6 +1,6 @@
 using OpenTK.Mathematics;
 
-public class UIText(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, TextMesh? textMesh) : UIElement(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex)
+public class UIText : UIElement
 {
     public int MaxCharCount = 20;
     public string Text = "";
@@ -8,9 +8,15 @@ public class UIText(string name, AnchorType anchorType, PositionType positionTyp
     public char[] Characters = [];
     public int CharCount = 0;
     public List<int> Chars = [];
-    public TextMesh? textMesh = textMesh;
+    public TextMesh? textMesh;
     public TextQuad textQuad = new TextQuad();
     public TextType TextType = TextType.Alphabetic;
+    public int TextOffset = 0;
+
+    public UIText(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, TextMesh? textMesh) : base(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex)
+    {
+        this.textMesh = textMesh;
+    }
 
     public override void SetTextMesh(TextMesh textMesh)
     {
@@ -33,6 +39,19 @@ public class UIText(string name, AnchorType anchorType, PositionType positionTyp
         ClampText();
 
         Scale = new Vector2(MaxCharCount * (20 * FontSize), 20 * FontSize);
+        newScale = Scale;
+    }
+
+    public override void UpdateTransformation()
+    {
+        if (textMesh == null)
+            return;
+        textMesh.UpdateElementTransformation(this);
+    }
+
+    public void UpdateText()
+    {
+        textMesh?.UpdateText();
     }
 
     public override void Generate(ref int offset)
@@ -56,10 +75,10 @@ public class UIText(string name, AnchorType anchorType, PositionType positionTyp
     {
         textQuad = new TextQuad();
 
-        Vector3 position1 = Mathf.RotateAround(Origin, Pivot, _rotationAxis, Rotation);
-        Vector3 position2 = Mathf.RotateAround(Origin + new Vector3(0, Scale.Y, 0), Pivot, _rotationAxis, Rotation);
-        Vector3 position3 = Mathf.RotateAround(Origin + new Vector3(Scale.X, Scale.Y, 0), Pivot, _rotationAxis, Rotation);
-        Vector3 position4 = Mathf.RotateAround(Origin + new Vector3(Scale.X, 0, 0), Pivot, _rotationAxis, Rotation);
+        Vector3 position1 = Mathf.RotateAround((0,          0,          Depth), Pivot, _rotationAxis, Rotation);
+        Vector3 position2 = Mathf.RotateAround((0,          newScale.Y, Depth), Pivot, _rotationAxis, Rotation);
+        Vector3 position3 = Mathf.RotateAround((newScale.X, newScale.Y, Depth), Pivot, _rotationAxis, Rotation);
+        Vector3 position4 = Mathf.RotateAround((newScale.X, 0,          Depth), Pivot, _rotationAxis, Rotation);
         
         textQuad.Vertices.Add(position1);
         textQuad.Vertices.Add(position2);
@@ -99,17 +118,14 @@ public class UIText(string name, AnchorType anchorType, PositionType positionTyp
     public override List<string> ToLines(int gap)
     {
         List<string> lines = new List<string>();
-        string gapString = "";
-        for (int i = 0; i < gap; i++)
-        {
-            gapString += "    ";
-        }
+        string gapString = new(' ', gap * 4);
         
         lines.Add(gapString + "Text");
         lines.Add(gapString + "{");
+        lines.AddRange(GetBasicDisplayLines(gapString));
         lines.Add(gapString + "    Text: " + Text);
         lines.Add(gapString + "    FontSize: " + FontSize);
-        lines.AddRange(GetBasicDisplayLines(gap));
+        lines.Add(gapString + "}");
         
         return lines;
     }

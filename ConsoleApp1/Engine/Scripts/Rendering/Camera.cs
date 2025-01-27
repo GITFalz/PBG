@@ -5,7 +5,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 using Vector2 = OpenTK.Mathematics.Vector2;
 using Vector3 = OpenTK.Mathematics.Vector3;
 
-public class Camera : Component
+public class Camera
 {
     public float SPEED { get; private set; } = 50f;
     public float SCREEN_WIDTH { get; private set; }
@@ -148,12 +148,12 @@ public class Camera : Component
         return yaw;
     }
 
-    public override void Start()
+    public void Start()
     {
         
     }
 
-    public override void Update()
+    public void Update()
     {
         _cameraModes[_cameraMode].Invoke();
     }

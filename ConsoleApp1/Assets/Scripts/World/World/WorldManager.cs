@@ -3,7 +3,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-public class WorldManager : Updateable
+public class WorldManager : Component
 {
     public static WorldManager? Instance;
     

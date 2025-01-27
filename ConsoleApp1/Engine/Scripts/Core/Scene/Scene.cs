@@ -1,68 +1,85 @@
 ﻿using OpenTK.Windowing.GraphicsLibraryFramework;
 
-public class Scene : Updateable
+public class Scene
 {
     public string Name;
 
     private HashSet<SceneSwitcher> _sceneSwitchers = new HashSet<SceneSwitcher>();
-    private List<GameObject> _gameObjects = new List<GameObject>();
 
-    public OldUIController? UiController = null;
+    public UIController? UiController = null;
     public Dictionary<string, SceneComponent> Components = new Dictionary<string, SceneComponent>();
 
-    private bool _started = false;
+    public bool Started = false;
 
     public bool Resize = false;
+    public string ScenePath = "";
+
+
+    private GameObject _root;
 
     public Scene(string name)
     {
         Name = name;
+        ScenePath = Path.Combine(Game.uiPath, name + ".ui");
+        _root = new GameObject(this);
     }
-
-    public bool Started => _started;
 
     public void AddSceneSwitcher(SceneSwitcher sceneSwitcher)
     {
         _sceneSwitchers.Add(sceneSwitcher);
     }
 
-    public void AddGameObject(GameObject gameObject)
+    public void AddGameObject(GameObject gameObject, string[] path)
     {
-        _gameObjects.Add(gameObject);
+        if (path.Length == 0 || path[0] == "" || path[0] == "Root")
+        {
+            _root.AddChild(gameObject);
+            gameObject.Scene = this;
+            return;
+        }
+
+        _root.AddChildToPath(gameObject, path);
         gameObject.Scene = this;
     }
-
-    public override void OnResize()
+    
+    public void AddGameObject(string[] path, params Component[] components)
     {
-        UiController?.Resize();
-        
-        foreach (var go in _gameObjects)
+        GameObject gameObject = new GameObject(this, _root);
+        foreach (Component component in components)
         {
-            go.Resize();
+            gameObject.AddComponent(component);
         }
+        AddGameObject(gameObject, path);
     }
 
-    public override void Awake()
+    public List<GameObjectHierarchy> GetHierarchy()
     {
-        UiController?.Resize();
-        
-        foreach (GameObject gameObject in _gameObjects)
-        {
-            gameObject.Awake();
-        }
+        return _root.GetHierarchies();
     }
 
-    public override void Start()
+    public void OnResize()
     {
-        if (_started)
+        UiController?.OnResize();
+        _root.Resize();
+    }
+
+    public void Awake()
+    {
+        _root.Awake();
+    }
+
+    public void Start()
+    {
+        if (Started)
             return;
 
-        foreach (GameObject gameObject in _gameObjects)
-        {
-            gameObject.Start();
-        }
+        _root.Start();
 
-        _started = true;
+
+        if (!File.Exists(ScenePath))
+            File.Create(ScenePath).Close();
+
+        Started = true;
 
         if (!Components.ContainsKey("ModelingEditor"))
             return;
@@ -79,15 +96,12 @@ public class Scene : Updateable
         }
     }
 
-    public override void FixedUpdate()
+    public void FixedUpdate()
     {
-        foreach (GameObject gameObject in _gameObjects)
-        {
-            gameObject.FixedUpdate();
-        }
+        _root.FixedUpdate();
     }
 
-    public override void Update()
+    public void Update()
     {
         foreach (SceneSwitcher sceneSwitcher in _sceneSwitchers)
         {
@@ -98,32 +112,20 @@ public class Scene : Updateable
             }
         }
 
-        foreach (GameObject gameObject in _gameObjects)
-        {
-            gameObject.Update();
-        }
+        _root.Update();
     }
 
-    public override void Render()
+    public void Render()
     {
         UiController?.Render();
-        
-        foreach (GameObject gameObject in _gameObjects)
-        {
-            foreach (Component component in gameObject.components)
-            {
-                component.Render();
-            }
-        }
+        _root.Render();
     }
 
-    public override void Exit()
+    public void Exit()
     {
-        foreach (GameObject gameObject in _gameObjects)
-        {
-            gameObject.Exit();
-        }
+        _root.Exit();
     }
+
 
     public void AddComponent(SceneComponent component)
     {
@@ -153,14 +155,14 @@ public class Scene : Updateable
 
     public void LoadUi()
     {
-        Console.WriteLine(Path.Combine("Load: " + Game.uiPath, $"{Name}.ui"));
+        Console.WriteLine(ScenePath);
         
-        string[] lines = File.ReadAllLines(Path.Combine(Game.uiPath, $"{Name}.ui"));
+        string[] lines = File.ReadAllLines(ScenePath);
         
         if (lines.Length == 0 || lines[0].Split(":")[1].Trim() != Name)
             return;
 
-        OldUIController? controller;
+        UIController? controller;
         try
         {
             controller = UiController;
@@ -174,7 +176,7 @@ public class Scene : Updateable
         if (controller == null)
             return; 
             
-        UiLoader.Load(controller, lines);
+        //UiLoader.Load(controller, lines);
     }
 
     public void SaveUi()
@@ -184,12 +186,12 @@ public class Scene : Updateable
         
         List<string> lines = new List<string>() { "Scene: " + Name, ""};
         
-        foreach (var element in UiController.GetUiElements())
+        foreach (var element in UiController.Elements)
         {
             lines.AddRange(element.ToLines(0));
         }
         
-        File.WriteAllLines(Path.Combine(Game.uiPath, $"{Name}.ui"), lines);
+        File.WriteAllLines(ScenePath, lines);
     }
 }
 
