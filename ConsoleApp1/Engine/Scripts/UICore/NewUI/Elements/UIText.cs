@@ -4,6 +4,7 @@ public class UIText : UIElement
 {
     public int MaxCharCount = 20;
     public string Text = "";
+    public string finalText = "";
     public float FontSize = 1.5f;
     public char[] Characters = [];
     public int CharCount = 0;
@@ -13,7 +14,7 @@ public class UIText : UIElement
     public TextType TextType = TextType.Alphabetic;
     public int TextOffset = 0;
 
-    public UIText(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, TextMesh? textMesh) : base(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex)
+    public UIText(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, Vector2 slice, TextMesh? textMesh) : base(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex, slice)
     {
         this.textMesh = textMesh;
     }
@@ -23,23 +24,23 @@ public class UIText : UIElement
         this.textMesh = textMesh;
     }
 
-    public void SetText(string text, float fontSize)
+    public UIText SetText(string text, float fontSize)
     {
         FontSize = fontSize;
-        SetText(text);
+        return SetText(text);
     }
     
-    public void SetText(string text)
+    public UIText SetText(string text)
     {
-        Text = text;
-        
-        Characters = Text.ToCharArray();
-        CharCount = Characters.Length;
-
-        ClampText();
+        Text = ClampText(text, 0, MaxCharCount);
+        finalText = AddSpaces(Text, MaxCharCount);
+        CharCount = Text.Length;
+        Characters = finalText.ToCharArray();
 
         Scale = new Vector2(MaxCharCount * (20 * FontSize), 20 * FontSize);
         newScale = Scale;
+
+        return this;
     }
 
     public override void UpdateTransformation()
@@ -57,22 +58,25 @@ public class UIText : UIElement
     public override void Generate(ref int offset)
     {
         Align();
-        GenerateChars();
         GenerateQuad(ref offset);
+        GenerateChars();
     }
 
-    public void GenerateChars()
+    public UIText GenerateChars()
     {
         Chars.Clear();
         foreach (var character in Characters)
         {
             Chars.Add(TextShaderHelper.GetChar(character));
         }
-        textMesh?.SetCharacters(Chars);
+        textMesh?.SetCharacters(Chars, TextOffset);
+        return this;
     }
 
     public void GenerateQuad(ref int offset)
     {
+        TextOffset = offset;
+
         textQuad = new TextQuad();
 
         Vector3 position1 = Mathf.RotateAround((0,          0,          Depth), Pivot, _rotationAxis, Rotation);
@@ -100,19 +104,30 @@ public class UIText : UIElement
         offset += MaxCharCount;
     }
 
-    private void ClampText()
+    public static string ClampText(string text, int min, int max)
     {
-        if (CharCount > MaxCharCount) 
+        if (text.Length < min)
         {
-            Text = Text[..MaxCharCount];
+            return text.PadRight(min, ' ');
         }
-        else if (CharCount < MaxCharCount) 
+        else if (text.Length > max)
         {
-            Text = Text.PadRight(MaxCharCount, ' ');
+            return text[..max];
         }
+        return text;
+    }
 
-        CharCount = MaxCharCount;
-        Characters = Text.ToCharArray();
+    public static string AddSpaces(string text, int maxCount)
+    {
+        if (text.Length > maxCount) 
+        {
+            return text[..maxCount];
+        }
+        else if (text.Length < maxCount) 
+        {
+            return text.PadRight(maxCount, ' ');
+        }
+        return text;
     }
 
     public override List<string> ToLines(int gap)

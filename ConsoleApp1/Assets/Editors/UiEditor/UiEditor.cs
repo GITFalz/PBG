@@ -23,12 +23,12 @@ public class UiEditor : Component
         Console.WriteLine("UiEditor Start");
 
         // Main UI
-        gameObject.Scene.UiController = MainUi;
+        gameObject.Scene.UIControllers.Add(MainUi);
 
-        UIPanel mainPanel = new("MainPanel", AnchorType.ScaleLeft, PositionType.Absolute, (0, 0, 0), (210, 100), (5, 5, 5, 5), 0, 0, null);
+        UIPanel mainPanel = new("MainPanel", AnchorType.ScaleLeft, PositionType.Absolute, (0, 0, 0), (210, 100), (5, 5, 5, 5), 0, 0, (10, 0.15f), null);
 
-        UIButton addPanelButton = new("AddPanelButton", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 0, 0), 0, 0, null, UIState.Static);
-        UIButton addTextButton = new("AddTextButton", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 30, 0, 0), 0, 0, null, UIState.Static);
+        UIButton addPanelButton = new("AddPanelButton", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 0, 0), 0, 0, (10, 0.15f), null, UIState.Static);
+        UIButton addTextButton = new("AddTextButton", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 30, 0, 0), 0, 0, (10, 0.15f), null, UIState.Static);
 
         addPanelButton.OnClick = new SerializableEvent(AddPanel);
 
@@ -40,8 +40,8 @@ public class UiEditor : Component
         MainUi.GenerateBuffers();
 
         // Edit UI
-        UIPanel panel = new("TestPanel", AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (100, 100), (10, 10, 0, 0), 0, 0, null);
-        UIText text = new("TestText", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (10, 10, 0, 0), 0, 0, null);
+        UIPanel panel = new("TestPanel", AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (100, 100), (10, 10, 0, 0), 0, 0, (10, 0.15f), null);
+        UIText text = new("TestText", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (10, 10, 0, 0), 0, 0, (10, 0.15f), null);
 
         text.SetText("Hello world", 0.7f);
         panel.AddChild(text);
@@ -177,7 +177,7 @@ public class UiEditor : Component
 
     public void AddPanel()
     {
-        UIPanel panel = new(EditUi.GetNextElementName(), AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (100, 100), (10, 10, 0, 0), 0, 0, null);
+        UIPanel panel = new(EditUi.GetNextElementName(), AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (100, 100), (10, 10, 0, 0), 0, 0, (10, 0.15f), null);
         while (EditUi.ElementSharePosition(panel))
         {
             panel.Offset += new Vector4(10, 10, 0, 0);
@@ -189,7 +189,7 @@ public class UiEditor : Component
 
     public void AddButton()
     {
-        UIButton button = new(EditUi.GetNextElementName(), AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (100, 20), (10, 10, 0, 0), 0, 0, null, UIState.Static);
+        UIButton button = new(EditUi.GetNextElementName(), AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (100, 20), (10, 10, 0, 0), 0, 0, (10, 0.15f), null, UIState.Static);
         while (EditUi.ElementSharePosition(button))
         {
             button.Offset += new Vector4(10, 10, 0, 0);

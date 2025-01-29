@@ -14,8 +14,6 @@ public class PlayerStateMachine : Component
     public const float FALL_SPEED = 1 * 250;
     public const float GRAPPLE_SPEED = 30 * 250;
     public const float JUMP_SPEED = 6f * 250;
-
-    public Camera camera;
     
     public Vector3 forward = new Vector3(0, 0, -1);
     
@@ -65,11 +63,11 @@ public class PlayerStateMachine : Component
     
     public override void Start()
     {
-        camera = new Camera(Game.width, Game.height, new Vector3(0, 20, 0));
+        Game.camera = new Camera(Game.width, Game.height, new Vector3(0, 20, 0));
         
-        _lastCameraPitch = camera.pitch;
-        _lastCameraYaw = camera.yaw;
-        _lastCameraPosition = camera.position;
+        _lastCameraPitch = Game.camera.pitch;
+        _lastCameraYaw = Game.camera.yaw;
+        _lastCameraPosition = Game.camera.position;
         
         physicsBody = ((Component)this).gameObject.GetComponent<PhysicsBody>();
         
@@ -146,8 +144,11 @@ public class PlayerStateMachine : Component
     public override void Awake()
     {
         Console.WriteLine("Player State Machine");
+
+        Camera camera = Game.camera;
         
-        WorldManager.Instance.camera = camera;
+        if (WorldManager.Instance != null)
+            WorldManager.Instance.camera = camera;
         
         camera.SetCameraMode(CameraMode.Free);
         
@@ -162,6 +163,8 @@ public class PlayerStateMachine : Component
 
     public override void Update()
     {
+        Camera camera = Game.camera;
+
         camera.Update();
         
         Vector2 input = Input.GetMovementInput();
@@ -214,6 +217,8 @@ public class PlayerStateMachine : Component
 
     public override void Render()
     {
+        Camera camera = Game.camera;
+
         _shaderProgram.Bind();
         
         Matrix4 model = Matrix4.Identity;
@@ -240,6 +245,8 @@ public class PlayerStateMachine : Component
 
     public override void Exit()
     {
+        Camera camera = Game.camera;
+
         Console.WriteLine("Exiting Player State Machine");
         
         _lastCameraPosition = camera.position;
@@ -301,6 +308,8 @@ public class PlayerStateMachine : Component
     
     public void MovePlayer(PlayerMovementSpeed playerMovementSpeed, Vector2 input)
     {
+        Camera camera = Game.camera;
+        
         Vector3 direction = camera.FrontYto0() * input.Y - camera.RightYto0() * input.X;
         Vector3 oldVelocity = physicsBody.GetHorizontalVelocity();
         MovePlayer(playerMovementSpeed, direction);

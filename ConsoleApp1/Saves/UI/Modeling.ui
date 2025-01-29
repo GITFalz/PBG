@@ -1,2 +1,181 @@
 Scene: Modeling
 
+Panel
+{
+    Name: StatePanel
+    Pivot: (0, 0, 0)
+    Scale: (1500, 40)
+    Offset: (5, 5, 5, 5)
+    Rotation: 0
+    AnchorType: 12
+    PositionType: 0
+    Count: 6
+    Inputfield
+    {
+        Name: ModelingButton
+        Pivot: (0, 0, 0)
+        Scale: (75, 30)
+        Offset: (5, 5, 5, 5)
+        Rotation: 0
+        AnchorType: 0
+        PositionType: 1
+        OnHover: null
+        OnClick: Static.GeneralModelingEditor.<Start>b__59_0
+        OnHold: null
+        OnRelease: null
+    }
+    Inputfield
+    {
+        Name: RiggingButton
+        Pivot: (0, 0, 0)
+        Scale: (75, 30)
+        Offset: (85, 5, 5, 5)
+        Rotation: 0
+        AnchorType: 0
+        PositionType: 1
+        OnHover: null
+        OnClick: Static.GeneralModelingEditor.<Start>b__59_1
+        OnHold: null
+        OnRelease: null
+    }
+    Inputfield
+    {
+        Name: AnimationButton
+        Pivot: (0, 0, 0)
+        Scale: (75, 30)
+        Offset: (165, 5, 5, 5)
+        Rotation: 0
+        AnchorType: 0
+        PositionType: 1
+        OnHover: null
+        OnClick: Static.GeneralModelingEditor.<Start>b__59_2
+        OnHold: null
+        OnRelease: null
+    }
+    Inputfield
+    {
+        Name: VertexSelectionButton
+        Pivot: (0, 0, 0)
+        Scale: (40, 40)
+        Offset: (245, 0, 0, 0)
+        Rotation: 0
+        AnchorType: 0
+        PositionType: 1
+        OnHover: null
+        OnClick: Static.<>c.<Start>b__59_3
+        OnHold: null
+        OnRelease: null
+    }
+    Inputfield
+    {
+        Name: EdgeSelectionButton
+        Pivot: (0, 0, 0)
+        Scale: (40, 40)
+        Offset: (285, 0, 0, 0)
+        Rotation: 0
+        AnchorType: 0
+        PositionType: 1
+        OnHover: null
+        OnClick: Static.<>c.<Start>b__59_4
+        OnHold: null
+        OnRelease: null
+    }
+    Inputfield
+    {
+        Name: FaceSelectionButton
+        Pivot: (0, 0, 0)
+        Scale: (40, 40)
+        Offset: (325, 0, 0, 0)
+        Rotation: 0
+        AnchorType: 0
+        PositionType: 1
+        OnHover: null
+        OnClick: Static.<>c.<Start>b__59_5
+        OnHold: null
+        OnRelease: null
+    }
+}
+Inputfield
+{
+    Name: ModelingButton
+    Pivot: (0, 0, 0)
+    Scale: (75, 30)
+    Offset: (5, 5, 5, 5)
+    Rotation: 0
+    AnchorType: 0
+    PositionType: 1
+    OnHover: null
+    OnClick: Static.GeneralModelingEditor.<Start>b__59_0
+    OnHold: null
+    OnRelease: null
+}
+Inputfield
+{
+    Name: RiggingButton
+    Pivot: (0, 0, 0)
+    Scale: (75, 30)
+    Offset: (85, 5, 5, 5)
+    Rotation: 0
+    AnchorType: 0
+    PositionType: 1
+    OnHover: null
+    OnClick: Static.GeneralModelingEditor.<Start>b__59_1
+    OnHold: null
+    OnRelease: null
+}
+Inputfield
+{
+    Name: AnimationButton
+    Pivot: (0, 0, 0)
+    Scale: (75, 30)
+    Offset: (165, 5, 5, 5)
+    Rotation: 0
+    AnchorType: 0
+    PositionType: 1
+    OnHover: null
+    OnClick: Static.GeneralModelingEditor.<Start>b__59_2
+    OnHold: null
+    OnRelease: null
+}
+Inputfield
+{
+    Name: VertexSelectionButton
+    Pivot: (0, 0, 0)
+    Scale: (40, 40)
+    Offset: (245, 0, 0, 0)
+    Rotation: 0
+    AnchorType: 0
+    PositionType: 1
+    OnHover: null
+    OnClick: Static.<>c.<Start>b__59_3
+    OnHold: null
+    OnRelease: null
+}
+Inputfield
+{
+    Name: EdgeSelectionButton
+    Pivot: (0, 0, 0)
+    Scale: (40, 40)
+    Offset: (285, 0, 0, 0)
+    Rotation: 0
+    AnchorType: 0
+    PositionType: 1
+    OnHover: null
+    OnClick: Static.<>c.<Start>b__59_4
+    OnHold: null
+    OnRelease: null
+}
+Inputfield
+{
+    Name: FaceSelectionButton
+    Pivot: (0, 0, 0)
+    Scale: (40, 40)
+    Offset: (325, 0, 0, 0)
+    Rotation: 0
+    AnchorType: 0
+    PositionType: 1
+    OnHover: null
+    OnClick: Static.<>c.<Start>b__59_5
+    OnHold: null
+    OnRelease: null
+}

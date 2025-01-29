@@ -1,96 +1,105 @@
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-public class ModelMesh : BoxMesh
+public class ModelMesh
 {
-    private VBO _textureVbo;
-    
-    public Vector3 WorldPosition = Vector3.Zero;
-    public Quaternion LastRotation = Quaternion.Identity;
-    
-    private bool print = true;
-
-    private int _modelCount = 0;
+    private VAO _vao = new VAO();
+    private IBO _ibo = new IBO([]);
+    private VBO _vertVbo = new VBO([(0, 0, 0)]);
+    private VBO _uvVbo = new VBO([(0, 0)]);
+    private VBO _textureVbo = new VBO([0]);
+    private VBO _normalVbo = new VBO([(0, 0, 0)]);
     
     public List<Vertex> VertexList = new List<Vertex>();
-    
+    public List<Triangle> TriangleList = new List<Triangle>();
+
+    public List<Vector2> Uvs = new List<Vector2>();
+    public List<uint> Indices = new List<uint>();
+    public List<int> TextureIndices = new List<int>();
     public List<Vector3> Normals = new List<Vector3>();
-    public VBO _normalVbo;
-    
-    private bool smoothShading = true;
-    
-    public ModelMesh()
-    {
-        _vao = new VAO();
-        
-        Vertices = new List<Vector3>();
-        Uvs = new List<Vector2>();
-        Indices = new List<uint>();
-        TextureIndices = new List<int>();
-        
-        _transformedVerts = new List<Vector3>();
-    }
+    public List<Vector3> _transformedVerts = new List<Vector3>();
     
     public void Init()
     {
-        _transformedVerts = new List<Vector3>(VertexList.Count);
+        _transformedVerts = new List<Vector3>(TriangleList.Count * 3);
 
-        foreach (var t in VertexList)
+        foreach (var t in TriangleList)
         {
-            _transformedVerts.Add(t.Position);
+            _transformedVerts.AddRange(t.GetVerticesPosition());
         }
     }
 
-    public void ApplyMirror(Vector3i mirror)
+    public void ApplyMirror()
     {
-        List<Vertex> currentVertices = new List<Vertex>(VertexList);
+        List<Triangle> currentTriangles = [.. TriangleList];
         
         Vector3[] flip = ModelSettings.Mirrors;
+        bool[] swaps = ModelSettings.Swaps;
+
         for (int j = 1; j < flip.Length; j++)
         {
-            for (int i = 0; i < currentVertices.Count; i+=3)
+            for (int i = 0; i < currentTriangles.Count; i++)
             {
-                Vertex A = new Vertex(currentVertices[i].Position * flip[j]);
-                Vertex B = new Vertex(currentVertices[i + 1].Position * flip[j]);
-                Vertex C = new Vertex(currentVertices[i + 2].Position * flip[j]);
-                
+                Vector3 aPosition = currentTriangles[i].A.Position * flip[j];
+                Vector3 bPosition = currentTriangles[i].B.Position * flip[j];
+                Vector3 cPosition = currentTriangles[i].C.Position * flip[j];
+
+                if (swaps[j])
+                {
+                    (aPosition, bPosition) = (bPosition, aPosition);
+                }
+
+                Vertex A = new Vertex(aPosition);
+                Vertex B = new Vertex(bPosition);
+                Vertex C = new Vertex(cPosition);
+
+                if (VertexSharePosition(A.Position, out var a)) A = a;
+                if (VertexSharePosition(B.Position, out var b)) B = b;
+                if (VertexSharePosition(C.Position, out var c)) C = c;
+
                 Triangle triangle = new Triangle(A, B, C);
                 
                 AddTriangle(triangle);
             }
         }
-        
-        CombineDuplicateVertices();
-    }
-    
-    public void Center()
-    {
-        for (int i = 0; i < VertexList.Count; i++)
-        {
-            _transformedVerts[i] += WorldPosition;
-        }
+
+        RecalculateNormals();
     }
 
-    public void ChangeModelColor(ref int index, int color)
+    public bool VertexSharePosition(Vector3 position, out Vertex vertex)
     {
-        index %= _modelCount;
-        int newIndex = index * 24;
-        
-        for (int i = 0; i < 24; i++)
+        vertex = new Vertex(Vector3.Zero);
+        foreach (var v in VertexList)
         {
-            TextureIndices[newIndex + i] = color;
+            if (v.Position == position)
+            {
+                vertex = v;
+                return true;
+            }
         }
+        return false;
     }
 
     public void AddTriangle(Triangle triangle)
     {
+        if (TriangleList.Contains(triangle))
+            return;
+
+        TriangleList.Add(triangle);
+       
         Normals.Add(triangle.Normal);
         Normals.Add(triangle.Normal);
         Normals.Add(triangle.Normal);
-        
-        VertexList.Add(triangle.A);
-        VertexList.Add(triangle.B);
-        VertexList.Add(triangle.C);
-        
+
+        var vertices = triangle.GetVertices();
+
+        if (!VertexList.Contains(vertices[0]))
+            VertexList.Add(vertices[0]);
+        if (!VertexList.Contains(vertices[1]))
+            VertexList.Add(vertices[1]);
+        if (!VertexList.Contains(vertices[2]))
+            VertexList.Add(vertices[2]);
+
         Uvs.Add((0, 0));
         Uvs.Add((0, 1));
         Uvs.Add((1, 1));
@@ -98,6 +107,46 @@ public class ModelMesh : BoxMesh
         TextureIndices.Add(0);
         TextureIndices.Add(0);
         TextureIndices.Add(0);
+
+        GenerateIndices();
+    }
+
+    public void RemoveTriangle(Triangle triangle)
+    {
+        if (Indices.Count < 3 || !TriangleList.Contains(triangle))
+            return;
+
+        int index = TriangleList.IndexOf(triangle) * 3;
+            
+        RemoveVertex(triangle.A);
+        RemoveVertex(triangle.B);
+        RemoveVertex(triangle.C);
+        
+        GenerateIndices();
+        for (int i = 0; i < 3; i++)
+        {
+            Uvs.RemoveAt(index);
+            Normals.RemoveAt(index);
+            TextureIndices.RemoveAt(index);
+        }
+        TriangleList.Remove(triangle);
+    }
+
+    public void RemoveVertex(Vertex vertex)
+    {
+        if (VertexCount(vertex) == 1)
+            VertexList.Remove(vertex);
+    }
+
+    public int VertexCount(Vertex vertex)
+    {
+        int count = 0;
+        foreach (var t in TriangleList)
+        {
+            if (t.A == vertex || t.B == vertex || t.C == vertex)
+                count++;
+        }
+        return count;
     }
     
     public bool SwapVertices(Vertex A, Vertex B)
@@ -116,133 +165,66 @@ public class ModelMesh : BoxMesh
 
     public void UpdateNormals(Triangle triangle)
     {
+        int index = TriangleList.IndexOf(triangle) * 3;
+
         triangle.UpdateNormals();
         
-        int indexA = VertexList.IndexOf(triangle.A);
-        int indexB = VertexList.IndexOf(triangle.B);
-        int indexC = VertexList.IndexOf(triangle.C);
-        
-        Normals[indexA] = triangle.Normal;
-        Normals[indexB] = triangle.Normal;
-        Normals[indexC] = triangle.Normal;
+        Normals[index+0] = triangle.Normal;
+        Normals[index+1] = triangle.Normal;
+        Normals[index+2] = triangle.Normal;
     }
 
     public void RecalculateNormals()
     {
-        HashSet<Triangle> triangles = new HashSet<Triangle>(); 
-        for (int i = 0; i < VertexList.Count; i++)
+        for (int i = 0; i < TriangleList.Count; i++)
         {
-            Vertex vertex = VertexList[i];
-            if (vertex.ParentTriangle != null)
-            {
-                Triangle triangle = vertex.ParentTriangle;
-                triangles.Add(triangle);
-                triangle.UpdateNormals();
-            }
-            Normals[i] = vertex.GetNormal();
+            UpdateNormals(TriangleList[i]);
         }
     }
 
     public void GenerateIndices()
     {
         Indices.Clear();
-        for (uint i = 0; i < VertexList.Count; i++)
+        for (uint i = 0; i < TriangleList.Count * 3; i++)
         {
             Indices.Add(i);
         }
     }
 
-    public void SmoothShading()
+    public void MergeVertices(List<Vertex> vertices)
     {
-        for (int i = 0; i < VertexList.Count; i++)
-        {
-            Vertex vertex = VertexList[i];
-            Normals[i] = vertex.GetAverageNormal();
-        }
-    }
 
-    public void CheckUselessTriangles()
-    {
-        HashSet<Triangle> triangles = new HashSet<Triangle>();
-        HashSet<Triangle> toDelete = new HashSet<Triangle>();
-        
-        foreach (var vertex in VertexList)
+        Vertex newVertex = new Vertex(Vector3.Zero);
+        int count = 0;
+
+        foreach (var vertex in vertices)
         {
-            if (vertex.ParentTriangle == null || triangles.Contains(vertex.ParentTriangle))
+            if (!VertexList.Contains(vertex))
                 continue;
-            
-            if (vertex.ParentTriangle.TwoVertSamePosition())
-                toDelete.Add(vertex.ParentTriangle);
+
+            newVertex.Position += vertex.Position;
+            ChangeVertexTo(vertex, newVertex);
+            RemoveVertex(vertex);
+            count++;
         }
-        
-        foreach (var triangle in toDelete)
+
+        newVertex.Position /= count;
+        VertexList.Add(newVertex);
+    }
+
+    public void ChangeVertexTo(Vertex oldVertex, Vertex newVertex)
+    {
+        foreach (var triangle in oldVertex.ParentTriangles)
         {
-            RemoveTriangle(triangle);
+            triangle.SetVertexTo(oldVertex, newVertex);
         }
     }
 
-    public void CombineDuplicateVertices()
-    {
-        CombineDuplicateVertices(VertexList);
-    }
-    
-    public void CombineDuplicateVertices(List<Vertex> vertices)
-    {
-        for (int i = 0; i < vertices.Count; i++)
-        {
-            Vertex vertex1 = vertices[i];
-            
-            for (int j = i + 1; j < vertices.Count; j++)
-            {
-                Vertex vertex2 = vertices[j];
-                if (vertex1.Position == vertex2.Position)
-                {
-                    vertex1.AddSharedVertexToAll(vertex1.ToList(), vertex2);
-                }
-            }
-        }
-    }
-
-    public void RemoveVertex(Vertex vertex)
-    {
-        if (VertexList.Contains(vertex))
-        {
-            int index = VertexList.IndexOf(vertex);
-            VertexList[index].RemoveInstanceFromAll();
-            VertexList.Remove(vertex);
-            Uvs.RemoveAt(index);
-            Normals.RemoveAt(index);
-            TextureIndices.RemoveAt(index);
-        }
-    }
-
-    public void RemoveTriangle(Triangle triangle)
-    {
-        if (Indices.Count < 3)
-            return;
-            
-        RemoveVertex(triangle.A);
-        RemoveVertex(triangle.B);
-        RemoveVertex(triangle.C);
-        
-        Indices.RemoveRange(Indices.Count - 3, 3);
-    }
-    
-    
-
-    public override void UpdateMesh()
+    public void UpdateMesh()
     {
         _normalVbo.Update(Normals);
         _vertVbo.Update(_transformedVerts);
         _textureVbo.Update(TextureIndices);
-    }
-    
-    public void ResetVertex()
-    {
-        foreach (var t in VertexList)
-        {
-            t.WentThrough = false;
-        }
     }
     
     public void SaveModel(string modelName)
@@ -250,30 +232,6 @@ public class ModelMesh : BoxMesh
         List<string> lines = new List<string>();
 
         string path = Path.Combine(Game.modelPath, $"{modelName}.model");
-        
-        lines.Add(VertexList.Count.ToString());
-        foreach (var vertex in VertexList)
-        {
-            lines.Add(vertex.Position.ToString());
-        }
-        
-        lines.Add(VertexList.Count.ToString());
-        for (int i = 0; i < VertexList.Count; i++)
-        {
-            lines.Add(Uvs[i].ToString());
-        }
-        
-        lines.Add((VertexList.Count / 3).ToString());
-        for (int i = 0; i < VertexList.Count; i += 3)
-        {
-            lines.Add(Normals[i].ToString());
-        }
-        
-        lines.Add((VertexList.Count / 3).ToString());
-        for (int i = 0; i < VertexList.Count; i += 3)
-        {
-            lines.Add(TextureIndices[i].ToString());
-        }
         
         File.WriteAllLines(path, lines);
     }
@@ -297,20 +255,28 @@ public class ModelMesh : BoxMesh
         int textureIndex = vertCount + uvCount + normalCount + 3;
         int textureCount = int.Parse(lines[textureIndex]);
 
-        VertexList = new List<Vertex>();
         Uvs = new List<Vector2>();
         Normals = new List<Vector3>();
         TextureIndices = new List<int>();
 
         for (int i = 0; i < vertCount; i+=3)
         {
-            Vertex A = new Vertex(UiLoader.TextToVector3(lines[i + 1]));
-            Vertex B = new Vertex(UiLoader.TextToVector3(lines[i + 2]));
-            Vertex C = new Vertex(UiLoader.TextToVector3(lines[i + 3]));
-            new Triangle(A, B, C);
-            VertexList.Add(A);
-            VertexList.Add(B);
-            VertexList.Add(C);
+            Vector3 vectorA = UiLoader.TextToVector3(lines[i + 1]);
+            Vector3 vectorB = UiLoader.TextToVector3(lines[i + 2]);
+            Vector3 vectorC = UiLoader.TextToVector3(lines[i + 3]);
+
+            Vertex A = new Vertex(vectorA);
+            Vertex B = new Vertex(vectorB);
+            Vertex C = new Vertex(vectorC);
+
+            foreach (var vert in VertexList)
+            {
+                if (A.Position == vert.Position) A = vert;
+                if (B.Position == vert.Position) B = vert;
+                if (C.Position == vert.Position) C = vert;
+            }
+            
+            AddTriangle(new Triangle(A, B, C));
         }
         
         for (int i = 0; i < uvCount; i++)
@@ -334,24 +300,12 @@ public class ModelMesh : BoxMesh
             TextureIndices.Add(int.Parse(lines[index]));
         }
 
-        CombineDuplicateVertices(VertexList);
-
         return true;
     }
     
-    public override void GenerateBuffers()
+    public void GenerateBuffers()
     {
-        foreach (var t in VertexList)
-        {
-            _transformedVerts.Add(t.Position);
-        }
-        
         GenerateIndices();
-        
-        Console.WriteLine("Vertices: " + VertexList.Count);
-        Console.WriteLine("Uvs: " + Uvs.Count);
-        Console.WriteLine("Normals: " + Normals.Count);
-        Console.WriteLine("Indices: " + Indices.Count);
         
         _vertVbo = new VBO(_transformedVerts);
         _uvVbo = new VBO(Uvs);
@@ -366,10 +320,19 @@ public class ModelMesh : BoxMesh
         _ibo = new IBO(Indices);
     }
 
-    public override void Delete()
+    public void Render()
+    {
+        _vao.Bind();
+        _ibo.Bind();
+
+        GL.DrawElements(PrimitiveType.Triangles, Indices.Count, DrawElementsType.UnsignedInt, 0);
+
+        _vao.Unbind();
+        _ibo.Unbind();
+    }
+
+    public void Delete()
     {
         _textureVbo.Delete();
-        
-        base.Delete();
     }
 }

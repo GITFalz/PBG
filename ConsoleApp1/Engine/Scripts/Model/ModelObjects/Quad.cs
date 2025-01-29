@@ -2,10 +2,10 @@ using OpenTK.Mathematics;
 
 public class Quad
 {
-    public Triangle A;
-    public Triangle B;
+    public OldTriangle A;
+    public OldTriangle B;
     
-    public Quad(Triangle a, Triangle b)
+    public Quad(OldTriangle a, OldTriangle b)
     {
         A = a; A.ParentQuad = this;
         B = b; B.ParentQuad = this;
@@ -24,16 +24,16 @@ public class Quad
     /// <param name="d"></param>
     /// <returns></returns>
     
-    public Quad(Vertex a, Vertex b, Vertex c, Vertex d)
+    public Quad(OldVertex a, OldVertex b, OldVertex c, OldVertex d)
     {
-        Vertex vertex1 = new Vertex(b);
-        Vertex vertex2 = new Vertex(c);
+        OldVertex vertex1 = new OldVertex(b);
+        OldVertex vertex2 = new OldVertex(c);
         
         b.AddSharedVertex(vertex1);
         c.AddSharedVertex(vertex2);
         
-        A = new Triangle(a, b, c);
-        B = new Triangle(vertex2, vertex1, d);
+        A = new OldTriangle(a, b, c);
+        B = new OldTriangle(vertex2, vertex1, d);
     }
 
     public override string ToString()

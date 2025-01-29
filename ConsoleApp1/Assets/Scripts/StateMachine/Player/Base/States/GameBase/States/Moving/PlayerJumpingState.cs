@@ -9,7 +9,7 @@ public class PlayerJumpingState : PlayerGameBaseState
     {
         Console.WriteLine("Entering jumping state");
         
-        Camera = playerGameState.PlayerStateMachine.camera;
+        Camera = Game.camera;
         
         playerGameState.PlayerStateMachine.physicsBody.doGravity = true;
         Vector3 velocity = playerGameState.PlayerStateMachine.physicsBody.Velocity;

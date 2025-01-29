@@ -9,9 +9,8 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class RiggingEditor : BaseEditor
 {
-    public Camera camera;
     public ShaderProgram _shaderProgram;
-    public OldUIController BoneUi = new OldUIController();
+    public UIController BoneUi = new UIController();
     public Model model;
     public Dictionary<Bone, BoneSelection> SelectedBones = [];
 
@@ -34,6 +33,8 @@ public class RiggingEditor : BaseEditor
             BoneUi.Generate();
             _started = true;
         }
+
+        editor.gameObject.Scene.UIControllers.Add(BoneUi);
     }
 
     public override void Awake(GeneralModelingEditor editor)
@@ -44,8 +45,6 @@ public class RiggingEditor : BaseEditor
     public override void Render(GeneralModelingEditor editor)
     {
         editor.RenderRigging();
-        
-        BoneUi.Render();
     }
 
     public override void Update(GeneralModelingEditor editor)
@@ -59,7 +58,7 @@ public class RiggingEditor : BaseEditor
             if (editor.freeCamera)
             {
                 Game.Instance.CursorState = CursorState.Grabbed;
-                editor.camera.firstMove = true;
+                Game.camera.firstMove = true;
             }
             else
             {
@@ -69,7 +68,7 @@ public class RiggingEditor : BaseEditor
 
         if (editor.freeCamera)
         {
-            editor.camera.Update();
+            Game.camera.Update();
         }
 
         if (editor.freeCamera && !editor.regenerateVertexUi)
@@ -106,12 +105,12 @@ public class RiggingEditor : BaseEditor
                 Vertex? closestVert = null;
                 Bone? closestBone = null;
             
-                System.Numerics.Matrix4x4 projection = editor.camera.GetNumericsProjectionMatrix();
-                System.Numerics.Matrix4x4 view = editor.camera.GetNumericsViewMatrix();
+                System.Numerics.Matrix4x4 projection = Game.camera.GetNumericsProjectionMatrix();
+                System.Numerics.Matrix4x4 view = Game.camera.GetNumericsViewMatrix();
 
                 // Vertex Selection
             
-                foreach (var vert in editor.model.Mesh.VertexList)
+                foreach (var vert in editor.model.modelMesh.VertexList)
                 {
                     Vector2? screenPos = Mathf.WorldToScreen(vert.Position, projection, view);
                     if (screenPos == null)
@@ -210,7 +209,7 @@ public class RiggingEditor : BaseEditor
 
                 foreach (var vert in editor._selectedVertices)
                 {
-                    vert.SetBoneIndexForAll(index);
+                    //vert.SetBoneIndexForAll(index);
                 }
             }
 
@@ -235,8 +234,7 @@ public class RiggingEditor : BaseEditor
 
     public void GenerateBonePanels(List<Link<Vector2>> links, GeneralModelingEditor editor)
     {
-        BoneUi.ClearUiMesh();
-        BoneUi.staticElements.Clear();
+        BoneUi.Clear();
 
         for (int i = 0; i < links.Count; i++)
         {
@@ -258,24 +256,24 @@ public class RiggingEditor : BaseEditor
                 }
             }
 
-            BoneUi.AddStaticElement(editor.GeneratePanelLink(link.A, link.B, bothSelected ? 4 : 3));
+            /*
+            BoneUi.AddElement(editor.GeneratePanelLink(link.A, link.B, bothSelected ? 4 : 3));
 
             StaticPanel panel1 = UI.CreateStaticPanel(link.A.ToString(), AnchorType.MiddleCenter, PositionType.Free, new Vector3(20, 20, 0), new Vector4(0, 0, 0, 0), null);
             panel1.SetPosition(new Vector3(link.A.X, link.A.Y, 0));
             panel1.TextureIndex = pivotSelected ? 4 : 3;
 
-            StaticPanel panel2 = UI.CreateStaticPanel(link.B.ToString(), AnchorType.MiddleCenter, PositionType.Free, new Vector3(20, 20, 0), new Vector4(0, 0, 0, 0), null);
+            UIPanel panel2 = UI.CreateStaticPanel(link.B.ToString(), AnchorType.MiddleCenter, PositionType.Free, new Vector3(20, 20, 0), new Vector4(0, 0, 0, 0), null);
             panel2.SetPosition(new Vector3(link.B.X, link.B.Y, 0));
             panel2.TextureIndex = endSelected ? 4 : 3;
             
-            BoneUi.AddStaticElement(panel1);
-            BoneUi.AddStaticElement(panel2);
+            BoneUi.AddElement(panel1);
+            BoneUi.AddElement(panel2);
+            */
         }
 
         BoneUi.Generate();
         BoneUi.Update();
-
-        Console.WriteLine("Bone Panels Generated: " + BoneUi.staticElements.Count);
     }
 
     public void Handle_Movement(List<Link<Vector2>> links, GeneralModelingEditor editor)

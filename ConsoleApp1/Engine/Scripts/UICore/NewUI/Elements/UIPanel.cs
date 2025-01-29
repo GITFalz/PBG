@@ -9,7 +9,7 @@ public class UIPanel : UIElement
     public List<UIElement> Children = new List<UIElement>();
     public UIMesh? uIMesh;
 
-    public UIPanel(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, UIMesh? uIMesh) : base(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex)
+    public UIPanel(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, Vector2 slice, UIMesh? uIMesh) : base(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex, slice)
     {
         this.uIMesh = uIMesh;
     }
@@ -18,7 +18,14 @@ public class UIPanel : UIElement
     {
         child.PositionType = PositionType.Relative;
         Children.Add(child);
-        child.ParentElement = this;
+        child.ParentElement = this; 
+        
+        if (child is UIInputField inputField)
+        {
+            inputField.Button.PositionType = PositionType.Relative;
+            Children.Add(inputField.Button);
+            inputField.Button.ParentElement = this;
+        }
     }
 
     public override void SetUIMesh(UIMesh uIMesh)
@@ -39,6 +46,13 @@ public class UIPanel : UIElement
         if (uIMesh == null)
             return;
         uIMesh.UpdateElementTransformation(this);
+    }
+
+    public override void UpdateScale()
+    {
+        if (uIMesh == null)
+            return;
+        uIMesh.UpdateElementScale(this);
     }
 
     public void UpdateAllTransformation()

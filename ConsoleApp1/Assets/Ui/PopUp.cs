@@ -22,16 +22,20 @@ public class PopUp : Component
     {
         Instance ??= this;
 
-        panel = new("PopupPanel", AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (500, 80), (10, 10, 0, 0), 0, 0, null);
-        text = new("PopupText", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (10, 10, 0, 0), 0, 0, null);
-        button = new("PopupButton", AnchorType.TopRight, PositionType.Relative, (0, 0, 0), (80, 30), (10, 10, 0, 0), 0, 0, null, UIState.Interactable);
+        panel = new("PopupPanel", AnchorType.BottomCenter, PositionType.Absolute, (0, 0, 0), (500, 80), (0, 0, 0, 0), 0, 0, (10, 0.15f), null);
+        text = new("PopupText", AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (100, 100), (0, 10, 0, 0), 0, 0, (10, 0.15f), null);
+        button = new("PopupButton", AnchorType.TopRight, PositionType.Relative, (0, 0, 0), (30, 30), (0, 0, 0, 0), 0, 89, (0, 0), null, UIState.Interactable);
+
+        panel.Depth = 0.5f;
+        text.Depth = 0.6f;
+        button.Depth = 0.6f;
 
         button.OnClick = new SerializableEvent(CloseCurrentPopUp);
 
         panel.AddChild(text);
         panel.AddChild(button);
 
-        text.MaxCharCount = 100;
+        text.MaxCharCount = 30;
         text.SetText("Hello", 0.7f);
 
         PopUpUi.AddElement(panel);
@@ -81,10 +85,10 @@ public class PopUp : Component
 
     public void MovePopup()
     {
-        if (!MovePopupEase(510, 2))
+        if (!MovePopupEase(90, 1.5f))
             return;
 
-        panel.Offset.X = -500 + position.X;
+        panel.Offset.Y = 85 - position.Y;
         panel.AlignAll();
         panel.UpdateAllTransformation();
 
@@ -96,6 +100,21 @@ public class PopUp : Component
         Instance?.messages.Add(message);
     }
 
+    /// <summary>
+    /// Removes popups so only i are left
+    /// </summary>
+    /// <param name="i"></param>
+    public static void Keep(int i)
+    {
+        if (Instance == null)
+            return;
+
+        while (Instance.messages.Count > i)
+        {
+            Instance.messages.RemoveAt(0);
+        }
+    }
+
     public bool MovePopupEase(float totalDistance, double duration)
     {
         if (elapsedTime < duration)
@@ -105,7 +124,7 @@ public class PopUp : Component
                 ? 4 * t * t * t 
                 : 1 - Mathf.Pow(-2 * t + 2, 3) / 2;
             
-            position.X = (float)easedT * totalDistance;
+            position.Y = (float)easedT * totalDistance;
         }
         else if (elapsedTime < duration * 2)
         {
@@ -114,7 +133,7 @@ public class PopUp : Component
                 ? 4 * t * t * t 
                 : 1 - Mathf.Pow(-2 * t + 2, 3) / 2;
             
-            position.X = totalDistance - (float)(easedT * totalDistance);
+            position.Y = totalDistance - (float)(easedT * totalDistance);
         }
         else
         {

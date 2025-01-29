@@ -1,9 +1,9 @@
 ﻿public class Edge
 {
-    public Vertex V1 { get; }
-    public Vertex V2 { get; }
+    public OldVertex V1 { get; }
+    public OldVertex V2 { get; }
 
-    public Edge(Vertex v1, Vertex v2)
+    public Edge(OldVertex v1, OldVertex v2)
     {
         if (v1.GetHashCode() > v2.GetHashCode())
         {

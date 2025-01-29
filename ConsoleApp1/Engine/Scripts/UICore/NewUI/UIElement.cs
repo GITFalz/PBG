@@ -12,6 +12,8 @@ public abstract class UIElement : Component
     public Vector2 Scale = (100, 100);
     public Vector2 newScale = (100, 100);
     public Vector4 Offset = (0, 0, 0, 0);  
+    public Vector4 totalOffset = (0, 0, 0, 0);
+    public Vector2 Slice = (10, 0.15f);
     public float Rotation = 0f;
     public bool Rotated = false;
     public bool test = false;
@@ -36,7 +38,7 @@ public abstract class UIElement : Component
     public SerializableEvent? OnRelease = null;
     private bool _clicked = false;
 
-    public UIElement(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex)
+    public UIElement(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, Vector2 slice)
     {
         Name = name;
         AnchorType = anchorType;
@@ -45,8 +47,10 @@ public abstract class UIElement : Component
         Scale = scale;
         newScale = scale;
         Offset = offset;
+        totalOffset = offset;
         Rotation = rotation;
         TextureIndex = textureIndex;
+        Slice = slice;
     }
 
     public virtual void Generate() {}
@@ -55,6 +59,7 @@ public abstract class UIElement : Component
     public virtual void SetTextMesh(TextMesh textMesh) {}
     public virtual List<string> ToLines(int gap) { return []; }
     public virtual void UpdateTransformation() {}
+    public virtual void UpdateScale() {}
     public virtual void UpdateTexture() {}
     public virtual bool Test() 
     { 
@@ -130,6 +135,7 @@ public abstract class UIElement : Component
         if (PositionType != PositionType.Free)
             return;
 
+        Origin = position;
         Transformation = Matrix4.CreateTranslation(position);
     }
 
@@ -148,28 +154,30 @@ public abstract class UIElement : Component
             Width = ParentElement.Scale.X;
             Height = ParentElement.Scale.Y;
 
+            totalOffset = Offset + ParentElement.totalOffset;
             Origin = GetTransformedOrigin() + (0, 0, 0.01f) + ParentElement.Origin;
-            Transformation = Matrix4.CreateTranslation(Origin);
         }
         else
         {
             Width = Game.width - (ScreenOffset.X + ScreenOffset.Y);
             Height = Game.height - (ScreenOffset.Z + ScreenOffset.W);
 
-            Transformation = Matrix4.CreateTranslation(GetTransformedOrigin());
-
-            if ((int)AnchorType >= 9) newScale = _dimensions[(int)AnchorType - 9](Width, Height, Scale, Offset);
+            totalOffset = Offset;
+            Origin = GetTransformedOrigin();
         }
+
+        Transformation = Matrix4.CreateTranslation(Origin);
+        if ((int)AnchorType >= 9) newScale = _dimensions[(int)AnchorType - 9](Width, Height, Scale, Offset);
     }
 
     public void GenerateUIQuad(out Panel panel, UIMesh uIMesh)
     {
         panel = new Panel();
 
-        Vector3 position1 = Mathf.RotateAround((0,              0,              Depth),  Pivot, _rotationAxis, Rotation);
-        Vector3 position2 = Mathf.RotateAround((0,              newScale.Y,    Depth),  Pivot, _rotationAxis, Rotation);
-        Vector3 position3 = Mathf.RotateAround((newScale.X,    newScale.Y,    Depth),  Pivot, _rotationAxis, Rotation);
-        Vector3 position4 = Mathf.RotateAround((newScale.X,    0,              Depth),  Pivot, _rotationAxis, Rotation);
+        Vector3 position1 = Mathf.RotateAround((0,             0,           Depth),  Pivot, _rotationAxis, Rotation);
+        Vector3 position2 = Mathf.RotateAround((0,             newScale.Y,  Depth),  Pivot, _rotationAxis, Rotation);
+        Vector3 position3 = Mathf.RotateAround((newScale.X,    newScale.Y,  Depth),  Pivot, _rotationAxis, Rotation);
+        Vector3 position4 = Mathf.RotateAround((newScale.X,    0,           Depth),  Pivot, _rotationAxis, Rotation);
         
         panel.Vertices.Add(position1);
         panel.Vertices.Add(position2);

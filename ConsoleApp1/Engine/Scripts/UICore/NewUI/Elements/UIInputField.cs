@@ -5,35 +5,33 @@ public class UIInputField : UIText
     public SerializableEvent? OnTextChange = null;
     public UIButton Button;
 
-    public UIInputField(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, TextMesh? text) : base(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex, text)
+    public UIInputField(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, Vector2 slice, TextMesh? text) : base(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex, slice, text)
     {
-        Button = new UIButton(name + "Button", anchorType, positionType, pivot, scale, offset, rotation, textureIndex, null, UIState.InvisibleInteractable);
-        Button.OnClick = new SerializableEvent(() => UIController.AssignInputField(Name));
+        Button = new UIButton(name + "Button", anchorType, positionType, pivot, scale, offset, rotation, textureIndex, slice, null, UIState.InvisibleInteractable);
+        Button.OnClick = new SerializableEvent(() => UIController.AssignInputField(name));
+        Button.test = true;
     }
 
     public override void Generate(ref int offset)
     {
         Align();
-        GenerateChars();
         GenerateQuad(ref offset);
+        GenerateChars();
     }
 
     public void AddCharacter(char character)
     {
-        Console.WriteLine("InputField: " + character);
-        if (!TextShaderHelper.CharExists(character)) 
-            return;
-        SetText(Format(Text + character));
-        GenerateChars();
-        UpdateText();
+        Console.WriteLine("Text: " + Text + " Character: " + character);
+        if (!TextShaderHelper.CharExists(character)) return;
+        string formatedText = Format(Text + character);
+        Console.WriteLine("Formated Text: " + formatedText);
+        SetText(formatedText).GenerateChars().UpdateText();
     }
     
     public void RemoveCharacter()
     {
         if (Text.Length <= 0) return;
-        SetText(SetLastCharToSpace(Text));
-        GenerateChars();
-        UpdateText();
+        SetText(Text[..^1]).GenerateChars().UpdateText();
     }
 
     public static string SetLastCharToSpace(string Text)
@@ -67,11 +65,11 @@ public class UIInputField : UIText
         }
         else if (TextType == TextType.Alphabetic)
         {
-            return new string(text.Where(char.IsLetter).ToArray());
+            return new string(text.Where(c => char.IsLetter(c) || char.IsWhiteSpace(c)).ToArray());
         }
         else if (TextType == TextType.Alphanumeric)
         {
-            return new string(text.Where(char.IsLetterOrDigit).ToArray());
+            return new string(text.Where(c => char.IsLetterOrDigit(c) || char.IsWhiteSpace(c)).ToArray());
         }
         else
         {

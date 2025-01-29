@@ -51,7 +51,7 @@ public class UIController : Component
             if (textElement is UIInputField inputField)
             {
                 InputFields.Add(inputField);
-                Buttons.Add(inputField.Button);
+                AddElement(inputField.Button);
             }
 
             textElement.SetTextMesh(textMesh);
@@ -273,9 +273,11 @@ public class UIController : Component
         foreach (var element in Elements)
         {
             element.Align();
+            element.UpdateScale();
         }
 
         UpdateMatrices();
+        uIMesh.UpdateVertices();
     }
 
     public override void Update()

@@ -15,7 +15,7 @@ public class PlayerAttack3State : PlayerGameBaseState
         
         Console.WriteLine("Entering attack 3 state");
         
-        Camera = playerGameState.PlayerStateMachine.camera;
+        Camera = Game.camera;
         
         attacked = false;
         

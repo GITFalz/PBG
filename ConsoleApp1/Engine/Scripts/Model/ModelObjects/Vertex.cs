@@ -1,25 +1,25 @@
 using OpenTK.Mathematics;
 
-public class Vertex
+public class OldVertex
 {
     public Vector3 Position;
-    public Triangle? ParentTriangle;
+    public OldTriangle? ParentTriangle;
     public int Index = -1;
     public int BoneIndex = 0;
     public bool WentThrough = false;
     
-    public List<Vertex> SharedVertices = new List<Vertex>();
+    public List<OldVertex> SharedVertices = new List<OldVertex>();
 
-    public Vertex(Vector3 position, Triangle? parentTriangle = null)
+    public OldVertex(Vector3 position, OldTriangle? parentTriangle = null)
     {
         Position = position;
         ParentTriangle = parentTriangle;
     }
     
-    public Vertex(Vertex vertex) : this(vertex.Position) { }
-    public Vertex(Vertex vertex, Triangle triangle) : this(vertex.Position, triangle) { }
+    public OldVertex(OldVertex vertex) : this(vertex.Position) { }
+    public OldVertex(OldVertex vertex, OldTriangle triangle) : this(vertex.Position, triangle) { }
     
-    public void AddSharedVertex(Vertex vertex)
+    public void AddSharedVertex(OldVertex vertex)
     {
         if (!SharedVertices.Contains(vertex))
             SharedVertices.Add(vertex);
@@ -27,7 +27,7 @@ public class Vertex
             vertex.SharedVertices.Add(this);
     }
 
-    public void AddSharedVertexToAll(List<Vertex> list, Vertex vertex)
+    public void AddSharedVertexToAll(List<OldVertex> list, OldVertex vertex)
     {
         for (int i = 0; i < list.Count; i++)
         {
@@ -40,7 +40,7 @@ public class Vertex
         }
     }
 
-    public bool GetTwoOtherVertex(out Vertex? a, out Vertex? b)
+    public bool GetTwoOtherVertex(out OldVertex? a, out OldVertex? b)
     {
         a = null;
         b = null;
@@ -75,14 +75,14 @@ public class Vertex
         }
     }
     
-    public bool SharesTriangleWith(Vertex vertex)
+    public bool SharesTriangleWith(OldVertex vertex)
     {
-        List<Vertex> sharedVertices = [
+        List<OldVertex> sharedVertices = [
             ..SharedVertices,
             this
         ];
 
-        List<Vertex> sharedVerticesVertex = [
+        List<OldVertex> sharedVerticesVertex = [
             ..vertex.SharedVertices,
             vertex
         ];
@@ -99,14 +99,14 @@ public class Vertex
         return false;
     }
     
-    public void RemoveSharedVertex(Vertex vertex)
+    public void RemoveSharedVertex(OldVertex vertex)
     {
         SharedVertices.Remove(vertex);
         if (vertex.SharedVertices.Contains(this))
             vertex.SharedVertices.Remove(this);
     }
     
-    public void RemoveSingleSharedVertex(Vertex vertex)
+    public void RemoveSingleSharedVertex(OldVertex vertex)
     {
         SharedVertices.Remove(vertex);
     }
@@ -119,7 +119,7 @@ public class Vertex
         }
     }
     
-    public void RemoveSharedVertexFromAll(List<Vertex> list, Vertex vertex)
+    public void RemoveSharedVertexFromAll(List<OldVertex> list, OldVertex vertex)
     {
         foreach (var sharedVertex in list)
         {
@@ -132,9 +132,9 @@ public class Vertex
         }
     }
     
-    public List<Vertex> ToList()
+    public List<OldVertex> ToList()
     {
-        List<Vertex> list = new List<Vertex>() { this };
+        List<OldVertex> list = new List<OldVertex>() { this };
         foreach (var sharedVertex in SharedVertices)
             list.Add(sharedVertex);
         return list;
@@ -184,6 +184,58 @@ public class Vertex
         return SharedVertices.Any(sharedVertex => sharedVertex.WentThrough) || WentThrough;
     }
 
+    public override string ToString()
+    {
+        return "( " + Position.X + ", " + Position.Y + ", " + Position.Z + " )";
+    }
+}
+
+public class Vertex
+{
+    private Vector3 _position = Vector3.Zero;
+    public Vector3 Position;
+    public List<Triangle> ParentTriangles = new List<Triangle>();
+    public int Index = -1;
+    public int BoneIndex = 0;
+
+    public Vertex(Vector3 position, Triangle? parentTriangle = null)
+    {
+        Position = position;
+        _position = position;
+        if (parentTriangle != null && !ParentTriangles.Contains(parentTriangle))
+            ParentTriangles.Add(parentTriangle);
+    }
+    public Vertex(Vertex vertex) : this(vertex.Position) { }
+    public Vertex(Vertex vertex, Triangle triangle) : this(vertex.Position, triangle) { }
+
+    public void AddParentTriangle(Triangle triangle)
+    {
+        if (!ParentTriangles.Contains(triangle))
+            ParentTriangles.Add(triangle);
+    }
+
+    public void SetPosition(Vector3 pos)
+    {
+        _position = pos;
+        Position = pos;
+    }
+
+    public void MovePosition(Vector3 offset)
+    {
+        Position += offset;
+        _position = Position;
+    }
+
+    public void SnapPosition(Vector3 offset, float snap)
+    {
+        _position += offset;
+        Position = new Vector3(
+            (float)Math.Round(_position.X / snap) * snap,
+            (float)Math.Round(_position.Y / snap) * snap,
+            (float)Math.Round(_position.Z / snap) * snap
+        );
+    }
+    
     public override string ToString()
     {
         return "( " + Position.X + ", " + Position.Y + ", " + Position.Z + " )";

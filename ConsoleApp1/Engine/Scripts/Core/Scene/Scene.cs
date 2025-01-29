@@ -6,7 +6,7 @@ public class Scene
 
     private HashSet<SceneSwitcher> _sceneSwitchers = new HashSet<SceneSwitcher>();
 
-    public UIController? UiController = null;
+    public List<UIController> UIControllers = [];
     public Dictionary<string, SceneComponent> Components = new Dictionary<string, SceneComponent>();
 
     public bool Started = false;
@@ -59,7 +59,10 @@ public class Scene
 
     public void OnResize()
     {
-        UiController?.OnResize();
+        foreach (UIController uiController in UIControllers)
+        {
+            uiController.OnResize();
+        }
         _root.Resize();
     }
 
@@ -103,6 +106,11 @@ public class Scene
 
     public void Update()
     {
+        foreach (UIController uiController in UIControllers)
+        {
+            uiController.Test();
+        }
+
         foreach (SceneSwitcher sceneSwitcher in _sceneSwitchers)
         {
             if (sceneSwitcher.CanSwitch())
@@ -117,8 +125,12 @@ public class Scene
 
     public void Render()
     {
-        UiController?.Render();
         _root.Render();
+
+        foreach (UIController uiController in UIControllers)
+        {
+            uiController.Render();
+        }
     }
 
     public void Exit()
@@ -151,47 +163,6 @@ public class Scene
         }
 
         return false;
-    }
-
-    public void LoadUi()
-    {
-        Console.WriteLine(ScenePath);
-        
-        string[] lines = File.ReadAllLines(ScenePath);
-        
-        if (lines.Length == 0 || lines[0].Split(":")[1].Trim() != Name)
-            return;
-
-        UIController? controller;
-        try
-        {
-            controller = UiController;
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine("Scene: " + Name + " with error: " + e);
-            return;
-        }
-        
-        if (controller == null)
-            return; 
-            
-        //UiLoader.Load(controller, lines);
-    }
-
-    public void SaveUi()
-    {
-        if (UiController == null)
-            return;
-        
-        List<string> lines = new List<string>() { "Scene: " + Name, ""};
-        
-        foreach (var element in UiController.Elements)
-        {
-            lines.AddRange(element.ToLines(0));
-        }
-        
-        File.WriteAllLines(ScenePath, lines);
     }
 }
 

@@ -5,7 +5,10 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class ModelingEditor : BaseEditor
 {
+    public static SelectionType selectionType = SelectionType.Vertex;
     public bool _started = false;
+
+    public static Action<GeneralModelingEditor>? Selection;
 
     public override void Start(GeneralModelingEditor editor)
     {
@@ -17,6 +20,8 @@ public class ModelingEditor : BaseEditor
         {
             _started = true;
         }
+
+        Selection = HandleSelection[(int)selectionType];
     }
 
     public override void Awake(GeneralModelingEditor editor)
@@ -41,7 +46,7 @@ public class ModelingEditor : BaseEditor
             if (editor.freeCamera)
             {
                 Game.Instance.CursorState = CursorState.Grabbed;
-                editor.camera.firstMove = true;
+                Game.camera.firstMove = true;
             }
             else
             {
@@ -57,7 +62,7 @@ public class ModelingEditor : BaseEditor
         
         if (editor.freeCamera)
         {
-            editor.camera.Update();
+            Game.camera.Update();
         }
 
         if (Input.IsKeyDown(Keys.LeftControl))
@@ -89,12 +94,6 @@ public class ModelingEditor : BaseEditor
 
         if (Input.IsKeyReleased(Keys.E))
         {
-            editor.model.Mesh.CheckUselessTriangles();
-            editor.model.Mesh.CombineDuplicateVertices();
-            editor.model.Mesh.RecalculateNormals();
-            editor.model.Mesh.InitModel();
-            editor.model.Mesh.UpdateMesh();
-            
             ModelSettings.SnappingOffset = Vector3.Zero;
             editor.regenerateVertexUi = true;
         }
@@ -124,35 +123,7 @@ public class ModelingEditor : BaseEditor
             
             if (Input.IsMousePressed(MouseButton.Left))
             {
-                if (!Input.IsKeyDown(Keys.LeftShift))
-                    editor._selectedVertices.Clear();
-                
-                Vector2 mousePos = Input.GetMousePosition();
-                Vector2? closest = null;
-                Vertex? closestVert = null;
-            
-                System.Numerics.Matrix4x4 projection = editor.camera.GetNumericsProjectionMatrix();
-                System.Numerics.Matrix4x4 view = editor.camera.GetNumericsViewMatrix();
-            
-                foreach (var vert in editor.model.Mesh.VertexList)
-                {
-                    Vector2? screenPos = Mathf.WorldToScreen(vert.Position, projection, view);
-                    if (screenPos == null)
-                        continue;
-                    float distance = Vector2.Distance(mousePos, (Vector2)screenPos);
-                    float distanceClosest = closest == null ? 1000 : Vector2.Distance(mousePos, (Vector2)closest);
-                
-                    if (distance < distanceClosest && distance < 10)
-                    {
-                        closest = screenPos;
-                        closestVert = vert;
-                    }
-                }
-
-                if (closestVert != null && !editor._selectedVertices.Remove(closestVert))
-                    editor._selectedVertices.Add(closestVert);
-                
-                editor.GenerateVertexColor();
+                Selection?.Invoke(editor);
             }
         }
     }
@@ -164,11 +135,72 @@ public class ModelingEditor : BaseEditor
 
     public override void Exit(GeneralModelingEditor editor)
     {
-        editor.camera.SetSmoothFactor(true);
-        editor.camera.SetPositionSmoothFactor(true);
-        
-        editor.gameObject.Scene.SaveUi();
+        Game.camera.SetSmoothFactor(true);
+        Game.camera.SetPositionSmoothFactor(true);
     }
+
+    public static void SwitchSelection(SelectionType selectionType)
+    {
+        PopUp.AddPopUp($"Switched to {selectionType} Selection");
+        Selection = HandleSelection[(int)selectionType];
+    }
+
+    public static void HandleVertexSelection(GeneralModelingEditor editor)
+    {
+        if (!Input.IsKeyDown(Keys.LeftShift))
+            editor._selectedVertices.Clear();
+        
+        Vector2 mousePos = Input.GetMousePosition();
+        Vector2? closest = null;
+        Vertex? closestVert = null;
+    
+        System.Numerics.Matrix4x4 projection = Game.camera.GetNumericsProjectionMatrix();
+        System.Numerics.Matrix4x4 view = Game.camera.GetNumericsViewMatrix();
+    
+        foreach (var vert in editor.model.modelMesh.VertexList)
+        {
+            Vector2? screenPos = Mathf.WorldToScreen(vert.Position, projection, view);
+            if (screenPos == null)
+                continue;
+            float distance = Vector2.Distance(mousePos, (Vector2)screenPos);
+            float distanceClosest = closest == null ? 1000 : Vector2.Distance(mousePos, (Vector2)closest);
+        
+            if (distance < distanceClosest && distance < 10)
+            {
+                closest = screenPos;
+                closestVert = vert;
+            }
+        }
+
+        if (closestVert != null && !editor._selectedVertices.Remove(closestVert))
+            editor._selectedVertices.Add(closestVert);
+
+        editor.GenerateVertexColor();
+    }
+
+    public static void HandleEdgeSelection(GeneralModelingEditor editor)
+    {
+        
+    }
+
+    public static void HandleFaceSelection(GeneralModelingEditor editor)
+    {
+
+    }
+
+    public static Action<GeneralModelingEditor>[] HandleSelection = 
+    [
+        HandleVertexSelection,
+        HandleEdgeSelection,
+        HandleFaceSelection,
+    ];
+}
+
+public enum SelectionType
+{
+    Vertex = 0,
+    Edge = 1,
+    Face = 2,
 }
 
 public abstract class Undoable

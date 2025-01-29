@@ -44,7 +44,7 @@ public class AnimationEditor : BaseEditor
             if (freeCamera)
             {
                 Game.Instance.CursorState = CursorState.Grabbed;
-                editor.camera.firstMove = true;
+                Game.camera.firstMove = true;
             }
             else
             {
@@ -54,7 +54,7 @@ public class AnimationEditor : BaseEditor
         
         if (freeCamera)
         {
-            editor.camera.Update();
+            Game.camera.Update();
             
             if (!regenerateUi)
             {

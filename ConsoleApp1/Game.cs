@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Drawing;
 using ConsoleApp1.Assets.Scripts.Inputs;
 using ConsoleApp1.Assets.Scripts.World.Blocks;
 using OpenTK.Graphics.OpenGL4;
@@ -22,14 +23,15 @@ public class Game : GameWindow
     // User paths
     public static string mainPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VoxelGame");
     public static string chunkPath = Path.Combine(mainPath, "Chunks");
-    
-    // Compile time paths
     public static string assetPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Saves");
     public static string uiPath = Path.Combine(assetPath, "UI");
     public static string modelPath = Path.Combine(assetPath, "Models");
 
 
-    private Camera _mainCamera;
+    public static Vector3 BackgroundColor = new Vector3(0.4f, 0.6f, 0.98f);
+
+
+    public static Camera camera;
     private WorldManager _worldManager;
     
     public ConcurrentDictionary<string, Scene> Scenes = new ConcurrentDictionary<string, Scene>();
@@ -47,12 +49,6 @@ public class Game : GameWindow
     
     private bool isRunning = true;
     private Thread _physicsThread;
-    
-    
-    //Skybox
-    private ShaderProgram _skyboxShader;
-
-    private Mesh _skyboxMesh;
 
 
     private static Scene _worldScene = new Scene("World");
@@ -67,11 +63,6 @@ public class Game : GameWindow
     private PopUp _popUp;
     
     
-    // Editor mode
-    public EditorMode EditorNode = new EditorMode();
-    public Action EditorUpdate;
-    
-    
     public Game(int width, int height) : base(GameWindowSettings.Default, new NativeWindowSettings
         {
             APIVersion = new Version(4, 6),
@@ -80,6 +71,8 @@ public class Game : GameWindow
         })
     {
         Instance = this;
+
+        camera = new Camera(width, height, new Vector3(0, 0, 0));
         
         CenterWindow(new Vector2i(width, height));
         Game.width = width;
@@ -102,7 +95,6 @@ public class Game : GameWindow
         try
         {
             UIController.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, e.Width, e.Height, 0, -2, 2);
-            _mainCamera.UpdateProjectionMatrix(e.Width, e.Height);
             ModelSettings.Camera?.UpdateProjectionMatrix(e.Width, e.Height);
         }
         catch (Exception ex)
@@ -132,11 +124,7 @@ public class Game : GameWindow
         // Utils
         stopwatch = new Stopwatch();
         stopwatch.Start();
-        
-        // Camera
-        _mainCamera = new Camera(width, height, new Vector3(0, 20, 0));
-        _mainCamera.Start();
-        
+
         if (!Directory.Exists(chunkPath))
             Directory.CreateDirectory(chunkPath);
         if (!Directory.Exists(modelPath))
@@ -174,9 +162,6 @@ public class Game : GameWindow
         //BlockManager.Add(grass);
         //BlockManager.Add(dirt);
         //BlockManager.Add(stone);
-
-        _skyboxMesh = new SkyboxMesh();
-        _skyboxShader = new ShaderProgram("Sky/Default.vert", "Sky/Default.frag");
         
         // Animation
         new OldAnimationManager().Start();
@@ -255,46 +240,17 @@ public class Game : GameWindow
     protected override void OnRenderFrame(FrameEventArgs args)
     {
         // Sky blue background
-        GL.ClearColor(0.4f, 0.6f, 0.98f, 1.0f);
+        GL.ClearColor(BackgroundColor.X, BackgroundColor.Y, BackgroundColor.Z, 1.0f);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         
         GL.Viewport(0, 0, width, height);
         
-        /*
-        GL.DepthFunc(DepthFunction.Lequal);
-        GL.DepthMask(false);
-       
-        _skyboxShader.Bind();
-        
-        Matrix4 model = Matrix4.Identity;
-        Matrix4 view = Camera.GetViewMatrix();
-        Matrix4 projection = Camera.GetProjectionMatrix();
-
-        int sml = GL.GetUniformLocation(_skyboxShader.ID, "model");
-        int svl = GL.GetUniformLocation(_skyboxShader.ID, "view");
-        int spl = GL.GetUniformLocation(_skyboxShader.ID, "projection");
-        
-        GL.UniformMatrix4(sml, true, ref model);
-        GL.UniformMatrix4(svl, true, ref view);
-        GL.UniformMatrix4(spl, true, ref projection);
-        
-        //_chunkManager.CreateChunks();
-        //_chunkManager.RenderChunks();
-        
-        _skyboxMesh.RenderMesh();
-
-        _skyboxShader.Unbind();
-
-        GL.DepthMask(true);
-        GL.DepthFunc(DepthFunction.Less);
-        */
-
-        _popUp.Render();
-        
         GL.Enable(EnableCap.CullFace);
         GL.FrontFace(FrontFaceDirection.Ccw);
         
+        Skybox.Render();
         CurrentScene?.Render();
+        _popUp.Render();
         
         Context.SwapBuffers();
         

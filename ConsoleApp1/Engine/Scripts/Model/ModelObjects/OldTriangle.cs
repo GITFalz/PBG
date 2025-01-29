@@ -1,29 +1,24 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using OpenTK.Mathematics;
 
-public class Triangle
+public class OldTriangle
 {
-    public Vertex A;
-    public Vertex B;
-    public Vertex C;
+    public OldVertex A;
+    public OldVertex B;
+    public OldVertex C;
     
     public Vector3 Normal;
     
     public Quad? ParentQuad;
 
-    public Triangle(Vertex a, Vertex b, Vertex c, Quad? parentQuad = null)
+    public OldTriangle(OldVertex a, OldVertex b, OldVertex c, Quad? parentQuad = null)
     {
-        A = a;
-        B = b;
-        C = c;
-
-        A.AddParentTriangle(this);
-        B.AddParentTriangle(this);
-        C.AddParentTriangle(this);
-
-        A.Index = 0;
-        B.Index = 1;
-        C.Index = 2;
-
+        A = a; A.ParentTriangle = this; A.Index = 0;
+        B = b; B.ParentTriangle = this; B.Index = 1;
+        C = c; C.ParentTriangle = this; C.Index = 2;
         UpdateNormals();
         ParentQuad = parentQuad;
     }
@@ -45,23 +40,13 @@ public class Triangle
         return A.Position == B.Position || A.Position == C.Position || B.Position == C.Position;
     }
 
-    public void SetVertexTo(Vertex oldVertex, Vertex newVertex)
-    {
-        if (A == oldVertex)
-            A = newVertex;
-        else if (B == oldVertex)
-            B = newVertex;
-        else if (C == oldVertex)
-            C = newVertex;
-    }
-
     public List<Vector3> GetVerticesPosition()
     {
         return new List<Vector3> {A.Position, B.Position, C.Position};
     }
 
-    public List<Vertex> GetVertices()
+    public List<OldVertex> GetVertices()
     {
-        return new List<Vertex> {A, B, C};
+        return new List<OldVertex> {A, B, C};
     }
 }

@@ -11,7 +11,7 @@ public class PlayerSprintingState : PlayerGameBaseState
     {
         Console.WriteLine("Entering sprinting state");
         
-        Camera = playerGameState.PlayerStateMachine.camera;
+        Camera = Game.camera;
         
         playerGameState.NextMovingState = playerGameState.SprintingState;
         playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Sprint);

@@ -6,7 +6,7 @@ public class UIButton : UIElement
 {
     public UIMesh? uIMesh;
 
-    public UIButton(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, UIMesh? uIMesh, UIState state) : base(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex)
+    public UIButton(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, Vector2 slice, UIMesh? uIMesh, UIState state) : base(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex, slice)
     {
         State = state;
         this.uIMesh = uIMesh;

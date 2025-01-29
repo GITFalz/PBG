@@ -18,7 +18,7 @@ void main()
     int index = int(TexCoord.x * Length.x) + Length.y;
     int char = texelFetch(charBuffer, index).r;
 
-    if (char == -1 || TexCoord.x > (1 / sizeX) * Length.x || TexCoord.y > (1 / sizeY))
+    if (char <= -1 || TexCoord.x > (1 / sizeX) * Length.x || TexCoord.y > (1 / sizeY))
         discard;
 
     vec2 uv = mod(vec2(TexCoord.x * sizeX, TexCoord.y * sizeY), 1.0);

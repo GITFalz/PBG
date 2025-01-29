@@ -15,7 +15,7 @@ public class PlayerAttack4State : PlayerGameBaseState
     {
         Console.WriteLine("Entering attack 4 state");
         
-        Camera = playerGameState.PlayerStateMachine.camera;
+        Camera = Game.camera;
         
         smashed1 = false;
         smashed2 = false;

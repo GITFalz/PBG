@@ -16,7 +16,7 @@ public class PlayerFallingState : PlayerGameBaseState
         Console.WriteLine("Entering falling state");
         playerGameState.PlayerStateMachine.physicsBody.doGravity = true;
         
-        Camera = playerGameState.PlayerStateMachine.camera;
+        Camera = Game.camera;
         
         OldAnimationManager.Instance.LoopAnimation("Player", "falling");
         

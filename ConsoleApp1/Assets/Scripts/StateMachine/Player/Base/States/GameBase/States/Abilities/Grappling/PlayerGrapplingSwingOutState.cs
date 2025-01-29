@@ -10,7 +10,7 @@ public class PlayerGrapplingSwingOutState : PlayerGameBaseState
     {
         Console.WriteLine("Entering grappling swing out state");
         
-        Camera = playerGameState.PlayerStateMachine.camera;
+        Camera = Game.camera;
         
         playerGameState.PlayerStateMachine.physicsBody.doGravity = true;
         playerGameState.PlayerStateMachine.physicsBody.gravity = 20f;

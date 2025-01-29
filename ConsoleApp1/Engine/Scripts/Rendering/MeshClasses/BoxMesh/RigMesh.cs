@@ -4,7 +4,7 @@ using OpenTK.Mathematics;
 public class RigMesh : BoxMesh
 {
     public Bone RootBone;
-    public List<Vertex> VertexList = new List<Vertex>();
+    public List<OldVertex> VertexList = new List<OldVertex>();
     public List<Vector3> Normals = new List<Vector3>();
     private VBO _textureVbo;
     public VBO _normalVbo;
@@ -99,18 +99,18 @@ public class RigMesh : BoxMesh
 
     public void ApplyMirror()
     {
-        List<Vertex> currentVertices = new List<Vertex>(VertexList);
+        List<OldVertex> currentVertices = new List<OldVertex>(VertexList);
         
         Vector3[] flip = ModelSettings.Mirrors;
         for (int j = 1; j < flip.Length; j++)
         {
             for (int i = 0; i < currentVertices.Count; i+=3)
             {
-                Vertex A = new Vertex(currentVertices[i].Position * flip[j]);
-                Vertex B = new Vertex(currentVertices[i + 1].Position * flip[j]);
-                Vertex C = new Vertex(currentVertices[i + 2].Position * flip[j]);
+                OldVertex A = new OldVertex(currentVertices[i].Position * flip[j]);
+                OldVertex B = new OldVertex(currentVertices[i + 1].Position * flip[j]);
+                OldVertex C = new OldVertex(currentVertices[i + 2].Position * flip[j]);
                 
-                Triangle triangle = new Triangle(A, B, C);
+                OldTriangle triangle = new OldTriangle(A, B, C);
                 
                 AddTriangle(triangle);
             }
@@ -119,7 +119,7 @@ public class RigMesh : BoxMesh
         CombineDuplicateVertices();
     }
 
-    public void AddTriangle(Triangle triangle)
+    public void AddTriangle(OldTriangle triangle)
     {
         Normals.Add(triangle.Normal);
         Normals.Add(triangle.Normal);
@@ -138,7 +138,7 @@ public class RigMesh : BoxMesh
         TextureIndices.Add(0);
     }
     
-    public bool SwapVertices(Vertex A, Vertex B)
+    public bool SwapVertices(OldVertex A, OldVertex B)
     {
         if (!VertexList.Contains(A) || !VertexList.Contains(B)) 
             return false;
@@ -152,7 +152,7 @@ public class RigMesh : BoxMesh
         return true;
     }
 
-    public void UpdateNormals(Triangle triangle)
+    public void UpdateNormals(OldTriangle triangle)
     {
         triangle.UpdateNormals();
         
@@ -167,13 +167,13 @@ public class RigMesh : BoxMesh
 
     public void RecalculateNormals()
     {
-        HashSet<Triangle> triangles = new HashSet<Triangle>(); 
+        HashSet<OldTriangle> triangles = new HashSet<OldTriangle>(); 
         for (int i = 0; i < VertexList.Count; i++)
         {
-            Vertex vertex = VertexList[i];
+            OldVertex vertex = VertexList[i];
             if (vertex.ParentTriangle != null)
             {
-                Triangle triangle = vertex.ParentTriangle;
+                OldTriangle triangle = vertex.ParentTriangle;
                 triangles.Add(triangle);
                 triangle.UpdateNormals();
             }
@@ -196,8 +196,8 @@ public class RigMesh : BoxMesh
 
     public void CheckUselessTriangles()
     {
-        HashSet<Triangle> triangles = new HashSet<Triangle>();
-        HashSet<Triangle> toDelete = new HashSet<Triangle>();
+        HashSet<OldTriangle> triangles = new HashSet<OldTriangle>();
+        HashSet<OldTriangle> toDelete = new HashSet<OldTriangle>();
         
         foreach (var vertex in VertexList)
         {
@@ -214,15 +214,15 @@ public class RigMesh : BoxMesh
         }
     }
     
-    public void CombineDuplicateVertices(List<Vertex> vertices)
+    public void CombineDuplicateVertices(List<OldVertex> vertices)
     {
         for (int i = 0; i < vertices.Count; i++)
         {
-            Vertex vertex1 = vertices[i];
+            OldVertex vertex1 = vertices[i];
             
             for (int j = i + 1; j < vertices.Count; j++)
             {
-                Vertex vertex2 = vertices[j];
+                OldVertex vertex2 = vertices[j];
                 if (vertex1.Position == vertex2.Position)
                 {
                     vertex1.AddSharedVertexToAll(vertex1.ToList(), vertex2);
@@ -231,7 +231,7 @@ public class RigMesh : BoxMesh
         }
     }
 
-    public void RemoveVertex(Vertex vertex)
+    public void RemoveVertex(OldVertex vertex)
     {
         if (VertexList.Contains(vertex))
         {
@@ -244,7 +244,7 @@ public class RigMesh : BoxMesh
         }
     }
 
-    public void RemoveTriangle(Triangle triangle)
+    public void RemoveTriangle(OldTriangle triangle)
     {
         if (Indices.Count < 3)
             return;
@@ -328,10 +328,10 @@ public class RigMesh : BoxMesh
             Vector3 vectorB = UiLoader.TextToVector3(lines[i + 2]);
             Vector3 vectorC = UiLoader.TextToVector3(lines[i + 3]);
 
-            Vertex A = new Vertex(vectorA);
-            Vertex B = new Vertex(vectorB);
-            Vertex C = new Vertex(vectorC);
-            new Triangle(A, B, C);
+            OldVertex A = new OldVertex(vectorA);
+            OldVertex B = new OldVertex(vectorB);
+            OldVertex C = new OldVertex(vectorC);
+            new OldTriangle(A, B, C);
 
             VertexList.Add(A);
             VertexList.Add(B);
