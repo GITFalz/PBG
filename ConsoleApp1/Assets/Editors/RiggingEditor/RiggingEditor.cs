@@ -33,8 +33,6 @@ public class RiggingEditor : BaseEditor
             BoneUi.Generate();
             _started = true;
         }
-
-        editor.gameObject.Scene.UIControllers.Add(BoneUi);
     }
 
     public override void Awake(GeneralModelingEditor editor)
@@ -45,10 +43,12 @@ public class RiggingEditor : BaseEditor
     public override void Render(GeneralModelingEditor editor)
     {
         editor.RenderRigging();
+        BoneUi.Render();
     }
 
     public override void Update(GeneralModelingEditor editor)
     {
+        /*
         var links = editor.GetLinkPositions(model.Bones);
 
         if (Input.IsKeyPressed(Keys.Escape))
@@ -225,6 +225,7 @@ public class RiggingEditor : BaseEditor
         {
             Handle_Movement(links, editor);
         }
+        */
     }
 
     public override void Exit(GeneralModelingEditor editor)
@@ -278,6 +279,7 @@ public class RiggingEditor : BaseEditor
 
     public void Handle_Movement(List<Link<Vector2>> links, GeneralModelingEditor editor)
     {
+        /*
         Vector3 move = editor.GetSnappingMovement();
 
             foreach (var (bone, pivot) in SelectedBones)
@@ -294,6 +296,7 @@ public class RiggingEditor : BaseEditor
             }
 
             GenerateBonePanels(links, editor);
+            */
     }
 
     public static bool IsPointCloseToLine(Vector2 point, Vector2 lineStart, Vector2 lineEnd, float threshold)

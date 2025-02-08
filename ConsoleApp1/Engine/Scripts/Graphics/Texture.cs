@@ -21,7 +21,7 @@ public class Texture
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
 
         StbImage.stbi_set_flip_vertically_on_load(1);
-        ImageResult texture = ImageResult.FromStream(File.OpenRead("../../../Assets/Textures/" + filePath), ColorComponents.RedGreenBlueAlpha);
+        ImageResult texture = ImageResult.FromStream(File.OpenRead(Path.Combine(Game.texturePath, filePath)), ColorComponents.RedGreenBlueAlpha);
         
         Width = texture.Width;
         Height = texture.Height;

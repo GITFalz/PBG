@@ -6,6 +6,11 @@ public class UIController : Component
 {
     public UIMesh uIMesh = new();
     public TextMesh textMesh = new();
+
+    public UIMesh maskMesh = new();
+    public UIMesh maskeduIMesh = new();
+    public TextMesh maskedTextMesh = new();
+    
     public static ShaderProgram _uiShader = UIData.UiShader;
     public static TextureArray _uItexture = UIData.UiTexture;
     public static ShaderProgram _textShader = UIData.TextShader;
@@ -172,6 +177,11 @@ public class UIController : Component
         activeInputField = inputField;
     }
 
+    public static void RemoveInputField()
+    {
+        activeInputField = null;
+    }
+
     public static void InputField(Keys key)
     {
         if (activeInputField == null || key == Keys.LeftShift || key == Keys.RightShift)
@@ -231,6 +241,9 @@ public class UIController : Component
     {
         uIMesh.GenerateBuffers();
         textMesh.GenerateBuffers();
+        maskMesh.GenerateBuffers();
+        maskeduIMesh.GenerateBuffers(); 
+        maskedTextMesh.GenerateBuffers();
     }
 
     public void GenerateBuffers()
@@ -243,17 +256,30 @@ public class UIController : Component
     {
         uIMesh.UpdateMatrices();
         textMesh.UpdateMatrices();
+        maskMesh.UpdateMatrices();
+        maskeduIMesh.UpdateMatrices();
+        maskedTextMesh.UpdateMatrices();
     }
 
     public void UpdateTextures()
     {
         uIMesh.UpdateTexture();
+        maskeduIMesh.UpdateTexture();
     }
 
     public List<string> ToLines()
     {
         List<string> lines = new List<string>();
         
+        foreach (var element in UIElements)
+        {
+            lines.AddRange(element.ToLines(0));
+        }
+
+        foreach (var line in lines)
+        {
+            Console.WriteLine(line);
+        }
 
         return lines;
     }
@@ -262,6 +288,11 @@ public class UIController : Component
     {
         uIMesh.Clear();
         textMesh.Clear();
+        foreach (var element in Elements)
+        {
+            if (element is UIInputField inputField && InputFields.Contains(inputField))
+                InputFields.Remove(inputField);
+        }
         UIElements.Clear();
         TextElements.Clear();
         Buttons.Clear();
@@ -291,12 +322,19 @@ public class UIController : Component
         if (!render)
             return;
 
-        GL.DepthMask(true);
-        GL.Enable(EnableCap.DepthTest);
+        GL.Disable(EnableCap.DepthTest);
+        GL.DepthMask(false);
         GL.Enable(EnableCap.Blend);
-        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         GL.Disable(EnableCap.CullFace);
         GL.FrontFace(FrontFaceDirection.Ccw);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+        
+        GL.Enable(EnableCap.StencilTest);
+        GL.Clear(ClearBufferMask.StencilBufferBit);
+        GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
+        GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace); 
+
+        
 
         _uiShader.Bind();
         _uItexture.Bind();
@@ -309,11 +347,17 @@ public class UIController : Component
         GL.UniformMatrix4(modelLoc, true, ref model);
         GL.UniformMatrix4(projectionLoc, true, ref OrthographicProjection);
 
-        uIMesh.Render();
+        maskMesh.Render();
         
+        GL.StencilFunc(StencilFunction.Equal, 1, 0xFF);
+        GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
+
+        maskeduIMesh.Render();
+
         _uiShader.Unbind();
         _uItexture.Unbind();
 
+        GL.Disable(EnableCap.StencilTest);
 
         _textShader.Bind();
         _textTexture.Bind();
@@ -323,6 +367,46 @@ public class UIController : Component
         int textModelLoc = GL.GetUniformLocation(_textShader.ID, "model");
         int textProjectionLoc = GL.GetUniformLocation(_textShader.ID, "projection");
         int charsLoc = GL.GetUniformLocation(_textShader.ID, "charBuffer");
+        
+        GL.UniformMatrix4(textModelLoc, true, ref model);
+        GL.UniformMatrix4(textProjectionLoc, true, ref OrthographicProjection);
+        GL.Uniform1(charsLoc, 1);
+        
+        maskedTextMesh.Render();
+        
+        _textShader.Unbind();
+        _textTexture.Unbind();
+        
+        GL.DepthMask(true);
+        GL.Enable(EnableCap.DepthTest);
+        GL.DepthFunc(DepthFunction.Lequal);
+
+
+
+        _uiShader.Bind();
+        _uItexture.Bind();
+
+        modelLoc = GL.GetUniformLocation(_uiShader.ID, "model");
+        projectionLoc = GL.GetUniformLocation(_uiShader.ID, "projection");
+
+        GL.UniformMatrix4(modelLoc, true, ref model);
+        GL.UniformMatrix4(projectionLoc, true, ref OrthographicProjection);
+
+        uIMesh.Render();
+        
+        _uiShader.Unbind();
+        _uItexture.Unbind();
+
+
+
+        _textShader.Bind();
+        _textTexture.Bind();
+
+        model = Matrix4.Identity;
+
+        textModelLoc = GL.GetUniformLocation(_textShader.ID, "model");
+        textProjectionLoc = GL.GetUniformLocation(_textShader.ID, "projection");
+        charsLoc = GL.GetUniformLocation(_textShader.ID, "charBuffer");
         
         GL.UniformMatrix4(textModelLoc, true, ref model);
         GL.UniformMatrix4(textProjectionLoc, true, ref OrthographicProjection);

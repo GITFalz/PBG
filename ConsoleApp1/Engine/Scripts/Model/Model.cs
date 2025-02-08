@@ -16,7 +16,7 @@ public class Model
 
     public Dictionary<string, Animation> Animations = new Dictionary<string, Animation>();
     public List<Bone> Bones = new List<Bone>();
-    public RigMesh Mesh;
+    public AnimationMesh Mesh;
     public ModelMesh modelMesh = new ModelMesh();
     public Animation? CurrentAnimation = null;
     
@@ -24,11 +24,10 @@ public class Model
     {
         CurrentModel = ModelModeling;
 
-        Mesh = new RigMesh(rootBone);
+        Bones = rootBone.GetBones();
+        Mesh = new AnimationMesh(rootBone, Bones.Count);
         modelMesh.LoadModel(modelName);
 
-        //rootBone.SetVertices(Mesh.Vertices);
-        Bones = rootBone.GetBones();
 
         CurrentAnimation = new Animation("TestAnimation");
         Animations.Add(CurrentAnimation.Name, CurrentAnimation);
@@ -52,6 +51,7 @@ public class Model
 
         modelMesh.Init();
         modelMesh.GenerateBuffers();
+        Mesh.GenerateBuffers();
 
         CurrentModel.Init(this);
     }
@@ -127,7 +127,7 @@ public class ModelAnimation : ModelBase
         Bones = model.Bones;
         CurrentAnimation = model.CurrentAnimation;
 
-        Mesh = model.Mesh.ToAnimationMesh(Bones.Count);
+        //Mesh = model.Mesh.ToAnimationMesh(Bones.Count);
         Mesh.GenerateBuffers();
     }
 
@@ -252,16 +252,26 @@ public class ModelModeling : ModelBase
 
         _shaderProgram.Bind();
 
+        GL.Enable(EnableCap.DepthTest);
+        GL.DepthFunc(DepthFunction.Lequal);
+
+        Matrix4 Model = Matrix4.Identity;
+        Matrix4 view = camera.GetViewMatrix();
+        Matrix4 projection = camera.GetProjectionMatrix();
+
+        int modelLocation;
+        int viewLocation;
+        int projectionLocation;
+        int colorAlphaLocation;
+
         foreach (var flip in ModelSettings.Mirrors)
         { 
-            Matrix4 Model = Matrix4.CreateScale(flip);
-            Matrix4 view = camera.GetViewMatrix();
-            Matrix4 projection = camera.GetProjectionMatrix();
+            Model = Matrix4.CreateScale(flip);
 
-            int modelLocation = GL.GetUniformLocation(_shaderProgram.ID, "model");
-            int viewLocation = GL.GetUniformLocation(_shaderProgram.ID, "view");
-            int projectionLocation = GL.GetUniformLocation(_shaderProgram.ID, "projection");
-            int colorAlphaLocation = GL.GetUniformLocation(_shaderProgram.ID, "colorAlpha");
+            modelLocation = GL.GetUniformLocation(_shaderProgram.ID, "model");
+            viewLocation = GL.GetUniformLocation(_shaderProgram.ID, "view");
+            projectionLocation = GL.GetUniformLocation(_shaderProgram.ID, "projection");
+            colorAlphaLocation = GL.GetUniformLocation(_shaderProgram.ID, "colorAlpha");
             
             GL.UniformMatrix4(modelLocation, true, ref Model);
             GL.UniformMatrix4(viewLocation, true, ref view);
@@ -272,13 +282,54 @@ public class ModelModeling : ModelBase
         }
 
         _shaderProgram.Unbind();
+
+        GL.Enable(EnableCap.DepthTest);
+        GL.DepthFunc(DepthFunction.Always);
+
+        Model = Matrix4.Identity;
+
+        ModelSettings.EdgeShader.Bind();
+
+        modelLocation = GL.GetUniformLocation(ModelSettings.EdgeShader.ID, "model");
+        viewLocation = GL.GetUniformLocation(ModelSettings.EdgeShader.ID, "view");
+        projectionLocation = GL.GetUniformLocation(ModelSettings.EdgeShader.ID, "projection");
+
+        GL.UniformMatrix4(modelLocation, true, ref Model);
+        GL.UniformMatrix4(viewLocation, true, ref view);
+        GL.UniformMatrix4(projectionLocation, true, ref projection);
+
+        modelMesh.RenderEdges();
+
+        ModelSettings.EdgeShader.Unbind();
+
+        ModelSettings.VertexShader.Bind();
+
+        modelLocation = GL.GetUniformLocation(ModelSettings.VertexShader.ID, "model");
+        viewLocation = GL.GetUniformLocation(ModelSettings.VertexShader.ID, "view");
+        projectionLocation = GL.GetUniformLocation(ModelSettings.VertexShader.ID, "projection");
+
+        GL.UniformMatrix4(modelLocation, true, ref Model);
+        GL.UniformMatrix4(viewLocation, true, ref view);
+        GL.UniformMatrix4(projectionLocation, true, ref projection);
+
+        modelMesh.RenderVertices();
+
+        ModelSettings.VertexShader.Unbind();
+
+        GL.Disable(EnableCap.DepthTest);
+        GL.DepthFunc(DepthFunction.Lequal);
     }
 }
 
 public static class ModelSettings
 {
+    public static ShaderProgram VertexShader = new ShaderProgram("Model/ModelVertex.vert", "Model/ModelVertex.frag");
+    public static ShaderProgram EdgeShader = new ShaderProgram("Model/ModelEdge.vert", "Model/ModelEdge.frag");
+
     public static Camera? Camera;
     public static Model Model = new Model();
+
+    public static RenderType RenderType = RenderType.Vertex;
 
     // Ui values
     public static float MeshAlpha = 1.0f;

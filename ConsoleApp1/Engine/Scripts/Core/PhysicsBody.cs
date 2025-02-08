@@ -29,8 +29,15 @@ public class PhysicsBody : Component
 
     public PhysicsBody()
     {
-        name = "PhysicsBody";
+        Name = "PhysicsBody";
         Hitbox = new Hitbox(new Vector3(1, 2, 1));
+    }
+
+    public PhysicsBody(bool doGravity)
+    {
+        Name = "PhysicsBody";
+        Hitbox = new Hitbox(new Vector3(1, 2, 1));
+        this.doGravity = doGravity;
     }
     
     private Vector3 targetVelocity;
@@ -52,7 +59,7 @@ public class PhysicsBody : Component
     {
         physicsPosition = newPosition;
         previousPosition = newPosition;
-        transform.Position = newPosition;
+        Transform.Position = newPosition;
     }
     
     public void AddImpulse(Vector3 impulse)
@@ -77,8 +84,8 @@ public class PhysicsBody : Component
     {
         float deltaTime = GameTime.DeltaTime;
         
-        transform.Position = Vector3.Lerp(
-            transform.Position,
+        Transform.Position = Vector3.Lerp(
+            Transform.Position,
             physicsPosition,
             interpolationSpeed * deltaTime
         );

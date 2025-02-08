@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using OpenTK.Mathematics;
 
 public class UIPanel : UIElement
@@ -14,7 +10,7 @@ public class UIPanel : UIElement
         this.uIMesh = uIMesh;
     }
 
-    public void AddChild(UIElement child)
+    public virtual void AddChild(UIElement child)
     {
         child.PositionType = PositionType.Relative;
         Children.Add(child);
@@ -31,6 +27,27 @@ public class UIPanel : UIElement
     public override void SetUIMesh(UIMesh uIMesh)
     {
         this.uIMesh = uIMesh;
+    }
+
+    public void SetMeshes(UIMesh uIMesh, TextMesh textMesh)
+    {
+        foreach (var child in Children)
+        {
+            if (child is UIPanel panel)
+            {
+                panel.SetMeshes(uIMesh, textMesh);
+            }
+
+            if (child is UIText text)
+            {
+                text.textMesh = textMesh;
+            }
+
+            if (child is UIButton button)
+            {
+                button.uIMesh = uIMesh;
+            }
+        }
     }
 
     public override void Generate()

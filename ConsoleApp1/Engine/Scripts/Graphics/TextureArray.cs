@@ -1,5 +1,4 @@
 ﻿using ConsoleApp1.Engine.Scripts.Core.Data;
-using ConsoleApp1.Engine.Scripts.Core.Folder;
 using OpenTK.Graphics.OpenGL4;
 using StbImageSharp;
 
@@ -9,7 +8,7 @@ public class TextureArray
 
     public TextureArray(string atlasPath, int cellWidth, int cellHeight)
     {
-        List<byte[]> textureData = TextureData.SplitTextureAtlas("../../../Assets/Textures/" + atlasPath, cellWidth, cellHeight);
+        List<byte[]> textureData = TextureData.SplitTextureAtlas(Path.Combine(Game.texturePath, atlasPath), cellWidth, cellHeight);
         
         int layers = textureData.Count;
         

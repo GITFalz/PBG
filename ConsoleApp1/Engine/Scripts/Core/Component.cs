@@ -1,9 +1,15 @@
 ﻿public abstract class Component
 {
-    public string name;
-    
-    public GameObject gameObject;
-    public Transform transform;
+    public string Name;
+    public GameObject GameObject;
+    public Transform Transform;
+
+    public Component()
+    {
+        Name = GetType().Name;
+        GameObject = new GameObject();
+        Transform = GameObject.transform;
+    }
 
     public virtual void OnResize()
     {

@@ -1,4 +1,5 @@
 using OpenTK.Mathematics;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class UIInputField : UIText
 {
@@ -9,7 +10,14 @@ public class UIInputField : UIText
     {
         Button = new UIButton(name + "Button", anchorType, positionType, pivot, scale, offset, rotation, textureIndex, slice, null, UIState.InvisibleInteractable);
         Button.OnClick = new SerializableEvent(() => UIController.AssignInputField(name));
-        Button.test = true;
+    }
+
+    public override UIText SetText(string text)
+    {
+        UIText uiText = base.SetText(text);
+        Button.Scale = Scale;
+        Button.newScale = newScale;
+        return uiText;
     }
 
     public override void Generate(ref int offset)
@@ -17,6 +25,21 @@ public class UIInputField : UIText
         Align();
         GenerateQuad(ref offset);
         GenerateChars();
+    }
+
+    public override void Align()
+    {
+        base.Align();
+        Button.Align();
+    }
+
+    public override bool Test()
+    {
+        if (UIController.activeInputField == this && Input.IsMousePressed(MouseButton.Left) && !IsMouseOver())
+        {
+            UIController.RemoveInputField();
+        }
+        return base.Test();
     }
 
     public void AddCharacter(char character)
@@ -87,6 +110,9 @@ public class UIInputField : UIText
         lines.AddRange(GetBasicDisplayLines(gapString));
         lines.Add(gapString + "    Text: " + Text);
         lines.Add(gapString + "    FontSize: " + FontSize);
+        lines.Add(gapString + "    MaxCharCount: " + MaxCharCount);
+        lines.Add(gapString + "    TextType: " + (int)TextType);
+        lines.AddRange(Button.ToLines(gap + 1));
         lines.Add(gapString + "}");
         
         return lines;

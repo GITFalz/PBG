@@ -25,17 +25,16 @@ public class Game : GameWindow
     public static string chunkPath = Path.Combine(mainPath, "Chunks");
     public static string assetPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Saves");
     public static string uiPath = Path.Combine(assetPath, "UI");
-    public static string modelPath = Path.Combine(assetPath, "Models");
+    public static readonly string modelPath = Path.Combine(assetPath, "Models");
+    public static readonly string undoModelPath = Path.Combine(mainPath, "UndoModels");
+    public static string shaderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Shaders");
+    public static string texturePath = Path.Combine(assetPath, "Textures");
 
 
     public static Vector3 BackgroundColor = new Vector3(0.4f, 0.6f, 0.98f);
-
-
     public static Camera camera;
-    private WorldManager _worldManager;
     
     public ConcurrentDictionary<string, Scene> Scenes = new ConcurrentDictionary<string, Scene>();
-    private KeyboardSwitch _visibleCursorSwitch;
 
 
 
@@ -129,6 +128,8 @@ public class Game : GameWindow
             Directory.CreateDirectory(chunkPath);
         if (!Directory.Exists(modelPath))
             Directory.CreateDirectory(modelPath);
+        if (!Directory.Exists(undoModelPath))
+            Directory.CreateDirectory(undoModelPath);
         
         if (!Directory.Exists(assetPath))
             Directory.CreateDirectory(assetPath);
@@ -140,8 +141,7 @@ public class Game : GameWindow
         KeyboardState keyboard = KeyboardState;
         
         Input.Start(keyboard, mouse);
-        
-        _visibleCursorSwitch = new KeyboardSwitch(Input.IsKeyPressed);
+
         
         // Blocks
         UVmaps editorUvs = new UVmaps( new int[] { 0, 0, 0, 0, 0, 0 });
@@ -163,46 +163,22 @@ public class Game : GameWindow
         //BlockManager.Add(dirt);
         //BlockManager.Add(stone);
         
-        // Animation
-        new OldAnimationManager().Start();
+        
+        // World
+        _worldScene.AddGameObject(["Root"], new PlayerStateMachine(), new PhysicsBody(false));
+        _worldScene.AddGameObject(["Root"], new WorldManager());
 
-        // GameObjects
-
-        // Player
-        PlayerStateMachine player = new PlayerStateMachine();
-        PhysicsBody playerPhysics = new PhysicsBody();
-        
-        playerPhysics.doGravity = false;
-        
-        // World setup
-        _worldManager = new WorldManager();
-        
-        _worldScene.AddGameObject(["Root"], player, playerPhysics);
-        _worldScene.AddGameObject(["Root"], _worldManager);
-        
-        
-        // Modeling Editor
-        GeneralModelingEditor editorComponent = new GeneralModelingEditor();
-
-        SceneComponent animationComponent = new SceneComponent("ModelingEditor", editorComponent);
-        
-        _modelingScene.AddGameObject(["Root"], editorComponent);
-        _modelingScene.AddComponent(animationComponent);
+        // Modeling
+        _modelingScene.AddGameObject(["Root"], new GeneralModelingEditor());
         
         // UI
-        UiEditor uiEditor = new UiEditor();
-        
-        SceneComponent uiEditorComponent = new SceneComponent("UIEditor", uiEditor);
-        
-        _uiEditorScene.AddGameObject(["Root"], uiEditor);
-        _uiEditorScene.AddComponent(uiEditorComponent);
+        _uiEditorScene.AddGameObject(["Root"], new UiEditor());
         
         AddScenes(_worldScene, _modelingScene, _uiScene, _uiEditorScene);
+        LoadScene("Modeling");
 
         _popUp = new PopUp();
-        
-        LoadScene("Modeling");
-        
+    
         _physicsThread = new Thread(PhysicsThread);
         _physicsThread.Start();
         
@@ -214,25 +190,26 @@ public class Game : GameWindow
     protected override void OnKeyDown(KeyboardKeyEventArgs e)
     {
         base.OnKeyDown(e);
+        if (!Input.PressedKeys.Contains(e.Key))
+            Input.PressedKeys.Add(e.Key);
         UIController.InputField(e.Key);
     }
     
     protected override void OnKeyUp(KeyboardKeyEventArgs e)
     {
         base.OnKeyUp(e);
+        Input.PressedKeys.Remove(e.Key);
     }
     
     protected override void OnUnload()
     {
-        _worldManager.Delete();
-        
         GC.Collect();
         GC.WaitForPendingFinalizers();
         
         isRunning = false;
         _physicsThread.Join();
         
-        CurrentScene?.Exit();
+        CurrentScene?.OnExit();
         
         base.OnUnload();
     }
@@ -249,7 +226,7 @@ public class Game : GameWindow
         GL.FrontFace(FrontFaceDirection.Ccw);
         
         Skybox.Render();
-        CurrentScene?.Render();
+        CurrentScene?.OnRender();
         _popUp.Render();
         
         Context.SwapBuffers();
@@ -276,8 +253,7 @@ public class Game : GameWindow
             
             if (time - totalTime >= GameTime.FixedDeltaTime)
             {
-                if (_worldScene.Started)
-                    _worldScene.FixedUpdate();
+                _worldScene.OnFixedUpdate();
                 
                 totalTime = time;
             }
@@ -310,7 +286,7 @@ public class Game : GameWindow
 
         _popUp.Update();
         
-        CurrentScene?.Update();
+        CurrentScene?.OnUpdate();
         
         base.OnUpdateFrame(args);
     }
@@ -343,10 +319,9 @@ public class Game : GameWindow
     {
         if (Instance.Scenes.TryGetValue(sceneName, out Scene? scene))
         {
-            CurrentScene?.Exit();
+            CurrentScene?.OnExit();
             CurrentScene = scene;
-            scene.Start();
-            scene.Awake();
+            scene.OnAwake();
             if (scene.Resize)
             {
                 scene.OnResize();

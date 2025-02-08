@@ -45,13 +45,9 @@ public class UIButton : UIElement
         List<string> lines = new List<string>();
         string gapString = new(' ', gap * 4);
         
-        lines.Add(gapString + "Inputfield");
+        lines.Add(gapString + "Button");
         lines.Add(gapString + "{");
         lines.AddRange(GetBasicDisplayLines(gapString));
-        lines.Add(gapString + "    OnHover: " + GetMethodString(OnHover));
-        lines.Add(gapString + "    OnClick: " + GetMethodString(OnClick));
-        lines.Add(gapString + "    OnHold: " + GetMethodString(OnHold));
-        lines.Add(gapString + "    OnRelease: " + GetMethodString(OnRelease));
         lines.Add(gapString + "}");
         
         return lines;

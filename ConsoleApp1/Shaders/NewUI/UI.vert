@@ -21,7 +21,9 @@ uniform mat4 projection;
 
 void main()
 {
-    vec4 transformedPosition = transformMatrices[transformIndex] * vec4(aPos, 1.0);
+    vec4 transformedPosition = vec4(0.0);
+    if (texIndex >= -1)
+        transformedPosition = transformMatrices[transformIndex] * vec4(aPos, 1.0);
 
     gl_Position = transformedPosition * model * projection;
     TexCoord = aTexCoord;

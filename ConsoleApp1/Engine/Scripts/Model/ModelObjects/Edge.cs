@@ -1,30 +1,45 @@
 ﻿public class Edge
 {
-    public OldVertex V1 { get; }
-    public OldVertex V2 { get; }
+    public Vertex A;
+    public Vertex B;
 
-    public Edge(OldVertex v1, OldVertex v2)
+    public List<Triangle> ParentTriangles = new List<Triangle>();
+
+    public Edge(Vertex v1, Vertex v2)
     {
-        if (v1.GetHashCode() > v2.GetHashCode())
-        {
-            V1 = v1;
-            V2 = v2;
-        }
-        else
-        {
-            V1 = v2;
-            V2 = v1;
-        }
+        A = v1;
+        B = v2;
+
+        A.AddParentEdge(this);
+        B.AddParentEdge(this);
     }
 
-    public override bool Equals(object obj)
+    public void AddParentTriangle(Triangle triangle)
     {
-        if (obj is not Edge other) return false;
-        return (V1 == other.V1 && V2 == other.V2);
+        if (!ParentTriangles.Contains(triangle))
+            ParentTriangles.Add(triangle);
     }
 
-    public override int GetHashCode()
+    public void SetVertexTo(Vertex oldVertex, Vertex newVertex)
     {
-        return V1.GetHashCode() ^ V2.GetHashCode();
+        if (A == oldVertex)
+            A = newVertex;
+        else if (B == oldVertex)
+            B = newVertex;
+    }
+
+    public bool HasNotVertex(Vertex v)
+    {
+        return A != v && B != v;
+    }
+
+    public Vertex Not(Vertex v)
+    {
+        return A == v ? B : A;
+    }
+
+    public void Swap()
+    {
+        (A, B) = (B, A);
     }
 }

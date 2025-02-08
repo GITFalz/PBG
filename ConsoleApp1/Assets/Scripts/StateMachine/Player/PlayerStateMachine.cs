@@ -69,15 +69,15 @@ public class PlayerStateMachine : Component
         _lastCameraYaw = Game.camera.yaw;
         _lastCameraPosition = Game.camera.position;
         
-        physicsBody = ((Component)this).gameObject.GetComponent<PhysicsBody>();
+        physicsBody = ((Component)this).GameObject.GetComponent<PhysicsBody>();
         
         _currentState = _gameState;
         _currentState.Enter(this);
         
         _shaderProgram = new ShaderProgram("Entity/Entity.vert", "Entity/Entity.frag");
         
-        transform.Position = new Vector3(0, 60, 0);
-        physicsBody.SetPosition(transform.Position);
+        Transform.Position = new Vector3(0, 60, 0);
+        physicsBody.SetPosition(Transform.Position);
         
         //Mesh
         _mesh = new EntityMesh();
@@ -172,15 +172,15 @@ public class PlayerStateMachine : Component
         if (input != Vector2.Zero)
             yaw = -camera.yaw + _inputAngle[input];
         
-        _mesh.Position = transform.Position + new Vector3(-0.5f, 0, -0.5f);
+        _mesh.Position = Transform.Position + new Vector3(-0.5f, 0, -0.5f);
         
         forward = Mathf.YAngleToDirection(-yaw);
         
         if (!Game.MoveTest)
             return;
             
-        _swordMesh.WorldPosition = transform.Position + new Vector3(0, 1f, 0);
-        _playerMesh.WorldPosition = transform.Position;
+        _swordMesh.WorldPosition = Transform.Position + new Vector3(0, 1f, 0);
+        _playerMesh.WorldPosition = Transform.Position;
         
         _swordMesh.Init();
         _playerMesh.Init();
@@ -189,8 +189,8 @@ public class PlayerStateMachine : Component
             physicsBody.doGravity = !physicsBody.doGravity;
         
         _currentState.Update(this);
-        PlayerData.Position = transform.Position;
-        PlayerData.EyePosition = transform.Position + new Vector3(0, 1.8f, 0);
+        PlayerData.Position = Transform.Position;
+        PlayerData.EyePosition = Transform.Position + new Vector3(0, 1.8f, 0);
         
         if (_swordAnimationController != null && _swordAnimationController.Update(yaw))
         {
@@ -258,7 +258,7 @@ public class PlayerStateMachine : Component
 
     public int MeshUpdate()
     {
-        _mesh.Position = transform.Position + new Vector3(-0.5f, 0, -0.5f);
+        _mesh.Position = Transform.Position + new Vector3(-0.5f, 0, -0.5f);
 
         _mesh.UpdatePosition();
         _mesh.UpdateRotation(_mesh.Position + new Vector3(0.5f, 0, 0.5f), new Vector3(0, 1, 0), yaw);
@@ -269,7 +269,7 @@ public class PlayerStateMachine : Component
 
     public void MeshRotateUpdate()
     {
-        _mesh.Position = transform.Position + new Vector3(-0.5f, 0, -0.5f);
+        _mesh.Position = Transform.Position + new Vector3(-0.5f, 0, -0.5f);
         
         _mesh.UpdatePosition();
         _mesh.UpdateRotation(_mesh.Position + new Vector3(0.5f, 0, 0.5f), new Vector3(0, 1, 0), yaw);
@@ -279,7 +279,7 @@ public class PlayerStateMachine : Component
     public void SnapToBlockUnder()
     {
         physicsBody.SnapToBlockY();
-        _mesh.Position = transform.Position + new Vector3(-0.5f, 0, -0.5f);
+        _mesh.Position = Transform.Position + new Vector3(-0.5f, 0, -0.5f);
         
         _mesh.UpdatePosition();
         _mesh.UpdateRotation(_mesh.Position + new Vector3(0.5f, 0, 0.5f), new Vector3(0, 1, 0), yaw);
@@ -332,14 +332,14 @@ public class PlayerStateMachine : Component
         else if (physicsBody.Velocity.Z > 0)
             HugZ = Mathf.FloorToInt(physicsBody.Hitbox.CornerX1Y1Z2 + new Vector3(0.5f, 0.5f, 1f));
         else
-            HugZ.Y = Mathf.FloorToInt(transform.Position.Y + 0.5f);
+            HugZ.Y = Mathf.FloorToInt(Transform.Position.Y + 0.5f);
 
         if (physicsBody.Velocity.X < 0)
             HugX = Mathf.FloorToInt(physicsBody.Hitbox.CornerX1Y1Z1 + new Vector3(-1f, 0.5f, 0.5f));
         else if (physicsBody.Velocity.X > 0)
             HugX = Mathf.FloorToInt(physicsBody.Hitbox.CornerX2Y1Z1 + new Vector3(1f, 0.5f, 0.5f));
         else
-            HugX.Y = Mathf.FloorToInt(transform.Position.Y + 0.5f);
+            HugX.Y = Mathf.FloorToInt(Transform.Position.Y + 0.5f);
         
         //Debug.DrawBox(HugZ, new Vector3(0.5f, 0.5f, 0.5f));
 

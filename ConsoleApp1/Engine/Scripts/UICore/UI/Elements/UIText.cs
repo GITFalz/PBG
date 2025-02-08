@@ -30,7 +30,7 @@ public class UIText : UIElement
         return SetText(text);
     }
     
-    public UIText SetText(string text)
+    public virtual UIText SetText(string text)
     {
         Text = ClampText(text, 0, MaxCharCount);
         finalText = AddSpaces(Text, MaxCharCount);
@@ -140,6 +140,8 @@ public class UIText : UIElement
         lines.AddRange(GetBasicDisplayLines(gapString));
         lines.Add(gapString + "    Text: " + Text);
         lines.Add(gapString + "    FontSize: " + FontSize);
+        lines.Add(gapString + "    MaxCharCount: " + MaxCharCount);
+        lines.Add(gapString + "    TextType: " + (int)TextType);
         lines.Add(gapString + "}");
         
         return lines;

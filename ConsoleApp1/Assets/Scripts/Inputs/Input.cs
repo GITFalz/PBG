@@ -11,6 +11,8 @@ public static class Input
     
     private static Vector2 _oldMousePosition;
 
+    public static List<Keys> PressedKeys = new List<Keys>();
+
     public static void Start(KeyboardState keyboard, MouseState mouse)
     {
         _previousKeyboardState = keyboard;
@@ -23,6 +25,16 @@ public static class Input
         
         _previousKeyboardState = keyboard;
         _previousMouseState = mouse;
+    }
+
+    public static Keys GetFirstPressedKey()
+    {
+        return PressedKeys.Count > 0 ? PressedKeys[0] : Keys.Unknown;
+    }
+
+    public static Keys GetLastPressedKey()
+    {
+        return PressedKeys.Count > 0 ? PressedKeys[PressedKeys.Count - 1] : Keys.Unknown;
     }
 
     public static bool IsKeyPressed(KeyboardState keyboard, Keys key)

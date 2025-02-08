@@ -23,8 +23,6 @@ public class UiEditor : Component
         Console.WriteLine("UiEditor Start");
 
         // Main UI
-        gameObject.Scene.UIControllers.Add(MainUi);
-
         UIPanel mainPanel = new("MainPanel", AnchorType.ScaleLeft, PositionType.Absolute, (0, 0, 0), (210, 100), (5, 5, 5, 5), 0, 0, (10, 0.15f), null);
 
         UIButton addPanelButton = new("AddPanelButton", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 0, 0), 0, 0, (10, 0.15f), null, UIState.Static);
@@ -50,7 +48,7 @@ public class UiEditor : Component
         
         EditUi.GenerateBuffers();
 
-        foreach (var go in gameObject.Scene.GetHierarchy())
+        foreach (var go in GameObject.Scene.GetHierarchy())
         {
             Console.WriteLine(new string(' ', go.offset) + go.gameObject.Name);
         }

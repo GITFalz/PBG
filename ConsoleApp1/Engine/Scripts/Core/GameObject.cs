@@ -1,7 +1,4 @@
-﻿using System.Collections.Concurrent;
-using OpenTK.Windowing.Common;
-
-public class GameObject
+﻿public class GameObject
 {
     public string Name = "Root";
     public Transform transform;
@@ -10,6 +7,14 @@ public class GameObject
     public List<Component> components = new List<Component>();
     public List<GameObject> children = new List<GameObject>();
     public Scene Scene;
+
+    public GameObject()
+    {
+        Scene = Scene.Base();
+        transform = new Transform(this);
+        _root = this;
+        _parent = this;
+    }
     
     public GameObject(Scene scene)
     {
@@ -43,7 +48,7 @@ public class GameObject
             return;
         }
 
-        GameObject parent = GetChild(path[0]);
+        GameObject parent = GetChild(path[0].Trim());
         if (parent.IsRoot()) AddChild(gameObject);
         else parent.AddChildToPath(gameObject, [.. path.Skip(1)]);
     }
@@ -170,11 +175,11 @@ public class GameObject
     {
         T component = new T();
         
-        if (ContainsComponent(component.name))
+        if (ContainsComponent(component.Name))
             return false;
         
-        component.transform = transform;
-        component.gameObject = this;
+        component.Transform = transform;
+        component.GameObject = this;
         
         components.Add(component);
         return true;
@@ -182,20 +187,20 @@ public class GameObject
     
     public bool AddComponent<T>(T component) where T : Component
     {
-        if (ContainsComponent(component.name))
+        if (ContainsComponent(component.Name))
             return false;
         
         components.Add(component);
         
-        component.transform = transform;
-        component.gameObject = this;
+        component.Transform = transform;
+        component.GameObject = this;
         
         return true;
     }
 
     private bool ContainsComponent(string name)
     {
-        return components.Any(component => component.name == name);
+        return components.Any(component => component.Name == name);
     }
 
     

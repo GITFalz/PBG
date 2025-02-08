@@ -5,7 +5,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class AnimationEditor : BaseEditor
 {
-    public OldUIController BoneUi = new OldUIController();
+    public UIController BoneUi = new UIController();
 
     private bool freeCamera = false;
     private bool regenerateUi = false;
@@ -24,8 +24,6 @@ public class AnimationEditor : BaseEditor
             BoneUi.Generate();
             _started = true;
         }
-
-        editor.Ui.Clear();
     }
 
     public override void Awake(GeneralModelingEditor editor)
@@ -62,32 +60,29 @@ public class AnimationEditor : BaseEditor
                 regenerateUi = true;
             }
         }
-        else
+        else if (regenerateUi)
         {
             foreach (var pos in links)
             {
-                var panel = editor.GeneratePanelLink(pos.A, pos.B, 3);
-                BoneUi.AddStaticElement(panel);
+                var panel = editor.GeneratePanelLink(pos.A, pos.B, 12);
+                BoneUi.AddElement(panel);
             }
         
             BoneUi.Generate();
             regenerateUi = false;
         }
-        
-        editor.model.Update();
     }
 
     public override void Render(GeneralModelingEditor editor)
     {
         editor.RenderAnimation();
-        
         BoneUi.Render();
     }
     
 
     public override void Exit(GeneralModelingEditor editor)
     {
-        editor.model.Mesh.InitModel();
-        editor.model.Mesh.UpdateMesh();
+        //editor.model.Mesh.InitModel();
+        //editor.model.Mesh.UpdateMesh();
     }
 }

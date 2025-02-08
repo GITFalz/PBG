@@ -6,10 +6,14 @@ public class Scene
 
     private HashSet<SceneSwitcher> _sceneSwitchers = new HashSet<SceneSwitcher>();
 
-    public List<UIController> UIControllers = [];
     public Dictionary<string, SceneComponent> Components = new Dictionary<string, SceneComponent>();
 
-    public bool Started = false;
+    public Action OnResize = () => { };
+    public Action OnAwake;
+    public Action OnUpdate = () => { };
+    public Action OnFixedUpdate = () => { };
+    public Action OnRender = () => { };
+    public Action OnExit = () => { };
 
     public bool Resize = false;
     public string ScenePath = "";
@@ -17,11 +21,28 @@ public class Scene
 
     private GameObject _root;
 
+
+    public static Scene Base () => new("Base");
+
     public Scene(string name)
     {
         Name = name;
         ScenePath = Path.Combine(Game.uiPath, name + ".ui");
         _root = new GameObject(this);
+
+        OnAwake = () =>
+        {
+            StartInternal();
+
+            OnResize = ResizeInternal;
+            OnUpdate = UpdateInternal;
+            OnFixedUpdate = FixedUpdateInternal;
+            OnRender = RenderInternal;
+            OnExit = ExitInternal;
+
+            AwakeInternal();
+            OnAwake = AwakeInternal;
+        };
     }
 
     public void AddSceneSwitcher(SceneSwitcher sceneSwitcher)
@@ -31,7 +52,7 @@ public class Scene
 
     public void AddGameObject(GameObject gameObject, string[] path)
     {
-        if (path.Length == 0 || path[0] == "" || path[0] == "Root")
+        if (path.Length == 0 || path[0] == "" || path[0].Trim() == "Root")
         {
             _root.AddChild(gameObject);
             gameObject.Scene = this;
@@ -57,36 +78,27 @@ public class Scene
         return _root.GetHierarchies();
     }
 
-    public void OnResize()
+    private void ResizeInternal()
     {
-        foreach (UIController uiController in UIControllers)
-        {
-            uiController.OnResize();
-        }
         _root.Resize();
     }
 
-    public void Awake()
+    private void AwakeInternal()
     {
         _root.Awake();
     }
 
-    public void Start()
+    private void StartInternal()
     {
-        if (Started)
-            return;
-
         _root.Start();
-
 
         if (!File.Exists(ScenePath))
             File.Create(ScenePath).Close();
 
-        Started = true;
-
         if (!Components.ContainsKey("ModelingEditor"))
             return;
 
+        /*
         Dictionary<string, ClassMethods> methods = Components["ModelingEditor"].GetMethods();
 
         foreach (var (className, classMethods) in methods)
@@ -97,20 +109,16 @@ public class Scene
                 Console.WriteLine("|----->" + method);
             }
         }
+        */
     }
 
-    public void FixedUpdate()
+    private void FixedUpdateInternal()
     {
         _root.FixedUpdate();
     }
 
-    public void Update()
+    private void UpdateInternal()
     {
-        foreach (UIController uiController in UIControllers)
-        {
-            uiController.Test();
-        }
-
         foreach (SceneSwitcher sceneSwitcher in _sceneSwitchers)
         {
             if (sceneSwitcher.CanSwitch())
@@ -123,19 +131,33 @@ public class Scene
         _root.Update();
     }
 
-    public void Render()
+    private void RenderInternal()
     {
         _root.Render();
-
-        foreach (UIController uiController in UIControllers)
-        {
-            uiController.Render();
-        }
     }
 
-    public void Exit()
+    private void ExitInternal()
     {
         _root.Exit();
+
+        OnResize = () => {};
+        OnUpdate = () => {};
+        OnFixedUpdate = () => {};
+        OnRender = () => {};
+
+        OnAwake = () =>
+        {
+            OnResize = ResizeInternal;
+            OnUpdate = UpdateInternal;
+            OnFixedUpdate = FixedUpdateInternal;
+            OnRender = RenderInternal;
+            OnExit = ExitInternal;
+
+            AwakeInternal();
+            OnAwake = AwakeInternal;
+        };
+
+        OnExit = () => {};
     }
 
 
