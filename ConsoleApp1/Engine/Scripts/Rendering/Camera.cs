@@ -247,7 +247,7 @@ public class Camera
         CameraDistance = Math.Clamp(CameraDistance, 3, 10);
         oldScroll = scroll;
     
-        _targetPosition = PlayerData.EyePosition - front * CameraDistance;
+        _targetPosition = (0, 0, 0) - front * CameraDistance;
         position = _positionSmooth ? Vector3.Lerp(position, _targetPosition, POSITION_SMOOTH_FACTOR * GameTime.DeltaTime) : _targetPosition;
     }
     

@@ -188,9 +188,55 @@ public class ModelMesh
         return true;
     }
 
+
+    public void RemoveVertex(Vertex vertex)
+    {
+        int index = VertexList.IndexOf(vertex);
+        if (index == -1)
+            return;
+
+        VertexList.Remove(vertex);
+        Vertices.RemoveAt(index);
+        VertexColors.RemoveAt(index);
+
+        List<Triangle> triangles = [.. vertex.ParentTriangles];
+
+        foreach (var triangle in triangles)
+        {
+            RemoveTriangle(triangle);
+        }
+    }
+
     public void RemoveTriangle(Triangle triangle)
     {
-        
+        int index = TriangleList.IndexOf(triangle);
+        if (index == -1)
+            return;
+
+        int tripleIndex = index * 3;
+
+        Normals.RemoveRange(tripleIndex, 3);
+        TextureIndices.RemoveRange(tripleIndex, 3);
+        Uvs.RemoveRange(tripleIndex, 3);
+        Indices.RemoveRange(Indices.Count - 3, 3);
+
+        Vertex A = triangle.A;
+        Vertex B = triangle.B;
+        Vertex C = triangle.C;
+
+        if (A.ParentTriangles.Count == 1) VertexList.Remove(A); else A.ParentTriangles.Remove(triangle);
+        if (B.ParentTriangles.Count == 1) VertexList.Remove(B); else B.ParentTriangles.Remove(triangle);
+        if (C.ParentTriangles.Count == 1) VertexList.Remove(C); else C.ParentTriangles.Remove(triangle);
+
+        Edge AB = triangle.AB;
+        Edge BC = triangle.BC;
+        Edge CA = triangle.CA;
+
+        if (AB.ParentTriangles.Count == 1) EdgeList.Remove(AB.Delete()); else Console.WriteLine("Removed triangle from edge AB: " + AB.ParentTriangles.Remove(triangle));
+        if (BC.ParentTriangles.Count == 1) EdgeList.Remove(BC.Delete()); else Console.WriteLine("Removed triangle from edge BC: " + BC.ParentTriangles.Remove(triangle));
+        if (CA.ParentTriangles.Count == 1) EdgeList.Remove(CA.Delete()); else Console.WriteLine("Removed triangle from edge CA: " + CA.ParentTriangles.Remove(triangle));
+
+        TriangleList.Remove(triangle.Delete());
     }
 
     public int VertexCount(Vertex vertex)
@@ -309,6 +355,24 @@ public class ModelMesh
                 triangle.AB.ParentTriangles.Remove(triangle);
                 triangle.BC.ParentTriangles.Remove(triangle);
                 triangle.CA.ParentTriangles.Remove(triangle);
+            }
+        }
+    }
+
+    public void CombineDuplicateVertices()
+    {
+        List<Vertex> vertices = [.. VertexList];
+        for (int i = 0; i < vertices.Count; i++)
+        {
+            Vertex vertex = vertices[i];
+            for (int j = i + 1; j < vertices.Count; j++)
+            {
+                Vertex other = vertices[j];
+                if (vertex.Position == other.Position)
+                {
+                    ChangeVertexTo(other, vertex);
+                    VertexList.Remove(other);
+                }
             }
         }
     }

@@ -2,7 +2,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-public class GeneralModelingEditor : Component
+public class GeneralModelingEditor : ScriptingNode
 {
     public BaseEditor CurrentEditor;
     public ModelingEditor modelingEditor = new ModelingEditor();
@@ -113,107 +113,167 @@ public class GeneralModelingEditor : Component
 
         _shaderProgram = new ShaderProgram("Model/Model.vert", "Model/Model.frag");
         
-        Game.camera = new Camera(Game.width, Game.height, new Vector3(0, 0, 5));
+        Game.camera = new Camera(Game.Width, Game.Height, new Vector3(0, 0, 5));
         ModelSettings.Camera = Game.camera;
         ModelSettings.Model = model;
         
         Transform.Position = new Vector3(0, 0, 0);
 
-        UIPanel statePanel = new("StatePanel", AnchorType.ScaleTop, PositionType.Absolute, (0, 0, 0), (Game.width, 40), (5, 5, 5, 5), 0, 0, (10, 0.15f), null);
+        UICollection stateCollection = new("StateCollection", AnchorType.ScaleTop, PositionType.Absolute, (0, 0, 0), (Game.Width, 50), (5, 5, 5, 5), 0);
 
-        UIButton modelingButton = new("ModelingButton", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (75, 30), (5, 5, 5, 5), 0, 0, (10, 0.15f), null, UIState.Static);
+        UIImage statePanel = new("StatePanel", AnchorType.ScaleTop, PositionType.Absolute, (0.5f, 0.5f, 0.5f), (0, 0, 0), (0, 50), (0, 0, 0, 0), 0, 0, (10, 0.05f), null);
+
+
+        UICollectionHorizontalStacking stateStacking = new("StateStacking", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (0, 0), (0, 0, 0, 0), (7, 7, 7, 7), 5, 0);
+
+        UIButton modelingButton = new("ModelingButton", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (75, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), null, UIState.Static);
         modelingButton.OnClick = new SerializableEvent(() => SwitchScene("Modeling"));
 
-        UIButton riggingButton = new("RiggingButton", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (75, 30), (85, 5, 5, 5), 0, 0, (10, 0.15f), null, UIState.Static);
+        UIButton riggingButton = new("RiggingButton", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (75, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), null, UIState.Static);
         riggingButton.OnClick = new SerializableEvent(() => SwitchScene("Rigging"));
 
-        UIButton animationButton = new("AnimationButton", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (75, 30), (165, 5, 5, 5), 0, 0, (10, 0.15f), null, UIState.Static);
+        UIButton animationButton = new("AnimationButton", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (75, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), null, UIState.Static);
         animationButton.OnClick = new SerializableEvent(() => SwitchScene("Animation"));
 
-        UIButton vertexSelectionButton = new("VertexSelectionButton", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (40, 40), (245, 0, 0, 0), 0, 97, (0, 0), null, UIState.Static);
+        UIButton vertexSelectionButton = new("VertexSelectionButton", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 97, (0, 0), null, UIState.Static);
         vertexSelectionButton.OnClick = new SerializableEvent(() => ModelingEditor.SwitchSelection(RenderType.Vertex));
 
-        UIButton edgeSelectionButton = new("EdgeSelectionButton", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (40, 40), (285, 0, 0, 0), 0, 98, (0, 0), null, UIState.Static);
+        UIButton edgeSelectionButton = new("EdgeSelectionButton", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 98, (0, 0), null, UIState.Static);
         edgeSelectionButton.OnClick = new SerializableEvent(() => ModelingEditor.SwitchSelection(RenderType.Edge));
 
-        UIButton faceSelectionButton = new("FaceSelectionButton", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (40, 40), (325, 0, 0, 0), 0, 99, (0, 0), null, UIState.Static);
+        UIButton faceSelectionButton = new("FaceSelectionButton", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 99, (0, 0), null, UIState.Static);
         faceSelectionButton.OnClick = new SerializableEvent(() => ModelingEditor.SwitchSelection(RenderType.Face));
 
-        UIButton loadModelButton = new("loadModelButton", AnchorType.TopRight, PositionType.Relative, (0, 0, 0), (40, 40), (0, 0, 0, 0), 0, 94, (0, 0), null, UIState.Static);
-        loadModelButton.OnClick = new SerializableEvent(() => LoadModel());
-
-        UIButton saveModelButton = new("saveModelButton", AnchorType.TopRight, PositionType.Relative, (0, 0, 0), (40, 40), (-45, 0, 0, 0), 0, 95, (0, 0), null, UIState.Static);
-        saveModelButton.OnClick = new SerializableEvent(() => SaveModel());
-
-        FileName = new("ModelName", AnchorType.MiddleCenter, PositionType.Relative, (0, 0, 0), (200, 20), (0, 0, 0, 0), 0, 0, (10, 0.15f), null);
-        FileName.SetText("cube", 0.7f);
-
-        UIPanel fileNamePanel = new("FileNamePanel", AnchorType.TopRight, PositionType.Relative, (0, 0, 0), (310, 30), (-95, 5, 0, 0), 0, 3, (10, 0.15f), null);
-        fileNamePanel.AddChild(FileName);
-
-        statePanel.AddChild(modelingButton);
-        statePanel.AddChild(riggingButton);
-        statePanel.AddChild(animationButton);
-        statePanel.AddChild(vertexSelectionButton);
-        statePanel.AddChild(edgeSelectionButton);
-        statePanel.AddChild(faceSelectionButton);
-        statePanel.AddChild(loadModelButton);
-        statePanel.AddChild(saveModelButton);
-        statePanel.AddChild(fileNamePanel);
-
-
-        UIPanel mainPanel = new("MainPanel", AnchorType.ScaleRight, PositionType.Absolute, (0, 0, 0), (245, Game.height), (-5, 50, 5, 5), 0, 0, (10, 0.15f), null);
-
-        BackfaceCullingText = new("CullingText", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (400, 20), (10, 35, 10, 10), 0, 0, (10, 0.15f), null);
-        BackfaceCullingText.SetText("cull: " + BackfaceCulling, 0.7f);
-
-        MeshAlphaText = new("AlphaText", AnchorType.TopLeft, PositionType.Relative, (0, 20, 0), (400, 20), (10, 60, 10, 10), 0, 0, (10, 0.15f), null);
-        MeshAlphaText.SetText("alpha: " + MeshAlpha.ToString("F2"), 0.7f);
-
-        SnappingText = new("SnappingText", AnchorType.TopLeft, PositionType.Relative, (0, 40, 0), (400, 20), (370, 13, 10, 10), 0, 0, (10, 0.15f), null);
+        SnappingText = new("SnappingText", AnchorType.MiddleCenter, PositionType.Relative, (0, 40, 0), (400, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), null);
         SnappingText.TextType = TextType.Decimal;
         SnappingText.MaxCharCount = 5;
         SnappingText.OnTextChange = new SerializableEvent(SnappingField);
         SnappingText.SetText("0", 0.7f);
 
-        MirrorText = new UIText("MirrorText", AnchorType.TopLeft, PositionType.Relative, (0, 60, 0), (400, 20), (10, 110, 10, 10), 0, 0, (10, 0.15f), null);
+
+        UIImage vertexPanel = new("VertexPanel", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), null);
+        UICollectionDepthStacking vertexCollection = new("VertexCollection", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (36, 36), (0, 0, 0, 0), 0);
+
+        vertexCollection.AddElement(vertexPanel);
+        vertexCollection.AddElement(vertexSelectionButton);
+
+        UIImage edgePanel = new("EdgePanel", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), null);
+        UICollectionDepthStacking edgeCollection = new("EdgeCollection", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (36, 36), (0, 0, 0, 0), 0);
+
+        edgeCollection.AddElement(edgePanel);
+        edgeCollection.AddElement(edgeSelectionButton);
+
+        UIImage facePanel = new("FacePanel", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), null);
+        UICollectionDepthStacking faceCollection = new("FaceCollection", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (36, 36), (0, 0, 0, 0), 0);
+
+        faceCollection.AddElement(facePanel);
+        faceCollection.AddElement(faceSelectionButton);
+
+        UIImage snappingPanel = new("SnappingPanel", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (100, 36), (0, 0, 0, 0), 0, 1, (10, 0.05f), null);
+        UICollectionDepthStacking snappingCollection = new("SnappingCollection", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (100, 36), (0, 0, 0, 0), 0);
+
+        snappingCollection.AddElement(snappingPanel);
+        snappingCollection.AddElement(SnappingText);
+
+
+        UICollectionHorizontalStacking fileStacking = new("FileStacking", AnchorType.TopRight, PositionType.Relative, (0, 0, 0), (0, 0), (0, 0, 0, 0), (7, 7, 7, 7), 5, 0);
+
+        FileName = new("ModelName", AnchorType.MiddleCenter, PositionType.Relative, (0, 0, 0), (200, 36), (0, 0, 0, 0), 0, 0, (10, 0.15f), null);
+        FileName.SetText("cube", 0.7f);
+
+        
+        UIButton saveModelButton = new("saveModelButton", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 95, (0, 0), null, UIState.Static);
+        saveModelButton.OnClick = new SerializableEvent(() => SaveModel());
+
+        UIButton loadModelButton = new("loadModelButton", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 94, (0, 0), null, UIState.Static);
+        loadModelButton.OnClick = new SerializableEvent(() => LoadModel());
+
+
+        UIImage fileNamePanel = new("FileNamePanel", AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (310, 36), (0, 0, 0, 0), 0, 1, (10, 0.05f), null);
+        UICollectionDepthStacking fileNameCollection = new("FileNameCollection", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (310, 36), (0, 0, 0, 0), 0);
+        
+        fileNameCollection.AddElement(fileNamePanel);
+        fileNameCollection.AddElement(FileName);
+
+        UIImage savePanel = new("SavePanel", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), null);
+        UICollectionDepthStacking saveCollection = new("SaveCollection", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (36, 36), (0, 0, 0, 0), 0);
+
+        saveCollection.AddElement(savePanel);
+        saveCollection.AddElement(saveModelButton);
+
+        UIImage loadPanel = new("LoadPanel", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), null);
+        UICollectionDepthStacking loadCollection = new("LoadCollection", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (36, 36), (0, 0, 0, 0), 0);
+
+        loadCollection.AddElement(loadPanel);
+        loadCollection.AddElement(loadModelButton);
+
+
+        stateCollection.AddElement(statePanel);
+
+        stateStacking.AddElement(modelingButton);
+        stateStacking.AddElement(riggingButton);
+        stateStacking.AddElement(animationButton);
+        stateStacking.AddElement(vertexCollection);
+        stateStacking.AddElement(edgeCollection);
+        stateStacking.AddElement(faceCollection);
+        stateStacking.AddElement(snappingCollection);
+
+        fileStacking.AddElement(fileNameCollection);
+        fileStacking.AddElement(saveCollection);
+        fileStacking.AddElement(loadCollection);
+
+        stateCollection.AddElement(stateStacking);
+        stateCollection.AddElement(fileStacking);
+
+
+
+        UICollection mainPanelCollection = new("MainPanelCollection", AnchorType.ScaleRight, PositionType.Absolute, (0, 0, 0), (250, Game.Height), (-5, 60, 5, 5), 0);
+
+        UIImage mainPanel = new("MainPanel", AnchorType.ScaleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (245, Game.Height), (0, 0, 0, 0), 0, 0, (10, 0.05f), null);
+
+        BackfaceCullingText = new("CullingText", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (400, 20), (10, 35, 10, 10), 0, 0, (10, 0.05f), null);
+        BackfaceCullingText.SetText("cull: " + BackfaceCulling, 0.7f);
+
+        MeshAlphaText = new("AlphaText", AnchorType.TopLeft, PositionType.Relative, (0, 20, 0), (400, 20), (10, 60, 10, 10), 0, 0, (10, 0.05f), null);
+        MeshAlphaText.SetText("alpha: " + MeshAlpha.ToString("F2"), 0.7f);
+
+        MirrorText = new UIText("MirrorText", AnchorType.TopLeft, PositionType.Relative, (0, 60, 0), (400, 20), (10, 110, 10, 10), 0, 0, (10, 0.05f), null);
         MirrorText.SetText("mirror: " + (Mirror.X == 1 ? "X" : "-") + (Mirror.Y == 1 ? "Y" : "-") + (Mirror.Z == 1 ? "Z" : "-"), 0.7f);
 
-        mainPanel.AddChild(BackfaceCullingText);
-        mainPanel.AddChild(MeshAlphaText);
-        statePanel.AddChild(SnappingText);
-        mainPanel.AddChild(MirrorText);
+        mainPanelCollection.AddElement(mainPanel);
+        mainPanelCollection.AddElement(BackfaceCullingText);
+        mainPanelCollection.AddElement(MeshAlphaText);
+        mainPanelCollection.AddElement(MirrorText);
 
 
-        UIButton cullingButton = new("CullingButton", AnchorType.TopRight, PositionType.Relative, (0, 0, 0), (40, 20), (-5, 35, 10, 10), 0, 0, (10, 0.15f), null, UIState.Static);
+        UIButton cullingButton = new("CullingButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (40, 20), (-5, 35, 10, 10), 0, 0, (10, 0.05f), null, UIState.Static);
         cullingButton.OnClick = new SerializableEvent(BackFaceCullingSwitch);
 
-        UIButton alphaButton = new("AlphaUpButton", AnchorType.TopRight, PositionType.Relative, (0, 0, 0), (40, 20), (-5, 60, 10, 10), 0, 0, (10, 0.15f), null, UIState.Static);
+        UIButton alphaButton = new("AlphaUpButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (40, 20), (-5, 60, 10, 10), 0, 0, (10, 0.05f), null, UIState.Static);
         alphaButton.OnHold = new SerializableEvent(AlphaControl);
 
-        UIButton mirrorButton = new("MirrorButton", AnchorType.TopRight, PositionType.Relative, (0, 0, 0), (40, 20), (-5, 110, 10, 10), 0, 0, (10, 0.15f), null, UIState.Static);
+        UIButton mirrorButton = new("MirrorButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (40, 20), (-5, 110, 10, 10), 0, 0, (10, 0.05f), null, UIState.Static);
         mirrorButton.OnClick = new SerializableEvent(ApplyMirror);
 
-        UIButton mirrorZButton = new("MirrorZButton", AnchorType.TopRight, PositionType.Relative, (0, 0, 0), (15, 20), (-80, 110, 10, 10), 0, 0, (10, 0.15f), null, UIState.InvisibleInteractable);
+        UIButton mirrorZButton = new("MirrorZButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (15, 20), (-85, 110, 10, 10), 0, 0, (10, 0.05f), null, UIState.InvisibleInteractable);
         mirrorZButton.OnClick = new SerializableEvent(() => SwitchMirror("Z"));
 
-        UIButton mirrorYButton = new("MirrorYButton", AnchorType.TopRight, PositionType.Relative, (0, 0, 0), (15, 20), (-95, 110, 10, 10), 0, 0, (10, 0.15f), null, UIState.InvisibleInteractable);
+        UIButton mirrorYButton = new("MirrorYButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (15, 20), (-100, 110, 10, 10), 0, 0, (10, 0.05f), null, UIState.InvisibleInteractable);
         mirrorYButton.OnClick = new SerializableEvent(() => SwitchMirror("Y"));
 
-        UIButton mirrorXButton = new("MirrorXButton", AnchorType.TopRight, PositionType.Relative, (0, 0, 0), (15, 20), (-110, 110, 10, 10), 0, 0, (10, 0.15f), null, UIState.InvisibleInteractable);
+        UIButton mirrorXButton = new("MirrorXButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (15, 20), (-115, 110, 10, 10), 0, 0, (10, 0.05f), null, UIState.InvisibleInteractable);
         mirrorXButton.OnClick = new SerializableEvent(() => SwitchMirror("X"));
 
 
-        mainPanel.AddChild(cullingButton);
-        mainPanel.AddChild(alphaButton);
-
-        mainPanel.AddChild(mirrorButton);
-        mainPanel.AddChild(mirrorXButton);
-        mainPanel.AddChild(mirrorYButton);
-        mainPanel.AddChild(mirrorZButton);
+        mainPanelCollection.AddElement(cullingButton);
+        mainPanelCollection.AddElement(alphaButton);
+        mainPanelCollection.AddElement(mirrorButton);
+        mainPanelCollection.AddElement(mirrorXButton);
+        mainPanelCollection.AddElement(mirrorYButton);
+        mainPanelCollection.AddElement(mirrorZButton);
  
-        MainUi.AddElement(statePanel);
-        ModelingUi.AddElement(mainPanel);
+        MainUi.AddElement(stateCollection);
+        ModelingUi.AddElement(mainPanelCollection);
 
 
         Bone rootBone = new Bone("bone1");
@@ -223,6 +283,8 @@ public class GeneralModelingEditor : Component
         
         MainUi.GenerateBuffers();
         ModelingUi.GenerateBuffers();
+
+        Console.WriteLine("Vertices: " + ModelingUi.uIMesh.Vertices.Count);
 
         Camera camera = Game.camera;
 
@@ -243,9 +305,11 @@ public class GeneralModelingEditor : Component
         //MainUi.ToLines();
     }
 
-    public override void OnResize()
+    public override void Resize()
     {
+        Console.WriteLine("Animation Editor Resize");
         MainUi.OnResize();
+        ModelingUi.OnResize();
     }
 
     public override void Awake()
@@ -402,6 +466,7 @@ public class GeneralModelingEditor : Component
     public void ApplyMirror()
     {
         model.modelMesh.ApplyMirror();
+        model.modelMesh.CombineDuplicateVertices();
         
         model.modelMesh.Init();
         model.modelMesh.GenerateBuffers();
@@ -530,7 +595,7 @@ public class GeneralModelingEditor : Component
     public UIPanel GeneratePanelLink(Vector2 pos1, Vector2 pos2, int textureIndex)
     {
         float distance = Vector2.Distance(pos1, pos2);
-        UIPanel panel = new($"Link{pos1}{pos2}", AnchorType.TopLeft, PositionType.Free, (0, 0, 0), (20, distance), (0, 0, 0, 0), 0, textureIndex, (10, 0.15f), null);
+        UIImage panel = new($"Link{pos1}{pos2}", AnchorType.TopLeft, PositionType.Free, (1, 1, 1), (0, 0, 0), (20, distance), (0, 0, 0, 0), 0, textureIndex, (10, 0.15f), null);
         panel.SetPosition(new Vector3(pos1.X, pos1.Y, 0));
         return panel;
     }

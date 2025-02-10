@@ -68,26 +68,6 @@ public class TextMesh
         _vao.LinkToVAO(2, 2, _textUvVbo);
         _vao.LinkToVAO(3, 1, _transformationVbo);
         
-        foreach (var vert in Vertices)
-        {
-            Console.WriteLine(vert);
-        }
-
-        foreach (var uv in Uvs)
-        {
-            Console.WriteLine(uv);
-        }
-
-        foreach (var index in Indices)
-        {
-            Console.WriteLine(index);
-        }
-
-        foreach (var tuv in TextUvs)
-        {
-            Console.WriteLine(tuv);
-        }
-        
         _ibo = new IBO(Indices);
     }
 

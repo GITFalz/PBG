@@ -241,6 +241,11 @@ public class Vertex
         );
     }
 
+    public bool ShareEdgeWith(Vertex vertex)
+    {
+        return GetEdgeWith(vertex) != null;
+    }
+
     public Edge? GetEdgeWith(Vertex vertex)
     {
         foreach (var edge in ParentEdges)

@@ -1,8 +1,5 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Drawing;
-using ConsoleApp1.Assets.Scripts.Inputs;
-using ConsoleApp1.Assets.Scripts.World.Blocks;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -14,21 +11,20 @@ public class Game : GameWindow
 {
     public static Game Instance;
     
-    public static int width;
-    public static int height;
+    public static int Width;
+    public static int Height;
     
-    public static int centerX;
-    public static int centerY;
+    public static int CenterX;
+    public static int CenterY;
 
     // User paths
-    public static string mainPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VoxelGame");
-    public static string chunkPath = Path.Combine(mainPath, "Chunks");
-    public static string assetPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Saves");
+    public static string mainPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Engines", "ModelingEngine");
+    public static string assetPath = Path.Combine(mainPath, "Saves");
+    public static string shaderPath = Path.Combine(mainPath, "Shaders");
     public static string uiPath = Path.Combine(assetPath, "UI");
+    public static string texturePath = Path.Combine(assetPath, "Textures");
     public static readonly string modelPath = Path.Combine(assetPath, "Models");
     public static readonly string undoModelPath = Path.Combine(mainPath, "UndoModels");
-    public static string shaderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Shaders");
-    public static string texturePath = Path.Combine(assetPath, "Textures");
 
 
     public static Vector3 BackgroundColor = new Vector3(0.4f, 0.6f, 0.98f);
@@ -74,22 +70,22 @@ public class Game : GameWindow
         camera = new Camera(width, height, new Vector3(0, 0, 0));
         
         CenterWindow(new Vector2i(width, height));
-        Game.width = width;
-        Game.height = height;
+        Game.Width = width;
+        Game.Height = height;
         
-        Game.centerX = width / 2;
-        Game.centerY = height / 2;
+        Game.CenterX = width / 2;
+        Game.CenterY = height / 2;
     }
     
     protected override void OnResize(ResizeEventArgs e)
     {
         GL.Viewport(0, 0, e.Width, e.Height);
         
-        Game.width = e.Width;
-        Game.height = e.Height;
+        Game.Width = e.Width;
+        Game.Height = e.Height;
         
-        centerX = e.Width / 2;
-        centerY = e.Height / 2;
+        CenterX = e.Width / 2;
+        CenterY = e.Height / 2;
         
         try
         {
@@ -124,8 +120,6 @@ public class Game : GameWindow
         stopwatch = new Stopwatch();
         stopwatch.Start();
 
-        if (!Directory.Exists(chunkPath))
-            Directory.CreateDirectory(chunkPath);
         if (!Directory.Exists(modelPath))
             Directory.CreateDirectory(modelPath);
         if (!Directory.Exists(undoModelPath))
@@ -142,39 +136,13 @@ public class Game : GameWindow
         
         Input.Start(keyboard, mouse);
 
-        
-        // Blocks
-        UVmaps editorUvs = new UVmaps( new int[] { 0, 0, 0, 0, 0, 0 });
-        
-        //UVmaps grassUvs = new UVmaps( new int[] { 0, 0, 1, 0, 2, 0 });
-        //UVmaps dirtUvs = new UVmaps( new int[] { 2, 2, 2, 2, 2, 2 });
-        //UVmaps stoneUvs = new UVmaps( new int[] { 3, 3, 3, 3, 3, 3 });
-    
-        
-        CWorldBlock editor = new CWorldBlock("editor_block", 1, 1, editorUvs);
-        
-        //CWorldBlock grass = new CWorldBlock("grass_block", 0, 1, grassUvs);
-        //CWorldBlock dirt = new CWorldBlock("dirt_block", 1, 2, dirtUvs);
-        //CWorldBlock stone = new CWorldBlock("stone_block", 2, 3, stoneUvs);
-        
-        BlockManager.Add(editor);
-        
-        //BlockManager.Add(grass);
-        //BlockManager.Add(dirt);
-        //BlockManager.Add(stone);
-        
-        
-        // World
-        _worldScene.AddGameObject(["Root"], new PlayerStateMachine(), new PhysicsBody(false));
-        _worldScene.AddGameObject(["Root"], new WorldManager());
+        TransformNode modelingNode = new TransformNode();
 
-        // Modeling
-        _modelingScene.AddGameObject(["Root"], new GeneralModelingEditor());
+        modelingNode.AddChild(new GeneralModelingEditor());
         
-        // UI
-        _uiEditorScene.AddGameObject(["Root"], new UiEditor());
+        _modelingScene.AddNode(modelingNode);
         
-        AddScenes(_worldScene, _modelingScene, _uiScene, _uiEditorScene);
+        AddScenes(_modelingScene);
         LoadScene("Modeling");
 
         _popUp = new PopUp();
@@ -220,7 +188,7 @@ public class Game : GameWindow
         GL.ClearColor(BackgroundColor.X, BackgroundColor.Y, BackgroundColor.Z, 1.0f);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         
-        GL.Viewport(0, 0, width, height);
+        GL.Viewport(0, 0, Width, Height);
         
         GL.Enable(EnableCap.CullFace);
         GL.FrontFace(FrontFaceDirection.Ccw);

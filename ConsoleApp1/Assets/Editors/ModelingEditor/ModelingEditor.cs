@@ -2,6 +2,7 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using SharpGen.Runtime;
 
 public class ModelingEditor : BaseEditor
 {
@@ -15,6 +16,7 @@ public class ModelingEditor : BaseEditor
     public Dictionary<Keys, Action> ReleasedAction = new Dictionary<Keys, Action>();
     public Action[] Selection = [ () => { }, () => { }, () => { } ];
     public Action[] Extrusion = [ () => { }, () => { }, () => { } ];
+    public Action[] Deletion = [ () => { }, () => { }, () => { } ];
 
     public List<Vertex> SelectedVertices = new();
     public List<Vector3> SelectedVerticesPosition = new();
@@ -52,6 +54,10 @@ public class ModelingEditor : BaseEditor
         Extrusion[0] = HandleVertexExtrusion;
         Extrusion[1] = HandleEdgeExtrusion;
         Extrusion[2] = HandleFaceExtrusion;
+
+        Deletion[0] = HandleVertexDeletion;
+        Deletion[1] = HandleEdgeDeletion;
+        Deletion[2] = HandleTriangleDeletion;
 
         _started = true;
     }
@@ -126,6 +132,7 @@ public class ModelingEditor : BaseEditor
         if (Input.IsKeyReleased(Keys.E) || Input.IsKeyReleased(Keys.G))
         {
             ModelSettings.SnappingOffset = Vector3.Zero;
+            Mesh.CombineDuplicateVertices();
             UpdateVertexPosition();
         }
         
@@ -162,6 +169,7 @@ public class ModelingEditor : BaseEditor
     {
         Game.camera.SetSmoothFactor(true);
         Game.camera.SetPositionSmoothFactor(true);
+        ClearStash();
     }
 
     public static void SwitchSelection(RenderType st)
@@ -192,8 +200,6 @@ public class ModelingEditor : BaseEditor
         Vector2 mousePos = Input.GetMousePosition();
         Vector2? closest = null;
         Vertex? closestVert = null;
-
-        Console.WriteLine(Vertices.Count);
     
         foreach (var vert in Vertices)
         {
@@ -205,16 +211,10 @@ public class ModelingEditor : BaseEditor
                 closest = vert.Value;
                 closestVert = vert.Key;
             }
-
-            Console.WriteLine(distance);
         }
-
-        Console.WriteLine(Mesh.VertexColors.Count);
 
         if (closestVert != null && !SelectedVertices.Remove(closestVert))
             SelectedVertices.Add(closestVert);
-
-        Console.WriteLine(SelectedVertices.Count);
 
         GenerateVertexColor();
     }
@@ -277,6 +277,79 @@ public class ModelingEditor : BaseEditor
     }
 
 
+    // Deletion
+    public void Handle_TriangleDeletion()
+    {
+        StashMesh();
+        
+        Console.WriteLine("Deletinga");
+        Deletion[(int)selectionType]();
+
+        UpdateVertexPosition();
+        GenerateVertexColor();
+    }
+    public void HandleVertexDeletion()
+    {
+        if (SelectedVertices.Count == 0)
+            return;
+
+        foreach (var vert in SelectedVertices)
+        {
+            Mesh.RemoveVertex(vert);
+        }
+        SelectedVertices.Clear();
+                
+        Mesh.Init();
+        Mesh.GenerateBuffers();
+    }
+
+    public void HandleEdgeDeletion()
+    {
+    }
+
+    public void HandleTriangleDeletion()
+    {
+        HashSet<Triangle> triangles = GetSelectedFullTriangles();
+
+        if (triangles.Count > 0)
+        {
+            foreach (var triangle in triangles)
+            {
+                Mesh.RemoveTriangle(triangle);
+            }
+            SelectedVertices.Clear();
+                
+            Mesh.Init();
+            Mesh.GenerateBuffers();
+        }
+    }
+
+
+
+    public void Handle_FlipTriangleNormal()
+    {
+        StashMesh();
+
+        HashSet<Triangle> triangles = GetSelectedFullTriangles();
+        ModelMesh modelMesh = Mesh;
+
+        if (triangles.Count > 0)
+        {
+            foreach (var triangle in triangles)
+            {
+                Vertex A = triangle.A;
+                Vertex B = triangle.B;
+                if (modelMesh.SwapVertices(A, B))
+                {
+                    triangle.Invert();
+                    modelMesh.UpdateNormals(triangle);
+                }
+            }
+
+            modelMesh.Init();
+            modelMesh.UpdateMesh();
+        }
+    }
 
     public void MoveSelectedVertices(Vector3 move)
     {
@@ -432,113 +505,38 @@ public class ModelingEditor : BaseEditor
         regenerateVertexUi = true;
     }
 
-    public void Handle_TriangleDeletion()
-    {
-        StashMesh();
-
-        HashSet<Triangle> triangles = GetSelectedFullTriangles();
-        ModelMesh modelMesh = Mesh;
-
-        if (triangles.Count > 0)
-        {
-            foreach (var triangle in triangles)
-            {
-                modelMesh.RemoveTriangle(triangle);
-            }
-            SelectedVertices.Clear();
-                
-            modelMesh.Init();
-            modelMesh.GenerateBuffers();
-        }
-    }
-
-    public void Handle_FlipTriangleNormal()
-    {
-        StashMesh();
-
-        HashSet<Triangle> triangles = GetSelectedFullTriangles();
-        ModelMesh modelMesh = Mesh;
-
-        if (triangles.Count > 0)
-        {
-            foreach (var triangle in triangles)
-            {
-                Vertex A = triangle.A;
-                Vertex B = triangle.B;
-                if (modelMesh.SwapVertices(A, B))
-                {
-                    triangle.Invert();
-                    modelMesh.UpdateNormals(triangle);
-                }
-            }
-
-            modelMesh.Init();
-            modelMesh.UpdateMesh();
-        }
-    }
-
     public void Handle_GenerateNewFace()
     {
         StashMesh();
 
-        if (selectionType != RenderType.Vertex)
+        if (selectionType != RenderType.Vertex || SelectedVertices.Count > 4)
             return;
 
+        if (SelectedVertices.Count == 2)
+        { 
+            if (ModelingHelper.Generate_2_Selected(SelectedVertices))
+            {
+                List<Vertex> nextVertices = [SelectedVertices[2], SelectedVertices[3]];
+                ModelingHelper.Generate_4_Selected(SelectedVertices, Mesh);
+                SelectedVertices = nextVertices;
+            }
+        }
+
         if (SelectedVertices.Count == 3)
-        {
-            Vertex A = SelectedVertices[0];
-            Vertex B = SelectedVertices[1];
-            Vertex C = SelectedVertices[2];
+        { 
+            ModelingHelper.Generate_3_Selected(SelectedVertices, Mesh);
+        }
 
-            if (A.ShareTriangle(B, C))
-                return;
-
-            Console.WriteLine("Generating new face");
-            
-            Edge AB;
-            Edge BC;
-            Edge CA;
-
-            Edge? b = A.GetEdgeWith(B);
-            if (b == null)
-            {
-                AB = new Edge(A, B);
-                Mesh.EdgeList.Add(AB);
-            }
-            else
-            {
-                AB = b;
-            }
-
-            Edge? c = B.GetEdgeWith(C);
-            if (c == null)
-            {
-                BC = new Edge(B, C);
-                Mesh.EdgeList.Add(BC);
-            }
-            else
-            {
-                BC = c;
-            }
-
-            Edge? a = C.GetEdgeWith(A);
-            if (a == null)
-            {
-                CA = new Edge(C, A);
-                Mesh.EdgeList.Add(CA);
-            }
-            else
-            {
-                CA = a;
-            }
-
-            Mesh.AddTriangle(new Triangle(A, B, C, AB, BC, CA));
+        if (SelectedVertices.Count == 4)
+        { 
+            ModelingHelper.Generate_4_Selected(SelectedVertices, Mesh);    
         }
 
         Mesh.Init();
         Mesh.GenerateBuffers();
-    }
 
+        GenerateVertexColor();
+    }
     public void Handle_SelectAllVertices()
     {
         Console.WriteLine("Select all");
@@ -573,6 +571,15 @@ public class ModelingEditor : BaseEditor
         Console.WriteLine("Stashing mesh");
         MeshSaveNames.Add(fileName);
         Mesh.SaveModel(fileName, folderPath);
+    }
+
+    public void ClearStash()
+    {
+        string folderPath = Path.Combine(Game.undoModelPath, Editor.currentModelName);
+        foreach (string file in Directory.GetFiles(folderPath))
+        {
+            File.Delete(file);
+        }
     }
 
     public void GetLastMesh()

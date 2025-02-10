@@ -1,4 +1,6 @@
-﻿public class Edge
+﻿using OpenTK.Mathematics;
+
+public class Edge
 {
     public Vertex A;
     public Vertex B;
@@ -33,13 +35,20 @@
         return A != v && B != v;
     }
 
+    public Vector3 GetDirectionFrom(Vertex vertex)
+    {
+        return vertex == A ? B.Position - A.Position : A.Position - B.Position;
+    }
+
     public Vertex Not(Vertex v)
     {
         return A == v ? B : A;
     }
 
-    public void Swap()
+    public Edge Delete()
     {
-        (A, B) = (B, A);
+        A.ParentEdges.Remove(this);
+        B.ParentEdges.Remove(this);
+        return this;
     }
 }

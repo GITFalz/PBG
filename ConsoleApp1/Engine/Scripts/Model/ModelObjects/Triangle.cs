@@ -14,6 +14,8 @@ public class Triangle
     
     public Quad? ParentQuad;
 
+    public bool Inverted = false;
+
     public Triangle(Vertex a, Vertex b, Vertex c, Edge ab, Edge bc, Edge ca, Quad? parentQuad = null)
     {
         A = a;
@@ -40,6 +42,8 @@ public class Triangle
         ParentQuad = parentQuad;
     }
 
+    public Triangle(Vertex a, Vertex b, Vertex c, Quad? parentQuad = null) : this(a, b, c, new Edge(a, b), new Edge(b, c), new Edge(c, a), parentQuad) {}
+
     public void UpdateNormals()
     {
         Vector3 edge1 = B.Position - A.Position;
@@ -50,6 +54,7 @@ public class Triangle
     public void Invert()
     {
         (A, B) = (B, A);
+        Inverted = !Inverted;
     }
     
     public bool TwoVertSamePosition()
@@ -102,7 +107,6 @@ public class Triangle
         return false;
     }
 
-
     public bool HasVertices(Vertex a, Vertex b, Vertex c)
     {
         return (A == a || A == b || A == c) && (B == a || B == b || B == c) && (C == a || C == b || C == c);
@@ -113,6 +117,24 @@ public class Triangle
         return (A == a && B == b) || (A == b && B == a) || (A == a && C == b) || (A == b && C == a) || (B == a && C == b) || (B == b && C == a);
     }
 
+    public bool HasEdge(Edge edge)
+    {
+        return AB == edge || BC == edge || CA == edge;
+    }
+
+    public Triangle Delete()
+    {
+        A.ParentTriangles.Remove(this);
+        B.ParentTriangles.Remove(this);
+        C.ParentTriangles.Remove(this);
+        
+        AB.ParentTriangles.Remove(this);
+        BC.ParentTriangles.Remove(this);
+        CA.ParentTriangles.Remove(this);
+        
+        return this;
+    }
+
     public List<Vector3> GetVerticesPosition()
     {
         return new List<Vector3> {A.Position, B.Position, C.Position};
@@ -121,5 +143,33 @@ public class Triangle
     public List<Vertex> GetVertices()
     {
         return new List<Vertex> {A, B, C};
+    }
+
+    public void InvertIfInverted()
+    {
+        foreach (Edge edge in new[] { AB, BC, CA })
+        {
+            foreach (Triangle adjTri in edge.ParentTriangles)
+            {
+                if (adjTri == this) continue;
+
+                Vertex thisSingleVertex = edge.HasNotVertex(A) ? A : edge.HasNotVertex(B) ? B : C;
+                Vertex adjSingleVertex = edge.HasNotVertex(adjTri.A) ? adjTri.A : edge.HasNotVertex(adjTri.B) ? adjTri.B : adjTri.C;
+
+                Vector3 oldPosition = thisSingleVertex.Position;
+                thisSingleVertex.SetPosition(adjSingleVertex.Position);
+                UpdateNormals();
+                float dot = Vector3.Dot(Normal, adjTri.Normal);
+                thisSingleVertex.SetPosition(oldPosition);
+                UpdateNormals();
+
+                if (dot > 0)
+                {
+                    Normal = -Normal;
+                    Invert();
+                    return;
+                }
+            }
+        }
     }
 }

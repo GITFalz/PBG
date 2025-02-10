@@ -28,7 +28,6 @@ public class Model
         Mesh = new AnimationMesh(rootBone, Bones.Count);
         modelMesh.LoadModel(modelName);
 
-
         CurrentAnimation = new Animation("TestAnimation");
         Animations.Add(CurrentAnimation.Name, CurrentAnimation);
 
