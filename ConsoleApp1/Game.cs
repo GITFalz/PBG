@@ -36,21 +36,10 @@ public class Game : GameWindow
 
     private int frameCount = 0;
     private float elapsedTime = 0;
-    private Stopwatch stopwatch;
-
 
     public static bool MoveTest = false;
-    
-    
-    private bool isRunning = true;
-    private Thread _physicsThread;
 
-
-    private static Scene _worldScene = new Scene("World");
     private static Scene _modelingScene = new Scene("Modeling");
-    private static Scene _uiEditorScene = new Scene("UIEditor");
-    private static Scene _uiScene = new Scene("UI");
-    
     
     public static Scene? CurrentScene;
 
@@ -110,16 +99,6 @@ public class Game : GameWindow
     
     protected override void OnLoad()
     {
-        // Scenes
-        _worldScene.AddSceneSwitcher(new SceneSwitcherKey(Keys.RightShift, "Modeling"));
-        _modelingScene.AddSceneSwitcher(new SceneSwitcherKeys([Keys.LeftControl, Keys.LeftShift, Keys.Z], "World"));
-        _modelingScene.AddSceneSwitcher(new SceneSwitcherKeys([Keys.LeftControl, Keys.LeftShift, Keys.U], "UIEditor"));
-        _uiEditorScene.AddSceneSwitcher(new SceneSwitcherKeys([Keys.LeftControl, Keys.LeftShift, Keys.Semicolon], "Modeling"));
-        
-        // Utils
-        stopwatch = new Stopwatch();
-        stopwatch.Start();
-
         if (!Directory.Exists(modelPath))
             Directory.CreateDirectory(modelPath);
         if (!Directory.Exists(undoModelPath))
@@ -146,9 +125,6 @@ public class Game : GameWindow
         LoadScene("Modeling");
 
         _popUp = new PopUp();
-    
-        _physicsThread = new Thread(PhysicsThread);
-        _physicsThread.Start();
         
         GL.Enable(EnableCap.DepthTest);
         
@@ -173,9 +149,6 @@ public class Game : GameWindow
     {
         GC.Collect();
         GC.WaitForPendingFinalizers();
-        
-        isRunning = false;
-        _physicsThread.Join();
         
         CurrentScene?.OnExit();
         
@@ -209,25 +182,6 @@ public class Game : GameWindow
         matrix.Row3.Y = 0; // Clear the Y translation
         matrix.Row3.Z = 0; // Clear the Z translation
         return matrix;
-    }
-
-    public void PhysicsThread()
-    {
-        double totalTime = 0;
-        
-        while (isRunning)
-        {
-            double time = stopwatch.Elapsed.TotalSeconds;
-            
-            if (time - totalTime >= GameTime.FixedDeltaTime)
-            {
-                _worldScene.OnFixedUpdate();
-                
-                totalTime = time;
-            }
-            
-            Thread.Sleep(1);
-        }
     }
     
     protected override void OnUpdateFrame(FrameEventArgs args)

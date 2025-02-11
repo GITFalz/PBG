@@ -11,12 +11,10 @@ public class Triangle
     public Edge CA;
     
     public Vector3 Normal;
-    
-    public Quad? ParentQuad;
 
     public bool Inverted = false;
 
-    public Triangle(Vertex a, Vertex b, Vertex c, Edge ab, Edge bc, Edge ca, Quad? parentQuad = null)
+    public Triangle(Vertex a, Vertex b, Vertex c, Edge ab, Edge bc, Edge ca)
     {
         A = a;
         B = b;
@@ -39,10 +37,9 @@ public class Triangle
         C.Index = 2;
 
         UpdateNormals();
-        ParentQuad = parentQuad;
     }
 
-    public Triangle(Vertex a, Vertex b, Vertex c, Quad? parentQuad = null) : this(a, b, c, new Edge(a, b), new Edge(b, c), new Edge(c, a), parentQuad) {}
+    public Triangle(Vertex a, Vertex b, Vertex c) : this(a, b, c, new Edge(a, b), new Edge(b, c), new Edge(c, a)) {}
 
     public void UpdateNormals()
     {
