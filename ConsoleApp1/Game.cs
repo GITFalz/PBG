@@ -51,9 +51,6 @@ public class Game : GameWindow
 
 
     private static Scene _worldScene = new Scene("World");
-    private static Scene _modelingScene = new Scene("Modeling");
-    private static Scene _uiEditorScene = new Scene("UIEditor");
-    private static Scene _uiScene = new Scene("UI");
     
     
     public static Scene? CurrentScene;
@@ -114,12 +111,6 @@ public class Game : GameWindow
     
     protected override void OnLoad()
     {
-        // Scenes
-        _worldScene.AddSceneSwitcher(new SceneSwitcherKey(Keys.RightShift, "Modeling"));
-        _modelingScene.AddSceneSwitcher(new SceneSwitcherKeys([Keys.LeftControl, Keys.LeftShift, Keys.Z], "World"));
-        _modelingScene.AddSceneSwitcher(new SceneSwitcherKeys([Keys.LeftControl, Keys.LeftShift, Keys.U], "UIEditor"));
-        _uiEditorScene.AddSceneSwitcher(new SceneSwitcherKeys([Keys.LeftControl, Keys.LeftShift, Keys.Semicolon], "Modeling"));
-        
         // Utils
         stopwatch = new Stopwatch();
         stopwatch.Start();
@@ -167,15 +158,9 @@ public class Game : GameWindow
         // World
         _worldScene.AddGameObject(["Root"], new PlayerStateMachine(), new PhysicsBody(false));
         _worldScene.AddGameObject(["Root"], new WorldManager());
-
-        // Modeling
-        _modelingScene.AddGameObject(["Root"], new GeneralModelingEditor());
         
-        // UI
-        _uiEditorScene.AddGameObject(["Root"], new UiEditor());
-        
-        AddScenes(_worldScene, _modelingScene, _uiScene, _uiEditorScene);
-        LoadScene("Modeling");
+        AddScenes(_worldScene);
+        LoadScene("World");
 
         _popUp = new PopUp();
     
