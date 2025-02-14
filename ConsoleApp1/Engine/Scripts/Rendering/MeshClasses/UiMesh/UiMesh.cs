@@ -10,6 +10,7 @@ public class UIMesh
     public List<Vector2> UiSizes = [];
     public List<int> TransformationIndex = [];
     public List<Vector2> Slices = [];
+    public List<Vector3> Colors = [];
     public List<Matrix4> TransformationMatrices = [];  
     private VAO _vao = new VAO();
     private IBO _ibo = new IBO([]);
@@ -19,10 +20,11 @@ public class UIMesh
     public VBO _uiSizeVbo = new VBO(new List<Vector2>());
     private VBO _transformationVbo = new VBO(new List<int>());
     private VBO _sliceVbo = new VBO(new List<Vector2>());
+    private VBO _colorVbo = new VBO(new List<Vector3>());
     private SSBO _transformationSsbo = new SSBO([]);
     public int ElementCount = 0;
 
-    public void AddElement(UIElement element, ref int uiIndex)
+    public void AddElement(UIPanel element, ref int uiIndex)
     {
         uiIndex = ElementCount;
         var panel = element.panel;
@@ -34,9 +36,28 @@ public class UIMesh
 
         TransformationIndex.AddRange([ElementCount, ElementCount, ElementCount, ElementCount]);
         Slices.AddRange([element.Slice, element.Slice, element.Slice, element.Slice]);
+        Colors.AddRange([element.Color, element.Color, element.Color, element.Color]);
         TransformationMatrices.Add(element.Transformation);
 
         ElementCount++;
+    }
+
+    public void RemoveElement(UIPanel element)
+    {
+        var index = element.ElementIndex;
+        int start = index * 4;
+
+        Vertices.RemoveRange(start, 4);
+        Uvs.RemoveRange(start, 4);
+        TextureIndices.RemoveRange(start, 4);
+        UiSizes.RemoveRange(start, 4);
+
+        TransformationIndex.RemoveRange(index, 4);
+        Slices.RemoveRange(index, 4);
+        Colors.RemoveRange(index, 4);
+        TransformationMatrices.RemoveAt(index);
+
+        ElementCount--;
     }
 
     public void UpdateElementTransformation(UIElement element)
@@ -44,10 +65,11 @@ public class UIMesh
         TransformationMatrices[element.ElementIndex] = element.Transformation;
     }
 
-    public void UpdateElementScale(UIElement element)
+    public void UpdateElementScale(UIPanel element)
     {
-        Panel panel = GetUIQuad(element);
+        Panel panel = UIPanel.GetUIQuad(element);
         int index = element.ElementIndex * 4;
+
         for (int i = 0; i < 4; i++)
         {
             UiSizes[index + i] = (element.newScale.X, element.newScale.Y);
@@ -55,7 +77,7 @@ public class UIMesh
         }
     }
 
-    public void UpdateElementTexture(UIElement element)
+    public void UpdateElementTexture(UIPanel element)
     {
         int index = element.ElementIndex * 4;
         for (int i = 0; i < 4; i++)
@@ -74,6 +96,7 @@ public class UIMesh
         _uiSizeVbo = new VBO(UiSizes);
         _transformationVbo = new VBO(TransformationIndex);
         _sliceVbo = new VBO(Slices);
+        _colorVbo = new VBO(Colors);
         _transformationSsbo = new SSBO(TransformationMatrices);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
@@ -82,6 +105,7 @@ public class UIMesh
         _vao.LinkToVAO(3, 2, _uiSizeVbo);
         _vao.LinkToVAO(4, 1, _transformationVbo);
         _vao.LinkToVAO(5, 2, _sliceVbo);
+        _vao.LinkToVAO(6, 3, _colorVbo);
         
         _ibo = new IBO(Indices);
     }
@@ -136,46 +160,5 @@ public class UIMesh
             uint index = i * 4;
             Indices.AddRange([index, index + 1, index + 2, index + 2, index + 3, index]);
         }
-    }
-
-
-    public Panel GetUIQuad(UIElement element)
-    {
-        Panel panel = new Panel();
-
-        Vector3 Pivot = element.Pivot;
-        Vector2 newScale = element.newScale;
-
-        float Depth = element.Depth;
-        float Rotation = element.Rotation;
-
-        int TextureIndex = element.TextureIndex;
-
-        Vector3 position1 = Mathf.RotateAround((0,             0,           Depth),  Pivot, (0, 0, 1), Rotation);
-        Vector3 position2 = Mathf.RotateAround((0,             newScale.Y,  Depth),  Pivot, (0, 0, 1), Rotation);
-        Vector3 position3 = Mathf.RotateAround((newScale.X,    newScale.Y,  Depth),  Pivot, (0, 0, 1), Rotation);
-        Vector3 position4 = Mathf.RotateAround((newScale.X,    0,           Depth),  Pivot, (0, 0, 1), Rotation);
-        
-        panel.Vertices.Add(position1);
-        panel.Vertices.Add(position2);
-        panel.Vertices.Add(position3);
-        panel.Vertices.Add(position4);
-        
-        panel.Uvs.Add(new Vector2(0, 0));
-        panel.Uvs.Add(new Vector2(0, 1));
-        panel.Uvs.Add(new Vector2(1, 1));
-        panel.Uvs.Add(new Vector2(1, 0));
-        
-        panel.TextUvs.Add(TextureIndex);
-        panel.TextUvs.Add(TextureIndex);
-        panel.TextUvs.Add(TextureIndex);
-        panel.TextUvs.Add(TextureIndex);
-        
-        panel.UiSizes.Add(new Vector2(newScale.X, newScale.Y));
-        panel.UiSizes.Add(new Vector2(newScale.X, newScale.Y));
-        panel.UiSizes.Add(new Vector2(newScale.X, newScale.Y));
-        panel.UiSizes.Add(new Vector2(newScale.X, newScale.Y));
-
-        return panel;
     }
 }

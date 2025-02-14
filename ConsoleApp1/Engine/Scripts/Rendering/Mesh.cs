@@ -55,42 +55,6 @@ public abstract class Mesh
         _vertVbo.Update(transformedVertices);
     }
     
-    public virtual void AddQuad(Vector3 position, MeshQuad meshQuad)
-    {
-        int index = Vertices.Count;
-        
-        foreach (int i in meshQuad.Indices)
-        {
-            Indices.Add((uint)(i + index));
-        }
-        
-        foreach (Vector3 vertex in meshQuad.Vertices)
-        {
-            Vertices.Add(position + vertex);
-        }
-        
-        foreach (Vector2 uv in meshQuad.Uvs)
-        {
-            Uvs.Add(uv);
-        }
-        
-        //_updateMesh = true;
-    }
-    
-
-    public void RecalculateBounds()
-    {
-        Bounds bounds = new Bounds();
-        bounds.min = new Vector3(float.MaxValue);
-        bounds.max = new Vector3(float.MinValue);
-
-        foreach (Vector3 vertex in Vertices)
-        {
-            bounds.min = Vector3.ComponentMin(bounds.min, vertex);
-            bounds.max = Vector3.ComponentMax(bounds.max, vertex);
-        }
-    }
-    
     public virtual void Clear()
     {
         Vertices.Clear();
@@ -106,12 +70,6 @@ public abstract class Mesh
         _vertVbo.Delete();
         _uvVbo.Delete();
         _ibo.Delete();
-    }
-    
-    public struct Bounds
-    {
-        public Vector3 min;
-        public Vector3 max;
     }
 }
 

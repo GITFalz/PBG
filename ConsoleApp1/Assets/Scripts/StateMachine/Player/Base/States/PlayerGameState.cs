@@ -1,4 +1,5 @@
 ﻿using OpenTK.Mathematics;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PlayerGameState : PlayerBaseState
 {
@@ -10,6 +11,7 @@ public class PlayerGameState : PlayerBaseState
     public PlayerGroundedState GroundedState = new();
     public PlayerIdleState IdleState = new();
     public PlayerWalkingState WalkingState = new();
+    public PlayerRunningState RunningState = new();
     public PlayerSprintingState SprintingState = new();
     public PlayerJumpingState JumpingState = new();
     public PlayerAttack1State Attack1State = new();
@@ -21,6 +23,12 @@ public class PlayerGameState : PlayerBaseState
     public PlayerGrapplingSwingOutState GrapplingSwingOutState = new();
 
     public PlayerGameBaseState NextMovingState;
+
+    public void Start()
+    {
+        InputManager.SetAction([Keys.Space], () => SwitchState(JumpingState));
+        InputManager.SetAction([MouseButton.Left], () => SwitchState(Attack1State));
+    }
     
     public override void Enter(PlayerStateMachine playerStateMachine)
     {

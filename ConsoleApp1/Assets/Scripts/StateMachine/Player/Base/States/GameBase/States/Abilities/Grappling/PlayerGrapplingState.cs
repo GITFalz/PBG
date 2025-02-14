@@ -16,7 +16,7 @@ public class PlayerGrapplingState : PlayerGameBaseState
         
         Camera.SetFOV(70);
         
-        playerGameState.PlayerStateMachine.physicsBody.doGravity = false;
+        playerGameState.PlayerStateMachine.physicsBody.DisableGravity();
         
         timer = 0;
         grappleDirection = Camera.Front();
@@ -53,6 +53,6 @@ public class PlayerGrapplingState : PlayerGameBaseState
 
     public override void Exit(PlayerGameState playerGameState)
     {
-        playerGameState.PlayerStateMachine.physicsBody.doGravity = true;
+        playerGameState.PlayerStateMachine.physicsBody.EnableGravity();
     }
 }

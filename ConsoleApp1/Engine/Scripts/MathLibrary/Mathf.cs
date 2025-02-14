@@ -276,11 +276,6 @@ public static class Mathf
     }
     
     
-    public static bool IsPointNearLine(Link<Vector2> link, Vector2 point, float distance)
-    {
-        return IsPointNearLine(link.A, link.B, point, distance);
-    }
-    
     public static bool IsPointNearLine(Vector2 pointA, Vector2 pointB, Vector2 point, float distance)
     {
         Vector2 lineDirection = pointB - pointA;

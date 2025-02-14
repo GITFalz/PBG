@@ -19,57 +19,6 @@ public class OldAnimationMesh : BoxMesh
         _transformedVerts = new List<Vector3>();
     }
 
-    /// <summary>
-    /// !!!NOTE: This function needs to be called after generating the buffers
-    /// </summary>
-    public void Init()
-    {
-        for (int i = 0; i < Vertices.Count; i++)
-        {
-            _transformedVerts[i] = Vertices[i];
-        }
-    }
-        
-    public void UpdateRotation(Quaternion rotation)
-    {
-        for (int i = 0; i < Vertices.Count; i++)
-        {
-            _transformedVerts[i] = Mathf.RotateAround(_transformedVerts[i], new Vector3(0, 0, 0), rotation);
-        }
-    }
-    
-    public void UpdateRotation(Vector3 axis, float angle)
-    {
-        for (int i = 0; i < Vertices.Count; i++)
-        {
-            _transformedVerts[i] = Mathf.RotateAround(_transformedVerts[i], new Vector3(0, 0, 0), axis, angle);
-        }
-    }
-    
-    public void UpdateRotation(Quaternion rotation, Vector3 pivot)
-    {
-        for (int i = 0; i < Vertices.Count; i++)
-        {
-            _transformedVerts[i] = Mathf.RotateAround(_transformedVerts[i], pivot, rotation);
-        }
-    }
-
-    public void UpdatePosition(Vector3 position)
-    {
-        for (int i = 0; i < Vertices.Count; i++)
-        {
-            _transformedVerts[i] += position;
-        }
-    }
-    
-    public void Center()
-    {
-        for (int i = 0; i < Vertices.Count; i++)
-        {
-            _transformedVerts[i] += WorldPosition;
-        }
-    }
-
     public override void UpdateMesh()
     {
         _vertVbo.Update(_transformedVerts);
@@ -77,6 +26,7 @@ public class OldAnimationMesh : BoxMesh
     
     public override void GenerateBuffers()
     {
+        _transformedVerts.Clear();
         for (int i = 0; i < Vertices.Count; i++)
         {
             _transformedVerts.Add(Vertices[i]);

@@ -19,8 +19,8 @@ public class PlayerAttack3State : PlayerGameBaseState
         
         attacked = false;
         
-        playerGameState.PlayerStateMachine.physicsBody.doGravity = true;
-        playerGameState.PlayerStateMachine.physicsBody.AddForce(Camera.FrontYto0() * 0.2f);
+        playerGameState.PlayerStateMachine.physicsBody.EnableGravity();
+        //playerGameState.PlayerStateMachine.physicsBody.SetAcceleration(Camera.FrontYto0() * 0.2f);
         
         OldAnimationManager.Instance.SetAnimation("Sword" , "attack3");
         OldAnimationManager.Instance.SetAnimation("Player", "attack3");

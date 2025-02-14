@@ -16,12 +16,9 @@ public class PlayerDashState : PlayerGameBaseState
         timer = 0;
 
         Vector3 forward = playerGameState.PlayerStateMachine.forward;
-        playerGameState.PlayerStateMachine.physicsBody.AddForce(forward * 0.5f);
-        
-        OldAnimationManager.Instance.SetAnimation("Player", "dashing");
-        OldAnimationManager.Instance.QueueLoopAnimation("Player", "running");
+        playerGameState.PlayerStateMachine.physicsBody.AddForce(forward, PlayerStateMachine.DASH_SPEED);
 
-        Camera.SetFOV(65);
+        Camera.SetFOV(60);
     }
 
     public override void Update(PlayerGameState playerGameState)
@@ -33,21 +30,23 @@ public class PlayerDashState : PlayerGameBaseState
         {
             if (input == Vector2.Zero)
             {
-                Camera.SetFOV(45);
                 playerGameState.SwitchState(playerGameState.IdleState);
+                return;
+            }
+            else if (Input.IsMouseDown(MouseButton.Right))
+            {
+                playerGameState.SwitchState(playerGameState.SprintingState);
                 return;
             }
             else
             {
-                Camera.SetFOV(45);
-                playerGameState.SwitchState(playerGameState.NextMovingState);
+                playerGameState.SwitchState(playerGameState.RunningState);
                 return;
             }
         }
         
-        if (Input.IsKeyDown(Keys.Space) && Game.MoveTest)
+        if (Input.IsKeyDown(Keys.Space))
         {
-            Camera.SetFOV(60);
             playerGameState.SwitchState(playerGameState.JumpingState);
             return;
         }
@@ -60,6 +59,6 @@ public class PlayerDashState : PlayerGameBaseState
 
     public override void Exit(PlayerGameState playerGameState)
     {
-        
+        Camera.SetFOV(45);
     }
 }

@@ -2,7 +2,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 
-public class PopUp : Component
+public class PopUp
 {
     public static PopUp? Instance = null;
     public List<string> messages = [];
@@ -16,11 +16,13 @@ public class PopUp : Component
     public UIController MessageUI = new();
     public UIController ConfirmationUI = new();
 
-    public UIPanel MessagePanel;
+    public UIImage MessagePanel;
+    public UICollection MessageCollection;
     public UIText Message;
     public UIButton MessageCloseButton;
 
-    public UIPanel ConfirmationPanel;
+    public UIImage ConfirmationPanel;
+    public UICollection ConfirmationCollection;
     public UIText Confirmation;
     public UIButton ConfirmationAcceptButton;
     public UIButton ConfirmationDeclineButton;
@@ -35,58 +37,52 @@ public class PopUp : Component
         RenderAction = RenderMessage;
         UpdateAction = UpdateMessage;
 
-        MessagePanel = new("PopupPanel", AnchorType.BottomCenter, PositionType.Absolute, (0, 0, 0), (500, 80), (0, 80, 0, 0), 0, 0, (10, 0.15f), null);
-        Message = new("PopupText", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (0, 10, 0, 0), 0, 0, (10, 0.15f), null);
-        MessageCloseButton = new("PopupButton", AnchorType.TopRight, PositionType.Relative, (0, 0, 0), (30, 30), (0, 0, 0, 0), 0, 89, (0, 0), null, UIState.Interactable);
-
-        MessagePanel.Depth = 0.5f;
-        Message.Depth = 0.6f;
-        MessageCloseButton.Depth = 0.6f;
+        MessagePanel = new("PopupPanel", AnchorType.MiddleCenter, PositionType.Absolute, (0.5f, 0.5f, 0.5f), (0, 0, 0), (500, 80), (0, 0, 0, 0), 0, 0, (10, 0.05f), null);
+        MessageCollection = new("MessageCollection", AnchorType.BottomCenter, PositionType.Absolute, (0, 0, 0), (500, 80), (0, 80, 0, 0), 0);
+        Message = new("PopupText", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (10, 10, 0, 0), 0, 0, (0, 0), null);
+        MessageCloseButton = new("PopupButton", AnchorType.TopRight, PositionType.Relative, (0.7f, 0.7f, 0.7f), (0, 0, 0), (30, 30), (0, 0, 0, 0), 0, 89, (0, 0), null, UIState.Interactable);
 
         MessageCloseButton.OnClick = new SerializableEvent(CloseCurrentMessage);
 
-        MessagePanel.AddChild(Message);
-        MessagePanel.AddChild(MessageCloseButton);
+        MessageCollection.AddElement(MessagePanel);
+        MessageCollection.AddElement(Message);
+        MessageCollection.AddElement(MessageCloseButton);
 
         Message.MaxCharCount = 30;
         Message.SetText("Hello", 0.7f);
 
-        MessageUI.AddElement(MessagePanel);
+        MessageUI.AddElement(MessageCollection);
 
         MessageUI.GenerateBuffers();
 
 
-        ConfirmationPanel = new("AlertPanel", AnchorType.BottomCenter, PositionType.Absolute, (0, 0, 0), (500, 80), (0, 80, 0, 0), 0, 0, (10, 0.15f), null);
-        Confirmation = new("AlertText", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (10, 10, 0, 0), 0, 0, (10, 0.15f), null);
-        ConfirmationAcceptButton = new("AlertButton", AnchorType.BottomCenter, PositionType.Relative, (0, 0, 0), (480, 35), (0, -10, 0, 0), 0, 1, (10, 0.15f), null, UIState.Interactable);
-        ConfirmationDeclineButton = new("AlertButton", AnchorType.TopRight, PositionType.Relative, (0, 0, 0), (30, 30), (0, 0, 0, 0), 0, 89, (0, 0), null, UIState.Interactable);
-        AcceptText = new("AcceptText", AnchorType.BottomCenter, PositionType.Relative, (0, 0, 0), (100, 100), (0, -20, 0, 0), 0, 0, (10, 0.15f), null);
-
-        ConfirmationPanel.Depth = 0.5f;
-        Confirmation.Depth = 0.6f;
-        ConfirmationAcceptButton.Depth = 0.6f;
-        ConfirmationDeclineButton.Depth = 0.6f;
-        AcceptText.Depth = 0.65f;
+        ConfirmationPanel = new("AlertPanel", AnchorType.MiddleCenter, PositionType.Absolute, (0.5f, 0.5f, 0.5f), (0, 0, 0), (500, 80), (0, 0, 0, 0), 0, 0, (10, 0.05f), null);
+        ConfirmationCollection = new("AlertCollection", AnchorType.BottomCenter, PositionType.Absolute, (0, 0, 0), (500, 80), (0, 80, 0, 0), 0);
+        Confirmation = new("AlertText", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (10, 10, 0, 0), 0, 0, (0, 0), null);
+        ConfirmationAcceptButton = new("AlertButton", AnchorType.BottomCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (480, 35), (0, -10, 0, 0), 0, 0, (10, 0.05f), null, UIState.Interactable);
+        ConfirmationDeclineButton = new("AlertButton", AnchorType.TopRight, PositionType.Relative, (0.7f, 0.7f, 0.7f), (0, 0, 0), (30, 30), (0, 0, 0, 0), 0, 89, (0, 0), null, UIState.Interactable);
+        AcceptText = new("AcceptText", AnchorType.BottomCenter, PositionType.Relative, (0, 0, 0), (100, 100), (0, -20, 0, 0), 0, 0, (0, 0), null);
 
         ConfirmationAcceptButton.OnClick = new SerializableEvent(AcceptCurrentConfirmation);
         ConfirmationDeclineButton.OnClick = new SerializableEvent(DeclineCurrentConfirmation);
 
-        ConfirmationPanel.AddChild(Confirmation);
-        ConfirmationPanel.AddChild(ConfirmationAcceptButton);
-        ConfirmationPanel.AddChild(ConfirmationDeclineButton);
-        ConfirmationPanel.AddChild(AcceptText);
+        ConfirmationCollection.AddElement(ConfirmationPanel);
+        ConfirmationCollection.AddElement(Confirmation);
+        ConfirmationCollection.AddElement(ConfirmationAcceptButton);
+        ConfirmationCollection.AddElement(ConfirmationDeclineButton);
+        ConfirmationCollection.AddElement(AcceptText);
 
         Confirmation.MaxCharCount = 30;
         Confirmation.SetText("Hello", 0.7f);
         AcceptText.MaxCharCount = 6;
         AcceptText.SetText("Accept", 1f);
 
-        ConfirmationUI.AddElement(ConfirmationPanel);
+        ConfirmationUI.AddElement(ConfirmationCollection);
 
         ConfirmationUI.GenerateBuffers();
     }
 
-    public override void Update()
+    public void Update()
     {
         if (!isShowing)
             return;
@@ -118,7 +114,7 @@ public class PopUp : Component
     }
 
 
-    public override void Render()
+    public void Render()
     {
         if (!isShowing)
             return;
@@ -213,9 +209,9 @@ public class PopUp : Component
         if (!MoveMessageEase(90, 1.5f))
             return;
 
-        MessagePanel.Offset.Y = 85 - position.Y;
-        MessagePanel.AlignAll();
-        MessagePanel.UpdateAllTransformation();
+        MessageCollection.Offset.Y = 85 - position.Y;
+        MessageCollection.Align();
+        MessageCollection.UpdateTransformation();
 
         MessageUI.UpdateMatrices();
     }
@@ -225,9 +221,9 @@ public class PopUp : Component
         if (!MoveConfirmationEaseIn(90, 1.5f))
             return;
 
-        ConfirmationPanel.Offset.Y = 85 - position.Y;
-        ConfirmationPanel.AlignAll();
-        ConfirmationPanel.UpdateAllTransformation();
+        ConfirmationCollection.Offset.Y = 85 - position.Y;
+        ConfirmationCollection.Align();
+        ConfirmationCollection.UpdateTransformation();
 
         ConfirmationUI.UpdateMatrices();
     }

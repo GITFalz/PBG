@@ -21,14 +21,15 @@ public class Game : GameWindow
     public static int centerY;
 
     // User paths
-    public static string mainPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VoxelGame");
+    public static string mainPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Engines", "PBG");
     public static string chunkPath = Path.Combine(mainPath, "Chunks");
-    public static string assetPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Saves");
+    public static string assetPath = Path.Combine(mainPath, "Saves");
+    public static string shaderPath = Path.Combine(mainPath, "Shaders");
     public static string uiPath = Path.Combine(assetPath, "UI");
+    public static string texturePath = Path.Combine(assetPath, "Textures");
     public static readonly string modelPath = Path.Combine(assetPath, "Models");
     public static readonly string undoModelPath = Path.Combine(mainPath, "UndoModels");
-    public static string shaderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Shaders");
-    public static string texturePath = Path.Combine(assetPath, "Textures");
+
 
 
     public static Vector3 BackgroundColor = new Vector3(0.4f, 0.6f, 0.98f);
@@ -57,6 +58,8 @@ public class Game : GameWindow
 
     // Miscaleanous Ui
     private PopUp _popUp;
+
+    public static Action<Keys> InputActions = (e) => { };
     
     
     public Game(int width, int height) : base(GameWindowSettings.Default, new NativeWindowSettings
@@ -156,8 +159,13 @@ public class Game : GameWindow
         
         
         // World
-        _worldScene.AddGameObject(["Root"], new PlayerStateMachine(), new PhysicsBody(false));
-        _worldScene.AddGameObject(["Root"], new WorldManager());
+        TransformNode worldGenerationNode = new TransformNode();
+        worldGenerationNode.AddChild(new WorldManager());
+
+        TransformNode playerNode = new TransformNode();
+        playerNode.AddChild(new PhysicsBody(false), new PlayerStateMachine());
+
+        _worldScene.AddNode(worldGenerationNode, playerNode);
         
         AddScenes(_worldScene);
         LoadScene("World");
@@ -175,15 +183,39 @@ public class Game : GameWindow
     protected override void OnKeyDown(KeyboardKeyEventArgs e)
     {
         base.OnKeyDown(e);
-        if (!Input.PressedKeys.Contains(e.Key))
-            Input.PressedKeys.Add(e.Key);
-        UIController.InputField(e.Key);
+        Input.PressedKeys.Add(e.Key);
+
+        if (e.Key == Keys.Escape)
+        {
+            MoveTest = !MoveTest;
+
+            if (MoveTest)
+            {
+                SetCursorState(CursorState.Grabbed);
+            }
+            else
+            {
+                SetCursorState(CursorState.Normal);
+            }
+        }
+    }
+
+    protected override void OnMouseDown(MouseButtonEventArgs e)
+    {
+        base.OnMouseDown(e);
+        Input.PressedButtons.Add(e.Button);
     }
     
     protected override void OnKeyUp(KeyboardKeyEventArgs e)
     {
         base.OnKeyUp(e);
         Input.PressedKeys.Remove(e.Key);
+    }
+
+    protected override void OnMouseUp(MouseButtonEventArgs e)
+    {
+        base.OnMouseUp(e);
+        Input.PressedButtons.Remove(e.Button);
     }
     
     protected override void OnUnload()
@@ -254,20 +286,6 @@ public class Game : GameWindow
         
         Input.Update(keyboard, mouse);
         GameTime.Update(args);
-
-        if (Input.IsKeyPressed(Keys.LeftAlt))
-        {
-            MoveTest = !MoveTest;
-
-            if (MoveTest)
-            {
-                Game.SetCursorState(CursorState.Grabbed);
-            }
-            else
-            {
-                Game.SetCursorState(CursorState.Normal);
-            }
-        }
 
         _popUp.Update();
         

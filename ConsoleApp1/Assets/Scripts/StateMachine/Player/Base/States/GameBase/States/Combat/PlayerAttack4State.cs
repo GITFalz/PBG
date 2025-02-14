@@ -20,8 +20,8 @@ public class PlayerAttack4State : PlayerGameBaseState
         smashed1 = false;
         smashed2 = false;
         
-        playerGameState.PlayerStateMachine.physicsBody.doGravity = true;
-        playerGameState.PlayerStateMachine.physicsBody.AddForce(Camera.FrontYto0() * 0.1f);
+        playerGameState.PlayerStateMachine.physicsBody.EnableGravity();
+        //playerGameState.PlayerStateMachine.physicsBody.SetAcceleration(Camera.FrontYto0() * 0.1f);
         
         OldAnimationManager.Instance.SetAnimation("Sword", "attack4");
         OldAnimationManager.Instance.SetAnimation("Player", "attack4");
@@ -34,13 +34,13 @@ public class PlayerAttack4State : PlayerGameBaseState
         
         if (timer > 0.12 && !smashed1)
         {
-            playerGameState.PlayerStateMachine.physicsBody.AddForce((0, 0.3f, 0));
+            //playerGameState.PlayerStateMachine.physicsBody.SetAcceleration((0, 0.3f, 0));
             smashed1 = true;
         }
 
         if (timer > 0.3 && !smashed2)
         {
-            playerGameState.PlayerStateMachine.physicsBody.AddForce((0, -0.2f, 0));
+            //playerGameState.PlayerStateMachine.physicsBody.SetAcceleration((0, -0.2f, 0));
             smashed2 = true;
         }
         

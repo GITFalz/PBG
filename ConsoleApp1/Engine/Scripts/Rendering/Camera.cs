@@ -15,9 +15,14 @@ public class Camera
     
     public float FOV { get; private set; } = 45f;
     public float targetFOV { get; private set; } = 45f;
-    public float FOV_SMOTH_FACTOR { get; private set; } = 100f;
+    public float FOV_SMOTH_FACTOR { get; private set; } = 20f;
 
-    public Vector3 position;
+    public Vector3 Position = (0, 0, 0);
+
+    public Vector3 Center = (0, 0, 0);
+    private Vector3 _currentCenter = (0, 0, 0);
+    private float _centerLerpSpeed = 30f;
+
     public float pitch = 0;
     public float yaw = -90;
     
@@ -26,6 +31,7 @@ public class Camera
     public Vector3 right = Vector3.UnitX;
     
     private float CameraDistance = 5;
+    public float WantedCameraDistance = 5;
     private float oldScroll = 0;
 
     public bool firstMove = true;
@@ -51,7 +57,7 @@ public class Camera
     {
         SCREEN_WIDTH = width;
         SCREEN_HEIGHT = height;
-        this.position = position;
+        this.Position = position;
         
         _cameraModes = new Dictionary<CameraMode, Action>
         {
@@ -62,15 +68,12 @@ public class Camera
 
     public Matrix4 GetViewMatrix()
     {
-        viewMatrix = Matrix4.LookAt(position, position + front, up);
+        viewMatrix = Matrix4.LookAt(Position, Position + front, up);
         return viewMatrix;
     }
     
     public Matrix4 GetProjectionMatrix()
     {
-        float fov = Mathf.Lerp(FOV, targetFOV, FOV_SMOTH_FACTOR * GameTime.DeltaTime);
-        FOV = Mathf.Clamp(1, 179, fov);
-        
         projectionMatrix = Matrix4.CreatePerspectiveFieldOfView(
             MathHelper.DegreesToRadians(FOV),
             SCREEN_WIDTH / SCREEN_HEIGHT, 
@@ -97,8 +100,7 @@ public class Camera
 
     public void SetFOV(float fov)
     {
-        targetFOV = fov;
-        projectionMatrix = GetProjectionMatrix();
+        targetFOV = Mathf.Clamp(1, 179, fov);
     }
     
     public void SetCameraMode(CameraMode mode)
@@ -167,38 +169,40 @@ public class Camera
 
     private void FreeCamera()
     {
+        FOV = Mathf.Lerp(FOV, targetFOV, FOV_SMOTH_FACTOR * GameTime.DeltaTime);
+        
         if (!Game.MoveTest)
         {
             float speed = SPEED * GameTime.DeltaTime;
 
             if (Input.IsKeyDown(Keys.W))
             {
-                position += Yto0(front) * speed;
+                Position += Yto0(front) * speed;
             }
 
             if (Input.IsKeyDown(Keys.A))
             {
-                position -= Yto0(right) * speed;
+                Position -= Yto0(right) * speed;
             }
 
             if (Input.IsKeyDown(Keys.S))
             {
-                position -= Yto0(front) * speed;
+                Position -= Yto0(front) * speed;
             }
 
             if (Input.IsKeyDown(Keys.D))
             {
-                position += Yto0(right) * speed;
+                Position += Yto0(right) * speed;
             }
 
             if (Input.IsKeyDown(Keys.Space))
             {
-                position.Y += speed;
+                Position.Y += speed;
             }
 
             if (Input.IsKeyDown(Keys.LeftShift))
             {
-                position.Y -= speed;
+                Position.Y -= speed;
             }
         }
         else
@@ -244,11 +248,13 @@ public class Camera
         float scroll = Input.GetMouseScroll().Y;
             
         CameraDistance -= (scroll - oldScroll) * SCROLL_SENSITIVITY;
+        //_currentCameraDistance = Mathf.Lerp(_currentCameraDistance, Math.Clamp(CameraDistance, 3, 10), 30f * GameTime.DeltaTime);
         CameraDistance = Math.Clamp(CameraDistance, 3, 10);
         oldScroll = scroll;
-    
-        _targetPosition = PlayerData.EyePosition - front * CameraDistance;
-        position = _positionSmooth ? Vector3.Lerp(position, _targetPosition, POSITION_SMOOTH_FACTOR * GameTime.DeltaTime) : _targetPosition;
+
+        _currentCenter = Mathf.Lerp(_currentCenter, Center, _centerLerpSpeed * GameTime.DeltaTime);
+        _targetPosition = _currentCenter - front * CameraDistance;
+        Position = _positionSmooth ? Vector3.Lerp(Position, _targetPosition, POSITION_SMOOTH_FACTOR * GameTime.DeltaTime) : _targetPosition;
     }
     
     public void SetSmoothFactor(bool value)

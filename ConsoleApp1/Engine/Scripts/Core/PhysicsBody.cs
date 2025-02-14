@@ -1,12 +1,12 @@
 ﻿using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-public class PhysicsBody : Component
+public class PhysicsBody : ScriptingNode
 {
     public float gravity = 50f;
     public float maxFallSpeed = 150f;
     
-    public bool doGravity = false;
+    private bool doGravity = false;
     
     public Vector3 Acceleration = Vector3.Zero;
     public Vector3 Velocity = Vector3.Zero;
@@ -25,7 +25,9 @@ public class PhysicsBody : Component
     
     public Vector3 physicsPosition;
     private Vector3 previousPosition;
-    private float interpolationSpeed = 10f;
+    private float interpolationSpeed = 20f;
+
+    private Action Gravity = () => { };
 
     public PhysicsBody()
     {
@@ -37,58 +39,42 @@ public class PhysicsBody : Component
     {
         Name = "PhysicsBody";
         Hitbox = new Hitbox(new Vector3(1, 2, 1));
-        this.doGravity = doGravity;
+        if (doGravity) EnableGravity();
     }
-    
-    private Vector3 targetVelocity;
-    private Vector3 currentForce;
-    private float velocityLerpSpeed = 8f;
-    private float forceInterpolationSpeed = 5f;
-    
-    public void AddForce(Vector3 force, float strength)
+
+    public void DisableGravity()
     {
-        AddForce(force * strength);
+        doGravity = false;
+        Gravity = () => { };
+    }
+
+    public void EnableGravity()
+    {
+        doGravity = true;
+        Gravity = ApplyGravity;
     }
     
+    public void SetPosition(Vector3 position)
+    {
+        physicsPosition = position;
+        previousPosition = position;
+        Hitbox.Position = position;
+        Transform.Position = position;
+    }
+
     public void AddForce(Vector3 force)
     {
-        Acceleration += force / Mass;
+        Velocity += force / Mass;
     }
-    
-    public void SetPosition(Vector3 newPosition)
+
+    public void AddForce(Vector3 direction, float maxSpeed)
     {
-        physicsPosition = newPosition;
-        previousPosition = newPosition;
-        Transform.Position = newPosition;
+        Velocity += direction.Normalized() * maxSpeed / Mass;
     }
-    
-    public void AddImpulse(Vector3 impulse)
-    {
-        Velocity += impulse / Mass;
-        targetVelocity = Velocity;
-    }
-    
-    public void AddAcceleration(Vector3 acceleration)
-    {
-        Acceleration += acceleration;
-    }
-    
-    public void SetVelocity(Vector3 newVelocity)
-    {
-        Velocity = newVelocity;
-        targetVelocity = newVelocity;
-        currentForce = Vector3.Zero;
-    }
-    
+
     public override void Update()
     {
-        float deltaTime = GameTime.DeltaTime;
-        
-        Transform.Position = Vector3.Lerp(
-            Transform.Position,
-            physicsPosition,
-            interpolationSpeed * deltaTime
-        );
+        Transform.Position = Vector3.Lerp(Transform.Position, physicsPosition, GameTime.DeltaTime * interpolationSpeed);
     }
     
     public override void FixedUpdate()
@@ -96,43 +82,22 @@ public class PhysicsBody : Component
         if (!Game.MoveTest)
             return;
         
-        float deltaTime = GameTime.FixedDeltaTime;
-        
         previousPosition = physicsPosition;
-        
-        Velocity += Acceleration * deltaTime;
 
-        if (doGravity)
-            Gravity();
-        
+        Velocity += Acceleration * GameTime.FixedDeltaTime;
+        Velocity *= 1 - Drag * GameTime.FixedDeltaTime;
+        Acceleration *= 1 - (Drag * 100) * GameTime.FixedDeltaTime;
+
+        Gravity();
         CollisionCheck();
-        
-        Velocity *= 1 - Drag * deltaTime;
 
-        physicsPosition += Velocity * deltaTime;
-        
+        physicsPosition += Velocity * GameTime.FixedDeltaTime;
         Hitbox.Position = physicsPosition;
-        
-        Acceleration = Vector3.Zero;
     }
     
-    public void Gravity()
+    public void ApplyGravity()
     {
-        Velocity += new Vector3(0, -gravity * GameTime.FixedDeltaTime, 0);
-
-        Velocity = new Vector3(
-            Velocity.X,
-            Math.Max(Velocity.Y, -maxFallSpeed),
-            Velocity.Z
-        );
-    }
-
-    public void Stop()
-    {
-        Velocity = Vector3.Zero;
-        targetVelocity = Vector3.Zero;
-        currentForce = Vector3.Zero;
-        Acceleration = Vector3.Zero;
+        Velocity.Y = Math.Max(Velocity.Y - gravity * GameTime.FixedDeltaTime, -maxFallSpeed);
     }
     
     public float GetSpeed()
@@ -228,6 +193,7 @@ public class PhysicsBody : Component
             huggingWall = true;
             
             Velocity.Z = 0;
+            Acceleration.Z = 0;
         }
         
         huggingPosX = false;
@@ -243,10 +209,12 @@ public class PhysicsBody : Component
             huggingWall = true;
             
             Velocity.X = 0;
+            Acceleration.X = 0;
         }
         if (WorldManager.IsBlockChecks(yPositions))
         {
             Velocity.Y = 0;
+            Acceleration.Y = 0;
         }
     }
     public bool IsGroundedCheck()

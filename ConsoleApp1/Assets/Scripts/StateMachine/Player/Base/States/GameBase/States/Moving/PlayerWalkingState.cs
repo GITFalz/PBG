@@ -13,6 +13,7 @@ public class PlayerWalkingState : PlayerGameBaseState
         playerGameState.NextMovingState = playerGameState.WalkingState;
         
         OldAnimationManager.Instance.LoopAnimation("Player", "walking");
+        Game.camera.SetFOV(45);
     }
 
     public override void Update(PlayerGameState playerGameState)
@@ -21,13 +22,19 @@ public class PlayerWalkingState : PlayerGameBaseState
         
         if (Input.IsKeyPressed(Keys.LeftControl))
         {
-            playerGameState.SwitchState(playerGameState.SprintingState);
+            playerGameState.SwitchState(playerGameState.RunningState);
             return;
         }
         
         if (input == Vector2.Zero)
         {
             playerGameState.SwitchState(playerGameState.IdleState);
+            return;
+        }
+
+        if (Input.IsMousePressed(MouseButton.Right))
+        {
+            playerGameState.SwitchState(playerGameState.DashState);
             return;
         }
         

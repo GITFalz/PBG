@@ -11,27 +11,14 @@ public class PlayerJumpingState : PlayerGameBaseState
         
         Camera = Game.camera;
         
-        playerGameState.PlayerStateMachine.physicsBody.doGravity = true;
-        Vector3 velocity = playerGameState.PlayerStateMachine.physicsBody.Velocity;
-        
-        velocity.Y = 0;
-        velocity = Mathf.Normalize(velocity) * 0.05f;
-        
-        playerGameState.PlayerStateMachine.physicsBody.AddForce(new Vector3(velocity.X, PlayerStateMachine.JUMP_SPEED, velocity.Z));
+        playerGameState.PlayerStateMachine.physicsBody.EnableGravity();
+        playerGameState.PlayerStateMachine.physicsBody.AddForce(new Vector3(0, PlayerStateMachine.JUMP_SPEED, 0));
         
         OldAnimationManager.Instance.SetAnimation("Player", "jumping");
     }
 
     public override void Update(PlayerGameState playerGameState)
     {
-        if (playerGameState.PlayerStateMachine.IsHuggingWall() && Input.IsKeyPressed(Keys.Space))
-        {
-            Camera.SetFOV(45);
-            playerGameState.PlayerStateMachine.physicsBody.Velocity.Y = 0;
-            playerGameState.SwitchState(playerGameState.JumpingState);
-            return;
-        }
-
         if (Input.IsKeyPressed(Keys.F))
         {
             playerGameState.SwitchState(playerGameState.GrapplingState);

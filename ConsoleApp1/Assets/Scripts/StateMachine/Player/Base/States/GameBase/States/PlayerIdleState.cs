@@ -6,8 +6,6 @@ public class PlayerIdleState : PlayerGameBaseState
     public override void Enter(PlayerGameState playerGameState)
     {
         Console.WriteLine("Entering idle state");
-
-        OldAnimationManager.Instance.LoopAnimation("Player", "idle");
     }
 
     public override void Update(PlayerGameState playerGameState)
@@ -22,18 +20,17 @@ public class PlayerIdleState : PlayerGameBaseState
             return;
         }
         
-        if (Input.IsMousePressed(MouseButton.Left))
-        {
-            playerGameState.SwitchState(playerGameState.Attack1State);
-            return;
-        }
-        
-        if (Input.IsKeyDown(Keys.Space) && Game.MoveTest)
+        if (Input.IsKeyPressed(Keys.Space) && Game.MoveTest)
         {
             playerGameState.SwitchState(playerGameState.JumpingState);
             return;
         }
 
+        if (Input.IsMousePressed(MouseButton.Left))
+        {
+            playerGameState.SwitchState(playerGameState.Attack1State);
+            return;
+        }
         
         if (!playerGameState.PlayerStateMachine.IsGrounded())
         {

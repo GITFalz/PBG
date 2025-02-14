@@ -12,7 +12,7 @@ public class PlayerGrapplingSwingOutState : PlayerGameBaseState
         
         Camera = Game.camera;
         
-        playerGameState.PlayerStateMachine.physicsBody.doGravity = true;
+        playerGameState.PlayerStateMachine.physicsBody.EnableGravity(); 
         playerGameState.PlayerStateMachine.physicsBody.gravity = 20f;
         
         OldAnimationManager.Instance.SetAnimation("Player", "grappleSwingOut");

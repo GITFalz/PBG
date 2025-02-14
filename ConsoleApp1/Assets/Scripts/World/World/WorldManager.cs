@@ -3,7 +3,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-public class WorldManager : Component
+public class WorldManager : ScriptingNode
 {
     public static WorldManager? Instance;
     
@@ -82,7 +82,10 @@ public class WorldManager : Component
     }
 
     public override void Render()
-    {
+    {   
+        GL.Enable(EnableCap.DepthTest);
+        GL.Enable(EnableCap.CullFace);
+
         _shaderProgram.Bind();
         _textureArray.Bind();
         
@@ -98,8 +101,7 @@ public class WorldManager : Component
         GL.UniformMatrix4(modelLocation, true, ref model);
         GL.UniformMatrix4(viewLocation, true, ref view);
         GL.UniformMatrix4(projectionLocation, true, ref projection);
-        GL.Uniform3(camPosLocation, camera.position);
-        //Console.WriteLine("Rendering chunk: " + activeChunks.Count);
+        GL.Uniform3(camPosLocation, camera.Position);
         
         foreach (var chunk in activeChunks)
         {
@@ -108,6 +110,9 @@ public class WorldManager : Component
         
         _shaderProgram.Unbind();
         _textureArray.Unbind();
+
+        GL.Disable(EnableCap.DepthTest);
+        GL.Disable(EnableCap.CullFace);
     }
 
     public override void Exit()

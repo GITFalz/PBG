@@ -5,21 +5,23 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using Veldrid;
 
-public class PlayerStateMachine : Component
+public class PlayerStateMachine : ScriptingNode
 {
-    public const float WALK_SPEED = 7 * 250;
-    public const float SPRINT_SPEED = 22 * 250;
-    public const float FALL_SPEED = 1 * 250;
-    public const float GRAPPLE_SPEED = 30 * 250;
-    public const float JUMP_SPEED = 6f * 250;
+    public const float WALK_SPEED = 7;
+    public const float RUN_SPEED = 14;
+    public const float DASH_SPEED = 24;
+    public const float SPRINT_SPEED = 22;
+    public const float FALL_SPEED = 1;
+    public const float GRAPPLE_SPEED = 30;
+    public const float JUMP_SPEED = 14;
     
     public Vector3 forward = new Vector3(0, 0, -1);
     
     public static readonly Dictionary<PlayerMovementSpeed, float> Speeds = new Dictionary<PlayerMovementSpeed, float>()
     {
         {PlayerMovementSpeed.Walk, WALK_SPEED},
+        {PlayerMovementSpeed.Run, RUN_SPEED},
         {PlayerMovementSpeed.Sprint, SPRINT_SPEED},
         {PlayerMovementSpeed.Fall, FALL_SPEED},
         {PlayerMovementSpeed.Grappling, GRAPPLE_SPEED},
@@ -39,18 +41,12 @@ public class PlayerStateMachine : Component
     
     private OldAnimationMesh _testMesh;
     
-    private OldAnimationController? _playerAnimationController;
-    private OldAnimationController? _swordAnimationController;
-    
-    
     private ShaderProgram _shaderProgram;
     public PhysicsBody physicsBody;
     
     public OldAnimation CurrentOldAnimation;
     
     public float yaw;
-    
-    private Quaternion _rotation = Quaternion.Identity;
     
     //Random values
     Vector3i HugZ = Vector3i.Zero;
@@ -60,16 +56,21 @@ public class PlayerStateMachine : Component
     private Vector3 _lastCameraPosition;
     private float _lastCameraYaw;
     private float _lastCameraPitch;
+
+    public UIController InfoMenu;
+    public UIText fpsText;
     
     public override void Start()
     {
+        new OldAnimationManager();
+
         Game.camera = new Camera(Game.width, Game.height, new Vector3(0, 20, 0));
         
         _lastCameraPitch = Game.camera.pitch;
         _lastCameraYaw = Game.camera.yaw;
-        _lastCameraPosition = Game.camera.position;
+        _lastCameraPosition = Game.camera.Position;
         
-        physicsBody = ((Component)this).GameObject.GetComponent<PhysicsBody>();
+        physicsBody = Transform.GetComponent<PhysicsBody>();
         
         _currentState = _gameState;
         _currentState.Enter(this);
@@ -124,23 +125,26 @@ public class PlayerStateMachine : Component
         
         _playerMesh.GenerateBuffers();
         _playerMesh.UpdateMesh();
-        
-        //Animation
-        if (!OldAnimationManager.Instance.SetMesh("Player", _playerMesh))
-            throw new System.Exception("Failed to set mesh");
-        
-        if (!OldAnimationManager.Instance.SetMesh("Sword", _swordMesh))
-            throw new System.Exception("Failed to set mesh");
-        
-        if (!OldAnimationManager.Instance.GetController("Player", out _playerAnimationController) || _playerAnimationController == null)
-            throw new System.Exception("Failed to get controller");
-        
-        if (!OldAnimationManager.Instance.GetController("Sword", out _swordAnimationController) || _swordAnimationController == null)
-            throw new System.Exception("Failed to get controller");
+
+        //UI
+        InfoMenu = new UIController();
+
+        fpsText = new("FpsTest", AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), null);
+        fpsText.MaxCharCount = 9;
+        fpsText.SetText("Fps: 9999", 0.5f);
+
+        InfoMenu.AddElement(fpsText);
+
+        InfoMenu.GenerateBuffers();
         
         Console.WriteLine("Player State Machine");
     }
-    
+
+    public override void Resize()
+    {
+        InfoMenu.OnResize();
+    }
+
     public override void Awake()
     {
         Console.WriteLine("Player State Machine");
@@ -152,57 +156,44 @@ public class PlayerStateMachine : Component
         
         camera.SetCameraMode(CameraMode.Free);
         
-        camera.position = _lastCameraPosition;
+        camera.Position = _lastCameraPosition;
         camera.yaw = _lastCameraYaw;
         camera.pitch = _lastCameraPitch;
         
         camera.UpdateVectors();
         
         base.Awake();
+
+        camera.SetCameraMode(CameraMode.Free);
     }
 
     public override void Update()
     {
+        if (Game.Instance.FpsUpdate())
+        {
+            Console.WriteLine("Fps: " + GameTime.Fps);
+            fpsText.SetText($"Fps: {GameTime.Fps}", 0.5f).GenerateChars().UpdateText();
+        }
+        InfoMenu.Test();
+
         Camera camera = Game.camera;
 
-        camera.Update();
+        camera.Center = Transform.Position + new Vector3(0, 1.8f, 0);
+
+        if (Game.MoveTest)
+            camera.Update();
         
         Vector2 input = Input.GetMovementInput();
         
         if (input != Vector2.Zero)
             yaw = -camera.yaw + _inputAngle[input];
         
-        _mesh.Position = Transform.Position + new Vector3(-0.5f, 0, -0.5f);
-        
         forward = Mathf.YAngleToDirection(-yaw);
         
         if (!Game.MoveTest)
             return;
-            
-        _swordMesh.WorldPosition = Transform.Position + new Vector3(0, 1f, 0);
-        _playerMesh.WorldPosition = Transform.Position;
-        
-        _swordMesh.Init();
-        _playerMesh.Init();
-        
-        if (Input.IsKeyPressed(Keys.M))
-            physicsBody.doGravity = !physicsBody.doGravity;
         
         _currentState.Update(this);
-        PlayerData.Position = Transform.Position;
-        PlayerData.EyePosition = Transform.Position + new Vector3(0, 1.8f, 0);
-        
-        if (_swordAnimationController != null && _swordAnimationController.Update(yaw))
-        {
-            _swordMesh.Center();
-            _swordMesh.UpdateMesh();
-        }
-
-        if (_playerAnimationController != null && _playerAnimationController.Update(yaw))
-        {
-            _playerMesh.Center();
-            _playerMesh.UpdateMesh();
-        }
 
         IsHuggingWall();
     }
@@ -219,9 +210,12 @@ public class PlayerStateMachine : Component
     {
         Camera camera = Game.camera;
 
+        GL.Enable(EnableCap.DepthTest);
+        GL.Enable(EnableCap.CullFace);
+
         _shaderProgram.Bind();
         
-        Matrix4 model = Matrix4.Identity;
+        Matrix4 model = Matrix4.CreateTranslation(Transform.Position);
         Matrix4 view = camera.GetViewMatrix();
         Matrix4 projection = camera.GetProjectionMatrix();
 
@@ -233,14 +227,15 @@ public class PlayerStateMachine : Component
         GL.UniformMatrix4(viewLocation, true, ref view);
         GL.UniformMatrix4(projectionLocation, true, ref projection);
         
-        //_mesh.RenderMesh();
         _swordMesh.RenderMesh();
         _playerMesh.RenderMesh();
-        _testMesh.RenderMesh();
         
         _shaderProgram.Unbind();
-        
-        //Debug.Render();
+
+        GL.Disable(EnableCap.DepthTest);
+        GL.Disable(EnableCap.CullFace);
+
+        InfoMenu.Render();
     }
 
     public override void Exit()
@@ -249,7 +244,7 @@ public class PlayerStateMachine : Component
 
         Console.WriteLine("Exiting Player State Machine");
         
-        _lastCameraPosition = camera.position;
+        _lastCameraPosition = camera.Position;
         _lastCameraYaw = camera.yaw;
         _lastCameraPitch = camera.pitch;
         
@@ -311,9 +306,9 @@ public class PlayerStateMachine : Component
         Camera camera = Game.camera;
         
         Vector3 direction = camera.FrontYto0() * input.Y - camera.RightYto0() * input.X;
-        Vector3 oldVelocity = physicsBody.GetHorizontalVelocity();
+        Vector3 horizontalVelocity = physicsBody.GetHorizontalVelocity();
         MovePlayer(playerMovementSpeed, direction);
-        physicsBody.Velocity -= oldVelocity;
+        physicsBody.Velocity -= horizontalVelocity;
     }
     
     public void MovePlayer(PlayerMovementSpeed playerMovementSpeed, Vector3 direction)
@@ -372,6 +367,7 @@ public class PlayerStateMachine : Component
 public enum PlayerMovementSpeed
 {
     Walk,
+    Run,
     Sprint,
     Fall,
     Grappling,

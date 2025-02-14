@@ -366,3 +366,10 @@ public static class ModelSettings
         { (1, 1, 1), [false, true, true, false, true, false, false, true] }
     };
 }
+
+public enum RenderType
+{
+    Vertex,
+    Edge,
+    Face
+}

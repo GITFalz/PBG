@@ -40,9 +40,7 @@ public class OldAnimationController
         {
             if (keyframe != null)
             {
-                mesh.UpdateRotation(keyframe.Rotation);
-                mesh.UpdatePosition(keyframe.Position);
-                mesh.UpdateRotation((0, 1, 0), angle + 180);
+
             }
 
             return true;

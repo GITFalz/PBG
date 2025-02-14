@@ -12,25 +12,13 @@ public class PlayerSprintingState : PlayerGameBaseState
         Console.WriteLine("Entering sprinting state");
         
         Camera = Game.camera;
-        
-        playerGameState.NextMovingState = playerGameState.SprintingState;
-        playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Sprint);
-        
-        OldAnimationManager.Instance.LoopAnimation("Player", "running");
-        
         Camera.SetFOV(55);
     }
 
     public override void Update(PlayerGameState playerGameState)
     { 
         input = Input.GetMovementInput();
-        
-        if (Input.IsKeyPressed(Keys.LeftControl))
-        {
-            playerGameState.SwitchState(playerGameState.WalkingState);
-            return;
-        }
-        
+
         if (input == Vector2.Zero)
         {
             playerGameState.SwitchState(playerGameState.IdleState);
