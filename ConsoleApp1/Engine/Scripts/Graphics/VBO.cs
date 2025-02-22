@@ -47,6 +47,13 @@ public class VBO
         GL.BufferData(BufferTarget.ArrayBuffer, data.Count * sizeof(int), data.ToArray(), BufferUsageHint.StaticDraw);
     }
 
+    public VBO(List<float> data)
+    {
+        ID = GL.GenBuffer();
+        GL.BindBuffer(BufferTarget.ArrayBuffer, ID);
+        GL.BufferData(BufferTarget.ArrayBuffer, data.Count * sizeof(float), data.ToArray(), BufferUsageHint.StaticDraw);
+    }
+
     public void Bind() { GL.BindBuffer(BufferTarget.ArrayBuffer, ID); }
     public void Unbind() { GL.BindBuffer(BufferTarget.ArrayBuffer, 0); }
     public void Delete() { GL.DeleteBuffer(ID); }

@@ -243,12 +243,12 @@ public class Game : GameWindow
         {
             CurrentScene?.OnExit();
             CurrentScene = scene;
-            scene.OnAwake();
             if (scene.Resize)
             {
                 scene.OnResize();
                 scene.Resize = false;
             }
+            scene.OnAwake();
         }
     }
     

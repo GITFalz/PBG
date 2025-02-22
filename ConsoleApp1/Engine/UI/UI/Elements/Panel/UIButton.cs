@@ -24,7 +24,10 @@ public class UIButton : UIPanel
     public override void UpdateTransformation()
     {
         if (CanGenerate())
+        {
             uIMesh.UpdateElementTransformation(this);
+            uIMesh.UpdateMatrices();
+        } 
     }
 
     protected override bool CanGenerate()

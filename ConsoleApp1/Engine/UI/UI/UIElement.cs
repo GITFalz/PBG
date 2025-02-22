@@ -5,6 +5,7 @@ public abstract class UIElement
 {
     public static Vector3 _rotationAxis = new Vector3(0, 0, 1);
 
+    public UIController? UIController = null;
     public UIElement? ParentElement = null;
     public string Name = "";
     public Vector3 Origin = (0, 0, 0);
@@ -213,21 +214,21 @@ public abstract class UIElement
     // w : width, h : height, s : scale, o : offset
     private static readonly Func<float, float, Vector2, Vector4, Vector3>[] origins =
     [
-        (w, h, s, o) => (o.X,                  o.Y,                  0), // TopLeft
-        (w, h, s, o) => (w / 2 - s.X / 2 + o.X, o.Y,                  0), // TopCenter
-        (w, h, s, o) => (w - s.X + o.X,        o.Y,                  0), // TopRight
-        (w, h, s, o) => (o.X,                  h / 2 - s.Y / 2 + o.Y, 0), // MiddleLeft
+        (w, h, s, o) => (o.X,                   o.Y,                   0), // TopLeft
+        (w, h, s, o) => (w / 2 - s.X / 2 + o.X, o.Y,                   0), // TopCenter
+        (w, h, s, o) => (w - s.X + o.X,         o.Y,                   0), // TopRight
+        (w, h, s, o) => (o.X,                   h / 2 - s.Y / 2 + o.Y, 0), // MiddleLeft
         (w, h, s, o) => (w / 2 - s.X / 2 + o.X, h / 2 - s.Y / 2 + o.Y, 0), // MiddleCenter
-        (w, h, s, o) => (w - s.X + o.X,        h / 2 - s.Y / 2 + o.Y, 0), // MiddleRight
-        (w, h, s, o) => (o.X,                  h - s.Y + o.Y,        0), // BottomLeft
-        (w, h, s, o) => (w / 2 - s.X / 2 + o.X, h - s.Y + o.Y,        0), // BottomCenter
-        (w, h, s, o) => (w - s.X + o.X,        h - s.Y + o.Y,        0), // BottomRight
-        (w, h, s, o) => (o.X,                  o.Y,                  0), // ScaleLeft
-        (w, h, s, o) => (w / 2 - s.X / 2 + o.X, o.Y,                  0), // ScaleCenter
-        (w, h, s, o) => (w - s.X + o.X,        o.Y,                  0), // ScaleRight
-        (w, h, s, o) => (o.X,                  o.Y,                  0), // ScaleTop
-        (w, h, s, o) => (o.X,                  h / 2 - s.Y / 2 + o.Y, 0), // ScaleMiddle
-        (w, h, s, o) => (o.X,                  h - s.Y + o.Y,        0), // ScaleBottom
+        (w, h, s, o) => (w - s.X + o.X,         h / 2 - s.Y / 2 + o.Y, 0), // MiddleRight
+        (w, h, s, o) => (o.X,                   h - s.Y + o.Y,         0), // BottomLeft
+        (w, h, s, o) => (w / 2 - s.X / 2 + o.X, h - s.Y + o.Y,         0), // BottomCenter
+        (w, h, s, o) => (w - s.X + o.X,         h - s.Y + o.Y,         0), // BottomRight
+        (w, h, s, o) => (o.X,                   o.Y,                   0), // ScaleLeft
+        (w, h, s, o) => (w / 2 - s.X / 2 + o.X, o.Y,                   0), // ScaleCenter
+        (w, h, s, o) => (w - s.X + o.X,         o.Y,                   0), // ScaleRight
+        (w, h, s, o) => (o.X,                   o.Y,                   0), // ScaleTop
+        (w, h, s, o) => (o.X,                   h / 2 - s.Y / 2 + o.Y, 0), // ScaleMiddle
+        (w, h, s, o) => (o.X,                   h - s.Y + o.Y,         0), // ScaleBottom
     ];
 
 

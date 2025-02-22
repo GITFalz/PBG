@@ -11,6 +11,7 @@ public class GeneralModelingEditor : ScriptingNode
 
     public UIController MainUi = new UIController();
     public UIController ModelingUi = new UIController();
+    public UIController UIScrollViewTest = new UIController();
     public Model model = new Model();
 
     public string currentModelName = "cube";
@@ -96,8 +97,6 @@ public class GeneralModelingEditor : ScriptingNode
     public bool regenerateVertexUi = false;
     public Bone? _selectedBone = null;
 
-    public ShaderProgram _shaderProgram;
-
     public static readonly Dictionary<int, float> SnappingFactors = new Dictionary<int, float>()
     {
         { 0, 1f },
@@ -110,8 +109,6 @@ public class GeneralModelingEditor : ScriptingNode
     public override void Start()
     {
         Console.WriteLine("Animation Editor Start");
-
-        _shaderProgram = new ShaderProgram("Model/Model.vert", "Model/Model.frag");
         
         Game.camera = new Camera(Game.Width, Game.Height, new Vector3(0, 0, 5));
         ModelSettings.Camera = Game.camera;
@@ -119,90 +116,93 @@ public class GeneralModelingEditor : ScriptingNode
         
         Transform.Position = new Vector3(0, 0, 0);
 
-        UICollection stateCollection = new("StateCollection", AnchorType.ScaleTop, PositionType.Absolute, (0, 0, 0), (Game.Width, 50), (5, 5, 5, 5), 0);
+        // Top panel
+        UIMesh uiMesh = MainUi.uIMesh;
+        TextMesh textMesh = MainUi.textMesh;
 
-        UIImage statePanel = new("StatePanel", AnchorType.ScaleTop, PositionType.Absolute, (0.5f, 0.5f, 0.5f), (0, 0, 0), (0, 50), (0, 0, 0, 0), 0, 0, (10, 0.05f), null);
+
+        UICollection stateCollection = new("StateCollection", AnchorType.ScaleTop, PositionType.Absolute, (0, 0, 0), (Game.Width, 50), (5, 5, 255, 5), 0);
+
+        UIImage statePanel = new("StatePanel", AnchorType.ScaleTop, PositionType.Absolute, (0.5f, 0.5f, 0.5f), (0, 0, 0), (0, 50), (0, 0, 0, 0), 0, 0, (10, 0.05f), uiMesh);
 
 
-        UICollectionHorizontalStacking stateStacking = new("StateStacking", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (0, 0), (0, 0, 0, 0), (7, 7, 7, 7), 5, 0);
+        UIHorizontalCollection stateStacking = new("StateStacking", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (0, 0), (0, 0, 0, 0), (7, 7, 7, 7), 5, 0);
 
-        UIButton modelingButton = new("ModelingButton", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (75, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), null, UIState.Static);
+        UIButton modelingButton = new("ModelingButton", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (75, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), uiMesh, UIState.Static);
         modelingButton.OnClick = new SerializableEvent(() => SwitchScene("Modeling"));
 
-        UIButton riggingButton = new("RiggingButton", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (75, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), null, UIState.Static);
+        UIButton riggingButton = new("RiggingButton", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (75, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), uiMesh, UIState.Static);
         riggingButton.OnClick = new SerializableEvent(() => SwitchScene("Rigging"));
 
-        UIButton animationButton = new("AnimationButton", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (75, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), null, UIState.Static);
+        UIButton animationButton = new("AnimationButton", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (75, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), uiMesh, UIState.Static);
         animationButton.OnClick = new SerializableEvent(() => SwitchScene("Animation"));
 
-        UIButton vertexSelectionButton = new("VertexSelectionButton", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 97, (0, 0), null, UIState.Static);
+        UIButton vertexSelectionButton = new("VertexSelectionButton", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 97, (0, 0), uiMesh, UIState.Static);
         vertexSelectionButton.OnClick = new SerializableEvent(() => ModelingEditor.SwitchSelection(RenderType.Vertex));
 
-        UIButton edgeSelectionButton = new("EdgeSelectionButton", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 98, (0, 0), null, UIState.Static);
+        UIButton edgeSelectionButton = new("EdgeSelectionButton", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 98, (0, 0), uiMesh, UIState.Static);
         edgeSelectionButton.OnClick = new SerializableEvent(() => ModelingEditor.SwitchSelection(RenderType.Edge));
 
-        UIButton faceSelectionButton = new("FaceSelectionButton", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 99, (0, 0), null, UIState.Static);
+        UIButton faceSelectionButton = new("FaceSelectionButton", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 99, (0, 0), uiMesh, UIState.Static);
         faceSelectionButton.OnClick = new SerializableEvent(() => ModelingEditor.SwitchSelection(RenderType.Face));
 
-        SnappingText = new("SnappingText", AnchorType.MiddleCenter, PositionType.Relative, (0, 40, 0), (400, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), null);
-        SnappingText.TextType = TextType.Decimal;
-        SnappingText.MaxCharCount = 5;
-        SnappingText.OnTextChange = new SerializableEvent(SnappingField);
-        SnappingText.SetText("0", 0.7f);
 
-
-        UIImage vertexPanel = new("VertexPanel", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), null);
-        UICollectionDepthStacking vertexCollection = new("VertexCollection", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (36, 36), (0, 0, 0, 0), 0);
+        UIImage vertexPanel = new("VertexPanel", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), uiMesh);
+        UIDepthCollection vertexCollection = new("VertexCollection", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (36, 36), (0, 0, 0, 0), 0);
 
         vertexCollection.AddElement(vertexPanel);
         vertexCollection.AddElement(vertexSelectionButton);
 
-        UIImage edgePanel = new("EdgePanel", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), null);
-        UICollectionDepthStacking edgeCollection = new("EdgeCollection", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (36, 36), (0, 0, 0, 0), 0);
+        UIImage edgePanel = new("EdgePanel", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), uiMesh);
+        UIDepthCollection edgeCollection = new("EdgeCollection", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (36, 36), (0, 0, 0, 0), 0);
 
         edgeCollection.AddElement(edgePanel);
         edgeCollection.AddElement(edgeSelectionButton);
 
-        UIImage facePanel = new("FacePanel", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), null);
-        UICollectionDepthStacking faceCollection = new("FaceCollection", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (36, 36), (0, 0, 0, 0), 0);
+        UIImage facePanel = new("FacePanel", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), uiMesh);
+        UIDepthCollection faceCollection = new("FaceCollection", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (36, 36), (0, 0, 0, 0), 0);
 
         faceCollection.AddElement(facePanel);
         faceCollection.AddElement(faceSelectionButton);
 
-        UIImage snappingPanel = new("SnappingPanel", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (100, 36), (0, 0, 0, 0), 0, 1, (10, 0.05f), null);
-        UICollectionDepthStacking snappingCollection = new("SnappingCollection", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (100, 36), (0, 0, 0, 0), 0);
+        UIImage snappingPanel = new("SnappingPanel", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (100, 36), (0, 0, 0, 0), 0, 1, (10, 0.05f), uiMesh);
+        UIDepthCollection snappingCollection = new("SnappingCollection", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (100, 36), (0, 0, 0, 0), 0);
+
+        SnappingText = new("SnappingText", AnchorType.MiddleCenter, PositionType.Relative, (0, 40, 0), (400, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), textMesh);
+        SnappingText.SetTextType(TextType.Decimal).SetMaxCharCount(5).SetText("0", 0.7f);
+        SnappingText.OnTextChange = new SerializableEvent(SnappingField);
 
         snappingCollection.AddElement(snappingPanel);
         snappingCollection.AddElement(SnappingText);
 
 
-        UICollectionHorizontalStacking fileStacking = new("FileStacking", AnchorType.TopRight, PositionType.Relative, (0, 0, 0), (0, 0), (0, 0, 0, 0), (7, 7, 7, 7), 5, 0);
+        UIHorizontalCollection fileStacking = new("FileStacking", AnchorType.TopRight, PositionType.Relative, (0, 0, 0), (0, 0), (0, 0, 0, 0), (7, 7, 7, 7), 5, 0);
 
-        FileName = new("ModelName", AnchorType.MiddleCenter, PositionType.Relative, (0, 0, 0), (200, 36), (0, 0, 0, 0), 0, 0, (10, 0.15f), null);
+        FileName = new("ModelName", AnchorType.MiddleCenter, PositionType.Relative, (0, 0, 0), (200, 36), (0, 0, 0, 0), 0, 0, (10, 0.15f), textMesh);
         FileName.SetText("cube", 0.7f);
 
         
-        UIButton saveModelButton = new("saveModelButton", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 95, (0, 0), null, UIState.Static);
+        UIButton saveModelButton = new("saveModelButton", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 95, (0, 0), uiMesh, UIState.Static);
         saveModelButton.OnClick = new SerializableEvent(() => SaveModel());
 
-        UIButton loadModelButton = new("loadModelButton", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 94, (0, 0), null, UIState.Static);
+        UIButton loadModelButton = new("loadModelButton", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 94, (0, 0), uiMesh, UIState.Static);
         loadModelButton.OnClick = new SerializableEvent(() => LoadModel());
 
 
-        UIImage fileNamePanel = new("FileNamePanel", AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (310, 36), (0, 0, 0, 0), 0, 1, (10, 0.05f), null);
-        UICollectionDepthStacking fileNameCollection = new("FileNameCollection", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (310, 36), (0, 0, 0, 0), 0);
+        UIImage fileNamePanel = new("FileNamePanel", AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (310, 36), (0, 0, 0, 0), 0, 1, (10, 0.05f), uiMesh);
+        UIDepthCollection fileNameCollection = new("FileNameCollection", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (310, 36), (0, 0, 0, 0), 0);
         
         fileNameCollection.AddElement(fileNamePanel);
         fileNameCollection.AddElement(FileName);
 
-        UIImage savePanel = new("SavePanel", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), null);
-        UICollectionDepthStacking saveCollection = new("SaveCollection", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (36, 36), (0, 0, 0, 0), 0);
+        UIImage savePanel = new("SavePanel", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), uiMesh);
+        UIDepthCollection saveCollection = new("SaveCollection", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (36, 36), (0, 0, 0, 0), 0);
 
         saveCollection.AddElement(savePanel);
         saveCollection.AddElement(saveModelButton);
 
-        UIImage loadPanel = new("LoadPanel", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), null);
-        UICollectionDepthStacking loadCollection = new("LoadCollection", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (36, 36), (0, 0, 0, 0), 0);
+        UIImage loadPanel = new("LoadPanel", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), uiMesh);
+        UIDepthCollection loadCollection = new("LoadCollection", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (36, 36), (0, 0, 0, 0), 0);
 
         loadCollection.AddElement(loadPanel);
         loadCollection.AddElement(loadModelButton);
@@ -227,17 +227,22 @@ public class GeneralModelingEditor : ScriptingNode
 
 
 
-        UICollection mainPanelCollection = new("MainPanelCollection", AnchorType.ScaleRight, PositionType.Absolute, (0, 0, 0), (250, Game.Height), (-5, 60, 5, 5), 0);
+        // Modeling panel
+        UIMesh modelingUiMesh = ModelingUi.uIMesh;
+        TextMesh modelingTextMesh = ModelingUi.textMesh;
 
-        UIImage mainPanel = new("MainPanel", AnchorType.ScaleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (245, Game.Height), (0, 0, 0, 0), 0, 0, (10, 0.05f), null);
 
-        BackfaceCullingText = new("CullingText", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (400, 20), (10, 35, 10, 10), 0, 0, (10, 0.05f), null);
+        UICollection mainPanelCollection = new("MainPanelCollection", AnchorType.ScaleRight, PositionType.Absolute, (0, 0, 0), (250, Game.Height), (-5, 5, 5, 5), 0);
+
+        UIImage mainPanel = new("MainPanel", AnchorType.ScaleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (245, Game.Height), (0, 0, 0, 0), 0, 0, (10, 0.05f), modelingUiMesh);
+
+        BackfaceCullingText = new("CullingText", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (400, 20), (10, 35, 10, 10), 0, 0, (10, 0.05f), modelingTextMesh);
         BackfaceCullingText.SetText("cull: " + BackfaceCulling, 0.7f);
 
-        MeshAlphaText = new("AlphaText", AnchorType.TopLeft, PositionType.Relative, (0, 20, 0), (400, 20), (10, 60, 10, 10), 0, 0, (10, 0.05f), null);
+        MeshAlphaText = new("AlphaText", AnchorType.TopLeft, PositionType.Relative, (0, 20, 0), (400, 20), (10, 60, 10, 10), 0, 0, (10, 0.05f), modelingTextMesh);
         MeshAlphaText.SetText("alpha: " + MeshAlpha.ToString("F2"), 0.7f);
 
-        MirrorText = new UIText("MirrorText", AnchorType.TopLeft, PositionType.Relative, (0, 60, 0), (400, 20), (10, 110, 10, 10), 0, 0, (10, 0.05f), null);
+        MirrorText = new UIText("MirrorText", AnchorType.TopLeft, PositionType.Relative, (0, 60, 0), (400, 20), (10, 110, 10, 10), 0, 0, (10, 0.05f), modelingTextMesh);
         MirrorText.SetText("mirror: " + (Mirror.X == 1 ? "X" : "-") + (Mirror.Y == 1 ? "Y" : "-") + (Mirror.Z == 1 ? "Z" : "-"), 0.7f);
 
         mainPanelCollection.AddElement(mainPanel);
@@ -246,45 +251,63 @@ public class GeneralModelingEditor : ScriptingNode
         mainPanelCollection.AddElement(MirrorText);
 
 
-        UIButton cullingButton = new("CullingButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (40, 20), (-5, 35, 10, 10), 0, 0, (10, 0.05f), null, UIState.Static);
+        UIButton cullingButton = new("CullingButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (40, 20), (-5, 35, 10, 10), 0, 0, (10, 0.05f), modelingUiMesh, UIState.Static);
         cullingButton.OnClick = new SerializableEvent(BackFaceCullingSwitch);
 
-        UIButton alphaButton = new("AlphaUpButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (40, 20), (-5, 60, 10, 10), 0, 0, (10, 0.05f), null, UIState.Static);
+        UIButton alphaButton = new("AlphaUpButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (40, 20), (-5, 60, 10, 10), 0, 0, (10, 0.05f), modelingUiMesh, UIState.Static);
         alphaButton.OnHold = new SerializableEvent(AlphaControl);
 
-        UIButton mirrorButton = new("MirrorButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (40, 20), (-5, 110, 10, 10), 0, 0, (10, 0.05f), null, UIState.Static);
+        UIButton mirrorButton = new("MirrorButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (40, 20), (-5, 110, 10, 10), 0, 0, (10, 0.05f), modelingUiMesh, UIState.Static);
         mirrorButton.OnClick = new SerializableEvent(ApplyMirror);
 
-        UIButton mirrorZButton = new("MirrorZButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (15, 20), (-85, 110, 10, 10), 0, 0, (10, 0.05f), null, UIState.InvisibleInteractable);
+        UIButton mirrorZButton = new("MirrorZButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (15, 20), (-85, 110, 10, 10), 0, 0, (10, 0.05f), modelingUiMesh, UIState.InvisibleInteractable);
         mirrorZButton.OnClick = new SerializableEvent(() => SwitchMirror("Z"));
 
-        UIButton mirrorYButton = new("MirrorYButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (15, 20), (-100, 110, 10, 10), 0, 0, (10, 0.05f), null, UIState.InvisibleInteractable);
+        UIButton mirrorYButton = new("MirrorYButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (15, 20), (-100, 110, 10, 10), 0, 0, (10, 0.05f), modelingUiMesh, UIState.InvisibleInteractable);
         mirrorYButton.OnClick = new SerializableEvent(() => SwitchMirror("Y"));
 
-        UIButton mirrorXButton = new("MirrorXButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (15, 20), (-115, 110, 10, 10), 0, 0, (10, 0.05f), null, UIState.InvisibleInteractable);
+        UIButton mirrorXButton = new("MirrorXButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (15, 20), (-115, 110, 10, 10), 0, 0, (10, 0.05f), modelingUiMesh, UIState.InvisibleInteractable);
         mirrorXButton.OnClick = new SerializableEvent(() => SwitchMirror("X"));
 
 
-        mainPanelCollection.AddElement(cullingButton);
-        mainPanelCollection.AddElement(alphaButton);
-        mainPanelCollection.AddElement(mirrorButton);
-        mainPanelCollection.AddElement(mirrorXButton);
-        mainPanelCollection.AddElement(mirrorYButton);
-        mainPanelCollection.AddElement(mirrorZButton);
- 
+        mainPanelCollection.AddElement(cullingButton, alphaButton, mirrorButton, mirrorXButton, mirrorYButton, mirrorZButton);
+
+
+        // Scroll view test
+        UIMesh scrollViewMaskMesh = UIScrollViewTest.maskMesh;
+        UIMesh scrollViewUiMesh = UIScrollViewTest.uIMesh;
+        UIMesh scrollViewMaskedUiMesh = UIScrollViewTest.maskeduIMesh;
+        TextMesh scrollViewTextMesh = UIScrollViewTest.textMesh;
+        TextMesh scrollViewMaskedTextMesh = UIScrollViewTest.maskedTextMesh;
+
+        UICollection scrollViewCollection = new("ScrollViewCollection", AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (250, 500), (0, 100, 0, 0), 0);
+
+        UIImage scrollViewBg = new("ScrollViewBg", AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (250, 250), (0, 0, 0, 0), 0, 1, (10, 0.05f), scrollViewUiMesh);
+        UIScrollView scrollView = new("ScrollView", AnchorType.TopLeft, PositionType.Relative, CollectionType.Vertical, (236, 236), (7, 7, 7, 7), scrollViewMaskMesh);
+        
+        UIText testPanel1 = new("TestPanel1", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
+        UIText testPanel2 = new("TestPanel2", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
+        UIText testPanel3 = new("TestPanel3", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
+
+        testPanel1.SetMaxCharCount(5).SetText("Test1", 1f);
+        testPanel2.SetMaxCharCount(5).SetText("Test2", 1f);
+        testPanel3.SetMaxCharCount(5).SetText("Test3", 1f);
+
+        scrollView.AddElement(testPanel1, testPanel2, testPanel3);
+        scrollViewCollection.AddElement(scrollView, scrollViewBg);
+
+        // Add elements to ui
         MainUi.AddElement(stateCollection);
         ModelingUi.AddElement(mainPanelCollection);
+        UIScrollViewTest.AddElement(scrollViewCollection);
 
-
-        Bone rootBone = new Bone("bone1");
-        rootBone.Pivot = (1, 0, -1);
-        rootBone.End = (1, 2, -1);
-        model.Init(rootBone, FileName.Text);
+        model.Init();
         
         MainUi.GenerateBuffers();
         ModelingUi.GenerateBuffers();
+        UIScrollViewTest.GenerateBuffers();
 
-        Console.WriteLine("Vertices: " + ModelingUi.uIMesh.Vertices.Count);
+
 
         Camera camera = Game.camera;
 
@@ -300,16 +323,21 @@ public class GeneralModelingEditor : ScriptingNode
         camera.SetPositionSmoothFactor(true);
 
         CurrentEditor = modelingEditor;
-        CurrentEditor.Start(this);
+        modelingEditor.Start(this);
+        riggingEditor.Start(this);
+        animationEditor.Start(this);
 
         //MainUi.ToLines();
     }
 
     public override void Resize()
     {
-        Console.WriteLine("Animation Editor Resize");
         MainUi.OnResize();
         ModelingUi.OnResize();
+        UIScrollViewTest.OnResize();
+        modelingEditor.Resize(this);
+        riggingEditor.Resize(this);
+        animationEditor.Resize(this);
     }
 
     public override void Awake()
@@ -323,6 +351,7 @@ public class GeneralModelingEditor : ScriptingNode
     {
         ModelingUi.Test();
         MainUi.Test();
+        UIScrollViewTest.Test();
         CurrentEditor.Update(this);
         model.Update();
         base.Update();
@@ -333,6 +362,7 @@ public class GeneralModelingEditor : ScriptingNode
         CurrentEditor.Render(this);
         ModelingUi.Render();
         MainUi.Render();
+        UIScrollViewTest.Render();
         base.Render();
     }
 
@@ -347,6 +377,7 @@ public class GeneralModelingEditor : ScriptingNode
         CurrentEditor.Exit(this);
         CurrentEditor = editor;
         CurrentEditor.Start(this);
+        CurrentEditor.Awake(this);
     }
 
     public void LoadModel()
@@ -357,6 +388,9 @@ public class GeneralModelingEditor : ScriptingNode
             PopUp.AddPopUp("Please enter a model name.");
             return;
         }
+
+        string folderPath = Path.Combine(Game.undoModelPath, fileName);
+        if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
 
         if (File.Exists(Path.Combine(Game.modelPath, $"{fileName}.model")) && currentModelName != fileName && currentModelName != "")
             PopUp.AddConfirmation("Save current model?", () => SaveAndLoad(fileName), () => Load(fileName));
@@ -373,21 +407,25 @@ public class GeneralModelingEditor : ScriptingNode
             return;
         }
 
-        if (File.Exists(Path.Combine(Game.modelPath, $"{fileName}.model")))
-            PopUp.AddConfirmation("Overwrite existing model?", () => model.modelMesh.SaveModel(fileName), null);
+        string folderPath = Path.Combine(Game.undoModelPath, fileName);
+        if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
+
+        string path = Path.Combine(Game.modelPath, $"{fileName}.model");
+        if (File.Exists(path))
+            PopUp.AddConfirmation("Overwrite existing model?", () => model.CurrentMesh.SaveModel(fileName), null);
         else
-            model.modelMesh.SaveModel(fileName);
+            model.CurrentMesh.SaveModel(fileName);  
     }
 
     public void SaveAndLoad(string fileName)
     {
-        model.modelMesh.SaveModel(currentModelName);
+        model.CurrentMesh.SaveModel(currentModelName);
         Load(fileName);
     }
 
     public void Load(string fileName)
     {
-        if (model.modelMesh.LoadModel(fileName))
+        if (model.CurrentMesh.LoadModel(fileName))
             currentModelName = fileName;
     }
 
@@ -511,13 +549,13 @@ public class GeneralModelingEditor : ScriptingNode
         switch (axis)
         {
             case "X":
-                _selectedBone.Pivot.X = float.Parse(BonePivotX.Text);
+                _selectedBone.Pivot.Position.X = float.Parse(BonePivotX.Text);
                 break;
             case "Y":
-                _selectedBone.Pivot.Y = float.Parse(BonePivotY.Text);
+                _selectedBone.Pivot.Position.Y = float.Parse(BonePivotY.Text);
                 break;
             case "Z":
-                _selectedBone.Pivot.Z = float.Parse(BonePivotZ.Text);
+                _selectedBone.Pivot.Position.Z = float.Parse(BonePivotZ.Text);
                 break;
         }
     }
@@ -530,13 +568,13 @@ public class GeneralModelingEditor : ScriptingNode
         switch (axis)
         {
             case "X":
-                _selectedBone.End.X = float.Parse(BoneEndX.Text);
+                _selectedBone.End.Position.X = float.Parse(BoneEndX.Text);
                 break;
             case "Y":
-                _selectedBone.End.Y = float.Parse(BoneEndY.Text);
+                _selectedBone.End.Position.Y = float.Parse(BoneEndY.Text);
                 break;
             case "Z":
-                _selectedBone.End.Z = float.Parse(BoneEndZ.Text);
+                _selectedBone.End.Position.Z = float.Parse(BoneEndZ.Text);
                 break;
         }
     }
@@ -584,8 +622,8 @@ public class GeneralModelingEditor : ScriptingNode
         
         foreach (var bone in worldLinks)
         {
-            Vector2? screenPosA = Mathf.WorldToScreen(bone.Pivot, projection, view);
-            Vector2? screenPosB = Mathf.WorldToScreen(bone.End, projection, view);
+            Vector2? screenPosA = Mathf.WorldToScreen(bone.Pivot.Position, projection, view);
+            Vector2? screenPosB = Mathf.WorldToScreen(bone.End.Position, projection, view);
             if (screenPosA == null || screenPosB == null) continue;
             screenLinks.Add(new Link<Vector2>(screenPosA.Value, screenPosB.Value)); 
         }
@@ -604,6 +642,7 @@ public class GeneralModelingEditor : ScriptingNode
 public abstract class BaseEditor 
 { 
     public abstract void Start(GeneralModelingEditor editor);
+    public abstract void Resize(GeneralModelingEditor editor);
     public abstract void Awake(GeneralModelingEditor editor);
     public abstract void Update(GeneralModelingEditor editor);
     public abstract void Render(GeneralModelingEditor editor);

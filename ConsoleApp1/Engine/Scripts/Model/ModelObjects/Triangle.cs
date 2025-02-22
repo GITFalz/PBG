@@ -139,7 +139,7 @@ public class Triangle
 
     public List<Vertex> GetVertices()
     {
-        return new List<Vertex> {A, B, C};
+        return [A, B, C];
     }
 
     public void InvertIfInverted()

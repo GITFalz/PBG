@@ -29,6 +29,18 @@ public class UIText : UIElement
         FontSize = fontSize;
         return SetText(text);
     }
+
+    public UIText SetTextType(TextType textType)
+    {
+        TextType = textType;
+        return this;
+    }
+
+    public UIText SetMaxCharCount(int maxCharCount)
+    {
+        MaxCharCount = maxCharCount;
+        return this;
+    }
     
     public virtual UIText SetText(string text)
     {
@@ -48,6 +60,7 @@ public class UIText : UIElement
         if (textMesh == null)
             return;
         textMesh.UpdateElementTransformation(this);
+        textMesh.UpdateMatrices();
     }
 
     public void UpdateText()

@@ -35,6 +35,12 @@ public class UIInputField : UIText
         Button.SetPositionType(positionType);
     }
 
+    public UIInputField SetOnTextChange(SerializableEvent onTextChange)
+    {
+        OnTextChange = onTextChange;
+        return this;
+    }
+
 
     public override UIText SetText(string text)
     {

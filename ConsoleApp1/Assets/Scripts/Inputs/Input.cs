@@ -61,6 +61,11 @@ public static class Input
     {
         return _previousMouseState.Scroll;
     }
+
+    public static Vector2 GetMouseScrollDelta()
+    {
+        return _previousMouseState.ScrollDelta;
+    }
     
     public static bool IsKeyPressed(Keys key)
     {
@@ -116,6 +121,16 @@ public static class Input
     public static bool IsKeyReleased(Keys key)
     {
         return _previousKeyboardState.IsKeyReleased(key);
+    }
+
+    public static bool AnyKeysReleased(params Keys[] keys)
+    {
+        foreach (var k in keys)
+        {
+            if (IsKeyReleased(k)) 
+                return true;
+        }
+        return false;
     }
     
     public static Vector2 GetMousePosition()

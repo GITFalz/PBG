@@ -37,10 +37,13 @@ public class PopUp
         RenderAction = RenderMessage;
         UpdateAction = UpdateMessage;
 
-        MessagePanel = new("PopupPanel", AnchorType.MiddleCenter, PositionType.Absolute, (0.5f, 0.5f, 0.5f), (0, 0, 0), (500, 80), (0, 0, 0, 0), 0, 0, (10, 0.05f), null);
+        UIMesh messageUiMesh = MessageUI.uIMesh;
+        TextMesh messageTextMesh = MessageUI.textMesh;
+
+        MessagePanel = new("PopupPanel", AnchorType.MiddleCenter, PositionType.Absolute, (0.5f, 0.5f, 0.5f), (0, 0, 0), (500, 80), (0, 0, 0, 0), 0, 0, (10, 0.05f), messageUiMesh);
         MessageCollection = new("MessageCollection", AnchorType.BottomCenter, PositionType.Absolute, (0, 0, 0), (500, 80), (0, 80, 0, 0), 0);
-        Message = new("PopupText", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (10, 10, 0, 0), 0, 0, (0, 0), null);
-        MessageCloseButton = new("PopupButton", AnchorType.TopRight, PositionType.Relative, (0.7f, 0.7f, 0.7f), (0, 0, 0), (30, 30), (0, 0, 0, 0), 0, 89, (0, 0), null, UIState.Interactable);
+        Message = new("PopupText", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (10, 10, 0, 0), 0, 0, (0, 0), messageTextMesh);
+        MessageCloseButton = new("PopupButton", AnchorType.TopRight, PositionType.Relative, (0.7f, 0.7f, 0.7f), (0, 0, 0), (30, 30), (0, 0, 0, 0), 0, 89, (0, 0), messageUiMesh, UIState.Interactable);
 
         MessageCloseButton.OnClick = new SerializableEvent(CloseCurrentMessage);
 
@@ -56,12 +59,15 @@ public class PopUp
         MessageUI.GenerateBuffers();
 
 
-        ConfirmationPanel = new("AlertPanel", AnchorType.MiddleCenter, PositionType.Absolute, (0.5f, 0.5f, 0.5f), (0, 0, 0), (500, 80), (0, 0, 0, 0), 0, 0, (10, 0.05f), null);
+        UIMesh confirmationUiMesh = ConfirmationUI.uIMesh;
+        TextMesh confirmationTextMesh = ConfirmationUI.textMesh;
+
+        ConfirmationPanel = new("AlertPanel", AnchorType.MiddleCenter, PositionType.Absolute, (0.5f, 0.5f, 0.5f), (0, 0, 0), (500, 80), (0, 0, 0, 0), 0, 0, (10, 0.05f), confirmationUiMesh);
         ConfirmationCollection = new("AlertCollection", AnchorType.BottomCenter, PositionType.Absolute, (0, 0, 0), (500, 80), (0, 80, 0, 0), 0);
-        Confirmation = new("AlertText", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (10, 10, 0, 0), 0, 0, (0, 0), null);
-        ConfirmationAcceptButton = new("AlertButton", AnchorType.BottomCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (480, 35), (0, -10, 0, 0), 0, 0, (10, 0.05f), null, UIState.Interactable);
-        ConfirmationDeclineButton = new("AlertButton", AnchorType.TopRight, PositionType.Relative, (0.7f, 0.7f, 0.7f), (0, 0, 0), (30, 30), (0, 0, 0, 0), 0, 89, (0, 0), null, UIState.Interactable);
-        AcceptText = new("AcceptText", AnchorType.BottomCenter, PositionType.Relative, (0, 0, 0), (100, 100), (0, -20, 0, 0), 0, 0, (0, 0), null);
+        Confirmation = new("AlertText", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (10, 10, 0, 0), 0, 0, (0, 0), confirmationTextMesh);
+        ConfirmationAcceptButton = new("AlertButton", AnchorType.BottomCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (480, 35), (0, -10, 0, 0), 0, 0, (10, 0.05f), confirmationUiMesh, UIState.Interactable);
+        ConfirmationDeclineButton = new("AlertButton", AnchorType.TopRight, PositionType.Relative, (0.7f, 0.7f, 0.7f), (0, 0, 0), (30, 30), (0, 0, 0, 0), 0, 89, (0, 0), confirmationUiMesh, UIState.Interactable);
+        AcceptText = new("AcceptText", AnchorType.BottomCenter, PositionType.Relative, (0, 0, 0), (100, 100), (0, -20, 0, 0), 0, 0, (0, 0), confirmationTextMesh);
 
         ConfirmationAcceptButton.OnClick = new SerializableEvent(AcceptCurrentConfirmation);
         ConfirmationDeclineButton.OnClick = new SerializableEvent(DeclineCurrentConfirmation);

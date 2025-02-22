@@ -4,9 +4,10 @@ public class Vertex
 {
     private Vector3 _position = Vector3.Zero;
     public Vector3 Position;
+    public Vector3 Color = (0, 0, 0);
     public List<Triangle> ParentTriangles = new List<Triangle>();
     public List<Edge> ParentEdges = new List<Edge>();
-    public int Index = -1;
+    public int Index = 0;
     public int BoneIndex = 0;
 
     public Vertex(Vector3 position, Triangle? parentTriangle = null)

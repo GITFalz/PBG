@@ -12,45 +12,43 @@ public class RiggingEditor : BaseEditor
     public ShaderProgram _shaderProgram;
     public UIController BoneUi = new UIController();
     public Model model;
-    public Dictionary<Bone, BoneSelection> SelectedBones = [];
+    public RigMesh Mesh;
+
+    public List<Vertex> SelectedVertices = new();
+    public List<BoneVertex> SelectedBones = new();
+    public Dictionary<Vertex, Vector2> Vertices = new Dictionary<Vertex, Vector2>();
+    public Dictionary<BoneVertex, Vector2> Bones = [];
 
     private bool _started = false;
+    private bool regenerateVertexUi = true;
 
     public override void Start(GeneralModelingEditor editor)
     {
         Console.WriteLine("Start Rigging Editor");
 
-        editor.model.SwitchState("Rigging");
-        
-        if (!_started)
-        {
-            model = editor.model;
-            Bone rootBone = new Bone("root");
-            rootBone.Pivot = (1, 0, -1);
-            rootBone.End = (1, 2, -1);
-            //model.Bones.Add(rootBone);
+        Mesh = editor.model.rigMesh;
+        model = editor.model;
+    }
 
-            BoneUi.Generate();
-            _started = true;
-        }
+    public override void Resize(GeneralModelingEditor editor)
+    {
+        
     }
 
     public override void Awake(GeneralModelingEditor editor)
     {
-
+        Mesh.LoadModel(editor.currentModelName);
+        editor.model.SwitchState("Rigging");
+        model.UpdateBones();
     }
     
     public override void Render(GeneralModelingEditor editor)
     {
         editor.RenderRigging();
-        BoneUi.Render();
     }
 
     public override void Update(GeneralModelingEditor editor)
     {
-        /*
-        var links = editor.GetLinkPositions(model.Bones);
-
         if (Input.IsKeyPressed(Keys.Escape))
         {
             editor.freeCamera = !editor.freeCamera;
@@ -71,161 +69,93 @@ public class RiggingEditor : BaseEditor
             Game.camera.Update();
         }
 
-        if (editor.freeCamera && !editor.regenerateVertexUi)
-        {
-            Console.WriteLine("Clear Vertex UI");
-            editor.Ui.Clear();
-            BoneUi.Clear();
-            editor.regenerateVertexUi = true;
-        }
-        
-        if (!editor.freeCamera)
-        {
-            if (editor.regenerateVertexUi)
-            {
-                Console.WriteLine("Regenerate Vertex UI");
-
-                editor.GenerateVertexPanels();
-                GenerateBonePanels(links, editor);
-                
-                BoneUi.Generate();
-                editor.regenerateVertexUi = false;
-            }
-            
-            if (Input.IsMousePressed(MouseButton.Left))
-            {
-                if (!Input.IsKeyDown(Keys.LeftShift))
-                {
-                    editor._selectedVertices.Clear();
-                    SelectedBones.Clear();
-                }
-                
-                Vector2 mousePos = Input.GetMousePosition();
-                Vector2? closest = null;
-                Vertex? closestVert = null;
-                Bone? closestBone = null;
-            
-                System.Numerics.Matrix4x4 projection = Game.camera.GetNumericsProjectionMatrix();
-                System.Numerics.Matrix4x4 view = Game.camera.GetNumericsViewMatrix();
-
-                // Vertex Selection
-            
-                foreach (var vert in editor.model.modelMesh.VertexList)
-                {
-                    Vector2? screenPos = Mathf.WorldToScreen(vert.Position, projection, view);
-                    if (screenPos == null)
-                        continue;
-                    float distance = Vector2.Distance(mousePos, (Vector2)screenPos);
-                    float distanceClosest = closest == null ? 1000 : Vector2.Distance(mousePos, (Vector2)closest);
-                
-                    if (distance < distanceClosest && distance < 10)
-                    {
-                        closest = screenPos;
-                        closestVert = vert;
-                    }
-                }
-
-                if (closestVert != null && !editor._selectedVertices.Remove(closestVert))
-                    editor._selectedVertices.Add(closestVert);
-
-                editor.GenerateVertexColor();
-
-                // Bone Selection
-
-                bool pivotSelected = false;
-                bool endSelected = false;
-
-                for (int i = 0; i < links.Count; i++)
-                {
-                    var bone = model.Bones[i];
-
-                    Vector2 linkStart = links[i].A;
-                    Vector2 linkEnd = links[i].B;
-
-                    pivotSelected = Vector2.Distance(mousePos, linkStart) < 10;
-                    endSelected = Vector2.Distance(mousePos, linkEnd) < 10;
-
-                    if (pivotSelected || endSelected)
-                    {   
-                        closestBone = bone;
-                        break;
-                    }
-
-                    if (IsPointCloseToLine(mousePos, linkStart, linkEnd, 10))
-                    {
-                        closestBone = bone;  
-                        pivotSelected = true;
-                        endSelected = true;
-                        break;
-                    }
-                }
-
-                if (closestBone != null && !SelectedBones.Remove(closestBone))
-                    SelectedBones.Add(closestBone, new BoneSelection(pivotSelected, endSelected));
-
-                GenerateBonePanels(links, editor);
-            }
-        }
-
         if (Input.AreAllKeysDown(Keys.LeftControl, Keys.LeftShift))
         {
             if (Input.IsKeyPressed(Keys.D) && SelectedBones.Count > 0)
             {
-                var bone = SelectedBones.First();
-                Bone parentBone = bone.Key;
-                Bone childBone = new Bone(parentBone.RootBone, "child");
+                BoneVertex bone = SelectedBones.First();
+                Bone parentBone = bone.Parent;
+                Bone childBone = new Bone(parentBone.RootBone, "Child");
                 childBone = parentBone.AddChild(childBone);
 
-                BoneSelection childSelection;
+                BoneVertex childSelection;
 
-                bool endSelected = bone.Value.EndSelected;
+                bool endSelected = bone.IsEnd();
 
                 if (!endSelected)
                 {
-                    childBone.Pivot = parentBone.Pivot;
-                    childBone.End = parentBone.Pivot - (parentBone.End - parentBone.Pivot);
+                    childBone.Pivot.Position = parentBone.Pivot.Position;
+                    childBone.End.Position = parentBone.Pivot.Position - (parentBone.End.Position - parentBone.Pivot.Position);
 
-                    childSelection = new BoneSelection(true, false);
+                    childSelection = childBone.Pivot;
                 }
                 else
                 {
-                    childBone.Pivot = parentBone.End;
-                    childBone.End = parentBone.End + (parentBone.End - parentBone.Pivot);
+                    childBone.Pivot.Position = parentBone.End.Position;
+                    childBone.End.Position = parentBone.End.Position + (parentBone.End.Position - parentBone.Pivot.Position);
 
-                    childSelection = new BoneSelection(false, true);
+                    childSelection = childBone.End;
                 }
 
-                SelectedBones.Remove(parentBone);
-                SelectedBones.Add(childBone, childSelection);
+                SelectedBones.Clear();
+                SelectedBones.Add(childSelection);
 
                 model.UpdateBones();
-                links = editor.GetLinkPositions(model.Bones);
+                UpdateVertexPosition();
+                Mesh.Init();
+                Mesh.GenerateRigBuffers();
             }
 
             if (Input.IsKeyPressed(Keys.A) && SelectedBones.Count > 0)
             {
                 var bone = SelectedBones.First();
-                int index = model.Bones.IndexOf(bone.Key);
+                int index = model.Bones.IndexOf(bone.Parent);
 
-                foreach (var vert in editor._selectedVertices)
+                foreach (var vert in SelectedVertices)
                 {
-                    //vert.SetBoneIndexForAll(index);
+                    vert.Index = index;
                 }
             }
 
             if (Input.IsKeyDown(Keys.D))
             {
-                Handle_Movement(links, editor);
+                HandleBoneMovement();
             }
-
-            Console.WriteLine(model.Bones.Count);
         }
 
         if (Input.IsKeyDown(Keys.G))
         {
-            Handle_Movement(links, editor);
+            HandleBoneMovement();
         }
-        */
+
+        if (Input.AnyKeysReleased(Keys.G, Keys.D))
+        {
+            UpdateBonePosition();
+        }
+
+        if (editor.freeCamera && !regenerateVertexUi)
+        {
+            Console.WriteLine("Clear Vertex UI");
+            regenerateVertexUi = true;
+        }
+        
+        if (!editor.freeCamera)
+        {
+            if (regenerateVertexUi)
+            {
+                UpdatePositions();
+                regenerateVertexUi = false;
+            }
+            
+            if (Input.IsMousePressed(MouseButton.Left))
+            {
+                HandleVertexSelection();
+                HandleBoneSelection();
+                GenerateVertexColor();
+
+                //Console.WriteLine("Selected Vertices: " + SelectedVertices.Count);
+            }
+        }
     }
 
     public override void Exit(GeneralModelingEditor editor)
@@ -233,70 +163,162 @@ public class RiggingEditor : BaseEditor
         //editor.model.CurrentAnimation = null;
     }
 
-    public void GenerateBonePanels(List<Link<Vector2>> links, GeneralModelingEditor editor)
+    // Utility
+    public void UpdatePositions()
     {
-        BoneUi.Clear();
+        System.Numerics.Matrix4x4 projection = Game.camera.GetNumericsProjectionMatrix();
+        System.Numerics.Matrix4x4 view = Game.camera.GetNumericsViewMatrix();
+    
+        UpdateVertexPosition(projection, view);
+        UpdateBonePosition(projection, view);
 
-        for (int i = 0; i < links.Count; i++)
-        {
-            Link<Vector2> link = links[i];
-
-            bool pivotSelected = false;
-            bool endSelected = false;
-            bool bothSelected = false;
-
-            if (SelectedBones.TryGetValue(model.Bones[i], out var selection))
-            {
-                pivotSelected = selection.PivotSelected;
-                endSelected = selection.EndSelected;
-                bothSelected = (pivotSelected && endSelected) || (!pivotSelected && !endSelected);
-                if (bothSelected)
-                {
-                    pivotSelected = true;
-                    endSelected = true;
-                }
-            }
-
-            /*
-            BoneUi.AddElement(editor.GeneratePanelLink(link.A, link.B, bothSelected ? 4 : 3));
-
-            StaticPanel panel1 = UI.CreateStaticPanel(link.A.ToString(), AnchorType.MiddleCenter, PositionType.Free, new Vector3(20, 20, 0), new Vector4(0, 0, 0, 0), null);
-            panel1.SetPosition(new Vector3(link.A.X, link.A.Y, 0));
-            panel1.TextureIndex = pivotSelected ? 4 : 3;
-
-            UIPanel panel2 = UI.CreateStaticPanel(link.B.ToString(), AnchorType.MiddleCenter, PositionType.Free, new Vector3(20, 20, 0), new Vector4(0, 0, 0, 0), null);
-            panel2.SetPosition(new Vector3(link.B.X, link.B.Y, 0));
-            panel2.TextureIndex = endSelected ? 4 : 3;
-            
-            BoneUi.AddElement(panel1);
-            BoneUi.AddElement(panel2);
-            */
-        }
-
-        BoneUi.Generate();
-        BoneUi.Update();
+        GenerateVertexColor();
     }
 
-    public void Handle_Movement(List<Link<Vector2>> links, GeneralModelingEditor editor)
+    public void UpdateVertexPosition()
     {
-        /*
-        Vector3 move = editor.GetSnappingMovement();
+        System.Numerics.Matrix4x4 projection = Game.camera.GetNumericsProjectionMatrix();
+        System.Numerics.Matrix4x4 view = Game.camera.GetNumericsViewMatrix();
+    
+        UpdateVertexPosition(projection, view);
 
-            foreach (var (bone, pivot) in SelectedBones)
+        GenerateVertexColor();
+    }
+
+    public void UpdateVertexPosition(System.Numerics.Matrix4x4 projection, System.Numerics.Matrix4x4 view)
+    {
+        Vertices.Clear();
+
+        foreach (var vert in Mesh.VertexList)
+        {
+            Vector2? screenPos = Mathf.WorldToScreen(vert.Position, projection, view);
+            if (screenPos == null)
+                continue;
+            
+            Vertices.Add(vert, screenPos.Value);
+        }
+    }
+
+    public void UpdateBonePosition()
+    {
+        System.Numerics.Matrix4x4 projection = Game.camera.GetNumericsProjectionMatrix();
+        System.Numerics.Matrix4x4 view = Game.camera.GetNumericsViewMatrix();
+    
+        UpdateBonePosition(projection, view);
+
+        GenerateVertexColor();
+    }
+
+    public void UpdateBonePosition(System.Numerics.Matrix4x4 projection, System.Numerics.Matrix4x4 view)
+    {
+        Bones.Clear();
+
+        foreach (var bone in model.rigMesh.RootBone.GetBones())
+        {
+            (Vector2?, Vector2?) screenPos = (Mathf.WorldToScreen(bone.Pivot.Position, projection, view), Mathf.WorldToScreen(bone.End.Position, projection, view));
+            if (screenPos.Item1 == null || screenPos.Item2 == null)
+                continue;
+
+            Bones.Add(bone.Pivot, screenPos.Item1.Value);
+            Bones.Add(bone.End, screenPos.Item2.Value);
+        }
+    }
+
+    public void HandleVertexSelection()
+    {
+        if (!Input.IsKeyDown(Keys.LeftShift))
+            SelectedVertices.Clear();
+        
+        Vector2 mousePos = Input.GetMousePosition();
+        Vector2? closest = null;
+        Vertex? closestVert = null;
+    
+        foreach (var vert in Vertices)
+        {
+            float distance = Vector2.Distance(mousePos, vert.Value);
+            float distanceClosest = closest == null ? 1000 : Vector2.Distance(mousePos, (Vector2)closest);
+        
+            if (distance < distanceClosest && distance < 10)
             {
-                if (pivot.PivotSelected)
-                {
-                    bone.Pivot += move;
-                }
-
-                if (pivot.EndSelected)
-                {
-                    bone.End += move;
-                }
+                closest = vert.Value;
+                closestVert = vert.Key;
             }
+        }
 
-            GenerateBonePanels(links, editor);
-            */
+        if (closestVert != null && !SelectedVertices.Remove(closestVert))
+            SelectedVertices.Add(closestVert);
+    }
+
+    public void HandleBoneSelection()
+    {
+        if (!Input.IsKeyDown(Keys.LeftShift))
+            SelectedBones.Clear();
+        
+        Vector2 mousePos = Input.GetMousePosition();
+        Vector2? closest = null;
+        BoneVertex? closestVert = null;
+
+        foreach (var bone in Bones)
+        {
+            float distance = Vector2.Distance(mousePos, bone.Value);
+            float distanceClosest = closest == null ? 1000 : Vector2.Distance(mousePos, closest.Value);
+        
+            if (distance < distanceClosest && distance < 10)
+            {
+                closest = bone.Value;
+                closestVert = bone.Key;
+            }
+        }
+
+        if (closestVert != null && !SelectedBones.Remove(closestVert))
+            SelectedBones.Add(closestVert);
+    }
+
+    public void GenerateVertexColor()
+    {
+        foreach (var vert in Mesh.VertexList)
+        {
+            int vertIndex = Mesh.VertexList.IndexOf(vert);
+            Vector3 color = SelectedVertices.Contains(vert) ? (0.25f, 0.3f, 1) : (0f, 0f, 0f);
+            if (Mesh.VertexColors.Count <= vertIndex)
+                continue;
+            Mesh.VertexColors[vertIndex] = color;
+        }
+
+        foreach (var bone in model.rigMesh.RootBone.GetBones())
+        {
+            int boneIndex = model.Bones.IndexOf(bone) * 2;
+            Vector3 color = SelectedBones.Contains(bone.Pivot) ? (1f, 0.3f, 0.25f) : (0.1f, 0.03f, 0.025f);
+            if (Mesh.BoneColors.Count > boneIndex)
+                Mesh.BoneColors[boneIndex] = color;
+
+            color = SelectedBones.Contains(bone.End) ? (1f, 0.3f, 0.25f) : (0.1f, 0.03f, 0.025f);
+            if (Mesh.BoneColors.Count > boneIndex + 1)
+                Mesh.BoneColors[boneIndex + 1] = color;
+        }
+
+        Mesh.UpdateVertexColors();
+        Mesh.UpdateBoneColors();
+    }
+
+    public void HandleBoneMovement()
+    {
+        Vector3 move = GetMovement();
+        foreach (var bone in SelectedBones)
+        {
+            bone.Position += move;
+        }
+        Mesh.UpdateBonePositions();
+    }
+
+    public Vector3 GetMovement()
+    {
+        Camera camera = Game.camera;
+
+        Vector2 mouseDelta = Input.GetMouseDelta() * (GameTime.DeltaTime * 10);
+        Vector3 move = camera.right * mouseDelta.X + camera.up * -mouseDelta.Y;
+
+        return move;
     }
 
     public static bool IsPointCloseToLine(Vector2 point, Vector2 lineStart, Vector2 lineEnd, float threshold)

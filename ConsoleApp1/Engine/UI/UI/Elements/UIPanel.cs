@@ -33,8 +33,11 @@ public abstract class UIPanel : UIElement
 
     public override void UpdateTransformation()
     {
-        if (CanGenerate())
+        if (CanGenerate()) 
+        {
             uIMesh.UpdateElementTransformation(this);
+            uIMesh.UpdateMatrices();
+        }
     }
 
     public override void UpdateScale()

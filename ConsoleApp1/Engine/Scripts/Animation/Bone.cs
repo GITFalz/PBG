@@ -3,19 +3,23 @@
 public class Bone
 {
     public Bone RootBone;
+    public Bone Parent;
     public readonly string Name;
     public List<Bone> Children = new List<Bone>();
     
     // Base values
-    public Vector3 Pivot = Vector3.Zero;
-    public Vector3 End = (0, 2, 0);
+    public BoneVertex Pivot;
+    public BoneVertex End;
 
-    public Matrix4 localTransform;
-    public Matrix4 globalTransform;
+    public Matrix4 localTransform = Matrix4.Identity;
+    public Matrix4 globalTransform = Matrix4.Identity;
 
     public Bone(Bone rootBone, string name)
     {
         RootBone = rootBone;
+        Parent = rootBone;
+        Pivot = new(this, (0, 0, 0));
+        End = new(this, (0, 1, 0));
         Name = name;
     }
 
@@ -26,6 +30,9 @@ public class Bone
     public Bone(string name)
     {
         RootBone = this;
+        Parent = this;
+        Pivot = new(this, (0, 0, 0));
+        End = new(this, (0, 1, 0));
         Name = name;
     }
 
@@ -39,6 +46,7 @@ public class Bone
         }
         child = child.Copy(RootBone, newName);
         Children.Add(child);
+        child.Parent = this;
         return child;
     }
 
@@ -59,7 +67,7 @@ public class Bone
 
     public void SetPivot(Vector3 pivot)
     {
-        Pivot = pivot;
+        Pivot.Position = pivot;
     }
 
     public void CalculateGlobalTransform()
@@ -84,8 +92,8 @@ public class Bone
     {
         Bone bone = new(rootBone, name);
 
-        bone.Pivot = Pivot;
-        bone.End = End;
+        bone.Pivot = new(bone, Pivot.Position);
+        bone.End = new(bone, End.Position);
         bone.localTransform = localTransform;
         bone.globalTransform = globalTransform;
 
@@ -96,33 +104,46 @@ public class Bone
 
         return bone;
     }
-
-
-    public override bool Equals(object? obj)
-    {
-        if (obj == null || GetType() != obj.GetType())
-        {
-            return false;
-        }
-
-        Bone bone = (Bone) obj;
-        return Name == bone.Name;
-    }
-
-    public override int GetHashCode()
-    {
-        return Name.GetHashCode();
-    }
 }
 
 public struct BoneSelection
 {
     public bool PivotSelected;
     public bool EndSelected;
+    public Vector2 PivotScreenPosition;
+    public Vector2 EndScreenPosition;
 
-    public BoneSelection(bool pivotSelected, bool endSelected)
+    public BoneSelection(bool pivotSelected, bool endSelected, Vector2 pivotScreenPosition, Vector2 endScreenPosition)
     {
         PivotSelected = pivotSelected;
         EndSelected = endSelected;
+        PivotScreenPosition = pivotScreenPosition;
+        EndScreenPosition = endScreenPosition;
+    }
+}
+
+public class BoneVertex
+{
+    public Bone Parent;
+    public Vector3 Position;
+    public Vector2 ScreenPosition;
+    public bool Selected;
+
+    public BoneVertex(Bone parent, Vector3 position)
+    {
+        Parent = parent;
+        Position = position;
+        ScreenPosition = (0, 0);
+        Selected = false;
+    }
+
+    public bool IsEnd()
+    {
+        return Parent.End == this;
+    }
+
+    public bool IsPivot()
+    {
+        return Parent.Pivot == this;
     }
 }

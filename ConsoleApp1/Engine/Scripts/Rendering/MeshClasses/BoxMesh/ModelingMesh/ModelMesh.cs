@@ -1,7 +1,7 @@
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-public class ModelMesh
+public class ModelMesh : Meshes
 {
     // Mesh
     private VAO _vao = new VAO();
@@ -21,15 +21,19 @@ public class ModelMesh
     private VAO _vertexVao = new VAO();
     private VBO _vertexVbo = new VBO([new Vector3(0, 0, 0)]);
     private VBO _vertexColorVbo = new VBO([new Vector3(0, 0, 0)]);
+    private VBO _vertexSizeVbo = new VBO([0.0f]);
 
     public List<Vector3> Vertices = new List<Vector3>();
     public List<Vector3> VertexColors = new List<Vector3>();
+    public List<float> VertexSize = new List<float>();
 
     // Edge
     private VAO _edgeVao = new VAO();
     private VBO _edgeVbo = new VBO([(0, 0, 0)]);
+    private VBO _edgeColorVbo = new VBO([new Vector3(0, 0, 0)]);
 
     public List<Vector3> EdgeVertices = new List<Vector3>();
+    public List<Vector3> EdgeColors = new List<Vector3>();
 
 
     public List<Vertex> VertexList = new List<Vertex>();
@@ -39,16 +43,21 @@ public class ModelMesh
     public void Init()
     {
         Vertices.Clear();
+        VertexColors.Clear();
+        VertexSize.Clear();
         foreach (var v in VertexList)
         {
             Vertices.Add(v.Position);
+            VertexColors.Add(v.Color);
+            VertexSize.Add(10f);
         }
 
         EdgeVertices.Clear();
+        EdgeColors.Clear();
         foreach (var e in EdgeList)
         {
-            EdgeVertices.Add(e.A.Position);
-            EdgeVertices.Add(e.B.Position);
+            EdgeVertices.AddRange(e.A.Position, e.B.Position);
+            EdgeColors.AddRange(e.A.Color, e.B.Color);
         }
 
         _transformedVerts.Clear();
@@ -151,14 +160,19 @@ public class ModelMesh
         if (!AddTriangleSimple(triangle))
             return;
 
-        var vertices = triangle.GetVertices();
+        if (!VertexList.Contains(triangle.A))
+            VertexList.Add(triangle.A);
+        if (!VertexList.Contains(triangle.B))
+            VertexList.Add(triangle.B);
+        if (!VertexList.Contains(triangle.C))
+            VertexList.Add(triangle.C);
 
-        if (!VertexList.Contains(vertices[0]))
-            VertexList.Add(vertices[0]);
-        if (!VertexList.Contains(vertices[1]))
-            VertexList.Add(vertices[1]);
-        if (!VertexList.Contains(vertices[2]))
-            VertexList.Add(vertices[2]);
+        if (!EdgeList.Contains(triangle.AB))
+            EdgeList.Add(triangle.AB);
+        if (!EdgeList.Contains(triangle.BC))
+            EdgeList.Add(triangle.BC);
+        if (!EdgeList.Contains(triangle.CA))
+            EdgeList.Add(triangle.CA);
 
         Uvs.Add((0, 0));
         Uvs.Add((0, 1));
@@ -188,6 +202,14 @@ public class ModelMesh
         return true;
     }
 
+    public void AddCopy(ModelCopy copy)
+    {
+        foreach (var triangle in copy.newSelectedTriangles)
+        {
+            AddTriangle(triangle);
+        }
+    }
+
 
     public void RemoveVertex(Vertex vertex)
     {
@@ -200,10 +222,16 @@ public class ModelMesh
         VertexColors.RemoveAt(index);
 
         List<Triangle> triangles = [.. vertex.ParentTriangles];
+        List<Edge> edges = [.. vertex.ParentEdges];
 
         foreach (var triangle in triangles)
         {
             RemoveTriangle(triangle);
+        }
+
+        foreach (var edge in edges)
+        {
+            RemoveEdge(edge);
         }
     }
 
@@ -237,6 +265,26 @@ public class ModelMesh
         if (CA.ParentTriangles.Count == 1) EdgeList.Remove(CA.Delete()); else Console.WriteLine("Removed triangle from edge CA: " + CA.ParentTriangles.Remove(triangle));
 
         TriangleList.Remove(triangle.Delete());
+    }
+
+    public void RemoveEdge(Edge edge)
+    {
+        int index = EdgeList.IndexOf(edge);
+        if (index == -1)
+            return;
+
+        int doubleIndex = index * 2;
+
+        EdgeVertices.RemoveRange(doubleIndex, 2);
+        EdgeColors.RemoveRange(doubleIndex, 2);
+
+        Vertex A = edge.A;
+        Vertex B = edge.B;
+
+        if (A.ParentEdges.Count == 1) VertexList.Remove(A); else A.ParentEdges.Remove(edge);
+        if (B.ParentEdges.Count == 1) VertexList.Remove(B); else B.ParentEdges.Remove(edge);
+
+        EdgeList.Remove(edge.Delete());
     }
 
     public int VertexCount(Vertex vertex)
@@ -389,54 +437,86 @@ public class ModelMesh
         _edgeVbo.Update(EdgeVertices);
     }
 
+    public void UpdateVertices()
+    {
+        _vertVbo.Update(_transformedVerts);
+        _vertexVbo.Update(Vertices);
+        _edgeVbo.Update(EdgeVertices);
+    }
+
     public void UpdateVertexColors()
     {
         _vertexColorVbo.Update(VertexColors);
     }
 
-    public void SaveModel(string modelName)
+    public void UpdateEdgeColors()
+    {
+        _edgeColorVbo.Update(EdgeColors);
+    }
+
+    public override void SaveModel(string modelName)
     {
         SaveModel(modelName, Game.modelPath);
     }
 
-    public void SaveModel(string modelName, string basePath)
+    public override void SaveModel(string modelName, string basePath)
     {
         string path = Path.Combine(basePath, $"{modelName}.model");
-        List<string> lines = new List<string>();
+        if (!File.Exists(path)) File.WriteAllText(path, "0\n0\n0\n0\n0");
+        List<string> oldLines = [.. File.ReadAllLines(path)];
+        List<string> newLines = new List<string>();
 
-        lines.Add(VertexList.Count.ToString());
+        int oldVertexCount = int.Parse(oldLines[0]);
+        int oldEdgeCount = int.Parse(oldLines[oldVertexCount + 1]);
+        int oldTriangleCount = int.Parse(oldLines[oldVertexCount + oldEdgeCount + 2]);
+        int oldTextureCount = int.Parse(oldLines[oldVertexCount + oldEdgeCount + oldTriangleCount + 3]);
+        int oldNormalCount = int.Parse(oldLines[oldVertexCount + oldEdgeCount + oldTriangleCount + oldTextureCount + 4]);
+        int rigStart = oldVertexCount + oldEdgeCount + oldTriangleCount + oldTextureCount + oldNormalCount + 5;
+
+        newLines.Add(VertexList.Count.ToString());
         foreach (var vertex in VertexList)
         {
-            lines.Add($"v {vertex.Position.X} {vertex.Position.Y} {vertex.Position.Z}");
+            newLines.Add($"v {vertex.Position.X} {vertex.Position.Y} {vertex.Position.Z} {vertex.Index}");
         }
     
-        lines.Add(EdgeList.Count.ToString());
+        newLines.Add(EdgeList.Count.ToString());
         foreach (var edge in EdgeList)
         {
-            lines.Add($"e {VertexList.IndexOf(edge.A)} {VertexList.IndexOf(edge.B)}");
+            newLines.Add($"e {VertexList.IndexOf(edge.A)} {VertexList.IndexOf(edge.B)}");
         }
 
-        lines.Add(TriangleList.Count.ToString());
+        newLines.Add(TriangleList.Count.ToString());
         foreach (var triangle in TriangleList)
         {
-            lines.Add($"f {VertexList.IndexOf(triangle.A)} {VertexList.IndexOf(triangle.B)} {VertexList.IndexOf(triangle.C)} {EdgeList.IndexOf(triangle.AB)} {EdgeList.IndexOf(triangle.BC)} {EdgeList.IndexOf(triangle.CA)}");
+            newLines.Add($"f {VertexList.IndexOf(triangle.A)} {VertexList.IndexOf(triangle.B)} {VertexList.IndexOf(triangle.C)} {EdgeList.IndexOf(triangle.AB)} {EdgeList.IndexOf(triangle.BC)} {EdgeList.IndexOf(triangle.CA)}");
         }
 
-        lines.Add(Uvs.Count.ToString());
+        newLines.Add(Uvs.Count.ToString());
         foreach (var uv in Uvs)
         {
-            lines.Add($"uv {uv.X} {uv.Y}");
+            newLines.Add($"uv {uv.X} {uv.Y}");
+        }
+
+        newLines.Add(Normals.Count.ToString());
+        foreach (var normal in Normals)
+        {
+            newLines.Add($"n {normal.X} {normal.Y} {normal.Z}");
+        }
+
+        for (int i = rigStart; i < oldLines.Count; i++)
+        {
+            newLines.Add(oldLines[i]);
         }
         
-        File.WriteAllLines(path, lines);
+        File.WriteAllLines(path, newLines);
     }
 
-    public bool LoadModel(string modelName)
+    public override bool LoadModel(string modelName)
     {
         return LoadModel(modelName, Game.modelPath);
     }
 
-    public bool LoadModel(string modelName, string basePath)
+    public override bool LoadModel(string modelName, string basePath)
     {
         string path = Path.Combine(basePath, $"{modelName.Trim()}.model");
         if (!File.Exists(path))
@@ -445,17 +525,7 @@ public class ModelMesh
             return false;
         }
 
-        VertexList.Clear();
-        TriangleList.Clear();
-        Uvs.Clear();
-        Indices.Clear();
-        TextureIndices.Clear();
-        Normals.Clear();
-        _transformedVerts.Clear();
-        VertexColors.Clear();
-        Vertices.Clear();
-        EdgeVertices.Clear();
-        EdgeList.Clear();
+        Unload();
 
         string[] lines = File.ReadAllLines(path);
 
@@ -467,7 +537,9 @@ public class ModelMesh
         for (int i = 1; i <= vertexCount; i++)
         {
             string[] values = lines[i].Split(' ');
-            VertexList.Add(new Vertex(new Vector3(float.Parse(values[1]), float.Parse(values[2]), float.Parse(values[3]))));
+            Vertex vertex = new Vertex(new Vector3(float.Parse(values[1]), float.Parse(values[2]), float.Parse(values[3])));
+            vertex.Index = int.Parse(values[4]);
+            VertexList.Add(vertex);
             VertexColors.Add(new Vector3(0f, 0f, 0f));
         }
 
@@ -496,6 +568,22 @@ public class ModelMesh
 
         return true;
     }
+
+    public override void Unload()
+    {
+        VertexList.Clear();
+        TriangleList.Clear();
+        Uvs.Clear();
+        Indices.Clear();
+        TextureIndices.Clear();
+        Normals.Clear();
+        _transformedVerts.Clear();
+        VertexColors.Clear();
+        VertexSize.Clear();
+        Vertices.Clear();
+        EdgeVertices.Clear();
+        EdgeList.Clear();
+    }
     
     public void GenerateBuffers()
     {
@@ -508,8 +596,10 @@ public class ModelMesh
 
         _vertexVbo = new VBO(Vertices);
         _vertexColorVbo = new VBO(VertexColors);
+        _vertexSizeVbo = new VBO(VertexSize);
 
         _edgeVbo = new VBO(EdgeVertices);
+        _edgeColorVbo = new VBO(EdgeColors);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
         _vao.LinkToVAO(1, 2, _uvVbo);
@@ -518,8 +608,10 @@ public class ModelMesh
 
         _vertexVao.LinkToVAO(0, 3, _vertexVbo);
         _vertexVao.LinkToVAO(1, 3, _vertexColorVbo);
+        _vertexVao.LinkToVAO(2, 1, _vertexSizeVbo);
 
         _edgeVao.LinkToVAO(0, 3, _edgeVbo);
+        _edgeVao.LinkToVAO(1, 3, _edgeColorVbo);
         
         _ibo = new IBO(Indices);
     }

@@ -5,35 +5,82 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class AnimationEditor : BaseEditor
 {
-    public UIController BoneUi = new UIController();
-
     private bool freeCamera = false;
     private bool regenerateUi = false;
     private bool _started = false;
     public Model model;
+    public AnimationMesh Mesh;
+    public UIController Timeline;
     
     public override void Start(GeneralModelingEditor editor)
     {
         Console.WriteLine("Start Animation Editor");
 
         editor.model.SwitchState("Animation");
+
+        if (_started)
+            return;
         
-        if (!_started)
-        {
-            model = editor.model;
-            BoneUi.Generate();
-            _started = true;
-        }
+        model = editor.model;
+        Mesh = model.animationMesh;
+
+        Timeline = new UIController();
+
+        _started = true;
+    }
+
+    public override void Resize(GeneralModelingEditor editor)
+    {
+        Timeline.OnResize();
     }
 
     public override void Awake(GeneralModelingEditor editor)
     {
+        Mesh.LoadModel(editor.currentModelName);
+        editor.model.SwitchState("Animation");
 
+        UIMesh uiMesh = Timeline.uIMesh;
+        UIMesh maskMesh = Timeline.maskMesh;
+        UIMesh maskeduIMesh = Timeline.maskeduIMesh;
+
+        TextMesh maskedTextMesh = Timeline.maskedTextMesh;
+
+        UICollection timelineCollection = new("TimelineCollection", AnchorType.ScaleBottom, PositionType.Absolute, (0, 0, 0), (1000, 200), (5, -5, 255, 5), 0);
+        
+        UIImage timelineBackground = new("TimelineBackground", AnchorType.ScaleBottom, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (1000, 200), (0, 0, 0, 0), 0, 1, (10, 0.05f), uiMesh);
+        UIScrollView boneTimelineCollection = new("BoneTimelineScrollView", AnchorType.ScaleTop, PositionType.Relative, CollectionType.Vertical, (1000, 186), (7, 7, 7, 7), maskMesh);
+        boneTimelineCollection.SetSpacing(0);
+
+        foreach (Bone bone in model.Bones)
+        {
+            // Main bone collection inside the timeline
+            UIHorizontalCollection boneCollection = new($"{bone.Name}_Collection", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (1000, 40), (0, 0, 0, 0), (0, 0, 0, 0), 5, 0);
+
+            // Bone name
+            UIText boneText = new($"{bone.Name}_Text", AnchorType.MiddleLeft, PositionType.Relative, (0, 0, 0), (10, 10), (5, 0, 0, 0), 0, 1, (10, 0.05f), maskedTextMesh);
+            boneText.SetMaxCharCount(20).SetText(bone.Name, 0.6f);
+
+            // The collection holds the bone name for alignment purposes.
+            // Text scale is calculated when calling SetText so we need to use it for the collection scale.
+            // (Scale info in UICollection class)
+            UIDepthCollection boneNameCollection = new($"{bone.Name}_NameCollection", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), boneText.Scale, (0, 0, 0, 0), 0);
+
+            // Background for the bone timeline newt to the bone name
+            UIImage boneTimelineBackground = new($"{bone.Name}_Background", AnchorType.TopLeft, PositionType.Relative, (0.4f, 0.4f, 0.4f), (0, 0, 0), (1000, 40), (0, 0, 0, 0), 0, 1, (10, 0.05f), maskeduIMesh);
+
+            boneCollection.AddElement(boneNameCollection.AddElement(boneText), boneTimelineBackground);
+
+            boneTimelineCollection.AddElement(boneCollection);
+        }
+
+        timelineCollection.AddElement(timelineBackground, boneTimelineCollection);
+        Timeline.AddElement(timelineCollection);
+        Timeline.GenerateBuffers();
     }
     
     public override void Update(GeneralModelingEditor editor)
     {
-        var links = editor.GetLinkPositions(model.Bones);
+        Timeline.Test();
 
         if (Input.IsKeyPressed(Keys.Escape))
         {
@@ -49,34 +96,17 @@ public class AnimationEditor : BaseEditor
                 Game.Instance.CursorState = CursorState.Normal;
             }
         }
-        
+
         if (freeCamera)
         {
             Game.camera.Update();
-            
-            if (!regenerateUi)
-            {
-                BoneUi.Clear();
-                regenerateUi = true;
-            }
-        }
-        else if (regenerateUi)
-        {
-            foreach (var pos in links)
-            {
-                var panel = editor.GeneratePanelLink(pos.A, pos.B, 12);
-                BoneUi.AddElement(panel);
-            }
-        
-            BoneUi.Generate();
-            regenerateUi = false;
         }
     }
 
     public override void Render(GeneralModelingEditor editor)
     {
         editor.RenderAnimation();
-        BoneUi.Render();
+        Timeline.Render();
     }
     
 
@@ -84,5 +114,6 @@ public class AnimationEditor : BaseEditor
     {
         //editor.model.Mesh.InitModel();
         //editor.model.Mesh.UpdateMesh();
+        Timeline.Clear();
     }
 }

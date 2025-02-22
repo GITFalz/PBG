@@ -16,21 +16,22 @@ public class Model
 
     public Dictionary<string, Animation> Animations = new Dictionary<string, Animation>();
     public List<Bone> Bones = new List<Bone>();
-    public AnimationMesh Mesh;
+    public AnimationMesh animationMesh = new AnimationMesh();
+    public RigMesh rigMesh = new RigMesh();
     public ModelMesh modelMesh = new ModelMesh();
     public Animation? CurrentAnimation = null;
+
+    public Meshes CurrentMesh;
     
-    public void Init(Bone rootBone, string modelName)
+    public void Init()
     {
         CurrentModel = ModelModeling;
-
-        Bones = rootBone.GetBones();
-        Mesh = new AnimationMesh(rootBone, Bones.Count);
-        modelMesh.LoadModel(modelName);
+        CurrentMesh = modelMesh;
 
         CurrentAnimation = new Animation("TestAnimation");
         Animations.Add(CurrentAnimation.Name, CurrentAnimation);
 
+        /*
         CurrentAnimation.AddOrUpdateKeyframe(0, new AnimationKeyframe(0, Quaternion.FromEulerAngles(Mathf.DegreesToRadians((0, 0, 0)))));
         CurrentAnimation.AddOrUpdateKeyframe(0, new AnimationKeyframe(8, Quaternion.FromEulerAngles(Mathf.DegreesToRadians((0, 5, 0)))));
         CurrentAnimation.AddOrUpdateKeyframe(0, new AnimationKeyframe(40, Quaternion.FromEulerAngles(Mathf.DegreesToRadians((0, 85, 0)))));
@@ -47,17 +48,23 @@ public class Model
         CurrentAnimation.AddOrUpdateKeyframe(2, new AnimationKeyframe(60, Quaternion.FromEulerAngles(Mathf.DegreesToRadians((0, 180, 0)))));
         CurrentAnimation.AddOrUpdateKeyframe(2, new AnimationKeyframe(120, Quaternion.FromEulerAngles(Mathf.DegreesToRadians((0, 180, 180)))));
         CurrentAnimation.AddOrUpdateKeyframe(2, new AnimationKeyframe(180, Quaternion.FromEulerAngles(Mathf.DegreesToRadians((0, 0, 0)))));
+        */
 
         modelMesh.Init();
         modelMesh.GenerateBuffers();
-        Mesh.GenerateBuffers();
+        animationMesh.GenerateBuffers();
 
         CurrentModel.Init(this);
     }
 
     public void UpdateBones()
     {
-        Bones = Mesh.RootBone.GetBones();
+        if (CurrentMesh is RigMesh rigMesh)
+            Bones = rigMesh.RootBone.GetBones();
+        else if (CurrentMesh is AnimationMesh animationMesh) 
+        {
+            Bones = animationMesh.RootBone.GetBones();
+        }
     }
 
     public void SetCurrentAnimation(string animationName)
@@ -116,18 +123,18 @@ public class ModelAnimation : ModelBase
     public Dictionary<string, Animation> Animations = new Dictionary<string, Animation>();
     public List<Bone> Bones = new List<Bone>();
     public Animation? CurrentAnimation = null;
-    public ShaderProgram _shaderProgram;
+
+    private ShaderProgram _shaderProgram = new ShaderProgram("Model/ModelAnimation.vert", "Model/Model.frag");
 
     public override void Init(Model model)
     {
-        _shaderProgram = new ShaderProgram("Model/ModelAnimation.vert", "Model/Model.frag");
-
+        model.UpdateBones();
         Animations = model.Animations;
         Bones = model.Bones;
         CurrentAnimation = model.CurrentAnimation;
 
-        //Mesh = model.Mesh.ToAnimationMesh(Bones.Count);
-        Mesh.GenerateBuffers();
+        Mesh = model.animationMesh;
+        model.CurrentMesh = Mesh;
     }
 
     public override void Update(Model model)
@@ -143,14 +150,26 @@ public class ModelAnimation : ModelBase
                 continue;
 
             var bone = Bones[i];
-            bone.localTransform = Model.GetRotationMatrix(Bones[i].Pivot, (Quaternion)frame);
+            bone.localTransform = Model.GetRotationMatrix(Bones[i].Pivot.Position, (Quaternion)frame);
         }
 
         Mesh.RootBone.CalculateGlobalTransform();
 
         for (int i = 0; i < Bones.Count; i++)
         {
-            Mesh.BoneMatrices[i] = Bones[i].globalTransform;
+            try
+            {
+                Mesh.BoneMatrices[i] = Bones[i].globalTransform;
+            }
+            catch (Exception)
+            {
+                Mesh.BoneMatrices.Add(Matrix4.Identity);
+            }
+        }
+
+        foreach (var bone in Bones)
+        {
+            //Console.WriteLine($"Bone: {bone.Name}, Global: {bone.globalTransform}, Local: {bone.localTransform}");
         }
         
         Mesh.UpdateBoneMatrices();
@@ -181,16 +200,52 @@ public class ModelAnimation : ModelBase
         Mesh.RenderMesh();
 
         _shaderProgram.Unbind();
+
+        GL.Enable(EnableCap.DepthTest);
+        GL.DepthFunc(DepthFunction.Always);
+
+        Model = Matrix4.Identity;
+
+        ModelSettings.EdgeShader.Bind();
+
+        modelLocation = GL.GetUniformLocation(ModelSettings.EdgeShader.ID, "model");
+        viewLocation = GL.GetUniformLocation(ModelSettings.EdgeShader.ID, "view");
+        projectionLocation = GL.GetUniformLocation(ModelSettings.EdgeShader.ID, "projection");
+
+        GL.UniformMatrix4(modelLocation, true, ref Model);
+        GL.UniformMatrix4(viewLocation, true, ref view);
+        GL.UniformMatrix4(projectionLocation, true, ref projection);
+
+        model.animationMesh.RenderEdges();
+
+        ModelSettings.EdgeShader.Unbind();
+
+        ModelSettings.VertexShader.Bind();
+
+        modelLocation = GL.GetUniformLocation(ModelSettings.VertexShader.ID, "model");
+        viewLocation = GL.GetUniformLocation(ModelSettings.VertexShader.ID, "view");
+        projectionLocation = GL.GetUniformLocation(ModelSettings.VertexShader.ID, "projection");
+
+        GL.UniformMatrix4(modelLocation, true, ref Model);
+        GL.UniformMatrix4(viewLocation, true, ref view);
+        GL.UniformMatrix4(projectionLocation, true, ref projection);
+
+        model.animationMesh.RenderVertices();
+
+        ModelSettings.VertexShader.Unbind();
+
+        GL.Disable(EnableCap.DepthTest);
+        GL.DepthFunc(DepthFunction.Lequal);
     }
 }
 
 public class ModelRigging : ModelBase
 {
-    public ShaderProgram _shaderProgram;
+    private ShaderProgram _shaderProgram = new ShaderProgram("Model/ModelRig.vert", "Model/Model.frag");
 
     public override void Init(Model model)
     {
-        _shaderProgram = new ShaderProgram("Model/Model.vert", "Model/Model.frag");
+        model.CurrentMesh = model.rigMesh;
     }
 
     public override void Update(Model model)
@@ -220,22 +275,55 @@ public class ModelRigging : ModelBase
         GL.UniformMatrix4(projectionLocation, true, ref projection);
         GL.Uniform1(colorAlphaLocation, 1.0f);
 
-        model.Mesh.RenderMesh();
+        model.rigMesh.RenderMesh();
 
         _shaderProgram.Unbind();
+
+        GL.Enable(EnableCap.DepthTest);
+        GL.DepthFunc(DepthFunction.Always);
+
+        Model = Matrix4.Identity;
+
+        ModelSettings.EdgeShader.Bind();
+
+        modelLocation = GL.GetUniformLocation(ModelSettings.EdgeShader.ID, "model");
+        viewLocation = GL.GetUniformLocation(ModelSettings.EdgeShader.ID, "view");
+        projectionLocation = GL.GetUniformLocation(ModelSettings.EdgeShader.ID, "projection");
+
+        GL.UniformMatrix4(modelLocation, true, ref Model);
+        GL.UniformMatrix4(viewLocation, true, ref view);
+        GL.UniformMatrix4(projectionLocation, true, ref projection);
+
+        model.rigMesh.RenderEdges();
+
+        ModelSettings.EdgeShader.Unbind();
+
+        ModelSettings.VertexShader.Bind();
+
+        modelLocation = GL.GetUniformLocation(ModelSettings.VertexShader.ID, "model");
+        viewLocation = GL.GetUniformLocation(ModelSettings.VertexShader.ID, "view");
+        projectionLocation = GL.GetUniformLocation(ModelSettings.VertexShader.ID, "projection");
+
+        GL.UniformMatrix4(modelLocation, true, ref Model);
+        GL.UniformMatrix4(viewLocation, true, ref view);
+        GL.UniformMatrix4(projectionLocation, true, ref projection);
+
+        model.rigMesh.RenderVertices();
+
+        ModelSettings.VertexShader.Unbind();
+
+        GL.Disable(EnableCap.DepthTest);
+        GL.DepthFunc(DepthFunction.Lequal);
     }
 }
 
 public class ModelModeling : ModelBase
 {
-    public ModelMesh modelMesh;
-    public ShaderProgram _shaderProgram;
+    private ShaderProgram _shaderProgram = new ShaderProgram("Model/Model.vert", "Model/Model.frag");
 
     public override void Init(Model model)
     {
-        Console.WriteLine("Init Model Modeling");
-        modelMesh = model.modelMesh;
-        _shaderProgram = new ShaderProgram("Model/ModelModeling.vert", "Model/Model.frag");
+        model.CurrentMesh = model.modelMesh;
     }
 
     public override void Update(Model model)
@@ -277,7 +365,7 @@ public class ModelModeling : ModelBase
             GL.UniformMatrix4(projectionLocation, true, ref projection);
             GL.Uniform1(colorAlphaLocation, ModelSettings.MeshAlpha);
             
-            modelMesh.Render();
+            model.modelMesh.Render();
         }
 
         _shaderProgram.Unbind();
@@ -297,7 +385,7 @@ public class ModelModeling : ModelBase
         GL.UniformMatrix4(viewLocation, true, ref view);
         GL.UniformMatrix4(projectionLocation, true, ref projection);
 
-        modelMesh.RenderEdges();
+        model.modelMesh.RenderEdges();
 
         ModelSettings.EdgeShader.Unbind();
 
@@ -311,7 +399,7 @@ public class ModelModeling : ModelBase
         GL.UniformMatrix4(viewLocation, true, ref view);
         GL.UniformMatrix4(projectionLocation, true, ref projection);
 
-        modelMesh.RenderVertices();
+        model.modelMesh.RenderVertices();
 
         ModelSettings.VertexShader.Unbind();
 

@@ -1,4 +1,5 @@
-﻿using OpenTK.Graphics.OpenGL4;
+﻿using System.Reflection.Metadata;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -9,7 +10,7 @@ public class ModelingEditor : BaseEditor
     public static RenderType selectionType = RenderType.Vertex;
     public bool _started = false;
     public GeneralModelingEditor Editor;
-    public ModelMesh Mesh => Editor.model.modelMesh;
+    public ModelMesh Mesh;
 
     public Dictionary<Keys, Action> PressedAction = new Dictionary<Keys, Action>();
     public Dictionary<Keys, Action> DownAction = new Dictionary<Keys, Action>();
@@ -28,22 +29,27 @@ public class ModelingEditor : BaseEditor
 
 
     public float scale = 1;
+    public Vector3 scaleCenter = Vector3.Zero;
 
     public bool regenerateVertexUi = true;
 
 
     public List<string> MeshSaveNames = new List<string>();
 
+    
+    public ModelCopy Copy = new();
+
     public override void Start(GeneralModelingEditor editor)
     {
+        Console.WriteLine("Start Modeling Editor");
+
         if (_started)
         {
             return;
         }
 
-        Console.WriteLine("Start Modeling Editor");
-
         Editor = editor;
+        Mesh = editor.model.modelMesh;
 
         Ui.GenerateBuffers();
         
@@ -62,9 +68,15 @@ public class ModelingEditor : BaseEditor
         _started = true;
     }
 
+    public override void Resize(GeneralModelingEditor editor)
+    {
+        
+    }
+
     public override void Awake(GeneralModelingEditor editor)
     {
         editor.model.SwitchState("Modeling");
+        Mesh.LoadModel(editor.currentModelName);
     }
     
     public override void Update(GeneralModelingEditor editor)
@@ -83,6 +95,7 @@ public class ModelingEditor : BaseEditor
             else
             {
                 Game.Instance.CursorState = CursorState.Normal;
+                UpdateVertexPosition();
             }
         }
 
@@ -95,12 +108,19 @@ public class ModelingEditor : BaseEditor
         if (editor.freeCamera)
         {
             Game.camera.Update();
+            return;
         }
 
         if (Input.IsKeyDown(Keys.LeftControl))
         {
             // Undo
             if (Input.IsKeyPressed(Keys.Z)) Handle_Undo();
+
+            // Copy
+            if (Input.IsKeyPressed(Keys.C)) Handle_Copy();
+
+            // Paste
+            if (Input.IsKeyPressed(Keys.V)) Handle_Paste();
 
             // Select all
             if (Input.IsKeyPressed(Keys.A)) Handle_SelectAllVertices();
@@ -124,6 +144,7 @@ public class ModelingEditor : BaseEditor
         // Scaling
         if (Input.IsKeyPressed(Keys.S)) ScalingInit();
         if (Input.IsKeyDown(Keys.S)) Handle_ScalingSelectedVertices();
+        if (Input.IsKeyReleased(Keys.S)) UpdateVertexPosition();
         
         // Moving
         if (Input.IsKeyPressed(Keys.G)) StashMesh();
@@ -187,6 +208,65 @@ public class ModelingEditor : BaseEditor
         Mesh.Init();
         Mesh.GenerateBuffers();
 
+        UpdateVertexPosition();
+        GenerateVertexColor();
+    }
+
+    public void Handle_Copy()
+    {
+        Console.WriteLine("Copy");
+        StashMesh();
+
+        Copy.Clear();
+        Copy.selectedTriangles = GetSelectedFullTriangles().ToList();
+
+        foreach (var triangle in Copy.selectedTriangles)
+        {
+            Copy.Add(triangle.A);
+            Copy.Add(triangle.B);
+            Copy.Add(triangle.C);
+
+            Copy.Add(triangle.AB);
+            Copy.Add(triangle.BC);
+            Copy.Add(triangle.CA);
+        }
+
+        foreach (var vert in Copy.selectedVertices)
+        {
+            Copy.newSelectedVertices.Add(vert.Copy());
+        }
+
+        foreach (var edge in Copy.selectedEdges)
+        {
+            Copy.newSelectedEdges.Add(new(Copy.GetNewVertex(edge.A), Copy.GetNewVertex(edge.B)));
+        }
+
+        foreach (var triangle in Copy.selectedTriangles)
+        {
+            Copy.newSelectedTriangles.Add(
+            new(
+                Copy.GetNewVertex(triangle.A), 
+                Copy.GetNewVertex(triangle.B), 
+                Copy.GetNewVertex(triangle.C), 
+                Copy.GetNewEdge(triangle.AB), 
+                Copy.GetNewEdge(triangle.BC), 
+                Copy.GetNewEdge(triangle.CA)
+            ));  
+        }
+    }
+
+    // Paste
+    public void Handle_Paste()
+    {
+        Console.WriteLine("Paste");
+        StashMesh();
+
+        ModelCopy copy = Copy.Copy();
+        SelectedVertices = copy.newSelectedVertices;
+
+        Mesh.AddCopy(copy);
+        Mesh.Init();
+        Mesh.GenerateBuffers();
         UpdateVertexPosition();
         GenerateVertexColor();
     }
@@ -386,13 +466,25 @@ public class ModelingEditor : BaseEditor
         foreach (var vert in Mesh.VertexList)
         {
             int vertIndex = Mesh.VertexList.IndexOf(vert);
-            Vector3 color = SelectedVertices.Contains(vert) ? (0.25f, 0.3f, 1) : (0f, 0f, 0f);
+            vert.Color = SelectedVertices.Contains(vert) ? (0.25f, 0.3f, 1) : (0f, 0f, 0f);
+
             if (Mesh.VertexColors.Count <= vertIndex)
                 continue;
-            Mesh.VertexColors[vertIndex] = color;
+            Mesh.VertexColors[vertIndex] = vert.Color;
+        }
+
+        foreach (var edge in Mesh.EdgeList)
+        {
+            int edgeIndex = Mesh.EdgeList.IndexOf(edge) * 2;
+            if (Mesh.EdgeColors.Count > edgeIndex)
+                Mesh.EdgeColors[edgeIndex] = edge.A.Color;
+
+            if (Mesh.EdgeColors.Count > edgeIndex + 1)
+                Mesh.EdgeColors[edgeIndex + 1] = edge.B.Color;
         }
 
         Mesh.UpdateVertexColors();
+        Mesh.UpdateEdgeColors();
     }
 
     public void Handle_MovingSelectedVertices()
@@ -411,6 +503,12 @@ public class ModelingEditor : BaseEditor
         SelectedVerticesPosition.Clear();
         SelectedVerticesPosition.AddRange(SelectedVertices.Select(v => v.Position));
         scale = 1;
+        scaleCenter = Vector3.Zero;
+        foreach (var vert in SelectedVertices)
+        {
+            scaleCenter += vert.Position;
+        }
+        scaleCenter /= SelectedVertices.Count;
     }
 
     public void Handle_ScalingSelectedVertices()
@@ -418,12 +516,20 @@ public class ModelingEditor : BaseEditor
         if (SelectedVertices.Count < 2)
             return;
 
-        Vector3 center = Vector3.Zero;
+        float mouseDelta = Input.GetMouseDelta().X * (GameTime.DeltaTime * 10);
+        Console.WriteLine(mouseDelta);
+        scale += mouseDelta;
+
         foreach (var vert in SelectedVertices)
         {
-            center += vert.Position;
+            Vector3 direction = vert.Position - scaleCenter;
+            vert.Position = scaleCenter + direction * scale;
         }
-        center /= SelectedVertices.Count;
+
+        scale = 1;
+
+        Mesh.Init();
+        Mesh.UpdateVertices();
     }
 
     public Vector3 GetSnappingMovement()
@@ -649,4 +755,74 @@ public enum RenderType
     Vertex = 0,
     Edge = 1,
     Face = 2,
+}
+
+public class ModelCopy
+{
+    public List<Vertex> selectedVertices = [];
+    public List<Edge> selectedEdges = [];
+    public List<Triangle> selectedTriangles = [];
+
+    public List<Vertex> newSelectedVertices = [];
+    public List<Edge> newSelectedEdges = [];
+    public List<Triangle> newSelectedTriangles = [];
+
+    public void Clear()
+    {
+        selectedVertices.Clear();
+        selectedEdges.Clear();
+        selectedTriangles.Clear();
+
+        newSelectedVertices.Clear();
+        newSelectedEdges.Clear();
+        newSelectedTriangles.Clear();
+    }
+
+    public void Add(Vertex vert) { if (!selectedVertices.Contains(vert)) selectedVertices.Add(vert); }
+    public void Add(Edge edge) { if (!selectedEdges.Contains(edge)) selectedEdges.Add(edge); }
+    public void Add(Triangle triangle) { if (!selectedTriangles.Contains(triangle)) selectedTriangles.Add(triangle); }
+
+    // Vertex
+    public int GetOldIndex(Vertex vert) { return selectedVertices.IndexOf(vert); }
+    public Vertex GetOldVertex(int index) { return selectedVertices[index]; }
+    public int GetNewIndex(Vertex vert) { return newSelectedVertices.IndexOf(vert); }
+    public Vertex GetNewVertex(int index) { return newSelectedVertices[index]; }
+    public Vertex GetNewVertex(Vertex oldVertex) { return newSelectedVertices[GetOldIndex(oldVertex)]; }
+
+    // Edge
+    public int GetOldIndex(Edge edge) { return selectedEdges.IndexOf(edge); }
+    public Edge GetOldEdge(int index) { return selectedEdges[index]; }
+    public int GetNewIndex(Edge edge) { return newSelectedEdges.IndexOf(edge); }
+    public Edge GetNewEdge(int index) { return newSelectedEdges[index]; }
+    public Edge GetNewEdge(Edge oldEdge) { return newSelectedEdges[GetOldIndex(oldEdge)]; }
+
+    public ModelCopy Copy()
+    {
+        ModelCopy copy = new();
+
+        foreach (var vert in newSelectedVertices)
+        {
+            copy.newSelectedVertices.Add(vert.Copy());
+        }
+
+        foreach (var edge in newSelectedEdges)
+        {
+            copy.newSelectedEdges.Add(new(copy.GetNewVertex(GetNewIndex(edge.A)), copy.GetNewVertex(GetNewIndex(edge.B))));
+        }
+
+        foreach (var triangle in newSelectedTriangles)
+        {
+            copy.newSelectedTriangles.Add(
+            new(
+                copy.GetNewVertex(GetNewIndex(triangle.A)), 
+                copy.GetNewVertex(GetNewIndex(triangle.B)), 
+                copy.GetNewVertex(GetNewIndex(triangle.C)), 
+                copy.GetNewEdge(GetNewIndex(triangle.AB)), 
+                copy.GetNewEdge(GetNewIndex(triangle.BC)), 
+                copy.GetNewEdge(GetNewIndex(triangle.CA))
+            ));  
+        }
+
+        return copy;
+    }
 }
