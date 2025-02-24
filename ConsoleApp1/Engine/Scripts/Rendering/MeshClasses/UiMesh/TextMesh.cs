@@ -20,15 +20,15 @@ public class TextMesh
     public TBO _textTbo = new TBO([]);
     public int ElementCount = 0;
 
-    public void SetCharacters(List<int> characters, int offset)
+    public void SetCharacters(UIText uIText, int offset)
     {
-        for (int i = 0; i < characters.Count; i++)
+        for (int i = 0; i < uIText.Chars.Count; i++)
         {
             int index = offset + i;
             if (index >= chars.Count)
-                chars.Add(characters[i]);
+                chars.Add(uIText.Chars[i]);
             else
-                chars[index] = characters[i];
+                chars[index] = uIText.Chars[i];
         }
     }
 
@@ -120,6 +120,8 @@ public class TextMesh
     {
         Vertices.Clear();
         Uvs.Clear();
+        TextUvs.Clear();
+        chars.Clear();
         Indices.Clear();
         TransformationIndex.Clear();
         TransformationMatrices.Clear();

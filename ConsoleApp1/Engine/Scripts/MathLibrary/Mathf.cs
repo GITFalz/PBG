@@ -235,8 +235,8 @@ public static class Mathf
         float ndcY = clipSpace.Y / clipSpace.W;
 
         Vector2 screenPos = new Vector2(
-            (ndcX + 1.0f) * Game.width * 0.5f,
-            (1.0f - ndcY) * Game.height * 0.5f
+            (ndcX + 1.0f) * Game.Width * 0.5f,
+            (1.0f - ndcY) * Game.Height * 0.5f
         );
 
         return screenPos;

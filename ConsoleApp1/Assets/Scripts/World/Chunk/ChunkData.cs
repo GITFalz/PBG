@@ -40,7 +40,6 @@ public class ChunkData
 
     public void Clear()
     {
-        
         meshData.Clear();
         sideChunks = null;
     }

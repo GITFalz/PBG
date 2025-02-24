@@ -142,4 +142,19 @@ public static class Input
         
         return input;
     }
+    
+    public static Vector2 GetMouseScrollDelta()
+    {
+        return _previousMouseState.ScrollDelta;
+    }
+
+    public static bool AnyKeysReleased(params Keys[] keys)
+    {
+        foreach (var k in keys)
+        {
+            if (IsKeyReleased(k)) 
+                return true;
+        }
+        return false;
+    }
 }

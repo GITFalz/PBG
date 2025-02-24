@@ -27,7 +27,17 @@ public class UIController
     public bool render = true;
     public static int TextOffset = 0;
 
-    public void AddElement(UIElement element, bool test = false)
+    public UIController() {}
+
+    public UIController(params UIElement[] elements)
+    {
+        foreach (var element in elements)
+        {
+            AddElement(element);
+        }
+    }
+
+    public void AddElement(UIElement element, MeshType type = MeshType.UnMasked, bool test = false)
     {
         if (element.PositionType == PositionType.Absolute)
             AbsoluteElements.Add(element);
@@ -35,13 +45,9 @@ public class UIController
         if (element is UIPanel panel)
         {
             if (panel is UIButton button)
-            {
                 Buttons.Add(button);
-            }
-            panel.SetUIMesh(uIMesh);
         }
-
-        if (element is UIText text)
+        else if (element is UIText text)
         {
             if (text is UIInputField inputField)
             {
@@ -49,19 +55,30 @@ public class UIController
                 Buttons.Add(inputField.Button);
                 InputFields.Add(inputField);
             }
-            text.SetTextMesh(textMesh);
         }
-
-        if (element is UICollection collection)
+        else if (element is UICollection collection)
         {
             foreach (var e in collection.Elements)
             {
-                AddElement(e);
+                AddElement(e, type, test);
             }
         }
 
+        element.UIController = this;
         Elements.Add(element);
     }
+
+    private static readonly Dictionary<MeshType, Func<UIController, UIMesh>> uiMeshType = new Dictionary<MeshType, Func<UIController, UIMesh>>()
+    {
+        { MeshType.UnMasked, controller => controller.uIMesh },
+        { MeshType.Masked, controller => controller.maskeduIMesh }
+    };
+
+    private static readonly Dictionary<MeshType, Func<UIController, TextMesh>> textMeshType = new Dictionary<MeshType, Func<UIController, TextMesh>>()
+    {
+        { MeshType.UnMasked, controller => controller.textMesh },
+        { MeshType.Masked, controller => controller.maskedTextMesh }
+    };
 
     public void RemoveElement(UIElement element)
     {
@@ -170,19 +187,20 @@ public class UIController
         return null;
     }
 
-    public static void AssignInputField(UIInputField inputField)
+    public static void AssignInputField(string name)
     {
+        Console.WriteLine("Assigning: " + name);
+        
+        UIInputField? inputField = GetStaticInputField(name);
+        if (inputField == null)
+            return;
+        
         activeInputField = inputField;
-        Game.InputActions += InputField;
     }
 
     public static void RemoveInputField()
     {
-        if (activeInputField != null)
-        {
-            activeInputField = null;
-            Game.InputActions -= InputField;    
-        }
+        activeInputField = null;
     }
 
     public static void InputField(Keys key)
@@ -276,12 +294,15 @@ public class UIController
     {
         uIMesh.Clear();
         textMesh.Clear();
-        foreach (var element in Elements)
-        {
-            if (element is UIInputField inputField && InputFields.Contains(inputField))
-                InputFields.Remove(inputField);
-        }
+
+        maskMesh.Clear();
+        maskeduIMesh.Clear();
+        maskedTextMesh.Clear();
+        
         Elements.Clear();
+        AbsoluteElements.Clear();
+        Buttons.Clear();
+        InputFields.Clear();
     }
 
     public void OnResize()
@@ -317,66 +338,14 @@ public class UIController
         GL.Disable(EnableCap.CullFace);
         GL.FrontFace(FrontFaceDirection.Ccw);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-        
-        GL.Enable(EnableCap.StencilTest);
-        GL.Clear(ClearBufferMask.StencilBufferBit);
-        GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
-        GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace); 
-
-        
-
-        _uiShader.Bind();
-        _uItexture.Bind();
 
         Matrix4 model = Matrix4.Identity;
-        
-        int modelLoc = GL.GetUniformLocation(_uiShader.ID, "model");
-        int projectionLoc = GL.GetUniformLocation(_uiShader.ID, "projection");
-
-        GL.UniformMatrix4(modelLoc, true, ref model);
-        GL.UniformMatrix4(projectionLoc, true, ref OrthographicProjection);
-
-        maskMesh.Render();
-        
-        GL.StencilFunc(StencilFunction.Equal, 1, 0xFF);
-        GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
-
-        maskeduIMesh.Render();
-
-        _uiShader.Unbind();
-        _uItexture.Unbind();
-
-        GL.Disable(EnableCap.StencilTest);
-
-        _textShader.Bind();
-        _textTexture.Bind();
-
-        model = Matrix4.Identity;
-
-        int textModelLoc = GL.GetUniformLocation(_textShader.ID, "model");
-        int textProjectionLoc = GL.GetUniformLocation(_textShader.ID, "projection");
-        int charsLoc = GL.GetUniformLocation(_textShader.ID, "charBuffer");
-        
-        GL.UniformMatrix4(textModelLoc, true, ref model);
-        GL.UniformMatrix4(textProjectionLoc, true, ref OrthographicProjection);
-        GL.Uniform1(charsLoc, 1);
-        
-        maskedTextMesh.Render();
-        
-        _textShader.Unbind();
-        _textTexture.Unbind();
-        
-        GL.DepthMask(true);
-        GL.Enable(EnableCap.DepthTest);
-        GL.DepthFunc(DepthFunction.Lequal);
-
-
 
         _uiShader.Bind();
         _uItexture.Bind();
 
-        modelLoc = GL.GetUniformLocation(_uiShader.ID, "model");
-        projectionLoc = GL.GetUniformLocation(_uiShader.ID, "projection");
+        int modelLoc = GL.GetUniformLocation(_uiShader.ID, "model");
+        int projectionLoc = GL.GetUniformLocation(_uiShader.ID, "projection");
 
         GL.UniformMatrix4(modelLoc, true, ref model);
         GL.UniformMatrix4(projectionLoc, true, ref OrthographicProjection);
@@ -391,6 +360,49 @@ public class UIController
         _textShader.Bind();
         _textTexture.Bind();
 
+        int textModelLoc = GL.GetUniformLocation(_textShader.ID, "model");
+        int textProjectionLoc = GL.GetUniformLocation(_textShader.ID, "projection");
+        int charsLoc = GL.GetUniformLocation(_textShader.ID, "charBuffer");
+        
+        GL.UniformMatrix4(textModelLoc, true, ref model);
+        GL.UniformMatrix4(textProjectionLoc, true, ref OrthographicProjection);
+        GL.Uniform1(charsLoc, 1);
+        
+        textMesh.Render();
+        
+        _textShader.Unbind();
+        _textTexture.Unbind();
+        
+
+        GL.Enable(EnableCap.StencilTest);
+        GL.Clear(ClearBufferMask.StencilBufferBit);
+        GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
+        GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace); 
+
+        _uiShader.Bind();
+        _uItexture.Bind();
+
+        model = Matrix4.Identity;
+        
+        modelLoc = GL.GetUniformLocation(_uiShader.ID, "model");
+        projectionLoc = GL.GetUniformLocation(_uiShader.ID, "projection");
+
+        GL.UniformMatrix4(modelLoc, true, ref model);
+        GL.UniformMatrix4(projectionLoc, true, ref OrthographicProjection);
+
+        maskMesh.Render();
+        
+        GL.StencilFunc(StencilFunction.Equal, 1, 0xFF);
+        GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
+
+        maskeduIMesh.Render();
+
+        _uiShader.Unbind();
+        _uItexture.Unbind();
+
+        _textShader.Bind();
+        _textTexture.Bind();
+
         model = Matrix4.Identity;
 
         textModelLoc = GL.GetUniformLocation(_textShader.ID, "model");
@@ -401,11 +413,20 @@ public class UIController
         GL.UniformMatrix4(textProjectionLoc, true, ref OrthographicProjection);
         GL.Uniform1(charsLoc, 1);
         
-        textMesh.Render();
+        maskedTextMesh.Render();
         
         _textShader.Unbind();
         _textTexture.Unbind();
 
+        GL.Disable(EnableCap.StencilTest);
+        GL.DepthMask(true);
         GL.Enable(EnableCap.DepthTest);
+        GL.DepthFunc(DepthFunction.Lequal);
     }
+}
+
+public enum MeshType
+{
+    UnMasked,
+    Masked
 }

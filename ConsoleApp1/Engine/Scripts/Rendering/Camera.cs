@@ -34,7 +34,7 @@ public class Camera
     public float WantedCameraDistance = 5;
     private float oldScroll = 0;
 
-    public bool firstMove = true;
+    public Vector2 pos;
     public Vector2 lastPos;
     
     public Matrix4 viewMatrix;
@@ -52,6 +52,8 @@ public class Camera
     private CameraMode _cameraMode = CameraMode.Fixed;
     
     private Dictionary<CameraMode, Action> _cameraModes;
+    
+    public Action FirstMove;
 
     public Camera(float width, float height, Vector3 position)
     {
@@ -64,6 +66,8 @@ public class Camera
             {CameraMode.Free, FreeCamera},
             {CameraMode.Fixed, FixedCamera}
         };
+
+        FirstMove = FirstMove1;
     }
 
     public Matrix4 GetViewMatrix()
@@ -171,76 +175,80 @@ public class Camera
     {
         FOV = Mathf.Lerp(FOV, targetFOV, FOV_SMOTH_FACTOR * GameTime.DeltaTime);
         
-        if (!Game.MoveTest)
+        float speed = SPEED * GameTime.DeltaTime;
+
+        if (Input.IsKeyDown(Keys.W))
         {
-            float speed = SPEED * GameTime.DeltaTime;
-
-            if (Input.IsKeyDown(Keys.W))
-            {
-                Position += Yto0(front) * speed;
-            }
-
-            if (Input.IsKeyDown(Keys.A))
-            {
-                Position -= Yto0(right) * speed;
-            }
-
-            if (Input.IsKeyDown(Keys.S))
-            {
-                Position -= Yto0(front) * speed;
-            }
-
-            if (Input.IsKeyDown(Keys.D))
-            {
-                Position += Yto0(right) * speed;
-            }
-
-            if (Input.IsKeyDown(Keys.Space))
-            {
-                Position.Y += speed;
-            }
-
-            if (Input.IsKeyDown(Keys.LeftShift))
-            {
-                Position.Y -= speed;
-            }
+            Position += Yto0(front) * speed;
         }
-        else
+
+        if (Input.IsKeyDown(Keys.A))
         {
-            CameraZoom();
+            Position -= Yto0(right) * speed;
+        }
+
+        if (Input.IsKeyDown(Keys.S))
+        {
+            Position -= Yto0(front) * speed;
+        }
+
+        if (Input.IsKeyDown(Keys.D))
+        {
+            Position += Yto0(right) * speed;
+        }
+
+        if (Input.IsKeyDown(Keys.Space))
+        {
+            Position.Y += speed;
+        }
+
+        if (Input.IsKeyDown(Keys.LeftShift))
+        {
+            Position.Y -= speed;
         }
         
-        if (firstMove)
-        {
-            lastPos = Input.GetMousePosition();
-            firstMove = false;
-        }
-        else
-        {
-            Vector2 pos = Input.GetMousePosition();
-            
-            Vector2 currentMouseDelta = new Vector2(pos.X - lastPos.X, pos.Y - lastPos.Y);
-            _smoothMouseDelta = _smooth ? Vector2.Lerp(_smoothMouseDelta, currentMouseDelta, SMOOTH_FACTOR * GameTime.DeltaTime) : currentMouseDelta;
-            lastPos = new Vector2(pos.X, pos.Y);
+        FirstMove.Invoke();
+        
+        pos = Input.GetMousePosition();
 
-            float deltaX = _smoothMouseDelta.X;
-            float deltaY = _smoothMouseDelta.Y;
+        Vector2 currentMouseDelta = new Vector2(pos.X - lastPos.X, pos.Y - lastPos.Y);
+        _smoothMouseDelta = _smooth ? Vector2.Lerp(_smoothMouseDelta, currentMouseDelta, SMOOTH_FACTOR * GameTime.DeltaTime) : currentMouseDelta;
+        lastPos = new Vector2(pos.X, pos.Y);
 
-            deltaX *= SENSITIVITY * GameTime.DeltaTime;
-            deltaY *= SENSITIVITY * GameTime.DeltaTime;
+        float deltaX = _smoothMouseDelta.X;
+        float deltaY = _smoothMouseDelta.Y;
 
-            yaw += deltaX;
-            pitch -= deltaY;
+        deltaX *= SENSITIVITY * GameTime.DeltaTime;
+        deltaY *= SENSITIVITY * GameTime.DeltaTime;
 
-            pitch = Math.Clamp(pitch, -89.0f, 89.0f);
+        yaw += deltaX;
+        pitch -= deltaY;
 
-            UpdateVectors();
-        }
+        pitch = Math.Clamp(pitch, -89.0f, 89.0f);
+
+        UpdateVectors();
     }
 
     private void FixedCamera()
     {
         CameraZoom();
+    }
+
+    public void SetMoveFirst()
+    {
+        FirstMove = FirstMove1;
+    }
+
+    public void FirstMove1()
+    {
+        lastPos = Input.GetMousePosition();
+        FirstMove = FirstMove2;
+    }
+
+    public void FirstMove2()
+    {
+        lastPos = Input.GetMousePosition();
+        FirstMove = () => { };
     }
 
     private void CameraZoom()

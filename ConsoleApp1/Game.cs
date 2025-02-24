@@ -14,11 +14,11 @@ public class Game : GameWindow
 {
     public static Game Instance;
     
-    public static int width;
-    public static int height;
+    public static int Width;
+    public static int Height;
     
-    public static int centerX;
-    public static int centerY;
+    public static int CenterX;
+    public static int CenterY;
 
     // User paths
     public static string mainPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Engines", "PBG");
@@ -34,6 +34,7 @@ public class Game : GameWindow
 
     public static Vector3 BackgroundColor = new Vector3(0.4f, 0.6f, 0.98f);
     public static Camera camera;
+    public static Action UpdateCamera = () => { camera?.Update(); };
     
     public ConcurrentDictionary<string, Scene> Scenes = new ConcurrentDictionary<string, Scene>();
 
@@ -74,22 +75,22 @@ public class Game : GameWindow
         camera = new Camera(width, height, new Vector3(0, 0, 0));
         
         CenterWindow(new Vector2i(width, height));
-        Game.width = width;
-        Game.height = height;
+        Game.Width = width;
+        Game.Height = height;
         
-        Game.centerX = width / 2;
-        Game.centerY = height / 2;
+        Game.CenterX = width / 2;
+        Game.CenterY = height / 2;
     }
     
     protected override void OnResize(ResizeEventArgs e)
     {
         GL.Viewport(0, 0, e.Width, e.Height);
         
-        Game.width = e.Width;
-        Game.height = e.Height;
+        Game.Width = e.Width;
+        Game.Height = e.Height;
         
-        centerX = e.Width / 2;
-        centerY = e.Height / 2;
+        CenterX = e.Width / 2;
+        CenterY = e.Height / 2;
         
         try
         {
@@ -117,6 +118,8 @@ public class Game : GameWindow
         // Utils
         stopwatch = new Stopwatch();
         stopwatch.Start();
+
+        Timer.Start();
 
         if (!Directory.Exists(chunkPath))
             Directory.CreateDirectory(chunkPath);
@@ -189,14 +192,13 @@ public class Game : GameWindow
         {
             MoveTest = !MoveTest;
 
-            if (MoveTest)
+            UpdateCamera = () =>
             {
-                SetCursorState(CursorState.Grabbed);
-            }
-            else
-            {
-                SetCursorState(CursorState.Normal);
-            }
+                SetCursorState(MoveTest ? CursorState.Grabbed : CursorState.Normal);
+                camera.SetMoveFirst();
+                camera.Update();
+                UpdateCamera = () => { camera.Update(); };
+            };
         }
     }
 
@@ -227,6 +229,7 @@ public class Game : GameWindow
         _physicsThread.Join();
         
         CurrentScene?.OnExit();
+        Timer.Stop();
         
         base.OnUnload();
     }
@@ -237,7 +240,7 @@ public class Game : GameWindow
         GL.ClearColor(BackgroundColor.X, BackgroundColor.Y, BackgroundColor.Z, 1.0f);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         
-        GL.Viewport(0, 0, width, height);
+        GL.Viewport(0, 0, Width, Height);
         
         GL.Enable(EnableCap.CullFace);
         GL.FrontFace(FrontFaceDirection.Ccw);
@@ -245,6 +248,7 @@ public class Game : GameWindow
         Skybox.Render();
         CurrentScene?.OnRender();
         _popUp.Render();
+        Timer.Render();
         
         Context.SwapBuffers();
         
@@ -281,6 +285,7 @@ public class Game : GameWindow
     
     protected override void OnUpdateFrame(FrameEventArgs args)
     {
+        Timer.Update();
         MouseState mouse = MouseState;
         KeyboardState keyboard = KeyboardState;
         
@@ -289,8 +294,10 @@ public class Game : GameWindow
 
         _popUp.Update();
         
+        UpdateCamera.Invoke();
         CurrentScene?.OnUpdate();
-        
+
+        Timer.DisplayTime("Total");
         base.OnUpdateFrame(args);
     }
 

@@ -9,7 +9,7 @@ public class UIInputField : UIText
     public UIInputField(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, Vector2 slice, TextMesh? text) : base(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex, slice, text)
     {
         Button = new UIButton(name + "Button", anchorType, positionType, (0, 0, 0), pivot, scale, offset, rotation, textureIndex, slice, null, UIState.InvisibleInteractable);
-        Button.OnClick = new SerializableEvent(() => UIController.AssignInputField(this));
+        Button.OnClick = new SerializableEvent(() => UIController.AssignInputField(name));
     }
 
     public override void SetParent(UIElement parent)
@@ -33,6 +33,12 @@ public class UIInputField : UIText
     {
         base.SetPositionType(positionType);
         Button.SetPositionType(positionType);
+    }
+
+    public UIInputField SetOnTextChange(SerializableEvent onTextChange)
+    {
+        OnTextChange = onTextChange;
+        return this;
     }
 
 

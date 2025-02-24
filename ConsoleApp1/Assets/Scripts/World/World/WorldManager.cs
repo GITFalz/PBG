@@ -2,6 +2,7 @@
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using ErrorCode = OpenTK.Graphics.OpenGL4.ErrorCode;
 
 public class WorldManager : ScriptingNode
 {
@@ -25,7 +26,10 @@ public class WorldManager : ScriptingNode
     
     
     private ShaderProgram _shaderProgram;
+    private ShaderProgram _testShader;
     private Texture _textureArray;
+
+    private ChunkMesh _chunkMesh;
     
     public WorldManager()
     {
@@ -44,6 +48,11 @@ public class WorldManager : ScriptingNode
         regionData.SaveChunk(new Vector3i(1, 1, 0), new ChunkData(new Vector3i(1, 1, 0)));
         
         _shaderProgram = new ShaderProgram("World/Default.vert", "World/Default.frag");
+        _testShader = new ShaderProgram("World/Test.vert", "World/Test.frag");
+
+        _chunkMesh = new ChunkMesh();
+        _chunkMesh.Init();
+        _chunkMesh.GenerateBuffers();
     }
     
     public override void Awake()
@@ -79,6 +88,8 @@ public class WorldManager : ScriptingNode
                 chunk.Clear();
             }
         }
+
+        Timer.DisplayTime("Chunks");
     }
 
     public override void Render()

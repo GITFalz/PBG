@@ -64,7 +64,7 @@ public class PlayerStateMachine : ScriptingNode
     {
         new OldAnimationManager();
 
-        Game.camera = new Camera(Game.width, Game.height, new Vector3(0, 20, 0));
+        Game.camera = new Camera(Game.Width, Game.Height, new Vector3(0, 20, 0));
         
         _lastCameraPitch = Game.camera.pitch;
         _lastCameraYaw = Game.camera.yaw;
@@ -129,15 +129,14 @@ public class PlayerStateMachine : ScriptingNode
         //UI
         InfoMenu = new UIController();
 
-        fpsText = new("FpsTest", AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), null);
-        fpsText.MaxCharCount = 9;
-        fpsText.SetText("Fps: 9999", 0.5f);
+        TextMesh textMesh = InfoMenu.textMesh;
+
+        fpsText = new("FpsTest", AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), textMesh);
+        fpsText.SetMaxCharCount(9).SetText("Fps: 9999", 0.5f);
 
         InfoMenu.AddElement(fpsText);
 
         InfoMenu.GenerateBuffers();
-        
-        Console.WriteLine("Player State Machine");
     }
 
     public override void Resize()
@@ -147,8 +146,6 @@ public class PlayerStateMachine : ScriptingNode
 
     public override void Awake()
     {
-        Console.WriteLine("Player State Machine");
-
         Camera camera = Game.camera;
         
         if (WorldManager.Instance != null)
@@ -169,14 +166,16 @@ public class PlayerStateMachine : ScriptingNode
 
     public override void Update()
     {
+        InfoMenu.Test();
+
         if (Game.Instance.FpsUpdate())
         {
             Console.WriteLine("Fps: " + GameTime.Fps);
             fpsText.SetText($"Fps: {GameTime.Fps}", 0.5f).GenerateChars().UpdateText();
         }
-        InfoMenu.Test();
 
         Camera camera = Game.camera;
+        return;
 
         camera.Center = Transform.Position + new Vector3(0, 1.8f, 0);
 
@@ -200,6 +199,7 @@ public class PlayerStateMachine : ScriptingNode
     
     public override void FixedUpdate()
     {
+        return;
         if (!Game.MoveTest)
             return;
         

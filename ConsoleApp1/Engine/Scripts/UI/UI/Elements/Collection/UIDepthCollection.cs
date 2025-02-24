@@ -1,8 +1,8 @@
 using OpenTK.Mathematics;
 
-public class UICollectionDepthStacking : UICollection
+public class UIDepthCollection : UICollection
 {
-    public UICollectionDepthStacking(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation) : base(name, anchorType, positionType, pivot, scale, offset, rotation)
+    public UIDepthCollection(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation) : base(name, anchorType, positionType, pivot, scale, offset, rotation)
     {
     }
 
@@ -10,7 +10,6 @@ public class UICollectionDepthStacking : UICollection
     {
         OnAlign?.Invoke();
         base.Align();
-        OnAlign = null;
     }
 
     protected override void Init()
@@ -20,5 +19,7 @@ public class UICollectionDepthStacking : UICollection
             UIElement element = Elements[i];
             element.Depth = i * 0.5f;
         }
+
+        OnAlign = null;
     }
 }
