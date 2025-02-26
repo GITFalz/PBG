@@ -1,5 +1,4 @@
-﻿using ConsoleApp1.Assets.Scripts.World.Blocks;
-using OpenTK.Mathematics;
+﻿using OpenTK.Mathematics;
 
 public static class VoxelData
 {
@@ -21,8 +20,15 @@ public static class VoxelData
         { -32, 1, 1024, -1, -1024, 32 },
         { -16, 1, 256, -1, -256, 16 },
     };
+
+    private const int ocmask = 0b100000001;
     
-    public static readonly byte[] ShiftPosition = { 1, 2, 4, 8, 16, 32 };
+    public static readonly byte[] OcclusionShift = [16, 17, 18, 19, 20, 21];
+    public static readonly byte[] CheckShift = [22, 23, 24, 25, 26, 27];
+
+    public static readonly int[] OcclusionMask = [1 << 16, 1 << 17, 1 << 18, 1 << 19, 1 << 20, 1 << 21];
+    public static readonly int[] CheckMask = [1 << 22, 1 << 23, 1 << 24, 1 << 25, 1 << 26, 1 << 27];
+    public static readonly int[] OcclusionCheckMask = [ocmask << 16, ocmask << 17, ocmask << 18, ocmask << 19, ocmask << 20, ocmask << 21];
 
     public static bool InBounds(int x, int y, int z, int side, int size)
     {

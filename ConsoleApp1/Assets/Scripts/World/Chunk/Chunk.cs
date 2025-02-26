@@ -1,12 +1,13 @@
-using ConsoleApp1.Assets.Scripts.World.Blocks;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
-using ConsoleApp1.Engine.Scripts.Core.Data;
 
 public class Chunk
 {
     public const int WIDTH = 32;
     public const int HEIGHT = 32;
     public const int DEPTH = 32;
+
+    public static ComputeShader GreedyMesher = new("Chunk/GreedyMesh.compute");
     
     public static Vector2[] spline = 
     [
@@ -94,7 +95,7 @@ public class Chunk
         return NoiseLib.Noise(4, ((float)position.X + 0.001f) / 100, ((float)position.Z + 0.001f) / 100);
     }
 
-    public static void GenerateOcclusion(Block?[] blocks, int width = WIDTH, int lod = 0)
+    public static void GenerateOcclusion(ChunkData chunkData, Block?[] blocks, int width = WIDTH, int lod = 0)
     {
         int index = 0;
         for (int y = 0; y < width; y++)
@@ -106,16 +107,14 @@ public class Chunk
                     Block? block = blocks[index];
                     
                     if (block != null)
-                    {
-                        byte occlusion = 0;
-                            
+                    { 
                         for (int i = 0; i < 6; i++)
                         {
                             if (VoxelData.InBounds(x, y, z, i, width) && blocks[index + VoxelData.IndexOffsetLod[lod, i]] != null)
-                                occlusion |= VoxelData.ShiftPosition[i];
+                                block.blockData |= 1 << VoxelData.OcclusionShift[i];
+                            else
+                                chunkData.maxFaceCount++;
                         }
-                            
-                        block.occlusion = occlusion;
                     }
                         
                     index++;
@@ -124,7 +123,7 @@ public class Chunk
         }
     }
     
-    public static void GenerateMesh(Block?[] blocks, ChunkData chunkData)
+    public static void GenerateMesh(Block?[] blocks, List<int> blockIds, ChunkData chunkData)
     {
         int index = 0;
         
@@ -139,45 +138,41 @@ public class Chunk
                     if (block != null)
                     {
                         int[] ids;
+                        int blockId = block.blockData & 15;
                         try
                         {
-                            ids = BlockManager.GetBlock(block.blockData).GetUVs();
+                            ids = BlockManager.GetBlock(blockId).GetUVs();
                         }
-                        catch (NullReferenceException e)
+                        catch (Exception)
                         {
                             return;
                         }
                         
                         for (int side = 0; side < 6; side++)
                         {
-                            if (((block.check >> side) & 1) == 0 && ((block.occlusion >> side) & 1) == 0)
+                            if ((block.blockData & VoxelData.CheckMask[side]) == 0 && (block.blockData & VoxelData.OcclusionMask[side]) == 0)
                             {
-                                block.check |= (byte)(1 << side);
-                                
-                                for (int tris = 0; tris < 6; tris++)
-                                {
-                                    chunkData.meshData.tris.Add(VoxelData.TrisIndexTable[tris] + (uint)chunkData.meshData.verts.Count);
-                                }
-                                
+                                byte sideShift = (byte)(1 << side);
+                                bool quit = false;
                                 int i = index;
                                 int loop = VoxelData.FirstLoopBase[side](y, z);
                                 int height = 1;
                                 int width = 1;
+                                uint count = (uint)chunkData.meshData.verts.Count;
+
+                                chunkData.meshData.tris.AddRange(count, count + 1, count + 2, count + 2, count + 3, count);
+                                block.blockData |= VoxelData.CheckMask[side];
+
                                 while (loop > 0)
                                 {
                                     i += VoxelData.FirstOffsetBase[side];
                                     
                                     Block? blockI = blocks[i];
                                     
-                                    if (blockI == null)
+                                    if (blockI == null || (blockI.blockData & VoxelData.OcclusionCheckMask[side]) != 0 || (blockI.blockData & 15) != blockId)
                                         break;
 
-                                    if (((blockI.check >> side) & 1) != 0 ||
-                                        ((blockI.occlusion >> side) & 1) != 0 ||
-                                        blockI.blockData != block.blockData)
-                                        break;
-
-                                    blockI.check |= (byte)(1 << side);
+                                    blockI.blockData |= VoxelData.CheckMask[side];
 
                                     height++;
                                     loop--;
@@ -185,8 +180,8 @@ public class Chunk
 
                                 i = index;
                                 loop = VoxelData.SecondLoopBase[side](x, z);
-                                
-                                bool quit = false;
+
+                                Block[] upBlocks = new Block[height];
                                 
                                 while (loop > 0)
                                 {
@@ -197,36 +192,20 @@ public class Chunk
                                     {
                                         Block? upBlock = blocks[up];
                                         
-                                        if (upBlock == null)
-                                        {
-                                            quit = true;
-                                            break;
-                                        }
-
-                                        if (((upBlock.check >> side) & 1) != 0 ||
-                                            ((upBlock.occlusion >> side) & 1) != 0 ||
-                                            upBlock.blockData != block.blockData)
+                                        if (upBlock == null || (upBlock.blockData & VoxelData.OcclusionCheckMask[side]) != 0 || (upBlock.blockData & 15) != blockId)
                                         {
                                             quit = true;
                                             break;
                                         }
                                         
+                                        upBlocks[j] = upBlock;
                                         up += VoxelData.FirstOffsetBase[side];
                                     }
                                     
                                     if (quit) break;
-                                    
-                                    up = i;
-                                    
-                                    for (int j = 0; j < height; j++) {
-                                        
-                                        Block? upBlock = blocks[up];
-                                        
-                                        if (upBlock == null)
-                                            continue;
-                                        
-                                        upBlock.check |= (byte)(1 << side);
-                                        up += VoxelData.FirstOffsetBase[side];
+                                    foreach (Block upBlock in upBlocks)
+                                    {
+                                        upBlock.blockData |= VoxelData.CheckMask[side];
                                     }
 
                                     width++;
@@ -234,24 +213,15 @@ public class Chunk
                                 }
 
                                 Vector3[] positions = VoxelData.PositionOffset[side](width, height);
-                                Vector3 position = new Vector3(x, y, z) + chunkData.position;
+                                Vector3 position = (x, y, z);
 
                                 int id = ids[side];
                                 
-                                chunkData.meshData.uvs.Add(new Vector2(width, height));
-                                chunkData.meshData.uvs.Add(new Vector2(width, 0));
-                                chunkData.meshData.uvs.Add(new Vector2(0, 0));
-                                chunkData.meshData.uvs.Add(new Vector2(0, height));
-                                
-                                chunkData.meshData.tCoords.Add(id);
-                                chunkData.meshData.tCoords.Add(id);
-                                chunkData.meshData.tCoords.Add(id);
-                                chunkData.meshData.tCoords.Add(id);
-                                
-                                chunkData.meshData.verts.Add(position + positions[0]);
-                                chunkData.meshData.verts.Add(position + positions[1]);
-                                chunkData.meshData.verts.Add(position + positions[2]);
-                                chunkData.meshData.verts.Add(position + positions[3]);
+                                chunkData.meshData.uvs.AddRange((width, height), (width, 0), (0, 0), (0, height));
+                                chunkData.meshData.tCoords.AddRange(id, id, id, id);
+                                chunkData.meshData.verts.AddRange(position + positions[0], position + positions[1], position + positions[2], position + positions[3]);
+
+                                chunkData.meshData.Enable.Invoke();
                             }
                         }
                     }
@@ -338,9 +308,10 @@ public class Chunk
 
     private static Block? GetBlockAtHeight(float terrainHeight, int currentHeight)
     {
-        //if (terrainHeight > currentHeight + 2)
-            //return new Block(2, 0);
-        
-        return new Block(1, 0);
+        if (terrainHeight > currentHeight + 3)
+            return new Block(2, 0);
+        if (terrainHeight > currentHeight + 1)
+            return new Block(1, 0);
+        return new Block(0, 0);
     }
 }

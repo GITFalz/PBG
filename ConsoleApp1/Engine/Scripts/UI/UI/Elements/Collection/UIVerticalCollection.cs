@@ -26,7 +26,6 @@ public class UIVerticalCollection : UICollection
             UIElement element = Elements[i];
             element.SetPositionType(PositionType.Relative);
             element.SetOffset((Border.X, totalOffset, 0, 0));
-            Console.WriteLine($"{element.Name} - {element.Offset}");
             totalOffset += element.Scale.Y + Spacing;
         }
 

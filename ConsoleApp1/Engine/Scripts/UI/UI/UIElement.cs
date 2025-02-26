@@ -142,9 +142,6 @@ public abstract class UIElement
 
             totalOffset = Offset + ParentElement.totalOffset;
             Origin = GetTransformedOrigin() + new Vector3(0, 0, 0.01f) + (new Vector3(0f, 0f, 0.01f) * Depth) + ParentElement.Origin;
-
-            if (Name.StartsWith("Text"))
-                Console.WriteLine($"{Name} - {totalOffset} - {ParentElement.totalOffset} - {ParentElement.Origin} - {Origin}");
         }
         else
         {

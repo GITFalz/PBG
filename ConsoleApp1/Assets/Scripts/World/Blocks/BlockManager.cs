@@ -1,5 +1,3 @@
-namespace ConsoleApp1.Assets.Scripts.World.Blocks;
-
 public class BlockManager
 {
     public static Dictionary<int, CWorldBlock> Blocks = new Dictionary<int, CWorldBlock>();

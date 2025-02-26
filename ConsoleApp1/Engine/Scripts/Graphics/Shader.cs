@@ -1,3 +1,5 @@
+using OpenTK.Graphics.OpenGL4;
+
 public static class Shader
 {
     public static string LoadShaderSource(string filePath)
@@ -17,5 +19,14 @@ public static class Shader
         }
 
         return shaderSource;
+    }
+
+    public static void Error(string context)
+    {
+        ErrorCode error = GL.GetError();
+        if (error != ErrorCode.NoError)
+        {
+            Console.WriteLine($"OpenGL Error: {context} - {error}");
+        }
     }
 }

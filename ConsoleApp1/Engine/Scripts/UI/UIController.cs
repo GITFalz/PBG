@@ -4,6 +4,8 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class UIController
 {
+    private static List<UIController> _uiControllers = new List<UIController>();
+
     public UIMesh uIMesh = new();
     public TextMesh textMesh = new();
 
@@ -27,15 +29,7 @@ public class UIController
     public bool render = true;
     public static int TextOffset = 0;
 
-    public UIController() {}
-
-    public UIController(params UIElement[] elements)
-    {
-        foreach (var element in elements)
-        {
-            AddElement(element);
-        }
-    }
+    public UIController() { _uiControllers.Add(this); }
 
     public void AddElement(UIElement element, MeshType type = MeshType.UnMasked, bool test = false)
     {
@@ -303,6 +297,14 @@ public class UIController
         AbsoluteElements.Clear();
         Buttons.Clear();
         InputFields.Clear();
+    }
+
+    public static void ClearAll()
+    {
+        foreach (var controller in _uiControllers)
+        {
+            controller.Clear();
+        }
     }
 
     public void OnResize()

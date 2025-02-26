@@ -1,22 +1,26 @@
-﻿using System.Diagnostics;
-using System.IO.Compression;
-using ConsoleApp1.Assets.Scripts.World.Blocks;
-using OpenTK.Graphics.OpenGL4;
+﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using Vortice.Mathematics;
 
 public class ChunkData
 {
-    public Vector3i position;
-    public BlockStorage blockStorage;
-    public MeshData meshData;
-    public ChunkData[] sideChunks;
-    public Bounds bounds;
+    public Vector3i position = (0, 0, 0);
+    public BlockStorage blockStorage = new(new Vector3i(0, 0, 0));
+    public MeshData meshData = new();
+    public int maxFaceCount = 0;
+    public ChunkData[] sideChunks = [];
+    public BoundingBox boundingBox = new(new System.Numerics.Vector3(0, 0, 0), new System.Numerics.Vector3(0, 0, 0));
     
-    public VAO chunkVao;
-    public VBO vertVBO;
-    public VBO uvVBO;
-    public VBO textureIndexVBO;
-    public IBO chunkIbo;
+    public VAO chunkVao = new VAO();
+    public VBO vertVBO = new VBO([0, 0, 0]);
+    public VBO uvVBO = new VBO([(0, 0)]);
+    public VBO textureIndexVBO = new VBO([0]);
+    public IBO chunkIbo = new IBO([]);
+
+    public List<Vector3> Wireframe = [];
+
+    private VAO _edgeVao = new VAO();
+    private VBO _edgeVbo = new VBO([(0, 0, 0)]);
 
     public bool Save = true;
     public bool isEmpty = true;
@@ -24,18 +28,54 @@ public class ChunkData
     
     private string filePath;
 
-    public ChunkData(Vector3i position)
+    public Action Render = () => { };
+    public Action CreateChunk = () => { };
+
+    public ChunkData(RenderType renderType, Vector3i position)
     {
         this.position = position;
 
         blockStorage = new BlockStorage(position);
         
-        Vector3 min = new Vector3(position.X, position.Y, position.Z);
-        Vector3 max = min + new Vector3(Chunk.WIDTH, Chunk.HEIGHT, Chunk.DEPTH);
+        System.Numerics.Vector3 min = new System.Numerics.Vector3(position.X, position.Y, position.Z);
+        System.Numerics.Vector3 max = min + new System.Numerics.Vector3(Chunk.WIDTH, Chunk.HEIGHT, Chunk.DEPTH);
         
-        bounds = new Bounds(min, max);
+        boundingBox = new BoundingBox(min, max);
         
         filePath = Path.Combine(Game.chunkPath, $"Chunk_{position.X}_{position.Y}_{position.Z}");
+
+        Render = renderType == RenderType.Solid ? RenderChunk : RenderWireframe;
+        CreateChunk = renderType == RenderType.Solid ? CreateChunkSolid : CreateChunkWireframe;
+    }
+
+    public bool IsDisabled()
+    {
+        return meshData.IsDisabled;
+    }
+
+    public void SetDisabled(bool isDisabled)
+    {
+        meshData.IsDisabled = isDisabled;
+    }
+
+    public void SetRenderType(RenderType type)
+    {
+        if (type == RenderType.Solid)
+        {
+            Wireframe.Clear();
+            Render = RenderChunk;
+            CreateChunk = CreateChunkSolid;
+        }
+        else if (type == RenderType.Wireframe)
+        {
+            Wireframe = meshData.GetWireFrame();
+
+            _edgeVbo = new VBO(Wireframe);
+            _edgeVao.LinkToVAO(0, 3, _edgeVbo);
+
+            Render = RenderWireframe;
+            CreateChunk = CreateChunkWireframe;
+        }
     }
 
     public void Clear()
@@ -56,7 +96,7 @@ public class ChunkData
         blockStorage.Clear();
     }
     
-    public void CreateChunk()
+    public void CreateChunkSolid()
     {
         chunkVao = new VAO();
 
@@ -70,16 +110,36 @@ public class ChunkData
         
         chunkIbo = new IBO(meshData.tris);
     }
+
+    public void CreateChunkWireframe()
+    {
+        Wireframe = meshData.GetWireFrame();
+
+        _edgeVao = new VAO();
+        _edgeVbo = new VBO(Wireframe);
+        
+        _edgeVao.LinkToVAO(0, 3, _edgeVbo);
+    }
     
     public void RenderChunk()
     {
         chunkVao.Bind();
         chunkIbo.Bind();
-        
+
         GL.DrawElements(PrimitiveType.Triangles, meshData.tris.Count, DrawElementsType.UnsignedInt, 0);
         
         chunkIbo.Unbind();
         chunkVao.Unbind();
+    }
+
+    public void RenderWireframe()
+    {
+        _edgeVao.Bind();
+
+        GL.LineWidth(2.0f);
+        GL.DrawArrays(PrimitiveType.Lines, 0, Wireframe.Count);
+
+        _edgeVao.Unbind();
     }
 
     public void StoreData()
@@ -223,7 +283,7 @@ public class BlockStorage
         BlockCount[arrayIndex]++;
     }
     
-    public Block? GetBlock(int x, int y, int z)
+    public Block? GetBlockNull(int x, int y, int z)
     {
         int modX = x & 15;
         int modY = y & 15;
@@ -238,17 +298,20 @@ public class BlockStorage
         
         Block?[]? blocks = arrayIndex >= Blocks.Count ? null : Blocks[arrayIndex];
         
-        //Console.WriteLine((BlockCount[arrayIndex] == 0) + " " + (blocks == null));
-        
         if (BlockCount[arrayIndex] == 0 || blocks == null)
             return null;
         
         return blocks[blockIndex];
     }
+
+    public Block GetBlock(int x, int y, int z)
+    {
+        return GetBlockNull(x, y, z) ?? new Block(-1, 0);
+    }
     
     public Block? GetBlock(Vector3i position)
     {
-        return GetBlock(position.X, position.Y, position.Z);
+        return GetBlockNull(position.X, position.Y, position.Z);
     }
 
     public Block?[] GetFullBlockArray()
@@ -262,7 +325,7 @@ public class BlockStorage
             {
                 for (int x = 0; x < 32; x++)
                 {
-                    blocks[index] = GetBlock(x, y, z);
+                    blocks[index] = GetBlockNull(x, y, z);
                     index++;
                 }
             }
@@ -286,4 +349,10 @@ public struct Bounds
         Min = min;
         Max = max;
     }
+}
+
+public enum RenderType
+{
+    Solid,
+    Wireframe
 }

@@ -37,9 +37,6 @@ public class PlayerStateMachine : ScriptingNode
     
     // Animation
     private OldAnimationMesh _playerMesh;
-    private OldAnimationMesh _swordMesh;
-    
-    private OldAnimationMesh _testMesh;
     
     private ShaderProgram _shaderProgram;
     public PhysicsBody physicsBody;
@@ -56,9 +53,6 @@ public class PlayerStateMachine : ScriptingNode
     private Vector3 _lastCameraPosition;
     private float _lastCameraYaw;
     private float _lastCameraPitch;
-
-    public UIController InfoMenu;
-    public UIText fpsText;
     
     public override void Start()
     {
@@ -82,66 +76,24 @@ public class PlayerStateMachine : ScriptingNode
         
         //Mesh
         _mesh = new EntityMesh();
-        VoxelData.GetEntityBoxMesh(_mesh, new Vector3(1, 2, 1), new Vector3(0, 0, 0), 0);
+        VoxelData.GetEntityBoxMesh(_mesh, new Vector3(0.7f, 1.8f, 0.7f), new Vector3(0, 0, 0), 0);
         _mesh.GenerateBuffers();
-        
-        _swordMesh = new OldAnimationMesh();
-        VoxelData.GenerateStandardMeshBox(_swordMesh,
-            new Vector3(0.3f, 0.2f, 0.2f), 
-            new Vector3(0, 0, 0), 
-            new Vector3(0, 0, 0), 
-            0
-        );
-        VoxelData.GenerateStandardMeshBox(_swordMesh, 
-            new Vector3(0.8f, 2f, 0.2f), 
-            new Vector3(-0.3f, 0.3f, 0), 
-            new Vector3(0, 0, 0), 
-            0
-        );
         
         _playerMesh = new OldAnimationMesh();
         VoxelData.GenerateStandardMeshBox(_playerMesh, 
-            new Vector3(1, 2, 1), 
+            new Vector3(0.7f, 1.8f, 0.7f), 
             new Vector3(-0.5f, 0, -0.5f), 
             new Vector3(0, 0, 0), 
             1
         );
-        
-        _testMesh = new OldAnimationMesh();
-        VoxelData.GenerateStandardMeshBox(_testMesh, 
-            new Vector3(1, 2, 1), 
-            new Vector3(-0.5f, 0, -0.5f), 
-            new Vector3(0, 0, 0), 
-            1
-        );
-        
-        _testMesh.WorldPosition = new Vector3(0, 60, 0);
-        
-        _testMesh.GenerateBuffers();
-        _testMesh.UpdateMesh();
-        
-        _swordMesh.GenerateBuffers();
-        _swordMesh.UpdateMesh();
         
         _playerMesh.GenerateBuffers();
         _playerMesh.UpdateMesh();
-
-        //UI
-        InfoMenu = new UIController();
-
-        TextMesh textMesh = InfoMenu.textMesh;
-
-        fpsText = new("FpsTest", AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), textMesh);
-        fpsText.SetMaxCharCount(9).SetText("Fps: 9999", 0.5f);
-
-        InfoMenu.AddElement(fpsText);
-
-        InfoMenu.GenerateBuffers();
     }
 
     public override void Resize()
     {
-        InfoMenu.OnResize();
+        
     }
 
     public override void Awake()
@@ -150,7 +102,7 @@ public class PlayerStateMachine : ScriptingNode
         
         if (WorldManager.Instance != null)
             WorldManager.Instance.camera = camera;
-        
+
         camera.SetCameraMode(CameraMode.Free);
         
         camera.Position = _lastCameraPosition;
@@ -160,27 +112,13 @@ public class PlayerStateMachine : ScriptingNode
         camera.UpdateVectors();
         
         base.Awake();
-
-        camera.SetCameraMode(CameraMode.Free);
     }
 
     public override void Update()
     {
-        InfoMenu.Test();
-
-        if (Game.Instance.FpsUpdate())
-        {
-            Console.WriteLine("Fps: " + GameTime.Fps);
-            fpsText.SetText($"Fps: {GameTime.Fps}", 0.5f).GenerateChars().UpdateText();
-        }
-
         Camera camera = Game.camera;
-        return;
 
         camera.Center = Transform.Position + new Vector3(0, 1.8f, 0);
-
-        if (Game.MoveTest)
-            camera.Update();
         
         Vector2 input = Input.GetMovementInput();
         
@@ -191,6 +129,9 @@ public class PlayerStateMachine : ScriptingNode
         
         if (!Game.MoveTest)
             return;
+
+        if (Game.MoveTest)
+            camera.Update();
         
         _currentState.Update(this);
 
@@ -199,7 +140,6 @@ public class PlayerStateMachine : ScriptingNode
     
     public override void FixedUpdate()
     {
-        return;
         if (!Game.MoveTest)
             return;
         
@@ -226,16 +166,13 @@ public class PlayerStateMachine : ScriptingNode
         GL.UniformMatrix4(modelLocation, true, ref model);
         GL.UniformMatrix4(viewLocation, true, ref view);
         GL.UniformMatrix4(projectionLocation, true, ref projection);
-        
-        _swordMesh.RenderMesh();
+
         _playerMesh.RenderMesh();
         
         _shaderProgram.Unbind();
 
         GL.Disable(EnableCap.DepthTest);
         GL.Disable(EnableCap.CullFace);
-
-        InfoMenu.Render();
     }
 
     public override void Exit()

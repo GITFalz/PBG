@@ -21,7 +21,7 @@ public class UIMesh
     private VBO _transformationVbo = new VBO(new List<int>());
     private VBO _sliceVbo = new VBO(new List<Vector2>());
     private VBO _colorVbo = new VBO(new List<Vector3>());
-    private SSBO _transformationSsbo = new SSBO([]);
+    private SSBO _transformationSsbo = new SSBO(new List<Matrix4>{});
     public int ElementCount = 0;
 
     public void AddElement(UIPanel element, ref int uiIndex)

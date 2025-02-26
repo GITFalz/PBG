@@ -79,8 +79,6 @@ public class PhysicsBody : ScriptingNode
     
     public override void FixedUpdate()
     {
-        return;
-        
         if (!Game.MoveTest)
             return;
         

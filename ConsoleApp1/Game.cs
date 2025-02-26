@@ -1,8 +1,5 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Drawing;
-using ConsoleApp1.Assets.Scripts.Inputs;
-using ConsoleApp1.Assets.Scripts.World.Blocks;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -73,6 +70,8 @@ public class Game : GameWindow
         Instance = this;
 
         camera = new Camera(width, height, new Vector3(0, 0, 0));
+
+        _ = new Info();
         
         CenterWindow(new Vector2i(width, height));
         Game.Width = width;
@@ -95,7 +94,6 @@ public class Game : GameWindow
         try
         {
             UIController.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, e.Width, e.Height, 0, -2, 2);
-            ModelSettings.Camera?.UpdateProjectionMatrix(e.Width, e.Height);
         }
         catch (Exception ex)
         {
@@ -138,49 +136,77 @@ public class Game : GameWindow
         KeyboardState keyboard = KeyboardState;
         
         Input.Start(keyboard, mouse);
-
         
         // Blocks
-        UVmaps editorUvs = new UVmaps( new int[] { 0, 0, 0, 0, 0, 0 });
+        //CWorldBlock editor = new CWorldBlock("editor_block", 1, 1, new([0, 0, 0, 0, 0, 0]));
+
+        //BlockManager.Add(editor);
         
-        //UVmaps grassUvs = new UVmaps( new int[] { 0, 0, 1, 0, 2, 0 });
-        //UVmaps dirtUvs = new UVmaps( new int[] { 2, 2, 2, 2, 2, 2 });
-        //UVmaps stoneUvs = new UVmaps( new int[] { 3, 3, 3, 3, 3, 3 });
-    
+        CWorldBlock grass = new("grass_block", 0, 1, new([ 0, 0, 1, 0, 2, 0]));
+        CWorldBlock dirt = new("dirt_block", 1, 2, new([2, 2, 2, 2, 2, 2]));
+        CWorldBlock stone = new("stone_block", 2, 3, new([3, 3, 3, 3, 3, 3]));
         
-        CWorldBlock editor = new CWorldBlock("editor_block", 1, 1, editorUvs);
-        
-        //CWorldBlock grass = new CWorldBlock("grass_block", 0, 1, grassUvs);
-        //CWorldBlock dirt = new CWorldBlock("dirt_block", 1, 2, dirtUvs);
-        //CWorldBlock stone = new CWorldBlock("stone_block", 2, 3, stoneUvs);
-        
-        BlockManager.Add(editor);
-        
-        //BlockManager.Add(grass);
-        //BlockManager.Add(dirt);
-        //BlockManager.Add(stone);
-        
+        BlockManager.Add(grass);
+        BlockManager.Add(dirt);
+        BlockManager.Add(stone);
         
         // World
         TransformNode worldGenerationNode = new TransformNode();
-        worldGenerationNode.AddChild(new WorldManager());
+        worldGenerationNode.AddChild(new WorldManager().AddBlocks(grass, dirt, stone));
 
         TransformNode playerNode = new TransformNode();
         playerNode.AddChild(new PhysicsBody(false), new PlayerStateMachine());
 
         _worldScene.AddNode(worldGenerationNode, playerNode);
-        
+
         AddScenes(_worldScene);
         LoadScene("World");
 
         _popUp = new PopUp();
-    
+
         _physicsThread = new Thread(PhysicsThread);
         _physicsThread.Start();
-        
+
         GL.Enable(EnableCap.DepthTest);
+
+        SSBOTest();
         
         base.OnLoad();
+    }
+
+    public void SSBOTest()
+    {
+        List<int> initialData = new List<int> { 1, 2, 3, 4, 5 };
+
+        // Create SSBO and initialize with data
+        SSBO testSSBO = new SSBO(initialData);
+        Console.WriteLine("SSBO ID: " + testSSBO.ID);
+
+        // Bind SSBO to a binding point
+        int bindingPoint = 0;
+        testSSBO.Bind(bindingPoint);
+        Console.WriteLine("Bind SSBO to binding point " + bindingPoint);
+
+        // Read the data back to verify
+        int[] values = testSSBO.ReadData(initialData.Count);
+        Console.WriteLine("Read data");
+        string output = "Values: " + string.Join(", ", values);
+        Console.WriteLine(output);
+
+        // Update the SSBO with new data
+        List<int> newData = new List<int> { 10, 20, 30, 40, 50 };
+        testSSBO.Update(newData, bindingPoint);
+        Console.WriteLine("Updated SSBO with new data");
+
+        // Read the updated data back to verify
+        values = testSSBO.ReadData(newData.Count);
+        Console.WriteLine("Read updated data");
+        output = "Updated Values: " + string.Join(", ", values);
+        Console.WriteLine(output);
+
+        // Delete the SSBO
+        testSSBO.Delete();
+        Console.WriteLine("Deleted SSBO");
     }
     
     protected override void OnKeyDown(KeyboardKeyEventArgs e)
@@ -199,6 +225,11 @@ public class Game : GameWindow
                 camera.Update();
                 UpdateCamera = () => { camera.Update(); };
             };
+        }
+
+        if (e.Key == Keys.P)
+        {
+            camera.SetCameraMode(camera.GetCameraMode() == CameraMode.Follow ? CameraMode.Free : CameraMode.Follow);
         }
     }
 
@@ -230,13 +261,33 @@ public class Game : GameWindow
         
         CurrentScene?.OnExit();
         Timer.Stop();
+        UIController.ClearAll();
         
         base.OnUnload();
+    }
+
+    protected override void OnUpdateFrame(FrameEventArgs args)
+    {
+        Timer.Update();
+        MouseState mouse = MouseState;
+        KeyboardState keyboard = KeyboardState;
+        
+        Input.Update(keyboard, mouse);
+        GameTime.Update(args);
+
+        if (FpsUpdate())
+            Info.FpsText.SetText($"Fps: {GameTime.Fps}", 0.5f).GenerateChars().UpdateText();
+
+        _popUp.Update();
+        
+        UpdateCamera.Invoke();
+        CurrentScene?.OnUpdate();
+
+        base.OnUpdateFrame(args);
     }
     
     protected override void OnRenderFrame(FrameEventArgs args)
     {
-        // Sky blue background
         GL.ClearColor(BackgroundColor.X, BackgroundColor.Y, BackgroundColor.Z, 1.0f);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         
@@ -249,6 +300,7 @@ public class Game : GameWindow
         CurrentScene?.OnRender();
         _popUp.Render();
         Timer.Render();
+        Info.Render();
         
         Context.SwapBuffers();
         
@@ -281,24 +333,6 @@ public class Game : GameWindow
             
             Thread.Sleep(1);
         }
-    }
-    
-    protected override void OnUpdateFrame(FrameEventArgs args)
-    {
-        Timer.Update();
-        MouseState mouse = MouseState;
-        KeyboardState keyboard = KeyboardState;
-        
-        Input.Update(keyboard, mouse);
-        GameTime.Update(args);
-
-        _popUp.Update();
-        
-        UpdateCamera.Invoke();
-        CurrentScene?.OnUpdate();
-
-        Timer.DisplayTime("Total");
-        base.OnUpdateFrame(args);
     }
 
     public bool FpsUpdate()

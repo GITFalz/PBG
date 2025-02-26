@@ -2,81 +2,67 @@
 
 public class MeshData
 {
-    public List<Vector3> verts;
-    public List<uint> tris;
-    public List<Vector2> uvs;
-    public List<int> tCoords;
+    public List<Vector3> verts = [];
+    public List<uint> tris = [];
+    public List<Vector2> uvs = [];
+    public List<int> tCoords = [];
+    public bool IsDisabled = true;
+
+    public Action Enable = () => { };
+    public Action Disable = () => { };
 
     public MeshData()
     {
-        verts = new List<Vector3>();
-        tris = new List<uint>();
-        uvs = new List<Vector2>();
-        tCoords = new List<int>();
+        Enable = OnEnable;
     }
 
-    public bool MoveQuad(int index, Vector3 position)
+    public List<Vector3> GetWireFrame()
     {
-        int vertIndex = index * 4;
-        
-        if (vertIndex < 0 || vertIndex > verts.Count)
-            return false;
-        
-        verts[vertIndex + 0] += position;
-        verts[vertIndex + 1] += position;
-        verts[vertIndex + 2] += position;
-        verts[vertIndex + 3] += position;
+        List<Vector3> wireFrame = [];
+        HashSet<(Vector3, Vector3)> dupe = [];
 
-        return true;
-    }
-    
-    public bool MoveQuadToXy(int index, Vector2 position)
-    {
-        int vertIndex = index * 4;
-        
-        if (vertIndex < 0 || vertIndex > verts.Count)
-            return false;
-        
-        Console.WriteLine(position);
-        
-        verts[vertIndex + 0] = new Vector3(position.X, position.Y, verts[vertIndex + 0].Z);
-        verts[vertIndex + 1] = new Vector3(position.X, position.Y, verts[vertIndex + 1].Z);
-        verts[vertIndex + 2] = new Vector3(position.X, position.Y, verts[vertIndex + 2].Z);
-        verts[vertIndex + 3] = new Vector3(position.X, position.Y, verts[vertIndex + 3].Z);
+        Console.WriteLine("Vertex: " + verts.Count);
+        Console.WriteLine("Tris: " + tris.Count);
 
-        return true;
+        for (int i = 0; i < tris.Count; i += 3)
+        {
+            int i0 = (int)tris[i];
+            int i1 = (int)tris[i+1];
+            int i2 = (int)tris[i+2];
+
+            Vector3 v0 = verts[i0];
+            Vector3 v1 = verts[i1];
+            Vector3 v2 = verts[i2]; 
+
+            (Vector3, Vector3) edge0 = Sup(v0, v1) ? (v0, v1) : (v1, v0);
+            (Vector3, Vector3) edge1 = Sup(v1, v2) ? (v1, v2) : (v2, v1);
+            (Vector3, Vector3) edge2 = Sup(v2, v0) ? (v2, v0) : (v0, v2);
+
+            if (dupe.Add(edge0)) wireFrame.AddRange(edge0.Item1, edge0.Item2);
+            if (dupe.Add(edge1)) wireFrame.AddRange(edge1.Item1, edge1.Item2);
+            if (dupe.Add(edge2)) wireFrame.AddRange(edge2.Item1, edge2.Item2);
+        }
+
+        return wireFrame;
     }
 
-    public void RemoveQuadAtIndex(int i)
+    private void OnEnable()
     {
-        int vertIndex = i * 4;
-        int uvIndex = i * 4;
-
-        if (vertIndex < 0 || vertIndex > verts.Count)
-            return;
-
-        verts.RemoveAt(vertIndex);
-        verts.RemoveAt(vertIndex);
-        verts.RemoveAt(vertIndex);
-        verts.RemoveAt(vertIndex);
-
-        uvs.RemoveAt(uvIndex);
-        uvs.RemoveAt(uvIndex);
-        uvs.RemoveAt(uvIndex);
-        uvs.RemoveAt(uvIndex);
-        
-        for (int t = 0; t < 6; t++)
-            tris.RemoveAt(tris.Count - 1);
+        IsDisabled = false;
+        Disable = OnDisable;
+        Enable = () => { };
     }
 
-    public void RemoveLastQuad()
+    private void OnDisable()
     {
-        int index = verts.Count / 4 - 1;
-        
-        if (index < 0)
-            return;
-        
-        RemoveQuadAtIndex(index);
+        IsDisabled = true;
+        Enable = OnEnable;
+        Disable = () => { };
+    }
+
+    private static bool Sup(Vector3 a, Vector3 b)
+    {
+        return a.X > b.X && a.Y > b.Y && a.Z > b.Z;
     }
 
     public void Clear()
@@ -84,5 +70,6 @@ public class MeshData
         verts.Clear();
         tris.Clear();
         uvs.Clear();
+        tCoords.Clear();
     }
 }

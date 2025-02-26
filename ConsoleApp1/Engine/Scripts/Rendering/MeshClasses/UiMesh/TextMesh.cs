@@ -10,13 +10,14 @@ public class TextMesh
     public List<Matrix4> TransformationMatrices = [];  
     public List<Vector2i> TextUvs = [];
     public List<int> chars = [];
+    
     private VAO _vao = new VAO();
     private IBO _ibo = new IBO([]);
     private VBO _vertVbo = new VBO(new List<Vector3>());
     private VBO _uvVbo = new VBO(new List<Vector2>());
     private VBO _transformationVbo = new VBO(new List<int>());
     public VBO _textUvVbo = new VBO(new List<Vector2i>());
-    private SSBO _transformationSsbo = new SSBO([]);
+    private SSBO _transformationSsbo = new SSBO(new List<Matrix4>{});
     public TBO _textTbo = new TBO([]);
     public int ElementCount = 0;
 
@@ -67,26 +68,6 @@ public class TextMesh
         _vao.LinkToVAO(1, 2, _uvVbo);
         _vao.LinkToVAO(2, 2, _textUvVbo);
         _vao.LinkToVAO(3, 1, _transformationVbo);
-        
-        foreach (var vert in Vertices)
-        {
-            Console.WriteLine(vert);
-        }
-
-        foreach (var uv in Uvs)
-        {
-            Console.WriteLine(uv);
-        }
-
-        foreach (var index in Indices)
-        {
-            Console.WriteLine(index);
-        }
-
-        foreach (var tuv in TextUvs)
-        {
-            Console.WriteLine(tuv);
-        }
         
         _ibo = new IBO(Indices);
     }
