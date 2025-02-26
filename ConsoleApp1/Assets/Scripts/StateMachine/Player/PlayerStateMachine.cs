@@ -16,7 +16,8 @@ public class PlayerStateMachine : ScriptingNode
     public const float GRAPPLE_SPEED = 30;
     public const float JUMP_SPEED = 14;
     
-    public Vector3 forward = new Vector3(0, 0, -1);
+    public Vector3 forward = (0, 0, -1);
+    private Vector3 _oldPosition = (0, 0, 0);
     
     public static readonly Dictionary<PlayerMovementSpeed, float> Speeds = new Dictionary<PlayerMovementSpeed, float>()
     {
@@ -40,8 +41,6 @@ public class PlayerStateMachine : ScriptingNode
     
     private ShaderProgram _shaderProgram;
     public PhysicsBody physicsBody;
-    
-    public OldAnimation CurrentOldAnimation;
     
     public float yaw;
     
@@ -76,12 +75,12 @@ public class PlayerStateMachine : ScriptingNode
         
         //Mesh
         _mesh = new EntityMesh();
-        VoxelData.GetEntityBoxMesh(_mesh, new Vector3(0.7f, 1.8f, 0.7f), new Vector3(0, 0, 0), 0);
+        VoxelData.GetEntityBoxMesh(_mesh, new Vector3(0.8f, 1.75f, 0.8f), new Vector3(0, 0, 0), 0);
         _mesh.GenerateBuffers();
         
         _playerMesh = new OldAnimationMesh();
         VoxelData.GenerateStandardMeshBox(_playerMesh, 
-            new Vector3(0.7f, 1.8f, 0.7f), 
+            new Vector3(0.8f, 1.75f, 0.8f), 
             new Vector3(-0.5f, 0, -0.5f), 
             new Vector3(0, 0, 0), 
             1
@@ -116,10 +115,13 @@ public class PlayerStateMachine : ScriptingNode
 
     public override void Update()
     {
+        if (!Game.MoveTest)
+            return;
+            
         Camera camera = Game.camera;
 
         camera.Center = Transform.Position + new Vector3(0, 1.8f, 0);
-        
+
         Vector2 input = Input.GetMovementInput();
         
         if (input != Vector2.Zero)
@@ -127,15 +129,14 @@ public class PlayerStateMachine : ScriptingNode
         
         forward = Mathf.YAngleToDirection(-yaw);
         
-        if (!Game.MoveTest)
-            return;
-
-        if (Game.MoveTest)
-            camera.Update();
-        
         _currentState.Update(this);
 
         IsHuggingWall();
+
+        if (camera.GetCameraMode() == CameraMode.Follow)
+            Info.SetPositionText(_oldPosition, Transform.Position);
+
+        _oldPosition = Transform.Position;
     }
     
     public override void FixedUpdate()

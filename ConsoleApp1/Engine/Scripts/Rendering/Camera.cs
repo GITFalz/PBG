@@ -302,32 +302,8 @@ public class Camera
             Position.Y -= speed;
         }
 
-        bool update = false;
+        Info.SetPositionText(oldPos, Position);
 
-        if (oldPos.X != Position.X)
-        {
-            Info.XPosText.SetText($"X: {Position.X}", 0.5f).GenerateChars();
-            update = true;
-        }
-
-        if (oldPos.Y != Position.Y)
-        {
-            Info.YPosText.SetText($"Y: {Position.Y}", 0.5f).GenerateChars();
-            update = true;
-        }
-
-        if (oldPos.Z != Position.Z)
-        {
-            Info.ZPosText.SetText($"Z: {Position.Z}", 0.5f).GenerateChars();
-            update = true;
-        }
-
-        if (update)
-        {
-            Info.ZPosText.textMesh.UpdateText();
-        }
-
-        
         FirstMove.Invoke();
 
         RotateCamera();
@@ -345,6 +321,7 @@ public class Camera
         UpdateVectors();
         CameraZoom();
     }
+
 
     public void SetMoveFirst()
     {

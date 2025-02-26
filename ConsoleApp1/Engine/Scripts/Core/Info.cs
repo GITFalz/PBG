@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using OpenTK.Mathematics;
 
 public class Info
 {
@@ -37,5 +38,33 @@ public class Info
     public static void Render()
     {
         _infoController.Render();
+    }
+
+    public static void SetPositionText(Vector3 oldPos, Vector3 position)
+    {
+        bool update = false;
+
+        if (oldPos.X != position.X)
+        {
+            XPosText.SetText($"X: {position.X}", 0.5f).GenerateChars();
+            update = true;
+        }
+
+        if (oldPos.Y != position.Y)
+        {
+            YPosText.SetText($"Y: {position.Y}", 0.5f).GenerateChars();
+            update = true;
+        }
+
+        if (oldPos.Z != position.Z)
+        {
+            ZPosText.SetText($"Z: {position.Z}", 0.5f).GenerateChars();
+            update = true;
+        }
+
+        if (update)
+        {
+            ZPosText.textMesh.UpdateText();
+        }
     }
 }

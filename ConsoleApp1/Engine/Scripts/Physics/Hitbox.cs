@@ -4,8 +4,8 @@ public class Hitbox
 {
     private static Vector3 _origin = Vector3.Zero;
     
-    public Vector3 Min;
-    public Vector3 Max;
+    public Vector3 Min { get; private set; }
+    public Vector3 Max { get; private set; }
     
     public Vector3 Position;
 
@@ -47,17 +47,15 @@ public class Hitbox
     
     public List<Vector3> GetCorners(Vector3 position)
     {
-        List<Vector3> corners = new List<Vector3>();
-        
-        corners.Add(position + new Vector3(Min.X, Min.Y, Min.Z));
-        corners.Add(position + new Vector3(Max.X, Min.Y, Min.Z));
-        corners.Add(position + new Vector3(Min.X, Min.Y, Max.Z));
-        corners.Add(position + new Vector3(Max.X, Min.Y, Max.Z));
-        corners.Add(position + new Vector3(Min.X, Max.Y, Min.Z));
-        corners.Add(position + new Vector3(Max.X, Max.Y, Min.Z));
-        corners.Add(position + new Vector3(Min.X, Max.Y, Max.Z));
-        corners.Add(position + new Vector3(Max.X, Max.Y, Max.Z));
-
-        return corners;
+        return [
+            position + (Min.X, Min.Y, Min.Z),
+            position + (Max.X, Min.Y, Min.Z),
+            position + (Min.X, Min.Y, Max.Z),
+            position + (Max.X, Min.Y, Max.Z),
+            position + (Min.X, Max.Y, Min.Z),
+            position + (Max.X, Max.Y, Min.Z),
+            position + (Min.X, Max.Y, Max.Z),
+            position + (Max.X, Max.Y, Max.Z),
+        ];;
     }
 }
