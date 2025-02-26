@@ -63,7 +63,7 @@ public class AnimationEditor : BaseEditor
             // The collection holds the bone name for alignment purposes.
             // Text scale is calculated when calling SetText so we need to use it for the collection scale.
             // (Scale info in UICollection class)
-            UIDepthCollection boneNameCollection = new($"{bone.Name}_NameCollection", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), boneText.Scale, (0, 0, 0, 0), 0);
+            UIDepthCollection boneNameCollection = new($"{bone.Name}_NameCollection", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (boneText.Scale.X, 40), (0, 0, 0, 0), 0);
 
             // Background for the bone timeline newt to the bone name
             UIImage boneTimelineBackground = new($"{bone.Name}_Background", AnchorType.TopLeft, PositionType.Relative, (0.4f, 0.4f, 0.4f), (0, 0, 0), (1000, 40), (0, 0, 0, 0), 0, 1, (10, 0.05f), maskeduIMesh);
