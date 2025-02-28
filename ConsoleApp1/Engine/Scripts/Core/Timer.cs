@@ -32,6 +32,11 @@ public static class Timer
         _timerIndex = 0;
     }
 
+    public static void Resize()
+    {
+        _uiTimes.OnResize();
+    }
+
     public static void Update()
     {
         if (_time + 1 < _stopwatch.Elapsed.TotalSeconds)

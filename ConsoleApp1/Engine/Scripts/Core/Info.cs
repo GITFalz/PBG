@@ -40,6 +40,11 @@ public class Info
         _infoController.GenerateBuffers();
     }
 
+    public static void Resize()
+    {
+        _infoController.OnResize();
+    }
+
     public static void Render()
     {
         UpdateVertexCount();

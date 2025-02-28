@@ -82,6 +82,12 @@ public class PopUp
         ConfirmationUI.GenerateBuffers();
     }
 
+    public void Resize()
+    {
+        MessageUI.OnResize();
+        ConfirmationUI.OnResize();
+    }
+
     public void Update()
     {
         if (!isShowing)

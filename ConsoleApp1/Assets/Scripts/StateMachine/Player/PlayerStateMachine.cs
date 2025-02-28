@@ -97,9 +97,6 @@ public class PlayerStateMachine : ScriptingNode
     public override void Awake()
     {
         Camera camera = Game.camera;
-        
-        if (WorldManager.Instance != null)
-            WorldManager.Instance.camera = camera;
 
         camera.SetCameraMode(CameraMode.Free);
         

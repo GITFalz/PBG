@@ -57,6 +57,9 @@ public class Game : GameWindow
     // Miscaleanous Ui
     private PopUp _popUp;
 
+    // Initializations
+    private Action Resize = () => { };
+
     public static Action<Keys> InputActions = (e) => { };
     
     
@@ -79,26 +82,33 @@ public class Game : GameWindow
         
         Game.CenterX = width / 2;
         Game.CenterY = height / 2;
+
+        Resize = () => { Resize = OnResize; };
     }
     
     protected override void OnResize(ResizeEventArgs e)
     {
         GL.Viewport(0, 0, e.Width, e.Height);
         
-        Game.Width = e.Width;
-        Game.Height = e.Height;
+        Width = e.Width;
+        Height = e.Height;
         
         CenterX = e.Width / 2;
         CenterY = e.Height / 2;
+
+        Resize.Invoke();
         
-        try
-        {
-            UIController.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, e.Width, e.Height, 0, -2, 2);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-        }
+        base.OnResize(e);
+    }
+
+    private void OnResize()
+    {
+        camera = new Camera(Width, Height, new Vector3(0, 0, 0));
+
+        UIController.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, Width, Height, 0, -2, 2);
+        _popUp.Resize();
+        Info.Resize();
+        Timer.Resize();
 
         CurrentScene?.OnResize();
 
@@ -107,8 +117,6 @@ public class Game : GameWindow
             if (scene != CurrentScene)
                 scene.Resize = true;
         }
-        
-        base.OnResize(e);
     }
     
     protected override void OnLoad()

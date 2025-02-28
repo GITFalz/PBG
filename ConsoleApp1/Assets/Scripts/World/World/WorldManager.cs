@@ -8,8 +8,6 @@ public class WorldManager : ScriptingNode
 {
     public static WorldManager? Instance;
     
-    public Camera camera;
-    
     public HashSet<Vector3i> chunks;
     
     public ConcurrentDictionary<Vector3i, ChunkData> activeChunks;
@@ -108,6 +106,8 @@ public class WorldManager : ScriptingNode
 
     public void RenderSolid()
     {    
+        Camera camera = Game.camera;
+
         int renderCount = 0;
         Info.VertexCount = 0;
 
@@ -156,6 +156,8 @@ public class WorldManager : ScriptingNode
 
     public void CheckFrustum()
     {
+        Camera camera = Game.camera;
+
         camera.CalculateFrustumPlanes();
         
         foreach (var (_, chunk) in activeChunks)
@@ -166,6 +168,8 @@ public class WorldManager : ScriptingNode
 
     public void RenderWireframe()
     {
+        Camera camera = Game.camera;
+        
         int renderCount = 0;
         Info.VertexCount = 0;
 

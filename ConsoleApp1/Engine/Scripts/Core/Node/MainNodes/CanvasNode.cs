@@ -1,7 +1,5 @@
 public class CanvasNode : MainNode
 {
-    public UIController UIController = new UIController();
-
     public void Awake()
     {
         
