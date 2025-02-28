@@ -34,13 +34,12 @@ public class PlayerStateMachine : ScriptingNode
     private PlayerGameState _gameState = new();
     private PlayerMenuState _menuState = new();
     
-    private EntityMesh _mesh;
-    
     // Animation
     private OldAnimationMesh _playerMesh;
-    
-    private ShaderProgram _shaderProgram;
+    private EntityMesh _mesh;
     public PhysicsBody physicsBody;
+
+    private ShaderProgram _shaderProgram;
     
     public float yaw;
     
@@ -81,7 +80,7 @@ public class PlayerStateMachine : ScriptingNode
         _playerMesh = new OldAnimationMesh();
         VoxelData.GenerateStandardMeshBox(_playerMesh, 
             new Vector3(0.8f, 1.75f, 0.8f), 
-            new Vector3(-0.5f, 0, -0.5f), 
+            new Vector3(-0.4f, 0, -0.4f), 
             new Vector3(0, 0, 0), 
             1
         );
@@ -120,7 +119,7 @@ public class PlayerStateMachine : ScriptingNode
             
         Camera camera = Game.camera;
 
-        camera.Center = Transform.Position + new Vector3(0, 1.8f, 0);
+        camera.Center = Transform.Position + new Vector3(0, 1.7f, 0);
 
         Vector2 input = Input.GetMovementInput();
         
@@ -191,7 +190,7 @@ public class PlayerStateMachine : ScriptingNode
 
     public int MeshUpdate()
     {
-        _mesh.Position = Transform.Position + new Vector3(-0.5f, 0, -0.5f);
+        _mesh.Position = Transform.Position + new Vector3(-0.4f, 0, -0.4f);
 
         _mesh.UpdatePosition();
         _mesh.UpdateRotation(_mesh.Position + new Vector3(0.5f, 0, 0.5f), new Vector3(0, 1, 0), yaw);

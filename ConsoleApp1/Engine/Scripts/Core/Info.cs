@@ -10,10 +10,14 @@ public class Info
     private static TextMesh _textMesh = _infoController.textMesh;
 
     public static UIText FpsText = new("FpsTest", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), _textMesh);
-    public static UIText XPosText = new("XPos", AnchorType.TopLeft, PositionType.Relative, (0, 20, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), _textMesh);
-    public static UIText YPosText = new("YPos", AnchorType.TopLeft, PositionType.Relative, (0, 40, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), _textMesh);
-    public static UIText ZPosText = new("ZPos", AnchorType.TopLeft, PositionType.Relative, (0, 60, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), _textMesh);
-    public static UIText ChunkRenderingText = new("ChunkRendering", AnchorType.TopLeft, PositionType.Relative, (0, 80, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), _textMesh);
+    public static UIText XPosText = new("XPos", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), _textMesh);
+    public static UIText YPosText = new("YPos", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), _textMesh);
+    public static UIText ZPosText = new("ZPos", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), _textMesh);
+    public static UIText ChunkRenderingText = new("ChunkRendering", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), _textMesh);
+    public static UIText VertexCountText = new("VertexCount", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), _textMesh);
+
+    private static int _oldVertexCount = 0;
+    public static int VertexCount = 0;
 
     public Info()
     {
@@ -25,11 +29,12 @@ public class Info
         YPosText.SetMaxCharCount(15).SetText("Y: 0", 0.5f);
         ZPosText.SetMaxCharCount(15).SetText("Z: 0", 0.5f);
         ChunkRenderingText.SetMaxCharCount(20).SetText("Chunks: 0", 0.5f);
+        VertexCountText.SetMaxCharCount(20).SetText("Vertices: 0", 0.5f);
 
         positionCollection.SetScale((positionCollection.Scale.X, FpsText.Scale.Y));
 
         positionCollection.AddElement(XPosText, YPosText, ZPosText);
-        infoCollection.AddElement(FpsText, positionCollection, ChunkRenderingText);
+        infoCollection.AddElement(FpsText, positionCollection, ChunkRenderingText, VertexCountText);
         
         _infoController.AddElement(infoCollection);
         _infoController.GenerateBuffers();
@@ -37,7 +42,17 @@ public class Info
 
     public static void Render()
     {
+        UpdateVertexCount();
         _infoController.Render();
+    }
+
+    private static void UpdateVertexCount()
+    {
+        if (_oldVertexCount != VertexCount)
+        {
+            VertexCountText.SetText("Vertices: " + VertexCount, 0.5f).GenerateChars().UpdateText();
+            _oldVertexCount = VertexCount;
+        }
     }
 
     public static void SetPositionText(Vector3 oldPos, Vector3 position)

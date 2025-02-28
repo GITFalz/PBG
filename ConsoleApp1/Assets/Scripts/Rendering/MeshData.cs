@@ -6,15 +6,6 @@ public class MeshData
     public List<uint> tris = [];
     public List<Vector2> uvs = [];
     public List<int> tCoords = [];
-    public bool IsDisabled = true;
-
-    public Action Enable = () => { };
-    public Action Disable = () => { };
-
-    public MeshData()
-    {
-        Enable = OnEnable;
-    }
 
     public List<Vector3> GetWireFrame()
     {
@@ -44,20 +35,6 @@ public class MeshData
         }
 
         return wireFrame;
-    }
-
-    private void OnEnable()
-    {
-        IsDisabled = false;
-        Disable = OnDisable;
-        Enable = () => { };
-    }
-
-    private void OnDisable()
-    {
-        IsDisabled = true;
-        Enable = OnEnable;
-        Disable = () => { };
     }
 
     private static bool Sup(Vector3 a, Vector3 b)

@@ -40,12 +40,12 @@ public class Hitbox
         max = Max + Position;
     }
     
-    public List<Vector3> GetCorners()
+    public Vector3[] GetCorners()
     {
         return GetCorners(Position);
     }
     
-    public List<Vector3> GetCorners(Vector3 position)
+    public Vector3[] GetCorners(Vector3 position)
     {
         return [
             position + (Min.X, Min.Y, Min.Z),

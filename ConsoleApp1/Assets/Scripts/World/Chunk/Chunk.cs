@@ -220,8 +220,8 @@ public class Chunk
                                 chunkData.meshData.uvs.AddRange((width, height), (width, 0), (0, 0), (0, height));
                                 chunkData.meshData.tCoords.AddRange(id, id, id, id);
                                 chunkData.meshData.verts.AddRange(position + positions[0], position + positions[1], position + positions[2], position + positions[3]);
-
-                                chunkData.meshData.Enable.Invoke();
+                            
+                                chunkData.HasBlocks = true;
                             }
                         }
                     }

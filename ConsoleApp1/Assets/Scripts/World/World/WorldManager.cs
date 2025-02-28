@@ -27,10 +27,7 @@ public class WorldManager : ScriptingNode
     
     public static ShaderProgram _shaderProgram = new ShaderProgram("World/World.vert", "World/World.frag");
     public static ShaderProgram _wireframeShader = new ShaderProgram("World/Wireframe.vert", "World/Wireframe.frag");
-    public Texture _textureArray;
-
-    private List<int> _blockIndices = new List<int>();
-    private TBO _blockTbo = new TBO([]);
+    public Texture _textureArray = new Texture("Test_TextureAtlas.png");
 
     private RenderType _renderType = RenderType.Solid;
     private Action _render = () => { };
@@ -56,20 +53,10 @@ public class WorldManager : ScriptingNode
         _render = _renderType == RenderType.Solid ? RenderSolid : RenderWireframe;
 
     }
-
-    public WorldManager AddBlocks(params CWorldBlock[] blocks)
-    {
-        _blockIndices.Clear();
-        foreach (var block in blocks) _blockIndices.AddRange(block.GetUVs());
-        _blockTbo = new TBO(_blockIndices);
-        return this;
-    }
     
     public override void Awake()
     {
         Console.WriteLine("World Manager");
-        
-        _textureArray = new Texture("Test_TextureAtlas.png");
         
         activeChunks.Clear();
         chunksToGenerate.Clear();
@@ -114,19 +101,21 @@ public class WorldManager : ScriptingNode
 
     public override void Render()
     {
+        Timer.DisplayTime("Render Start");
         _render.Invoke();
+        Timer.DisplayTime("Render End");
     }
 
     public void RenderSolid()
-    {   
+    {    
         int renderCount = 0;
+        Info.VertexCount = 0;
 
         GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.CullFace);
 
         _shaderProgram.Bind();
         _textureArray.Bind();
-        _blockTbo.Bind(TextureUnit.Texture1);
         
         Matrix4 view = camera.viewMatrix;
         Matrix4 projection = camera.projectionMatrix;
@@ -135,28 +124,25 @@ public class WorldManager : ScriptingNode
         int viewLocation = GL.GetUniformLocation(_shaderProgram.ID, "view");
         int projectionLocation = GL.GetUniformLocation(_shaderProgram.ID, "projection");
         int camPosLocation = GL.GetUniformLocation(_shaderProgram.ID, "camPos");
-        int textureLocation = GL.GetUniformLocation(_shaderProgram.ID, "texture1");
-        
         
         GL.UniformMatrix4(viewLocation, true, ref view);
         GL.UniformMatrix4(projectionLocation, true, ref projection);
         GL.Uniform3(camPosLocation, camera.Position);
-        GL.Uniform1(textureLocation, 1);
         
         foreach (var (_, chunk) in activeChunks)
         {   
-            if (!chunk.IsDisabled())
-            {
-                renderCount++;
-                Matrix4 model = Matrix4.CreateTranslation(chunk.position);
-                GL.UniformMatrix4(modelLocation, true, ref model);
-                chunk.Render.Invoke();
-            }
+            if (chunk.IsDisabled)
+                continue;
+
+            renderCount++;
+            Info.VertexCount += chunk.meshData.verts.Count;
+            Matrix4 model = Matrix4.CreateTranslation(chunk.position);
+            GL.UniformMatrix4(modelLocation, true, ref model);
+            chunk.Render.Invoke();
         }
         
         _shaderProgram.Unbind();
         _textureArray.Unbind();
-        _blockTbo.Unbind();
 
         GL.Disable(EnableCap.DepthTest);
         GL.Disable(EnableCap.CullFace);
@@ -174,13 +160,14 @@ public class WorldManager : ScriptingNode
         
         foreach (var (_, chunk) in activeChunks)
         {
-            chunk.SetDisabled(!camera.FrustumIntersects(chunk.boundingBox));
+            chunk.IsDisabled = !chunk.HasBlocks || !camera.FrustumIntersects(chunk.boundingBox);
         }
     }
 
     public void RenderWireframe()
     {
         int renderCount = 0;
+        Info.VertexCount = 0;
 
         GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.CullFace);
@@ -199,13 +186,14 @@ public class WorldManager : ScriptingNode
         
         foreach (var (_, chunk) in activeChunks)
         {   
-            if (!chunk.IsDisabled())
-            {
-                renderCount++;
-                Matrix4 model = Matrix4.CreateTranslation(chunk.position);
-                GL.UniformMatrix4(modelLocation, true, ref model);
-                chunk.Render.Invoke();
-            }
+            if (chunk.IsDisabled)
+                continue;
+
+            renderCount++;
+            Info.VertexCount += chunk.meshData.verts.Count;
+            Matrix4 model = Matrix4.CreateTranslation(chunk.position);
+            GL.UniformMatrix4(modelLocation, true, ref model);
+            chunk.Render.Invoke();
         }
         
         _wireframeShader.Unbind();
@@ -389,14 +377,15 @@ public class WorldManager : ScriptingNode
     
     public void Delete()
     {
-        foreach (var chunk in activeChunks)
+        foreach (var (_, chunk) in activeChunks)
         {
-            chunk.Value.Delete();
+            chunk.Delete();
         }
         
         try
         {
             _shaderProgram.Delete();
+            _wireframeShader.Delete();
             _textureArray.Delete();
         }
         catch (Exception e)

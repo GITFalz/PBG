@@ -152,7 +152,7 @@ public class Game : GameWindow
         
         // World
         TransformNode worldGenerationNode = new TransformNode();
-        worldGenerationNode.AddChild(new WorldManager().AddBlocks(grass, dirt, stone));
+        worldGenerationNode.AddChild(new WorldManager());
 
         TransformNode playerNode = new TransformNode();
         playerNode.AddChild(new PhysicsBody(false), new PlayerStateMachine());

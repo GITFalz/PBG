@@ -31,6 +31,12 @@ public class ChunkData
     public Action Render = () => { };
     public Action CreateChunk = () => { };
 
+    public bool IsDisabled = true;
+    public bool HasBlocks = false;
+
+    public Action Enable = () => { };
+    public Action Disable = () => { };
+
     public ChunkData(RenderType renderType, Vector3i position)
     {
         this.position = position;
@@ -46,16 +52,6 @@ public class ChunkData
 
         Render = renderType == RenderType.Solid ? RenderChunk : RenderWireframe;
         CreateChunk = renderType == RenderType.Solid ? CreateChunkSolid : CreateChunkWireframe;
-    }
-
-    public bool IsDisabled()
-    {
-        return meshData.IsDisabled;
-    }
-
-    public void SetDisabled(bool isDisabled)
-    {
-        meshData.IsDisabled = isDisabled;
     }
 
     public void SetRenderType(RenderType type)
@@ -91,6 +87,9 @@ public class ChunkData
         uvVBO.Delete();
         textureIndexVBO.Delete();
         chunkIbo.Delete();
+
+        _edgeVao.Delete();
+        _edgeVbo.Delete();
         
         meshData.Clear();
         blockStorage.Clear();

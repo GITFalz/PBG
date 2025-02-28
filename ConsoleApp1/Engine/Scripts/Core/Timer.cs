@@ -79,8 +79,8 @@ public static class Timer
             UIText textName = new($"Name {index}", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (0, 0, 0, 0), 0, 0 ,(0, 0), _textMesh);
             UIText textTime = new($"Time {index}", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (0, 0, 0, 0), 0, 0 ,(0, 0), _textMesh);
 
-            textName.SetMaxCharCount(10).SetText("Name", 0.5f).GenerateChars();
-            textTime.SetMaxCharCount(10).SetText("0.000000000", 0.5f).GenerateChars();
+            textName.SetMaxCharCount(15).SetText("Name", 0.5f).GenerateChars();
+            textTime.SetMaxCharCount(15).SetText("0.000000000", 0.5f).GenerateChars();
 
             UIHorizontalCollection text = new($"Text {index}", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, textName.Scale.Y), (0, 0, 0, 0), (0, 0, 0, 0), 5, 0);
 

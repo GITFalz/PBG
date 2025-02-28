@@ -32,13 +32,13 @@ public class PhysicsBody : ScriptingNode
     public PhysicsBody()
     {
         Name = "PhysicsBody";
-        Hitbox = new Hitbox(new Vector3(1, 2, 1));
+        Hitbox = new Hitbox(new Vector3(0.8f, 1.75f, 0.8f));
     }
 
     public PhysicsBody(bool doGravity)
     {
         Name = "PhysicsBody";
-        Hitbox = new Hitbox(new Vector3(1, 2, 1));
+        Hitbox = new Hitbox(new Vector3(0.8f, 1.75f, 0.8f));
         if (doGravity) EnableGravity();
     }
 
