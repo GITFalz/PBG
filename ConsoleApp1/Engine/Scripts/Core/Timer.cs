@@ -39,6 +39,8 @@ public static class Timer
 
     public static void Update()
     {
+        _uiTimes.Update();
+        
         if (_time + 1 < _stopwatch.Elapsed.TotalSeconds)
         {
             for (int i = 0; i < _times.Count; i++)

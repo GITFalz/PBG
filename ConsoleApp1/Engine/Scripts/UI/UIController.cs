@@ -29,6 +29,10 @@ public class UIController
     public bool render = true;
     public static int TextOffset = 0;
 
+    private Action _updateText = () => { };
+    public Action UpdateText = () => { };
+
+
     public UIController() { _uiControllers.Add(this); }
 
     public void AddElement(UIElement element, MeshType type = MeshType.UnMasked, bool test = false)
@@ -60,6 +64,8 @@ public class UIController
 
         element.UIController = this;
         Elements.Add(element);
+
+        ResetUpdateText();
     }
 
     private static readonly Dictionary<MeshType, Func<UIController, UIMesh>> uiMeshType = new Dictionary<MeshType, Func<UIController, UIMesh>>()
@@ -73,6 +79,21 @@ public class UIController
         { MeshType.UnMasked, controller => controller.textMesh },
         { MeshType.Masked, controller => controller.maskedTextMesh }
     };
+
+    private void ResetUpdateText()
+    {
+        UpdateText = () =>
+        {
+            _updateText = () =>
+            {
+                textMesh.UpdateText();
+                maskedTextMesh.UpdateText();
+                _updateText = () => { };
+                ResetUpdateText();
+            };
+            UpdateText = () => { };
+        };
+    }
 
     public void RemoveElement(UIElement element)
     {
@@ -90,7 +111,7 @@ public class UIController
         return null;
     }
 
-    public void Test()
+    private void Test()
     {
         foreach (var element in Elements)
         {
@@ -324,9 +345,10 @@ public class UIController
         uIMesh.UpdateVertices();
     }
 
-    public void Update()
+    public void Update(bool test = false)
     {
-        Test();
+        if (test) Test();
+        _updateText();
     }
 
     public void Render()
@@ -422,7 +444,6 @@ public class UIController
 
         GL.Disable(EnableCap.StencilTest);
         GL.DepthMask(true);
-        GL.Enable(EnableCap.DepthTest);
         GL.DepthFunc(DepthFunction.Lequal);
     }
 }

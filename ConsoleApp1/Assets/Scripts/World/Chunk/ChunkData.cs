@@ -6,16 +6,8 @@ public class ChunkData
 {
     public Vector3i position = (0, 0, 0);
     public BlockStorage blockStorage = new(new Vector3i(0, 0, 0));
-    public MeshData meshData = new();
-    public int maxFaceCount = 0;
     public ChunkData[] sideChunks = [];
     public BoundingBox boundingBox = new(new System.Numerics.Vector3(0, 0, 0), new System.Numerics.Vector3(0, 0, 0));
-    
-    public VAO chunkVao = new VAO();
-    public VBO vertVBO = new VBO([0, 0, 0]);
-    public VBO uvVBO = new VBO([(0, 0)]);
-    public VBO textureIndexVBO = new VBO([0]);
-    public IBO chunkIbo = new IBO([]);
 
     public List<Vector3> Wireframe = [];
 
@@ -23,8 +15,6 @@ public class ChunkData
     private VBO _edgeVbo = new VBO([(0, 0, 0)]);
 
     public bool Save = true;
-    public bool isEmpty = true;
-    public short filePosition = -1;
     
     private string filePath;
 
@@ -34,8 +24,23 @@ public class ChunkData
     public bool IsDisabled = true;
     public bool HasBlocks = false;
 
-    public Action Enable = () => { };
-    public Action Disable = () => { };
+    private VAO _chunkVao = new VAO();
+    public SSBO VertexSSBO = new SSBO(new List<Vector2i>());
+    public List<Vector2i> VertexData = new List<Vector2i>();
+
+    public void AddFace(byte posX, byte posY, byte posZ, byte width, byte height, int blockIndex, byte side)
+    {
+        Vector3i size = _faceVertices[side];
+        int vertex = posX | (posY << 5) | (posZ << 10) | (width << 15) | (height << 20);
+        int blockData = blockIndex | (side << 16) | (size.X << 19) | (size.Y << 21) | (size.Z << 23);
+
+        VertexData.Add(new Vector2i(vertex, blockData));
+    }
+
+    public void AddFace(Vector3 position, byte width, byte height, int blockIndex, byte side)
+    {
+        AddFace((byte)position.X, (byte)position.Y, (byte)position.Z, width, height, blockIndex, side);
+    }
 
     public ChunkData(RenderType renderType, Vector3i position)
     {
@@ -52,6 +57,17 @@ public class ChunkData
 
         Render = renderType == RenderType.Solid ? RenderChunk : RenderWireframe;
         CreateChunk = renderType == RenderType.Solid ? CreateChunkSolid : CreateChunkWireframe;
+
+        /*
+        AddFace(0, 0, 0, 1, 1, 0, 0);
+        AddFace(0, 0, 0, 3, 1, 0, 1);
+        AddFace(0, 0, 0, 1, 1, 0, 2);
+        AddFace(0, 0, 0, 1, 1, 0, 3);
+        AddFace(0, 0, 0, 1, 1, 0, 4);
+        AddFace(0, 0, 0, 1, 1, 0, 5);
+
+        VertexSSBO = new SSBO(VertexData);
+        */
     }
 
     public void SetRenderType(RenderType type)
@@ -64,8 +80,6 @@ public class ChunkData
         }
         else if (type == RenderType.Wireframe)
         {
-            Wireframe = meshData.GetWireFrame();
-
             _edgeVbo = new VBO(Wireframe);
             _edgeVao.LinkToVAO(0, 3, _edgeVbo);
 
@@ -76,59 +90,42 @@ public class ChunkData
 
     public void Clear()
     {
-        meshData.Clear();
         sideChunks = null;
     }
 
     public void Delete()
     {
-        chunkVao.Delete();
-        vertVBO.Delete();
-        uvVBO.Delete();
-        textureIndexVBO.Delete();
-        chunkIbo.Delete();
-
         _edgeVao.Delete();
         _edgeVbo.Delete();
-        
-        meshData.Clear();
+
         blockStorage.Clear();
     }
+
     
     public void CreateChunkSolid()
     {
-        chunkVao = new VAO();
-
-        vertVBO = new VBO(meshData.verts);
-        uvVBO = new VBO(meshData.uvs);
-        textureIndexVBO = new VBO(meshData.tCoords);
-        
-        chunkVao.LinkToVAO(0, 3, vertVBO);
-        chunkVao.LinkToVAO(1, 2, uvVBO);
-        chunkVao.LinkToVAO(2, 1, textureIndexVBO);
-        
-        chunkIbo = new IBO(meshData.tris);
+        _chunkVao = new VAO();
+        VertexSSBO = new SSBO(VertexData);
     }
 
     public void CreateChunkWireframe()
     {
-        Wireframe = meshData.GetWireFrame();
-
         _edgeVao = new VAO();
         _edgeVbo = new VBO(Wireframe);
         
         _edgeVao.LinkToVAO(0, 3, _edgeVbo);
     }
-    
+
+
     public void RenderChunk()
     {
-        chunkVao.Bind();
-        chunkIbo.Bind();
+        _chunkVao.Bind();
+        VertexSSBO.Bind(0);
 
-        GL.DrawElements(PrimitiveType.Triangles, meshData.tris.Count, DrawElementsType.UnsignedInt, 0);
+        GL.DrawArrays(PrimitiveType.Triangles, 0, VertexData.Count * 6);
         
-        chunkIbo.Unbind();
-        chunkVao.Unbind();
+        VertexSSBO.Unbind();
+        _chunkVao.Unbind();
     }
 
     public void RenderWireframe()
@@ -237,6 +234,16 @@ public class ChunkData
         
         return null;
     }
+
+    private readonly Vector3i[] _faceVertices =
+    [
+        (0, 1, 2),
+        (2, 1, 0),
+        (0, 2, 1),
+        (2, 1, 0),
+        (0, 2, 1),
+        (0, 1, 2),
+    ];
 }
 
 public class BlockStorage

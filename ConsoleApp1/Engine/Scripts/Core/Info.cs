@@ -10,11 +10,13 @@ public class Info
     private static TextMesh _textMesh = _infoController.textMesh;
 
     public static UIText FpsText = new("FpsTest", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), _textMesh);
+    public static UIText GPUText = new("Gpu", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), _textMesh);
     public static UIText XPosText = new("XPos", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), _textMesh);
     public static UIText YPosText = new("YPos", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), _textMesh);
     public static UIText ZPosText = new("ZPos", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), _textMesh);
     public static UIText ChunkRenderingText = new("ChunkRendering", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), _textMesh);
     public static UIText VertexCountText = new("VertexCount", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), _textMesh);
+    public static UIText RamUsageText = new("RamUsage", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), _textMesh);
 
     private static int _oldVertexCount = 0;
     public static int VertexCount = 0;
@@ -25,16 +27,18 @@ public class Info
         UIHorizontalCollection positionCollection = new("PositionCollection", AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (1000, 100), (5, 5, 5, 5), (0, 0, 0, 0), 5, 0);
 
         FpsText.SetMaxCharCount(9).SetText("Fps: 9999", 0.5f);
+        GPUText.SetMaxCharCount(40).SetText("GPU: None", 0.5f);
         XPosText.SetMaxCharCount(15).SetText("X: 0", 0.5f);
         YPosText.SetMaxCharCount(15).SetText("Y: 0", 0.5f);
         ZPosText.SetMaxCharCount(15).SetText("Z: 0", 0.5f);
         ChunkRenderingText.SetMaxCharCount(20).SetText("Chunks: 0", 0.5f);
         VertexCountText.SetMaxCharCount(20).SetText("Vertices: 0", 0.5f);
+        RamUsageText.SetMaxCharCount(20).SetText("Ram: 0", 0.5f);
 
         positionCollection.SetScale((positionCollection.Scale.X, FpsText.Scale.Y));
 
         positionCollection.AddElement(XPosText, YPosText, ZPosText);
-        infoCollection.AddElement(FpsText, positionCollection, ChunkRenderingText, VertexCountText);
+        infoCollection.AddElement(FpsText, GPUText, positionCollection, ChunkRenderingText, VertexCountText, RamUsageText);
         
         _infoController.AddElement(infoCollection);
         _infoController.GenerateBuffers();
@@ -43,6 +47,11 @@ public class Info
     public static void Resize()
     {
         _infoController.OnResize();
+    }
+
+    public static void Update()
+    {
+        _infoController.Update();
     }
 
     public static void Render()

@@ -21,6 +21,27 @@ public class SSBO
         GL.BufferData(BufferTarget.ShaderStorageBuffer, data.Count * IntSizeInBytes, data.ToArray(), BufferUsageHint.DynamicDraw);
     }
 
+    public SSBO(List<Vector3> data)
+    {
+        ID = GL.GenBuffer();
+        GL.BindBuffer(BufferTarget.ShaderStorageBuffer, ID);
+        GL.BufferData(BufferTarget.ShaderStorageBuffer, data.Count * Vector3.SizeInBytes, data.ToArray(), BufferUsageHint.DynamicDraw);
+    }
+
+    public SSBO(List<Vector4i> data)
+    {
+        ID = GL.GenBuffer();
+        GL.BindBuffer(BufferTarget.ShaderStorageBuffer, ID);
+        GL.BufferData(BufferTarget.ShaderStorageBuffer, data.Count * Vector4i.SizeInBytes, data.ToArray(), BufferUsageHint.DynamicDraw);
+    }
+
+    public SSBO(List<Vector2i> data)
+    {
+        ID = GL.GenBuffer();
+        GL.BindBuffer(BufferTarget.ShaderStorageBuffer, ID);
+        GL.BufferData(BufferTarget.ShaderStorageBuffer, data.Count * Vector2i.SizeInBytes, data.ToArray(), BufferUsageHint.DynamicDraw);
+    }
+
     public void Bind(int bindingPoint)
     {
         GL.BindBuffer(BufferTarget.ShaderStorageBuffer, ID);

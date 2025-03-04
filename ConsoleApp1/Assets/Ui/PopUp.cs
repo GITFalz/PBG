@@ -104,7 +104,7 @@ public class PopUp
             ShowNextMessage();
 
         MoveMessage();
-        MessageUI.Update();
+        MessageUI.Update(true);
     }
 
     public void UpdateConfirmation()
@@ -116,7 +116,7 @@ public class PopUp
             ShowNextConfirmation();
 
         MoveConfirmation();
-        ConfirmationUI.Update();
+        ConfirmationUI.Update(true);
     }
 
 

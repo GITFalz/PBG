@@ -147,10 +147,11 @@ public class PlayerStateMachine : ScriptingNode
     {
         Camera camera = Game.camera;
 
-        GL.Enable(EnableCap.DepthTest);
-        GL.Enable(EnableCap.CullFace);
+        //Shader.Error("Before Player Render");
 
         _shaderProgram.Bind();
+
+        //Shader.Error("After Player Bind: " + _shaderProgram.ID);
         
         Matrix4 model = Matrix4.CreateTranslation(Transform.Position);
         Matrix4 view = camera.GetViewMatrix();
@@ -165,11 +166,10 @@ public class PlayerStateMachine : ScriptingNode
         GL.UniformMatrix4(projectionLocation, true, ref projection);
 
         _playerMesh.RenderMesh();
+
+        //Shader.Error("After Player Render Mesh");
         
         _shaderProgram.Unbind();
-
-        GL.Disable(EnableCap.DepthTest);
-        GL.Disable(EnableCap.CullFace);
     }
 
     public override void Exit()

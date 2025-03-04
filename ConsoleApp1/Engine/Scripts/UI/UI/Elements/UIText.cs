@@ -65,7 +65,7 @@ public class UIText : UIElement
 
     public void UpdateText()
     {
-        textMesh?.UpdateText();
+        UIController?.UpdateText();
     }
 
     public override void Generate()

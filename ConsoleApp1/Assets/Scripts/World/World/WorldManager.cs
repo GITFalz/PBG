@@ -10,15 +10,15 @@ public class WorldManager : ScriptingNode
     
     public HashSet<Vector3i> chunks;
     
-    public ConcurrentDictionary<Vector3i, ChunkData> activeChunks;
-    public ConcurrentQueue<Vector3i> chunksToGenerate;
-    public ConcurrentQueue<ChunkData> chunksToCreate;
-    public ConcurrentQueue<ChunkData> chunksToStore;
+    public static ConcurrentDictionary<Vector3i, ChunkData> activeChunks;
+    public static ConcurrentQueue<Vector3i> chunksToGenerate;
+    public static ConcurrentQueue<ChunkData> chunksToCreate;
+    public static ConcurrentQueue<ChunkData> chunksToStore;
 
-    private ConcurrentBag<Vector3i> chunksToIgnore;
+    private static ConcurrentBag<Vector3i> chunksToIgnore;
     
-    private Task? currentTask = null;
-    private Task? storeTask = null;
+    private Task?[] currentTask = new Task?[4];
+    private Task?[] storeTask = new Task?[6];
     
     public ChunkRegionData regionData;
     
@@ -27,10 +27,16 @@ public class WorldManager : ScriptingNode
     public static ShaderProgram _wireframeShader = new ShaderProgram("World/Wireframe.vert", "World/Wireframe.frag");
     public Texture _textureArray = new Texture("Test_TextureAtlas.png");
 
-    private RenderType _renderType = RenderType.Solid;
+    private static RenderType _renderType = RenderType.Solid;
     private Action _render = () => { };
 
     private int _oldRenderedChunks = 0;
+
+
+
+
+    public ChunkData chunkData = new ChunkData(RenderType.Solid, new Vector3i(0, 0, 0));
+    public ShaderProgram pullingShader = new ShaderProgram("World/Pulling.vert", "World/Pulling.frag");
     
     public WorldManager()
     {
@@ -49,7 +55,6 @@ public class WorldManager : ScriptingNode
         regionData.SaveChunk(new Vector3i(1, 1, 0), new ChunkData(_renderType, (1, 1, 0)));
     
         _render = _renderType == RenderType.Solid ? RenderSolid : RenderWireframe;
-
     }
     
     public override void Awake()
@@ -111,47 +116,58 @@ public class WorldManager : ScriptingNode
         int renderCount = 0;
         Info.VertexCount = 0;
 
+        //Shader.Error("Before Render Start");
+
         GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.CullFace);
 
-        _shaderProgram.Bind();
+        //Shader.Error("Before Bind");
+
+        pullingShader.Bind();
         _textureArray.Bind();
-        
+
+        //Shader.Error("After Bind");
+
         Matrix4 view = camera.viewMatrix;
         Matrix4 projection = camera.projectionMatrix;
 
-        int modelLocation = GL.GetUniformLocation(_shaderProgram.ID, "model");
-        int viewLocation = GL.GetUniformLocation(_shaderProgram.ID, "view");
-        int projectionLocation = GL.GetUniformLocation(_shaderProgram.ID, "projection");
-        int camPosLocation = GL.GetUniformLocation(_shaderProgram.ID, "camPos");
+        int modelLocationA = GL.GetUniformLocation(pullingShader.ID, "model");
+        int viewLocationA = GL.GetUniformLocation(pullingShader.ID, "view");
+        int projectionLocationA = GL.GetUniformLocation(pullingShader.ID, "projection");
+        int camPosLocationA = GL.GetUniformLocation(pullingShader.ID, "camPos");
         
-        GL.UniformMatrix4(viewLocation, true, ref view);
-        GL.UniformMatrix4(projectionLocation, true, ref projection);
-        GL.Uniform3(camPosLocation, camera.Position);
-        
+        GL.UniformMatrix4(viewLocationA, true, ref view);
+        GL.UniformMatrix4(projectionLocationA, true, ref projection);
+        GL.Uniform3(camPosLocationA, camera.Position); 
+
         foreach (var (_, chunk) in activeChunks)
         {   
             if (chunk.IsDisabled)
                 continue;
 
             renderCount++;
-            Info.VertexCount += chunk.meshData.verts.Count;
+            Info.VertexCount += chunk.VertexData.Count;
             Matrix4 model = Matrix4.CreateTranslation(chunk.position);
-            GL.UniformMatrix4(modelLocation, true, ref model);
+            GL.UniformMatrix4(modelLocationA, true, ref model);
             chunk.Render.Invoke();
+
+            //Shader.Error("After Render");
         }
+
+        //Shader.Error("Before Unbind");
         
-        _shaderProgram.Unbind();
+        pullingShader.Unbind();
         _textureArray.Unbind();
 
-        GL.Disable(EnableCap.DepthTest);
-        GL.Disable(EnableCap.CullFace);
+        //Shader.Error("After Unbind");
 
         if (renderCount != _oldRenderedChunks)
         {
             Info.ChunkRenderingText.SetText($"Chunks: {renderCount}").GenerateChars().UpdateText();
             _oldRenderedChunks = renderCount;
         }
+
+        Shader.Error("After Render End");
     }
 
     public void CheckFrustum()
@@ -194,7 +210,7 @@ public class WorldManager : ScriptingNode
                 continue;
 
             renderCount++;
-            Info.VertexCount += chunk.meshData.verts.Count;
+            Info.VertexCount += chunk.VertexData.Count;
             Matrix4 model = Matrix4.CreateTranslation(chunk.position);
             GL.UniformMatrix4(modelLocation, true, ref model);
             chunk.Render.Invoke();
@@ -227,7 +243,7 @@ public class WorldManager : ScriptingNode
         
         for (int x = -render; x < render; x++)
         {
-            for (int y = 0; y < 10; y++)
+            for (int y = 0; y < 4; y++)
             {
                 for (int z = -render; z < render; z++)
                 {
@@ -291,29 +307,32 @@ public class WorldManager : ScriptingNode
 
     private async void GenerateChunks()
     {
-        if (currentTask == null)
+        for (int i = 0; i < 2; i++)
         {
-            currentTask = GenerateChunk();
-            await currentTask;
-            currentTask = null;
+            Task? task = currentTask[i];
+            if (task == null)
+            {
+                task = GenerateChunk();
+                await task;
+                currentTask[i] = null;
+            }
         }
     }
 
-    private async Task GenerateChunk()
+    private static async Task GenerateChunk()
     {
         if (chunksToGenerate.TryDequeue(out var position))
         {
             if (activeChunks.ContainsKey(position) || chunksToIgnore.Contains(position)) return;
 
             ChunkData chunkData = new ChunkData(_renderType, position);
-            chunkData.meshData = new MeshData();
 
             await Task.Run(() =>
             {
                 Block?[] blocks;
                 
                 Chunk.GenerateChunk(ref chunkData, position);
-                Chunk.GenerateBox(ref chunkData, position, new Vector3i(20, 10, 20), new Vector3i(10, 10, 10));
+                //Chunk.GenerateBox(ref chunkData, position, new Vector3i(20, 10, 20), new Vector3i(10, 10, 10));
                 
                 blocks = chunkData.blockStorage.GetFullBlockArray();
                 
@@ -333,11 +352,16 @@ public class WorldManager : ScriptingNode
     
     private async void StoreChunks()
     {
-        if (storeTask == null)
+        return;
+        for (int i = 0; i < 6; i++)
         {
-            storeTask = StoreChunk();
-            await storeTask;
-            storeTask = null;
+            Task? task = storeTask[i];
+            if (task == null)
+            {
+                task = StoreChunk();
+                await task;
+                storeTask[i] = null;
+            }
         }
     }
     

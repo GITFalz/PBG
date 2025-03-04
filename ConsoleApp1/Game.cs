@@ -72,11 +72,12 @@ public class Game : GameWindow
     {
         Instance = this;
 
+        CenterWindow(new Vector2i(width, height));
+
         camera = new Camera(width, height, new Vector3(0, 0, 0));
 
         _ = new Info();
         
-        CenterWindow(new Vector2i(width, height));
         Game.Width = width;
         Game.Height = height;
         
@@ -96,6 +97,8 @@ public class Game : GameWindow
         CenterX = e.Width / 2;
         CenterY = e.Height / 2;
 
+        UIController.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, Width, Height, 0, -2, 2);
+
         Resize.Invoke();
         
         base.OnResize(e);
@@ -105,7 +108,6 @@ public class Game : GameWindow
     {
         camera = new Camera(Width, Height, new Vector3(0, 0, 0));
 
-        UIController.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, Width, Height, 0, -2, 2);
         _popUp.Resize();
         Info.Resize();
         Timer.Resize();
@@ -177,7 +179,9 @@ public class Game : GameWindow
 
         GL.Enable(EnableCap.DepthTest);
 
-        SSBOTest();
+        Console.WriteLine("OpenGL Version: " + GL.GetString(StringName.Renderer));
+
+        Info.GPUText.SetText($"GPU: {GL.GetString(StringName.Renderer)}", 0.5f).GenerateChars().UpdateText();
         
         base.OnLoad();
     }
@@ -276,7 +280,6 @@ public class Game : GameWindow
 
     protected override void OnUpdateFrame(FrameEventArgs args)
     {
-        Timer.Update();
         MouseState mouse = MouseState;
         KeyboardState keyboard = KeyboardState;
         
@@ -284,7 +287,14 @@ public class Game : GameWindow
         GameTime.Update(args);
 
         if (FpsUpdate())
+        {
             Info.FpsText.SetText($"Fps: {GameTime.Fps}", 0.5f).GenerateChars().UpdateText();
+            long memoryBytes = Process.GetCurrentProcess().WorkingSet64;
+            Info.RamUsageText.SetText($"Ram: {memoryBytes / (1024 * 1024)} Mb", 0.5f).GenerateChars();
+        }   
+
+        Timer.Update();
+        Info.Update();
 
         _popUp.Update();
         
@@ -307,7 +317,7 @@ public class Game : GameWindow
         Skybox.Render();
         CurrentScene?.OnRender();
         _popUp.Render();
-        Timer.Render();
+        //Timer.Render();
         Info.Render();
         
         Context.SwapBuffers();

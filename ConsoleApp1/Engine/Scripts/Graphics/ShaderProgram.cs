@@ -11,7 +11,7 @@ public class ShaderProgram
         int vertexShader = GL.CreateShader(ShaderType.VertexShader);
         GL.ShaderSource(vertexShader, Shader.LoadShaderSource(vertexShaderFilePath));
         GL.CompileShader(vertexShader);
-        
+
         int fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
         GL.ShaderSource(fragmentShader, Shader.LoadShaderSource(fragmentShaderFilePath));
         GL.CompileShader(fragmentShader);
@@ -20,6 +20,19 @@ public class ShaderProgram
         GL.AttachShader(ID, fragmentShader);
         
         GL.LinkProgram(ID);
+
+        int linkStatus;
+        GL.GetProgram(ID, GetProgramParameterName.LinkStatus, out linkStatus);
+        Console.WriteLine($"Shaders: {vertexShaderFilePath} and {fragmentShaderFilePath} linked: {linkStatus}");
+        if (linkStatus == 0)
+        {
+            string infoLog = GL.GetProgramInfoLog(ID);
+            Console.WriteLine("Shader program failed to link: " + infoLog);
+        }
+        else
+        {
+            Shader.Error("LinkProgram");
+        }
         
         GL.DeleteShader(vertexShader);
         GL.DeleteShader(fragmentShader);

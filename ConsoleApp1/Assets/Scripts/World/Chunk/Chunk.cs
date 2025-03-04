@@ -21,6 +21,7 @@ public class Chunk
     
     public static void GenerateChunk(ref ChunkData chunkData, Vector3i position)
     {
+        int count = 0;
         for (var x = 0; x < WIDTH; x++)
         {
             for (var z = 0; z < DEPTH; z++)
@@ -43,6 +44,8 @@ public class Chunk
                 {
                     Block? block = GetBlockAtHeight(height, y + position.Y);
                     chunkData.blockStorage.SetBlock(x, y, z, block);
+                    if (block != null)
+                        count++;
                 }
             }
         }
@@ -112,8 +115,6 @@ public class Chunk
                         {
                             if (VoxelData.InBounds(x, y, z, i, width) && blocks[index + VoxelData.IndexOffsetLod[lod, i]] != null)
                                 block.blockData |= 1 << VoxelData.OcclusionShift[i];
-                            else
-                                chunkData.maxFaceCount++;
                         }
                     }
                         
@@ -158,9 +159,7 @@ public class Chunk
                                 int loop = VoxelData.FirstLoopBase[side](y, z);
                                 int height = 1;
                                 int width = 1;
-                                uint count = (uint)chunkData.meshData.verts.Count;
 
-                                chunkData.meshData.tris.AddRange(count, count + 1, count + 2, count + 2, count + 3, count);
                                 block.blockData |= VoxelData.CheckMask[side];
 
                                 while (loop > 0)
@@ -212,16 +211,13 @@ public class Chunk
                                     loop--;
                                 }
 
-                                Vector3[] positions = VoxelData.PositionOffset[side](width, height);
                                 Vector3 position = (x, y, z);
 
                                 int id = ids[side];
-                                
-                                chunkData.meshData.uvs.AddRange((width, height), (width, 0), (0, 0), (0, height));
-                                chunkData.meshData.tCoords.AddRange(id, id, id, id);
-                                chunkData.meshData.verts.AddRange(position + positions[0], position + positions[1], position + positions[2], position + positions[3]);
                             
                                 chunkData.HasBlocks = true;
+
+                                chunkData.AddFace(position, (byte)(width - 1), (byte)(height - 1), id, (byte)side);
                             }
                         }
                     }

@@ -12,7 +12,7 @@ public class SubBlockBoundingBox
     public Vector3 DistanceToCollision(Hitbox playerHitbox, Vector3 direction)
     {
         var corners = playerHitbox.GetCorners(direction);
-        return (0, 0, 0);
+        return new Vector3(0, 0, 0);
     }
 
     public bool InsideHitbox(Vector3[] corners, Vector3 direction, out Vector3 newDirection)
@@ -33,20 +33,20 @@ public class SubBlockBoundingBox
     /// </summary>
     /// <param name="point"></param>
     /// <param name="direction"></param>
-    public void EdgeCheck(Vector3 point, Vector3 direction)
+    public Vector3 EdgeCheck(Vector3 point, Vector3 direction)
     {
-        // Get the distance to the edge that is opposite to the direction
+        // Avoid division by zero by setting large values if direction is zero
         float distanceX = direction.X < 0 ? Max.X - point.X : point.X - Min.X;
         float distanceY = direction.Y < 0 ? Max.Y - point.Y : point.Y - Min.Y;
         float distanceZ = direction.Z < 0 ? Max.Z - point.Z : point.Z - Min.Z;
 
-        // Map the direction vector so X = 1 but stays proportional
-        Vector3 mappedVector = direction / direction.X;
+        float multiplierX = direction.X != 0 ? distanceX / direction.X : float.MaxValue;
+        float multiplierY = direction.Y != 0 ? distanceY / direction.Y : float.MaxValue;
+        float multiplierZ = direction.Z != 0 ? distanceZ / direction.Z : float.MaxValue;
 
-        float multiplierX = distanceX;
-        float multiplierY = distanceY / mappedVector.Y;
-        float multiplierZ = distanceZ / mappedVector.Z;
-
+        // Find the smallest positive multiplier
+        float minMultiplier = Math.Min(multiplierX, Math.Min(multiplierY, multiplierZ));
         
+        return direction * minMultiplier;
     }
 }
