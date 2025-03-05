@@ -329,21 +329,14 @@ public class WorldManager : ScriptingNode
 
             await Task.Run(() =>
             {
-                Block?[] blocks;
+                Block[] blocks;
                 
                 Chunk.GenerateChunk(ref chunkData, position);
                 //Chunk.GenerateBox(ref chunkData, position, new Vector3i(20, 10, 20), new Vector3i(10, 10, 10));
                 
                 blocks = chunkData.blockStorage.GetFullBlockArray();
-                
-                Chunk.GenerateOcclusion(chunkData, blocks);
-                
-                List<int> blockIds = [];
-
-                foreach (var block in blocks)
-                    blockIds.Add(block?.blockData ?? -1);
-
-                Chunk.GenerateMesh(blocks, blockIds, chunkData);
+                blocks = Chunk.GenerateOcclusion(chunkData, blocks);
+                Chunk.GenerateMesh(blocks, chunkData);
                     
                 chunksToCreate.Enqueue(chunkData);
             });

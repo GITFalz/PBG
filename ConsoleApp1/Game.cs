@@ -324,15 +324,6 @@ public class Game : GameWindow
         
         base.OnRenderFrame(args);
     }
-    
-    
-    public static Matrix4 ClearTranslation(Matrix4 matrix)
-    {
-        matrix.Row3.X = 0; // Clear the X translation
-        matrix.Row3.Y = 0; // Clear the Y translation
-        matrix.Row3.Z = 0; // Clear the Z translation
-        return matrix;
-    }
 
     public void PhysicsThread()
     {
