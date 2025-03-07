@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
+using ConsoleApp1.Engine.Scripts.Core.Data;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -35,10 +36,6 @@ public class Game : GameWindow
     
     public ConcurrentDictionary<string, Scene> Scenes = new ConcurrentDictionary<string, Scene>();
 
-
-
-    private int frameCount = 0;
-    private float elapsedTime = 0;
     private Stopwatch stopwatch;
 
 
@@ -182,43 +179,8 @@ public class Game : GameWindow
         Console.WriteLine("OpenGL Version: " + GL.GetString(StringName.Renderer));
 
         Info.GPUText.SetText($"GPU: {GL.GetString(StringName.Renderer)}", 0.5f).GenerateChars().UpdateText();
-        
+
         base.OnLoad();
-    }
-
-    public void SSBOTest()
-    {
-        List<int> initialData = new List<int> { 1, 2, 3, 4, 5 };
-
-        // Create SSBO and initialize with data
-        SSBO testSSBO = new SSBO(initialData);
-        Console.WriteLine("SSBO ID: " + testSSBO.ID);
-
-        // Bind SSBO to a binding point
-        int bindingPoint = 0;
-        testSSBO.Bind(bindingPoint);
-        Console.WriteLine("Bind SSBO to binding point " + bindingPoint);
-
-        // Read the data back to verify
-        int[] values = testSSBO.ReadData(initialData.Count);
-        Console.WriteLine("Read data");
-        string output = "Values: " + string.Join(", ", values);
-        Console.WriteLine(output);
-
-        // Update the SSBO with new data
-        List<int> newData = new List<int> { 10, 20, 30, 40, 50 };
-        testSSBO.Update(newData, bindingPoint);
-        Console.WriteLine("Updated SSBO with new data");
-
-        // Read the updated data back to verify
-        values = testSSBO.ReadData(newData.Count);
-        Console.WriteLine("Read updated data");
-        output = "Updated Values: " + string.Join(", ", values);
-        Console.WriteLine(output);
-
-        // Delete the SSBO
-        testSSBO.Delete();
-        Console.WriteLine("Deleted SSBO");
     }
     
     protected override void OnKeyDown(KeyboardKeyEventArgs e)
@@ -286,13 +248,6 @@ public class Game : GameWindow
         Input.Update(keyboard, mouse);
         GameTime.Update(args);
 
-        if (FpsUpdate())
-        {
-            Info.FpsText.SetText($"Fps: {GameTime.Fps}", 0.5f).GenerateChars().UpdateText();
-            long memoryBytes = Process.GetCurrentProcess().WorkingSet64;
-            Info.RamUsageText.SetText($"Ram: {memoryBytes / (1024 * 1024)} Mb", 0.5f).GenerateChars();
-        }   
-
         Timer.Update();
         Info.Update();
 
@@ -300,6 +255,8 @@ public class Game : GameWindow
         
         UpdateCamera.Invoke();
         CurrentScene?.OnUpdate();
+
+        ThreadPool.Update();
 
         base.OnUpdateFrame(args);
     }
@@ -342,25 +299,6 @@ public class Game : GameWindow
             
             Thread.Sleep(1);
         }
-    }
-
-    public bool FpsUpdate()
-    {
-        frameCount++;
-        elapsedTime += (float)GameTime.DeltaTime;
-        
-        if (elapsedTime >= 1.0f)
-        {
-            int fps = Mathf.FloorToInt(frameCount / elapsedTime);
-            frameCount = 0;
-            elapsedTime = 0;
-            
-            GameTime.Fps = fps;
-            
-            return true;
-        }
-        
-        return false;
     }
     
     public static void SetCursorState(CursorState state)

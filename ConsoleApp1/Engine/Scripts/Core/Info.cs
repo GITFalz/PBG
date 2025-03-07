@@ -21,6 +21,11 @@ public class Info
     private static int _oldVertexCount = 0;
     public static int VertexCount = 0;
 
+
+
+    private static int frameCount = 0;
+    private static float elapsedTime = 0;
+
     public Info()
     {
         UIVerticalCollection infoCollection = new("FpsCollection", AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (100, 1000), (5, 5, 5, 5), (0, 0, 0, 0), 5, 0);
@@ -51,7 +56,14 @@ public class Info
 
     public static void Update()
     {
-        _infoController.Update();
+        if (FpsUpdate())
+        {
+            FpsText.SetText($"Fps: {GameTime.Fps}", 0.5f).GenerateChars().UpdateText();
+            long memoryBytes = Process.GetCurrentProcess().WorkingSet64;
+            RamUsageText.SetText($"Ram: {memoryBytes / (1024 * 1024)} Mb", 0.5f).GenerateChars();
+        }  
+        
+        _infoController.Update(); 
     }
 
     public static void Render()
@@ -95,5 +107,25 @@ public class Info
         {
             ZPosText.textMesh.UpdateText();
         }
+    }
+
+
+    private static bool FpsUpdate()
+    {
+        frameCount++;
+        elapsedTime += (float)GameTime.DeltaTime;
+        
+        if (elapsedTime >= 1.0f)
+        {
+            int fps = Mathf.FloorToInt(frameCount / elapsedTime);
+            frameCount = 0;
+            elapsedTime = 0;
+            
+            GameTime.Fps = fps;
+            
+            return true;
+        }
+        
+        return false;
     }
 }

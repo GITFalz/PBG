@@ -7,6 +7,7 @@ public class SSBO
     private const int Matrix4SizeInBytes = sizeof(float) * 16;
     private const int IntSizeInBytes = sizeof(int);
 
+
     public SSBO(List<Matrix4> data)
     {
         ID = GL.GenBuffer();
@@ -42,6 +43,8 @@ public class SSBO
         GL.BufferData(BufferTarget.ShaderStorageBuffer, data.Count * Vector2i.SizeInBytes, data.ToArray(), BufferUsageHint.DynamicDraw);
     }
 
+
+
     public void Bind(int bindingPoint)
     {
         GL.BindBuffer(BufferTarget.ShaderStorageBuffer, ID);
@@ -66,6 +69,29 @@ public class SSBO
         GL.BufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, newData.Count * IntSizeInBytes, newData.ToArray());
         Unbind();
     }
+
+    public void Update(List<Vector3> newData, int bindingPoint)
+    {
+        Bind(bindingPoint);
+        GL.BufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, newData.Count * Vector3.SizeInBytes, newData.ToArray());
+        Unbind();
+    }
+
+    public void Update(List<Vector4i> newData, int bindingPoint)
+    {
+        Bind(bindingPoint);
+        GL.BufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, newData.Count * Vector4i.SizeInBytes, newData.ToArray());
+        Unbind();
+    }
+
+    public void Update(List<Vector2i> newData, int bindingPoint)
+    {
+        Bind(bindingPoint);
+        GL.BufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, newData.Count * Vector2i.SizeInBytes, newData.ToArray());
+        Unbind();
+    }
+
+
 
     public int[] ReadData(int count)
     {

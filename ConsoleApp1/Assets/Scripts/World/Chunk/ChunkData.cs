@@ -6,7 +6,6 @@ public class ChunkData
 {
     public Vector3i position = (0, 0, 0);
     public BlockStorage blockStorage = new(new Vector3i(0, 0, 0));
-    public ChunkData[] sideChunks = [];
     public BoundingBox boundingBox = new(new System.Numerics.Vector3(0, 0, 0), new System.Numerics.Vector3(0, 0, 0));
 
     public List<Vector3> Wireframe = [];
@@ -30,7 +29,7 @@ public class ChunkData
 
     public void AddFace(byte posX, byte posY, byte posZ, byte width, byte height, int blockIndex, byte side)
     {
-        Vector3i size = _faceVertices[side];
+        Vector3i size = FaceVertices[side];
         int vertex = posX | (posY << 5) | (posZ << 10) | (width << 15) | (height << 20);
         int blockData = blockIndex | (side << 16) | (size.X << 19) | (size.Y << 21) | (size.Z << 23);
 
@@ -57,17 +56,6 @@ public class ChunkData
 
         Render = renderType == RenderType.Solid ? RenderChunk : RenderWireframe;
         CreateChunk = renderType == RenderType.Solid ? CreateChunkSolid : CreateChunkWireframe;
-
-        /*
-        AddFace(0, 0, 0, 1, 1, 0, 0);
-        AddFace(0, 0, 0, 3, 1, 0, 1);
-        AddFace(0, 0, 0, 1, 1, 0, 2);
-        AddFace(0, 0, 0, 1, 1, 0, 3);
-        AddFace(0, 0, 0, 1, 1, 0, 4);
-        AddFace(0, 0, 0, 1, 1, 0, 5);
-
-        VertexSSBO = new SSBO(VertexData);
-        */
     }
 
     public void SetRenderType(RenderType type)
@@ -90,7 +78,8 @@ public class ChunkData
 
     public void Clear()
     {
-        sideChunks = null;
+        VertexData.Clear();
+        Wireframe.Clear();
     }
 
     public void Delete()
@@ -233,7 +222,7 @@ public class ChunkData
         }
     }
 
-    private readonly Vector3i[] _faceVertices =
+    public static readonly Vector3i[] FaceVertices =
     [
         (0, 1, 2),
         (2, 1, 0),

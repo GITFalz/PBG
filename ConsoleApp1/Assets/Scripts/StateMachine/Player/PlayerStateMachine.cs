@@ -147,11 +147,7 @@ public class PlayerStateMachine : ScriptingNode
     {
         Camera camera = Game.camera;
 
-        //Shader.Error("Before Player Render");
-
         _shaderProgram.Bind();
-
-        //Shader.Error("After Player Bind: " + _shaderProgram.ID);
         
         Matrix4 model = Matrix4.CreateTranslation(Transform.Position);
         Matrix4 view = camera.GetViewMatrix();
@@ -166,8 +162,6 @@ public class PlayerStateMachine : ScriptingNode
         GL.UniformMatrix4(projectionLocation, true, ref projection);
 
         _playerMesh.RenderMesh();
-
-        //Shader.Error("After Player Render Mesh");
         
         _shaderProgram.Unbind();
     }
@@ -253,9 +247,6 @@ public class PlayerStateMachine : ScriptingNode
 
     public bool IsHuggingWall()
     {
-        if (WorldManager.Instance == null)
-            return false;
-
         if (physicsBody.Velocity.Z < 0)
             HugZ = Mathf.FloorToInt(physicsBody.Hitbox.CornerX1Y1Z1 + new Vector3(0.5f, 0.5f, -1f));
         else if (physicsBody.Velocity.Z > 0)
@@ -291,11 +282,6 @@ public class PlayerStateMachine : ScriptingNode
         { new Vector2(-1, 0), 270 },
         { new Vector2(-1, 1), 315 },
     };
-    
-    public void SetPosition(Vector3 position)
-    {
-        physicsBody.SetPosition(position);
-    }
 }
 
 public enum PlayerMovementSpeed

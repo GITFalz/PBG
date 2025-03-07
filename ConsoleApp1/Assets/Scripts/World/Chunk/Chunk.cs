@@ -35,8 +35,7 @@ public class Chunk
                     );
                 
                 int height = Mathf.FloorToInt(Mathf.Lerp(20, 100, (float)(noise * 0.05 + splineVector)));
-                
-                //Console.WriteLine(noise + " Spline: " + specNoise  + " " + splineVector + " " + height);
+
                 int terrainHeight = Mathf.Min(Mathf.Max((height - position.Y), 0), 32);
 
                 for (int y = 0; y < terrainHeight; y++)
@@ -47,6 +46,8 @@ public class Chunk
             }
         }
     }
+
+    private static readonly int[] _lodLevels = { 1, 2, 4, 8, 16, 32 };
     
     public static void GenerateFlatChunk(ref ChunkData chunkData, Vector3i position)
     {

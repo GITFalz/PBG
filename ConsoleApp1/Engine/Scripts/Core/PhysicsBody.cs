@@ -131,9 +131,6 @@ public class PhysicsBody : ScriptingNode
     
     public void CollisionCheck()
     {
-        if (WorldManager.Instance == null)
-            return;
-        
         Vector3 checkDistance = Velocity * GameTime.FixedDeltaTime;
 
         Vector3i[] zPositions = checkDistance.Z < 0 ?

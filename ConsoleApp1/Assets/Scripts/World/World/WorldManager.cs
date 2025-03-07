@@ -6,9 +6,7 @@ using ErrorCode = OpenTK.Graphics.OpenGL4.ErrorCode;
 
 public class WorldManager : ScriptingNode
 {
-    public static WorldManager? Instance;
-    
-    public HashSet<Vector3i> chunks;
+    public static HashSet<Vector3i> chunks;
     
     public static ConcurrentDictionary<Vector3i, ChunkData> activeChunks;
     public static ConcurrentQueue<Vector3i> chunksToGenerate;
@@ -25,7 +23,8 @@ public class WorldManager : ScriptingNode
     
     public static ShaderProgram _shaderProgram = new ShaderProgram("World/World.vert", "World/World.frag");
     public static ShaderProgram _wireframeShader = new ShaderProgram("World/Wireframe.vert", "World/Wireframe.frag");
-    public Texture _textureArray = new Texture("Test_TextureAtlas.png");
+    public Texture _textures = new Texture("Test_TextureAtlas.png");
+    
 
     private static RenderType _renderType = RenderType.Solid;
     private Action _render = () => { };
@@ -40,8 +39,6 @@ public class WorldManager : ScriptingNode
     
     public WorldManager()
     {
-        Instance ??= this;
-        
         chunks = [];
         
         activeChunks = [];
@@ -116,18 +113,13 @@ public class WorldManager : ScriptingNode
         int renderCount = 0;
         Info.VertexCount = 0;
 
-        //Shader.Error("Before Render Start");
-
         GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.CullFace);
 
-        //Shader.Error("Before Bind");
-
         pullingShader.Bind();
-        _textureArray.Bind();
+        _textures.Bind();
 
-        //Shader.Error("After Bind");
-
+        Matrix4 model = Matrix4.Identity;
         Matrix4 view = camera.viewMatrix;
         Matrix4 projection = camera.projectionMatrix;
 
@@ -147,19 +139,17 @@ public class WorldManager : ScriptingNode
 
             renderCount++;
             Info.VertexCount += chunk.VertexData.Count;
-            Matrix4 model = Matrix4.CreateTranslation(chunk.position);
+            model = Matrix4.CreateTranslation(chunk.position);
             GL.UniformMatrix4(modelLocationA, true, ref model);
             chunk.Render.Invoke();
-
-            //Shader.Error("After Render");
         }
 
-        //Shader.Error("Before Unbind");
+        model = Matrix4.Identity;
+        GL.UniformMatrix4(modelLocationA, true, ref model);
+        LodBase.Render();
         
         pullingShader.Unbind();
-        _textureArray.Unbind();
-
-        //Shader.Error("After Unbind");
+        _textures.Unbind();
 
         if (renderCount != _oldRenderedChunks)
         {
@@ -294,7 +284,7 @@ public class WorldManager : ScriptingNode
         }
     }
 
-    public int GetBlock(Vector3i blockPosition, out Block? block)
+    public static int GetBlock(Vector3i blockPosition, out Block? block)
     {
         block = null;
         Vector3i chunkPosition = VoxelData.BlockToChunkPosition(blockPosition);
@@ -305,42 +295,32 @@ public class WorldManager : ScriptingNode
         return block == null ? 1 : 0;
     }
 
-    private async void GenerateChunks()
-    {
-        for (int i = 0; i < 2; i++)
-        {
-            Task? task = currentTask[i];
-            if (task == null)
-            {
-                task = GenerateChunk();
-                await task;
-                currentTask[i] = null;
-            }
-        }
-    }
-
-    private static async Task GenerateChunk()
+    private void GenerateChunks()
     {
         if (chunksToGenerate.TryDequeue(out var position))
         {
-            if (activeChunks.ContainsKey(position) || chunksToIgnore.Contains(position)) return;
-
-            ChunkData chunkData = new ChunkData(_renderType, position);
-
-            await Task.Run(() =>
-            {
-                Block[] blocks;
-                
-                Chunk.GenerateChunk(ref chunkData, position);
-                //Chunk.GenerateBox(ref chunkData, position, new Vector3i(20, 10, 20), new Vector3i(10, 10, 10));
-                
-                blocks = chunkData.blockStorage.GetFullBlockArray();
-                blocks = Chunk.GenerateOcclusion(chunkData, blocks);
-                Chunk.GenerateMesh(blocks, chunkData);
-                    
-                chunksToCreate.Enqueue(chunkData);
-            });
+            ThreadPool.QueueAction(() => GenerateChunk(position));
         }
+    }
+
+    private static async Task GenerateChunk(Vector3i position)
+    {
+        if (activeChunks.ContainsKey(position) || chunksToIgnore.Contains(position)) return;
+
+        ChunkData chunkData = new ChunkData(_renderType, position);
+
+        await Task.Run(() =>
+        {
+            Block[] blocks;
+            
+            Chunk.GenerateChunk(ref chunkData, position);
+            
+            blocks = chunkData.blockStorage.GetFullBlockArray();
+            blocks = Chunk.GenerateOcclusion(chunkData, blocks);
+            Chunk.GenerateMesh(blocks, chunkData);
+                
+            chunksToCreate.Enqueue(chunkData);
+        });
     }
     
     private async void StoreChunks()
@@ -375,7 +355,7 @@ public class WorldManager : ScriptingNode
 
         foreach (var position in positions)
         {
-            int result = Instance.GetBlock(position, out block);
+            int result = GetBlock(position, out block);
 
             if (result == 0 || result == 2)
                 return true;
@@ -388,7 +368,7 @@ public class WorldManager : ScriptingNode
     {
         Block? block;
         
-        int result = Instance.GetBlock(position, out block);
+        int result = GetBlock(position, out block);
 
         if (result == 0 || result == 2)
             return true;
@@ -407,7 +387,7 @@ public class WorldManager : ScriptingNode
         {
             _shaderProgram.Delete();
             _wireframeShader.Delete();
-            _textureArray.Delete();
+            _textures.Delete();
         }
         catch (Exception e)
         {
