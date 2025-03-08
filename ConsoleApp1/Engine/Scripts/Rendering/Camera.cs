@@ -96,7 +96,7 @@ public class Camera
     public void CalculateFrustumPlanes()
     {
         Matrix4 viewProjectionMatrix = GetViewProjectionMatrix();
-        Matrix4x4 viewProjectionMatrixNumerics = Mathf.ToNumericsMatrix4(viewProjectionMatrix);
+        Matrix4x4 viewProjectionMatrixNumerics = Mathf.ToNumerics(viewProjectionMatrix);
 
         // Extract the frustum planes from the view-projection matrix
         frustumPlanes[0] = new Plane( // Left
@@ -152,7 +152,7 @@ public class Camera
     {
         foreach (var plane in frustumPlanes)
         {
-            if (Plane.DotCoordinate(plane, Mathf.ToNumericsVector3(point)) < 0)
+            if (Plane.DotCoordinate(plane, Mathf.ToNumerics(point)) < 0)
                 return false;
         }
         return true;
@@ -185,12 +185,12 @@ public class Camera
     
     public Matrix4x4 GetNumericsViewMatrix()
     {
-        return Mathf.ToNumericsMatrix4(GetViewMatrix());
+        return Mathf.ToNumerics(GetViewMatrix());
     }
     
     public Matrix4x4 GetNumericsProjectionMatrix()
     {
-        return Mathf.ToNumericsMatrix4(GetProjectionMatrix());
+        return Mathf.ToNumerics(GetProjectionMatrix());
     }
     
     public Matrix4 GetViewProjectionMatrix()

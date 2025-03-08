@@ -9,7 +9,7 @@ public static class ThreadPool
     private static readonly int MAX_THREAD_COUNT = Environment.ProcessorCount;
     public static int ThreadCount { get; private set; } = 4;
 
-    private static readonly ConcurrentQueue<Func<Task>> _actions = new ConcurrentQueue<Func<Task>>();
+    private static PriorityQueue _actions = new PriorityQueue();
     private static readonly List<Task> _runningTasks = new List<Task>();
 
     public static void SetThreadCount(int count)
@@ -17,9 +17,9 @@ public static class ThreadPool
         ThreadCount = Math.Clamp(count, 1, MAX_THREAD_COUNT);
     }
 
-    public static void QueueAction(Func<Task> action)
+    public static void QueueAction(Func<Task> action, TaskPriority priority = TaskPriority.Normal)
     {
-        _actions.Enqueue(action);
+        _actions.Enqueue(action, priority);
     }
 
     public static void Update()
@@ -40,4 +40,55 @@ public static class ThreadPool
             }
         }
     }
+
+    private class PriorityQueue 
+    {
+        private readonly ConcurrentQueue<Func<Task>> _highPriorityActions = new ConcurrentQueue<Func<Task>>();
+        private readonly ConcurrentQueue<Func<Task>> _normalPriorityActions = new ConcurrentQueue<Func<Task>>();
+        private readonly ConcurrentQueue<Func<Task>> _lowPriorityActions = new ConcurrentQueue<Func<Task>>();
+
+        public void Enqueue(Func<Task> action, TaskPriority priority = TaskPriority.Normal)
+        {
+            switch (priority)
+            {
+                case TaskPriority.Low:
+                    _lowPriorityActions.Enqueue(action);
+                    break;
+                case TaskPriority.Normal:
+                    _normalPriorityActions.Enqueue(action);
+                    break;
+                case TaskPriority.High:
+                    _highPriorityActions.Enqueue(action);
+                    break;
+            }
+        }
+
+        public bool TryDequeue(out Func<Task> action)
+        {
+            action = () => { return Task.CompletedTask; };
+            if (_highPriorityActions.TryDequeue(out var a))
+            {
+                action = a;
+                return true;
+            }
+            if (_normalPriorityActions.TryDequeue(out a))
+            {
+                action = a;
+                return true;
+            }
+            if (_lowPriorityActions.TryDequeue(out a))
+            {
+                action = a;
+                return true;
+            }
+            return false;
+        }
+    }
+}
+
+public enum TaskPriority
+{
+    Low,
+    Normal,
+    High
 }

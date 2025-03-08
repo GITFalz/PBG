@@ -31,7 +31,7 @@ public class Game : GameWindow
 
 
     public static Vector3 BackgroundColor = new Vector3(0.4f, 0.6f, 0.98f);
-    public static Camera camera;
+    public static Camera camera { get; private set; }
     public static Action UpdateCamera = () => { camera?.Update(); };
     
     public ConcurrentDictionary<string, Scene> Scenes = new ConcurrentDictionary<string, Scene>();
@@ -75,11 +75,11 @@ public class Game : GameWindow
 
         _ = new Info();
         
-        Game.Width = width;
-        Game.Height = height;
+        Width = width;
+        Height = height;
         
-        Game.CenterX = width / 2;
-        Game.CenterY = height / 2;
+        CenterX = width / 2;
+        CenterY = height / 2;
 
         Resize = () => { Resize = OnResize; };
     }

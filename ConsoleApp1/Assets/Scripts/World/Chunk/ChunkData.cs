@@ -45,14 +45,12 @@ public class ChunkData
     {
         this.position = position;
 
-        blockStorage = new BlockStorage(position);
+        blockStorage = new BlockStorage(position * 32);
         
-        System.Numerics.Vector3 min = new System.Numerics.Vector3(position.X, position.Y, position.Z);
+        System.Numerics.Vector3 min = Mathf.ToNumerics(position * 32);
         System.Numerics.Vector3 max = min + new System.Numerics.Vector3(Chunk.WIDTH, Chunk.HEIGHT, Chunk.DEPTH);
         
         boundingBox = new BoundingBox(min, max);
-        
-        filePath = Path.Combine(Game.chunkPath, $"Chunk_{position.X}_{position.Y}_{position.Z}");
 
         Render = renderType == RenderType.Solid ? RenderChunk : RenderWireframe;
         CreateChunk = renderType == RenderType.Solid ? CreateChunkSolid : CreateChunkWireframe;
@@ -74,6 +72,16 @@ public class ChunkData
             Render = RenderWireframe;
             CreateChunk = CreateChunkWireframe;
         }
+    }
+
+    public Vector3i GetWorldPosition()
+    {
+        return position * 32;
+    }
+
+    public Vector3i GetRelativePosition()
+    {
+        return position;
     }
 
     public void Clear()
@@ -127,99 +135,9 @@ public class ChunkData
         _edgeVao.Unbind();
     }
 
-    public void StoreData()
+    public void SaveChunk()
     {
-        int i = 0;
-        
-        if (!Directory.Exists(filePath))
-            Directory.CreateDirectory(filePath);
-        
-        foreach (var subPos in blockStorage.SubPositions)
-        {
-            string subFilePath = Path.Combine(filePath, $"SubChunk_{subPos.X}_{subPos.Y}_{subPos.Z}.chunk");
-            
-            Block[]? blocks = blockStorage.Blocks[i];
-            
-            if (blockStorage.BlockCount[i] == 0 || blocks == null)
-                SaveEmptyChunk(subFilePath);
-            else
-                SaveChunk(blocks, subFilePath);
-            
-            i++;
-        }
-    }
-    
-    public void SaveChunk(Block[] data, string filePath)
-    {
-        using (BinaryWriter writer = new BinaryWriter(File.Open(filePath, FileMode.Create)))
-        {
-            foreach (Block block in data)
-            {
-                if (block.IsAir())
-                    writer.Write((short)-1);
-                else
-                    writer.Write(block.blockData);
-            }
-        }
-    }
-    
-    public void SaveEmptyChunk(string filePath)
-    {
-        using (BinaryWriter writer = new BinaryWriter(File.Open(filePath, FileMode.Create)))
-        {
-            writer.Write(-2);
-        }
-    }
-    
-    public bool FolderExists()
-    {
-        return Directory.Exists(filePath);
-    }
-    
-    public void LoadData()
-    {
-        int i = 0;
-        
-        if (!Directory.Exists(filePath))
-            Directory.CreateDirectory(filePath);
-        
-        foreach (var subPos in blockStorage.SubPositions)
-        {
-            string subFilePath = Path.Combine(filePath, $"SubChunk_{subPos.X}_{subPos.Y}_{subPos.Z}.chunk");
-            blockStorage.Blocks[i] = LoadChunk(subFilePath, out int count);
-            blockStorage.BlockCount[i] = count;
-            
-            i++;
-        }
-    }
-
-    public Block[]? LoadChunk(string subFilePath, out int count)
-    {
-        count = 0;
-        
-        using (BinaryReader reader = new BinaryReader(File.Open(subFilePath, FileMode.Open)))
-        {
-            short value = reader.ReadInt16();
-            if (value == -2)
-                return null;
-            
-            Block[] blocks = new Block[4096];
-            blocks[0] = value == -1 ? new Block(false, 0) : new Block(true, value);
-            
-            for (int i = 1; i < 4096; i++)
-            {
-                short data = reader.ReadInt16();
-                if (data == -1)
-                    blocks[i] = new Block(false, 0);
-                else
-                {
-                    blocks[i] = new Block(true, data);
-                    count++;
-                }
-            }
-            
-            return blocks;
-        }
+        ChunkManager.SaveChunk(this);
     }
 
     public static readonly Vector3i[] FaceVertices =
@@ -233,100 +151,6 @@ public class ChunkData
     ];
 }
 
-public class BlockStorage
-{
-    public List<Block[]?> Blocks;
-    public List<Vector3i> SubPositions;
-    public int[] BlockCount;
-
-    public BlockStorage(Vector3i position)
-    {
-        Blocks = new List<Block[]?>() { null, null, null, null, null, null, null, null };
-        BlockCount = [0, 0, 0, 0, 0, 0, 0, 0];
-        SubPositions = new List<Vector3i>()
-        {
-            position,
-            position + new Vector3i(16, 0, 0),
-            position + new Vector3i(0, 0, 16),
-            position + new Vector3i(16, 0, 16),
-            position + new Vector3i(0, 16, 0),
-            position + new Vector3i(16, 16, 0),
-            position + new Vector3i(0, 16, 16),
-            position + new Vector3i(16, 16, 16),
-        };
-    }
-    
-    public void SetBlock(int x, int y, int z, Block block)
-    {
-        int modX = x & 15;
-        int modY = y & 15;
-        int modZ = z & 15;
-        
-        int xIndex = x >> 4;
-        int yIndex = y >> 4;
-        int zIndex = z >> 4;
-
-        int blockIndex = modX + modZ * 16 + modY * 256;
-        int arrayIndex = xIndex + zIndex * 2 + yIndex * 4;
-        
-        if (BlockCount[arrayIndex] == 0 || Blocks[arrayIndex] == null)
-            Blocks[arrayIndex] = Enumerable.Range(0, 4096).Select(_ => new Block(false, 0)).ToArray(); 
-        
-        Blocks[arrayIndex][blockIndex] = block;
-        BlockCount[arrayIndex]++;
-    }
-    
-    public Block GetBlock(int x, int y, int z)
-    {
-        int modX = x & 15;
-        int modY = y & 15;
-        int modZ = z & 15;
-        
-        int xIndex = x >> 4;
-        int yIndex = y >> 4;
-        int zIndex = z >> 4;
-
-        int blockIndex = modX + modZ * 16 + modY * 256;
-        int arrayIndex = xIndex + zIndex * 2 + yIndex * 4;
-        
-        Block[]? blocks = arrayIndex >= Blocks.Count ? null : Blocks[arrayIndex];
-        
-        if (BlockCount[arrayIndex] == 0 || blocks == null)
-            return new Block(false, 0);
-        
-        return blocks[blockIndex];
-    }
-    
-    public Block GetBlock(Vector3i position)
-    {
-        return GetBlock(position.X, position.Y, position.Z);
-    }
-
-    public Block[] GetFullBlockArray()
-    {
-        Block[] blocks = new Block[32768];
-
-        int index = 0;
-        for (int y = 0; y < 32; y++)
-        {
-            for (int z = 0; z < 32; z++)
-            {
-                for (int x = 0; x < 32; x++)
-                {
-                    blocks[index] = GetBlock(x, y, z);
-                    index++;
-                }
-            }
-        }
-
-        return blocks;
-    }
-    
-    public void Clear()
-    {
-        Blocks.Clear();
-    }
-}
 public struct Bounds
 {
     public Vector3 Min;

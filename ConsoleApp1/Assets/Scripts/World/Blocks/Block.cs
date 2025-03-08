@@ -10,8 +10,8 @@
 
     public int blockData = 0;
 
-    public Block(short blockData) : this(true, blockData) { }
-    public Block(bool isSolid, short blockData)
+    public Block(int blockData) : this(true, blockData) { }
+    public Block(bool isSolid, int blockData)
     {
         this.blockData = blockData;
         if (isSolid)

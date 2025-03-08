@@ -64,7 +64,7 @@ public static class Mathf
 
     public static Vector3 Transform(Vector3 value, Matrix4 matrix)
     {
-        return ToOpenTKVector3(System.Numerics.Vector3.Transform(ToNumericsVector3(value), ToNumericsMatrix4(matrix)));
+        return ToOpenTK(System.Numerics.Vector3.Transform(ToNumerics(value), ToNumerics(matrix)));
     }
     
     public static Vector3 Normalize(Vector3 value)
@@ -157,7 +157,7 @@ public static class Mathf
         return (t - a) / (b - a);
     }
     
-    public static System.Numerics.Matrix4x4 ToNumericsMatrix4(Matrix4 matrix)
+    public static System.Numerics.Matrix4x4 ToNumerics(Matrix4 matrix)
     {
         return new System.Numerics.Matrix4x4(
             matrix.M11, matrix.M12, matrix.M13, matrix.M14,
@@ -166,24 +166,25 @@ public static class Mathf
             matrix.M41, matrix.M42, matrix.M43, matrix.M44);
     }
     
-    public static System.Numerics.Vector4 ToNumericsVector4(OpenTK.Mathematics.Vector4 vector)
+    public static System.Numerics.Vector4 ToNumerics(OpenTK.Mathematics.Vector4 vector)
     {
         return new System.Numerics.Vector4(vector.X, vector.Y, vector.Z, vector.W);
     }
     
-    public static System.Numerics.Vector3 ToNumericsVector3(OpenTK.Mathematics.Vector3 vector)
+    public static System.Numerics.Vector3 ToNumerics(OpenTK.Mathematics.Vector3 vector)
     {
         return new System.Numerics.Vector3(vector.X, vector.Y, vector.Z);
     }
 
-    public static Vector3 ToOpenTKVector3(System.Numerics.Vector3 vector)
-    {
-        return new Vector3(vector.X, vector.Y, vector.Z);
-    }
-    
-    public static System.Numerics.Vector2 ToNumericsVector2(OpenTK.Mathematics.Vector2 vector)
+    public static System.Numerics.Vector2 ToNumerics(OpenTK.Mathematics.Vector2 vector)
     {
         return new System.Numerics.Vector2(vector.X, vector.Y);
+    }
+
+
+    public static Vector3 ToOpenTK(System.Numerics.Vector3 vector)
+    {
+        return new Vector3(vector.X, vector.Y, vector.Z);
     }
 
     public static Vector3 DegreesToRadians(Vector3 degrees)
@@ -222,7 +223,7 @@ public static class Mathf
         System.Numerics.Matrix4x4 projMatrix = projectionMatrix;
 
         System.Numerics.Vector4 viewSpace = System.Numerics.Vector4.Transform(
-            new System.Numerics.Vector4(ToNumericsVector3(worldPosition), 1.0f),
+            new System.Numerics.Vector4(ToNumerics(worldPosition), 1.0f),
             viewMatrix
         );
 

@@ -55,8 +55,6 @@ public class PlayerStateMachine : ScriptingNode
     public override void Start()
     {
         new OldAnimationManager();
-
-        Game.camera = new Camera(Game.Width, Game.Height, new Vector3(0, 20, 0));
         
         _lastCameraPitch = Game.camera.pitch;
         _lastCameraYaw = Game.camera.yaw;
