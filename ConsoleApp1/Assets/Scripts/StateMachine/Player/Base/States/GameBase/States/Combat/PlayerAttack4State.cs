@@ -20,9 +20,6 @@ public class PlayerAttack4State : PlayerGameBaseState
         smashed1 = false;
         smashed2 = false;
         
-        playerGameState.PlayerStateMachine.physicsBody.EnableGravity();
-        //playerGameState.PlayerStateMachine.physicsBody.SetAcceleration(Camera.FrontYto0() * 0.1f);
-        
         OldAnimationManager.Instance.SetAnimation("Sword", "attack4");
         OldAnimationManager.Instance.SetAnimation("Player", "attack4");
     }

@@ -2,11 +2,6 @@
 
 public static class VoxelData
 {
-    public static readonly uint[] TrisIndexTable = new uint[]
-    {
-        0, 1, 2, 2, 3, 0
-    };
-
     public static readonly Vector2[] UVTable = new Vector2[]
     {
         new Vector2(0, 0),
@@ -21,14 +16,7 @@ public static class VoxelData
         { -16, 1, 256, -1, -256, 16 },
     };
 
-    private const int ocmask = 0b100000001;
-    
-    public static readonly byte[] OcclusionShift = [16, 17, 18, 19, 20, 21];
-    public static readonly byte[] CheckShift = [22, 23, 24, 25, 26, 27];
-
     public static readonly int[] OcclusionMask = [1 << 16, 1 << 17, 1 << 18, 1 << 19, 1 << 20, 1 << 21];
-    public static readonly int[] CheckMask = [1 << 22, 1 << 23, 1 << 24, 1 << 25, 1 << 26, 1 << 27];
-    public static readonly int[] OcclusionCheckMask = [ocmask << 16, ocmask << 17, ocmask << 18, ocmask << 19, ocmask << 20, ocmask << 21];
 
     public static bool InBounds(int x, int y, int z, int side, int size)
     {
@@ -70,16 +58,6 @@ public static class VoxelData
         (x, z) => 31 - x,
         (x, z) => 31 - x,
     };
-
-    public static readonly Func<float, float, Vector3[]>[] PositionOffset =
-    [
-        (width, height) => new Vector3[] { new Vector3(0, 0, 0), new Vector3(0, height, 0), new Vector3(width, height, 0), new Vector3(width, 0, 0), }, //Front
-        (width, height) => new Vector3[] { new Vector3(1, 0, 0), new Vector3(1, height, 0), new Vector3(1, height, width), new Vector3(1, 0, width), }, //Right
-        (width, height) => new Vector3[] { new Vector3(0, 1, 0), new Vector3(0, 1, height), new Vector3(width, 1, height), new Vector3(width, 1, 0), }, //Top
-        (width, height) => new Vector3[] { new Vector3(0, 0, width), new Vector3(0, height, width), new Vector3(0, height, 0), new Vector3(0, 0, 0), }, //Left
-        (width, height) => new Vector3[] { new Vector3(width, 0, 0), new Vector3(width, 0, height), new Vector3(0, 0, height), new Vector3(0, 0, 0), }, //Bottom
-        (width, height) => new Vector3[] { new Vector3(width, 0, 1), new Vector3(width, height, 1), new Vector3(0, height, 1), new Vector3(0, 0, 1), }  //Back
-    ];
 
     public static BoxMesh GetEntityBoxMesh(BoxMesh mesh, Vector3 size, Vector3 offset, int color)
     {
@@ -248,26 +226,266 @@ public static class VoxelData
         mesh.TextureIndices.Add(color);
     }
 
+    /// <summary>
+    /// Returns the blocks of the raycast
+    /// </summary>
+    /// <param name="origin"></param>
+    /// <param name="direction"></param>
+    /// <param name="maxDistance"></param>
+    /// <param name="blocks"></param>
+    /// <returns></returns>
+    public static bool RaycastBlocks(Vector3 origin, Vector3 direction, float maxDistance, out List<Vector3i> blocks)
+    {
+        return Raycast(origin, direction, maxDistance, out blocks, out _, out _);
+    }
+
+    /// <summary>
+    /// Returns the steps of the raycast
+    /// </summary>
+    /// <param name="origin"></param>
+    /// <param name="direction"></param>
+    /// <param name="maxDistance"></param>
+    /// <param name="steps"></param>
+    /// <returns></returns>
+    public static bool RaycastSteps(Vector3 origin, Vector3 direction, float maxDistance, out List<Vector3> steps)
+    {
+        return Raycast(origin, direction, maxDistance, out _, out steps, out _);
+    }
+    
+    /// <summary>
+    /// Returns the normals of the raycast
+    /// </summary>
+    /// <param name="origin"></param>
+    /// <param name="direction"></param>
+    /// <param name="maxDistance"></param>
+    /// <param name="blocks"></param>
+    /// <param name="steps"></param>
+    /// <param name="normals"></param>
+    /// <returns></returns>
+    public static bool RaycastNormals(Vector3 origin, Vector3 direction, float maxDistance, out List<Vector3i> normals)
+    {
+        return Raycast(origin, direction, maxDistance, out _, out _, out normals);
+    }
+    
+    /// <summary>
+    /// Returns the blocks, steps and normals of the raycast
+    /// </summary>
+    /// <param name="origin"></param>
+    /// <param name="direction"></param>
+    /// <param name="maxDistance"></param>
+    /// <param name="blocks"></param>
+    /// <param name="steps"></param>
+    /// <param name="normals"></param>
+    /// <returns></returns>
+    public static bool Raycast(Vector3 origin, Vector3 direction, float maxDistance, out List<Vector3i> blocks, out List<Vector3> steps, out List<Vector3i> normals)
+    {
+        blocks = new List<Vector3i>();
+        steps = new List<Vector3>();
+        normals = new List<Vector3i>();
+
+        if (direction.LengthSquared == 0) return false;
+        direction.Normalize();
+
+        Vector3 pos = origin;
+        Vector3i blockPos = new Vector3i(
+            Mathf.FloorToInt(pos.X),
+            Mathf.FloorToInt(pos.Y),
+            Mathf.FloorToInt(pos.Z)
+        );
+
+        Vector3 safeInvDir = new Vector3(
+            direction.X != 0 ? 1 / direction.X : float.MaxValue,
+            direction.Y != 0 ? 1 / direction.Y : float.MaxValue,
+            direction.Z != 0 ? 1 / direction.Z : float.MaxValue
+        );
+
+        Vector3 deltaDist = new Vector3(
+            MathF.Abs(safeInvDir.X),
+            MathF.Abs(safeInvDir.Y),
+            MathF.Abs(safeInvDir.Z)
+        );
+
+        Vector3i step = new Vector3i(
+            direction.X > 0 ? 1 : -1,
+            direction.Y > 0 ? 1 : -1,
+            direction.Z > 0 ? 1 : -1
+        );
+
+        Vector3 sideDist = new Vector3(
+            (direction.X > 0 ? (blockPos.X + 1 - pos.X) : (pos.X - blockPos.X)) * deltaDist.X,
+            (direction.Y > 0 ? (blockPos.Y + 1 - pos.Y) : (pos.Y - blockPos.Y)) * deltaDist.Y,
+            (direction.Z > 0 ? (blockPos.Z + 1 - pos.Z) : (pos.Z - blockPos.Z)) * deltaDist.Z
+        );
+
+        float totalDistance = 0f;
+
+        while (totalDistance <= maxDistance)
+        {
+            if (sideDist.X < sideDist.Y && sideDist.X < sideDist.Z)
+            {
+                totalDistance = sideDist.X;
+                blockPos.X += step.X;
+                sideDist.X += deltaDist.X;
+                normals.Add(new Vector3i(-step.X, 0, 0));
+            }
+            else if (sideDist.Y < sideDist.Z)
+            {
+                totalDistance = sideDist.Y;
+                blockPos.Y += step.Y;
+                sideDist.Y += deltaDist.Y;
+                normals.Add(new Vector3i(0, -step.Y, 0));
+            }
+            else
+            {
+                totalDistance = sideDist.Z;
+                blockPos.Z += step.Z;
+                sideDist.Z += deltaDist.Z;
+                normals.Add(new Vector3i(0, 0, -step.Z));
+            }
+
+            if (totalDistance > maxDistance) break;
+            blocks.Add(blockPos);
+            steps.Add(direction * totalDistance);
+        }
+
+        return blocks.Count > 0;
+    }
+
+    /// <summary>
+    /// Returns every block a hitbox hits
+    /// </summary>
+    /// <param name="origin"></param>
+    /// <param name="halfSize">The half size of the hitbox</param>
+    /// <param name="direction"></param>
+    /// <param name="maxDistance"></param>
+    /// <param name="blocks"></param>
+    /// <param name="steps"></param>
+    /// <param name="normals"></param>
+    /// <returns></returns>
+    public static bool ColliderRaycast(Collider collider, Vector3 direction, float maxDistance, out HashSet<Vector3i> blocks)
+    {
+        Console.WriteLine("---Raycast---");
+        blocks = [];
+
+        if (direction.LengthSquared == 0) return false;
+        direction.Normalize();
+
+        Vector3 pos = collider.Center;
+        Vector3i blockPos = new Vector3i(
+            Mathf.FloorToInt(pos.X),
+            Mathf.FloorToInt(pos.Y),
+            Mathf.FloorToInt(pos.Z)
+        );
+
+        Vector3 safeInvDir = new Vector3(
+            direction.X != 0 ? 1 / direction.X : float.MaxValue,
+            direction.Y != 0 ? 1 / direction.Y : float.MaxValue,
+            direction.Z != 0 ? 1 / direction.Z : float.MaxValue
+        );
+
+        Vector3 deltaDist = new Vector3(
+            MathF.Abs(safeInvDir.X),
+            MathF.Abs(safeInvDir.Y),
+            MathF.Abs(safeInvDir.Z)
+        );
+
+        Vector3i step = new Vector3i(
+            direction.X > 0 ? 1 : -1,
+            direction.Y > 0 ? 1 : -1,
+            direction.Z > 0 ? 1 : -1
+        );
+
+        Vector3 sideDist = new Vector3(
+            (direction.X > 0 ? (blockPos.X + 1 - pos.X) : (pos.X - blockPos.X)) * deltaDist.X,
+            (direction.Y > 0 ? (blockPos.Y + 1 - pos.Y) : (pos.Y - blockPos.Y)) * deltaDist.Y,
+            (direction.Z > 0 ? (blockPos.Z + 1 - pos.Z) : (pos.Z - blockPos.Z)) * deltaDist.Z
+        );
+
+        float totalDistance = 0f;
+
+        while (totalDistance <= maxDistance)
+        {
+            if (sideDist.X < sideDist.Y && sideDist.X < sideDist.Z)
+            {
+                totalDistance = sideDist.X;
+                blockPos.X += step.X;
+                sideDist.X += deltaDist.X;
+            }
+            else if (sideDist.Y < sideDist.Z)
+            {
+                totalDistance = sideDist.Y;
+                blockPos.Y += step.Y;
+                sideDist.Y += deltaDist.Y;
+            }
+            else
+            {
+                totalDistance = sideDist.Z;
+                blockPos.Z += step.Z;
+                sideDist.Z += deltaDist.Z;
+            }
+
+            if (totalDistance > maxDistance) break;
+
+            Vector3 stepPos = direction * totalDistance;
+            Vector3 min = collider.Min + stepPos - direction;
+            Vector3 max = collider.Max + stepPos - direction;
+
+            Console.WriteLine($"HitboxRaycast: {blockPos} - {min} - {max} - {stepPos}");
+
+            GetNewBlockPositions(min, max, blocks);
+        }
+
+        return blocks.Count > 0;
+    }
+
+    /// <summary>
+    /// Returns the block positions between two positions
+    /// </summary>
+    /// <param name="pos1"></param>
+    /// <param name="pos2"></param>
+    /// <returns></returns>
+    public static HashSet<Vector3i> GetBlockPositions(Vector3 pos1, Vector3 pos2)
+    {
+        return GetNewBlockPositions(pos1, pos2, []);
+    }
+
+    /// <summary>
+    /// Returns the new block positions between two positions
+    /// </summary>
+    /// <param name="pos1"></param>
+    /// <param name="pos2"></param>
+    /// <param name="blocks"></param>
+    public static HashSet<Vector3i> GetNewBlockPositions(Vector3 pos1, Vector3 pos2, HashSet<Vector3i> blocks)
+    {
+        Vector3i min = Mathf.FloorToInt((Mathf.Min(pos1.X, pos2.X), Mathf.Min(pos1.Y, pos2.Y), Mathf.Min(pos1.Z, pos2.Z)));
+        Vector3i max = Mathf.FloorToInt((Mathf.Max(pos1.X, pos2.X), Mathf.Max(pos1.Y, pos2.Y), Mathf.Max(pos1.Z, pos2.Z)));
+
+        for (int x = min.X; x <= max.X; x++)
+            for (int y = min.Y; y <= max.Y; y++)
+                for (int z = min.Z; z <= max.Z; z++)
+                    blocks.Add(new Vector3i(x, y, z));
+
+        Console.WriteLine($"GetNewBlockPositions: {min} - {max} - {blocks.Count}");
+        
+        return blocks;
+    }
+
+
     public static void AddVertToBoxMesh(BoxMesh mesh, Vector3 scale, Quaternion rotation, Vector3 position)
     {
         mesh.Vertices.Add(Mathf.RotateAround(scale + position, new Vector3(0, 0, 0), rotation));
     }
     
-    public static Vector3i BlockToChunkPosition(Vector3 position)
-    {
-        return new Vector3i(
-            (int)position.X & ~31,
-            (int)position.Y & ~31,
-            (int)position.Z & ~31
-        );
+    public static Vector3i BlockToChunkPosition(Vector3 position) 
+    { 
+        return new Vector3i( (int)position.X & ~31, (int)position.Y & ~31, (int)position.Z & ~31 ); 
     }
-    
-    public static Vector3i BlockToRelativePosition(Vector3 position)
-    {
-        return new Vector3i(
-            (int)position.X & 31,
-            (int)position.Y & 31,
-            (int)position.Z & 31
-        );
+    public static Vector3i BlockToRelativePosition(Vector3 position) 
+    { 
+        return ((int)position.X & 31, (int)position.Y & 31, (int)position.Z & 31 ); 
     }
+    public static Vector3i ChunkToRelativePosition(Vector3i position) 
+    { 
+        return (position.X >> 5, position.Y >> 5, position.Z >> 5); 
+    }  
 }

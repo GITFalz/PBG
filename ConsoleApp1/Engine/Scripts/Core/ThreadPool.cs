@@ -10,7 +10,7 @@ public static class ThreadPool
     public static int ThreadCount { get; private set; } = 4;
 
     private static PriorityQueue _actions = new PriorityQueue();
-    private static readonly List<Task> _runningTasks = new List<Task>();
+    private static readonly ConcurrentBag<Task> _runningTasks = new ConcurrentBag<Task>();
 
     public static void SetThreadCount(int count)
     {
@@ -36,7 +36,7 @@ public static class ThreadPool
                 var task = action();
                 _runningTasks.Add(task);
                 await task;
-                _runningTasks.Remove(task);
+                _runningTasks.TryTake(out task);
             }
         }
     }

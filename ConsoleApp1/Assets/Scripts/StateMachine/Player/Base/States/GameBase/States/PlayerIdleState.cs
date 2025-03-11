@@ -6,13 +6,13 @@ public class PlayerIdleState : PlayerGameBaseState
     public override void Enter(PlayerGameState playerGameState)
     {
         Console.WriteLine("Entering idle state");
+        playerGameState.PlayerStateMachine.physicsBody.Drag = 7f;
+        playerGameState.NextMovingState = playerGameState.WalkingState;
     }
 
     public override void Update(PlayerGameState playerGameState)
     {
         Vector2 input = Input.GetMovementInput();
-        
-        playerGameState.PlayerStateMachine.physicsBody.Velocity = Vector3.Zero;
 
         if (input != Vector2.Zero && Game.MoveTest)
         {
@@ -34,6 +34,7 @@ public class PlayerIdleState : PlayerGameBaseState
         
         if (!playerGameState.PlayerStateMachine.IsGrounded())
         {
+            Console.WriteLine("Falling");
             playerGameState.SwitchState(playerGameState.FallingState);
             return;
         }
@@ -48,6 +49,6 @@ public class PlayerIdleState : PlayerGameBaseState
 
     public override void Exit(PlayerGameState playerGameState)
     {
-        
+        playerGameState.PlayerStateMachine.physicsBody.Drag = 0.1f;
     }
 }

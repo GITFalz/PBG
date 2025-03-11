@@ -11,10 +11,20 @@ public static class Mathf
     {
         return (int)Math.Floor(value);
     }
+
+    public static Vector3i FloorToInt(Vector3 value)
+    {
+        return new Vector3i(FloorToInt(value.X), FloorToInt(value.Y), FloorToInt(value.Z));
+    }
     
     public static int RoundToInt(float value)
     {
         return (int)Math.Round(value);
+    }
+
+    public static int CeilToInt(float value)
+    {
+        return (int)Math.Ceiling(value);
     }
 
     public static float Clamp(float min, float max, float value)
@@ -56,11 +66,6 @@ public static class Mathf
     {
         return new Vector3(Floor(value.X), Floor(value.Y), Floor(value.Z));
     }
-    
-    public static Vector3i FloorToInt(Vector3 value)
-    {
-        return new Vector3i(FloorToInt(value.X), FloorToInt(value.Y), FloorToInt(value.Z));
-    }
 
     public static Vector3 Transform(Vector3 value, Matrix4 matrix)
     {
@@ -100,32 +105,79 @@ public static class Mathf
 
         return new Vector3(x, 0, z);
     }
-    
+
+    public static double Max(params double[] values)
+    {
+        double max = values[0];
+        for (int i = 1; i < values.Length; i++)
+            max = Max(max, values[i]);
+        return max;
+    } 
     public static double Max(double a, double b)
     {
         return a > b ? a : b;
     }
-    
+
+
+    public static float Max(params float[] values)
+    {
+        float max = values[0];
+        for (int i = 1; i < values.Length; i++)
+            max = Max(max, values[i]);
+        return max;
+    }
     public static float Max(float a, float b)
     {
         return a > b ? a : b;
     }
+
     
+    public static int Max(params int[] values)
+    {
+        int max = values[0];
+        for (int i = 1; i < values.Length; i++)
+            max = Max(max, values[i]);
+        return max;
+    }
     public static int Max(int a, int b)
     {
         return a > b ? a : b;
     }
     
+
+    public static double Min(params double[] values)
+    {
+        double min = values[0];
+        for (int i = 1; i < values.Length; i++)
+            min = Min(min, values[i]);
+        return min;
+    }
     public static double Min(double a, double b)
     {
         return a < b ? a : b;
     }
     
+
+    public static float Min(params float[] values)
+    {
+        float min = values[0];
+        for (int i = 1; i < values.Length; i++)
+            min = Min(min, values[i]);
+        return min;
+    }
     public static float Min(float a, float b)
     {
         return a < b ? a : b;
     }
     
+
+    public static int Min(params int[] values)
+    {
+        int min = values[0];
+        for (int i = 1; i < values.Length; i++)
+            min = Min(min, values[i]);
+        return min;
+    }
     public static int Min(int a, int b)
     {
         return a < b ? a : b;
@@ -134,6 +186,11 @@ public static class Mathf
     public static int Sign(float value)
     {
         return value > 0 ? 1 : value < 0 ? -1 : 0;
+    }
+
+    public static int SignNo0(float value)
+    {
+        return value < 0 ? -1 : 1;
     }
     
     public static float Abs(float value)

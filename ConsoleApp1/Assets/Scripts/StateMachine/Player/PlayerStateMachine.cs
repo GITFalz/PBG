@@ -67,7 +67,7 @@ public class PlayerStateMachine : ScriptingNode
         
         _shaderProgram = new ShaderProgram("Entity/Entity.vert", "Entity/Entity.frag");
         
-        Transform.Position = new Vector3(0, 60, 0);
+        Transform.Position = new Vector3(0, 200, 0);
         physicsBody.SetPosition(Transform.Position);
         
         //Mesh
@@ -78,7 +78,7 @@ public class PlayerStateMachine : ScriptingNode
         _playerMesh = new OldAnimationMesh();
         VoxelData.GenerateStandardMeshBox(_playerMesh, 
             new Vector3(0.8f, 1.75f, 0.8f), 
-            new Vector3(-0.4f, 0, -0.4f), 
+            new Vector3(-0.4f, -1.75f/2, -0.4f), 
             new Vector3(0, 0, 0), 
             1
         );
@@ -209,7 +209,7 @@ public class PlayerStateMachine : ScriptingNode
 
     public bool IsGrounded()
     {
-        return physicsBody.IsGroundedCheck();
+        return physicsBody.IsGrounded;
     }
     
     public void SwitchState(PlayerBaseState newState)
@@ -245,27 +245,6 @@ public class PlayerStateMachine : ScriptingNode
 
     public bool IsHuggingWall()
     {
-        if (physicsBody.Velocity.Z < 0)
-            HugZ = Mathf.FloorToInt(physicsBody.Hitbox.CornerX1Y1Z1 + new Vector3(0.5f, 0.5f, -1f));
-        else if (physicsBody.Velocity.Z > 0)
-            HugZ = Mathf.FloorToInt(physicsBody.Hitbox.CornerX1Y1Z2 + new Vector3(0.5f, 0.5f, 1f));
-        else
-            HugZ.Y = Mathf.FloorToInt(Transform.Position.Y + 0.5f);
-
-        if (physicsBody.Velocity.X < 0)
-            HugX = Mathf.FloorToInt(physicsBody.Hitbox.CornerX1Y1Z1 + new Vector3(-1f, 0.5f, 0.5f));
-        else if (physicsBody.Velocity.X > 0)
-            HugX = Mathf.FloorToInt(physicsBody.Hitbox.CornerX2Y1Z1 + new Vector3(1f, 0.5f, 0.5f));
-        else
-            HugX.Y = Mathf.FloorToInt(Transform.Position.Y + 0.5f);
-        
-        //Debug.DrawBox(HugZ, new Vector3(0.5f, 0.5f, 0.5f));
-
-        if (WorldManager.IsBlockChecks(HugZ))
-            return true;
-        if (WorldManager.IsBlockChecks(HugX))
-            return true;
-        
         return false;
     }
 

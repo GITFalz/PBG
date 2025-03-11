@@ -23,6 +23,7 @@ public class PlayerGameState : PlayerBaseState
     public PlayerGrapplingSwingOutState GrapplingSwingOutState = new();
 
     public PlayerGameBaseState NextMovingState;
+    public PlayerMovementSpeed MovementSpeed;
 
     public void Start()
     {

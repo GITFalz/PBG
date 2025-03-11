@@ -9,8 +9,11 @@
     // 16 bits, block id       
 
     public int blockData = 0;
+    public short ID => BlockId();
 
-    public Block(int blockData) : this(true, blockData) { }
+    public static Block Air = new Block(false, 0);
+
+    public Block(int blockData) : this(false, blockData) { }
     public Block(bool isSolid, int blockData)
     {
         this.blockData = blockData;

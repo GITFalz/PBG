@@ -3,25 +3,16 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PhysicsBody : ScriptingNode
 {
-    public float gravity = 50f;
-    public float maxFallSpeed = 150f;
-    
-    private bool doGravity = false;
+    private float gravity = 50f;
+    private float maxFallSpeed = 150f;
     
     public Vector3 Acceleration = Vector3.Zero;
-    public Vector3 Velocity = Vector3.Zero;
+    public Vector3 Velocity = Vector3.Zero;     
     public float Drag = 0.1f;
     public float Mass = 1f;
 
-    public Hitbox Hitbox;
+    public Collider collider;
     public bool IsGrounded;
-    
-    public bool huggingPosZ = false;
-    public bool huggingNegZ = false;
-    public bool huggingPosX = false;
-    public bool huggingNegX = false;
-    
-    public bool huggingWall = false;
     
     public Vector3 physicsPosition;
     private Vector3 previousPosition;
@@ -32,25 +23,19 @@ public class PhysicsBody : ScriptingNode
     public PhysicsBody()
     {
         Name = "PhysicsBody";
-        Hitbox = new Hitbox(new Vector3(0.8f, 1.75f, 0.8f));
-    }
-
-    public PhysicsBody(bool doGravity)
-    {
-        Name = "PhysicsBody";
-        Hitbox = new Hitbox(new Vector3(0.8f, 1.75f, 0.8f));
-        if (doGravity) EnableGravity();
+        Vector3 size = (0.8f, 1.75f, 0.8f);
+        Vector3 halfSize = size / 2;
+        collider = new Collider(-halfSize, halfSize);
+        EnableGravity();
     }
 
     public void DisableGravity()
     {
-        doGravity = false;
         Gravity = () => { };
     }
 
     public void EnableGravity()
     {
-        doGravity = true;
         Gravity = ApplyGravity;
     }
     
@@ -58,7 +43,6 @@ public class PhysicsBody : ScriptingNode
     {
         physicsPosition = position;
         previousPosition = position;
-        Hitbox.Position = position;
         Transform.Position = position;
     }
 
@@ -84,20 +68,18 @@ public class PhysicsBody : ScriptingNode
         
         previousPosition = physicsPosition;
 
-        Velocity += Acceleration * GameTime.FixedDeltaTime;
-        Velocity *= 1 - Drag * GameTime.FixedDeltaTime;
-        Acceleration *= 1 - (Drag * 100) * GameTime.FixedDeltaTime;
+        Velocity += Acceleration * GameTime.FixedTime;
+        Velocity *= 1f - Drag * GameTime.FixedTime;
+        Acceleration *= 1f - (Drag * 100) * GameTime.FixedTime;
 
         Gravity();
-        CollisionCheck();
 
-        physicsPosition += Velocity * GameTime.FixedDeltaTime;
-        Hitbox.Position = physicsPosition;
+        CollisionCheck();
     }
     
     public void ApplyGravity()
     {
-        Velocity.Y = Math.Max(Velocity.Y - gravity * GameTime.FixedDeltaTime, -maxFallSpeed);
+        Velocity.Y = Math.Max(Velocity.Y - gravity * GameTime.FixedTime, -maxFallSpeed);
     }
     
     public float GetSpeed()
@@ -131,100 +113,89 @@ public class PhysicsBody : ScriptingNode
     
     public void CollisionCheck()
     {
-        Vector3 checkDistance = Velocity * GameTime.FixedDeltaTime;
+        Collider currentCollider = collider + physicsPosition;
+        Vector3 checkDistance = Velocity * GameTime.FixedTime;
 
-        Vector3i[] zPositions = checkDistance.Z < 0 ?
-        [
-            Mathf.FloorToInt(Hitbox.CornerX1Y1Z1 + new Vector3(0, 0, checkDistance.Z)),
-            Mathf.FloorToInt(Hitbox.CornerX1Y2Z1 + new Vector3(0, 0, checkDistance.Z)),
-            Mathf.FloorToInt(Hitbox.CornerX2Y2Z1 + new Vector3(0, 0, checkDistance.Z)),
-            Mathf.FloorToInt(Hitbox.CornerX2Y1Z1 + new Vector3(0, 0, checkDistance.Z)),
-        ]:
-        [
-            Mathf.FloorToInt(Hitbox.CornerX1Y1Z2 + new Vector3(0, 0, checkDistance.Z)),
-            Mathf.FloorToInt(Hitbox.CornerX1Y2Z2 + new Vector3(0, 0, checkDistance.Z)),
-            Mathf.FloorToInt(Hitbox.CornerX2Y2Z2 + new Vector3(0, 0, checkDistance.Z)),
-            Mathf.FloorToInt(Hitbox.CornerX2Y1Z2 + new Vector3(0, 0, checkDistance.Z)),
-        ];
-        
-        Vector3i[] xPositions = checkDistance.X < 0 ?
-        [
-            Mathf.FloorToInt(Hitbox.CornerX1Y1Z1 + new Vector3(checkDistance.X, 0, 0)),
-            Mathf.FloorToInt(Hitbox.CornerX1Y2Z1 + new Vector3(checkDistance.X, 0, 0)),
-            Mathf.FloorToInt(Hitbox.CornerX1Y2Z2 + new Vector3(checkDistance.X, 0, 0)),
-            Mathf.FloorToInt(Hitbox.CornerX1Y1Z2 + new Vector3(checkDistance.X, 0, 0)),
-        ]:
-        [
-            Mathf.FloorToInt(Hitbox.CornerX2Y1Z1 + new Vector3(checkDistance.X, 0, 0)),
-            Mathf.FloorToInt(Hitbox.CornerX2Y2Z1 + new Vector3(checkDistance.X, 0, 0)),
-            Mathf.FloorToInt(Hitbox.CornerX2Y2Z2 + new Vector3(checkDistance.X, 0, 0)),
-            Mathf.FloorToInt(Hitbox.CornerX2Y1Z2 + new Vector3(checkDistance.X, 0, 0)),
-        ];
-        
-        Vector3i[] yPositions = checkDistance.Y < 0 ?
-        [
-            Mathf.FloorToInt(Hitbox.CornerX1Y1Z1 + new Vector3(0, checkDistance.Y, 0)),
-            Mathf.FloorToInt(Hitbox.CornerX2Y1Z1 + new Vector3(0, checkDistance.Y, 0)),
-            Mathf.FloorToInt(Hitbox.CornerX2Y1Z2 + new Vector3(0, checkDistance.Y, 0)),
-            Mathf.FloorToInt(Hitbox.CornerX1Y1Z2 + new Vector3(0, checkDistance.Y, 0)),
-        ]:
-        [
-            Mathf.FloorToInt(Hitbox.CornerX1Y2Z1 + new Vector3(0, checkDistance.Y, 0)),
-            Mathf.FloorToInt(Hitbox.CornerX2Y2Z1 + new Vector3(0, checkDistance.Y, 0)),
-            Mathf.FloorToInt(Hitbox.CornerX2Y2Z2 + new Vector3(0, checkDistance.Y, 0)),
-            Mathf.FloorToInt(Hitbox.CornerX1Y2Z2 + new Vector3(0, checkDistance.Y, 0)),
-        ];
-        
-        huggingWall = false;
+        Vector3 pos1 = physicsPosition;
+        Vector3 pos2 = physicsPosition + checkDistance.Normalized() * 3;
 
-        huggingPosZ = false;
-        huggingNegZ = false;
-        
-        if (WorldManager.IsBlockChecks(zPositions))
+        Vector3i min = Mathf.FloorToInt(Vector3.ComponentMin(pos1, pos2) - (2, 2, 2));
+        Vector3i max = Mathf.FloorToInt(Vector3.ComponentMax(pos1, pos2) + (2, 2, 2));
+
+        List<Vector3i> blockPositions = [];
+
+        for (int x = min.X; x <= max.X; x++)
         {
-            if (Velocity.Z < 0)
-                huggingNegZ = true;
-            else
-                huggingPosZ = true;
-            
-            huggingWall = true;
-            
-            Velocity.Z = 0;
-            Acceleration.Z = 0;
+            for (int y = min.Y; y <= max.Y; y++)
+            {
+                for (int z = min.Z; z <= max.Z; z++)
+                {
+                    blockPositions.Add((x, y, z));
+                }
+            }
         }
-        
-        huggingPosX = false;
-        huggingNegX = false;
-        
-        if (WorldManager.IsBlockChecks(xPositions))
+
+        for (int i = 0; i < 3; i++)
         {
-            if (Velocity.X < 0)
-                huggingNegX = true;
-            else
-                huggingPosX = true;
-            
-            huggingWall = true;
-            
-            Velocity.X = 0;
-            Acceleration.X = 0;
+            checkDistance = Velocity * GameTime.FixedTime;
+            (float entryTime, Vector3? normal) entryData = (1f, null);
+
+            foreach (var position in blockPositions)
+            {
+                //Console.WriteLine($"Checking block at {position}");
+
+                if (!WorldManager.GetBlock(position) || !BlockCollision.GetSubBoundingBoxes(1, out var colliders))
+                    continue;
+
+                //Console.WriteLine($"Block at {position} is solid");
+
+                foreach (var collider in colliders)
+                {
+                    if (!((currentCollider + checkDistance) & (collider + position)))
+                        continue;
+
+                    (float newEntry, Vector3? newNormal) = currentCollider.Collide(collider + position, checkDistance);
+
+                    //Console.WriteLine($"Testing collision with Collider: Min: {currentCollider.Min} Max: {currentCollider.Max}\nwith the block Collider: Min {(collider + position).Min} Max: {(collider + position).Max}\nblock at {position} - entry: {newEntry}, normal: {newNormal}");
+                    
+                    if (newNormal == null)
+                        continue;
+
+                    if (newEntry < entryData.entryTime)
+                        entryData = (newEntry - 0.001f, newNormal.Value);
+                }
+            }
+
+            if (entryData.normal != null)
+            {
+                if (entryData.normal.Value.X != 0)
+                {
+                    Velocity.X = 0;
+                    physicsPosition.X += checkDistance.X * entryData.entryTime;
+                }
+                if (entryData.normal.Value.Y != 0)
+                {
+                    Velocity.Y = 0;
+                    IsGrounded = true;
+                    physicsPosition.Y += checkDistance.Y * entryData.entryTime;
+                }
+                if (entryData.normal.Value.Z != 0)
+                {
+                    Velocity.Z = 0;
+                    physicsPosition.Z += checkDistance.Z * entryData.entryTime;
+                }
+            }
         }
-        if (WorldManager.IsBlockChecks(yPositions))
-        {
-            Velocity.Y = 0;
-            Acceleration.Y = 0;
-        }
+
+        if (Velocity.Y != 0)
+            IsGrounded = false;
+
+        physicsPosition += Velocity * GameTime.FixedTime;
     }
+
     public bool IsGroundedCheck()
     {
-        Vector3i[] yPositions =
-        [
-            Mathf.FloorToInt(Hitbox.CornerX1Y1Z1 + new Vector3(0, -0.2f, 0)),
-            Mathf.FloorToInt(Hitbox.CornerX2Y1Z1 + new Vector3(0, -0.2f, 0)),
-            Mathf.FloorToInt(Hitbox.CornerX2Y1Z2 + new Vector3(0, -0.2f, 0)),
-            Mathf.FloorToInt(Hitbox.CornerX1Y1Z2 + new Vector3(0, -0.2f, 0)),
-        ];
-        
-        return WorldManager.IsBlockChecks(yPositions);
+        return IsGrounded;
     }
     
     #region Getters

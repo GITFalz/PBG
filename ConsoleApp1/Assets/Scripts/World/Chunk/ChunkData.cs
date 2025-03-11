@@ -14,8 +14,6 @@ public class ChunkData
     private VBO _edgeVbo = new VBO([(0, 0, 0)]);
 
     public bool Save = true;
-    
-    private string filePath;
 
     public Action Render = () => { };
     public Action CreateChunk = () => { };
@@ -25,7 +23,7 @@ public class ChunkData
 
     private VAO _chunkVao = new VAO();
     public SSBO VertexSSBO = new SSBO(new List<Vector2i>());
-    public List<Vector2i> VertexData = new List<Vector2i>();
+    public List<Vector2i> GridAlignedFaces = new List<Vector2i>();
 
     public void AddFace(byte posX, byte posY, byte posZ, byte width, byte height, int blockIndex, byte side)
     {
@@ -33,7 +31,7 @@ public class ChunkData
         int vertex = posX | (posY << 5) | (posZ << 10) | (width << 15) | (height << 20);
         int blockData = blockIndex | (side << 16) | (size.X << 19) | (size.Y << 21) | (size.Z << 23);
 
-        VertexData.Add(new Vector2i(vertex, blockData));
+        GridAlignedFaces.Add(new Vector2i(vertex, blockData));
     }
 
     public void AddFace(Vector3 position, byte width, byte height, int blockIndex, byte side)
@@ -86,7 +84,7 @@ public class ChunkData
 
     public void Clear()
     {
-        VertexData.Clear();
+        GridAlignedFaces.Clear();
         Wireframe.Clear();
     }
 
@@ -102,7 +100,7 @@ public class ChunkData
     public void CreateChunkSolid()
     {
         _chunkVao = new VAO();
-        VertexSSBO = new SSBO(VertexData);
+        VertexSSBO = new SSBO(GridAlignedFaces);
     }
 
     public void CreateChunkWireframe()
@@ -119,7 +117,7 @@ public class ChunkData
         _chunkVao.Bind();
         VertexSSBO.Bind(0);
 
-        GL.DrawArrays(PrimitiveType.Triangles, 0, VertexData.Count * 6);
+        GL.DrawArrays(PrimitiveType.Triangles, 0, GridAlignedFaces.Count * 6);
         
         VertexSSBO.Unbind();
         _chunkVao.Unbind();
@@ -137,7 +135,13 @@ public class ChunkData
 
     public void SaveChunk()
     {
+        if (!Save) return;
         ChunkManager.SaveChunk(this);
+    }
+
+    public bool LoadChunk()
+    {
+        return ChunkManager.LoadChunk(this);
     }
 
     public static readonly Vector3i[] FaceVertices =

@@ -17,6 +17,8 @@ public class PlayerDashState : PlayerGameBaseState
 
         Vector3 forward = playerGameState.PlayerStateMachine.forward;
         playerGameState.PlayerStateMachine.physicsBody.AddForce(forward, PlayerStateMachine.DASH_SPEED);
+        playerGameState.PlayerStateMachine.physicsBody.Drag = 7f;
+        playerGameState.MovementSpeed = PlayerMovementSpeed.Run;
 
         Camera.SetFOV(60);
     }
@@ -60,5 +62,6 @@ public class PlayerDashState : PlayerGameBaseState
     public override void Exit(PlayerGameState playerGameState)
     {
         Camera.SetFOV(45);
+        playerGameState.PlayerStateMachine.physicsBody.Drag = 0.1f;
     }
 }

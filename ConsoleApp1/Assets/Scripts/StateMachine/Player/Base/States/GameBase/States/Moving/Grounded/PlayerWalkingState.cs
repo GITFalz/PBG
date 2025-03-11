@@ -11,6 +11,8 @@ public class PlayerWalkingState : PlayerGameBaseState
         Console.WriteLine("Entering walking state");
         
         playerGameState.NextMovingState = playerGameState.WalkingState;
+        playerGameState.PlayerStateMachine.physicsBody.Drag = 7f;
+        playerGameState.MovementSpeed = PlayerMovementSpeed.Walk;
         
         OldAnimationManager.Instance.LoopAnimation("Player", "walking");
         Game.camera.SetFOV(45);
@@ -66,6 +68,6 @@ public class PlayerWalkingState : PlayerGameBaseState
 
     public override void Exit(PlayerGameState playerGameState)
     {
-
+        playerGameState.PlayerStateMachine.physicsBody.Drag = 0.1f;
     }
 }

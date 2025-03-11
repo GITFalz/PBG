@@ -1,4 +1,6 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
 public class Info
@@ -22,9 +24,18 @@ public class Info
     public static int VertexCount = 0;
 
 
-
     private static int frameCount = 0;
     private static float elapsedTime = 0;
+
+
+    private static VAO _blockVao = new VAO();
+    private static SSBO _blockSSBO = new SSBO([(0, 0, 0, 0)]);
+    private static List<Vector4> _blockData = [];
+    private static ConcurrentBag<Vector4> _blocks = new ConcurrentBag<Vector4>();
+    private static ShaderProgram _blockShader = new ShaderProgram("Info/InfoBlock.vert", "Info/InfoBlock.frag");
+
+    private static Action _updateBlocks = () => { };
+
 
     public Info()
     {
@@ -47,6 +58,8 @@ public class Info
         
         _infoController.AddElement(infoCollection);
         _infoController.GenerateBuffers();
+
+        GenerateBlocks();
     }
 
     public static void Resize()
@@ -64,13 +77,70 @@ public class Info
         }  
         
         _infoController.Update(); 
+        _updateBlocks();
     }
 
     public static void Render()
     {
         UpdateVertexCount();
+        RenderBlocks();
         _infoController.Render();
     }
+
+    public static void GenerateBlocks()
+    {
+        _blockVao = new VAO();
+        _blockSSBO = new SSBO(_blockData);
+    }
+
+    public static void ClearBlocks()
+    {
+        _blocks.Clear();
+    }
+
+    public static void AddBlock(Vector3 position)
+    {
+        _blocks.Add((position.X, position.Y, position.Z, 0));
+    }
+
+    public static void UpdateBlocks()
+    {
+        _updateBlocks = () => 
+        {
+            _blockData = _blocks.ToList();
+            Console.WriteLine($"Block Count: {_blockData.Count}");
+            GenerateBlocks();
+            _updateBlocks = () => { };
+        };
+    }
+
+    public static void RenderBlocks()
+    {
+        _blockShader.Bind();
+
+        Matrix4 model = Matrix4.Identity;
+        Matrix4 view = Game.camera.viewMatrix;
+        Matrix4 projection = Game.camera.projectionMatrix;
+
+        int modelLocationA = GL.GetUniformLocation(_blockShader.ID, "model");
+        int viewLocationA = GL.GetUniformLocation(_blockShader.ID, "view");
+        int projectionLocationA = GL.GetUniformLocation(_blockShader.ID, "projection");
+        
+        GL.UniformMatrix4(viewLocationA, true, ref view);
+        GL.UniformMatrix4(projectionLocationA, true, ref projection);
+        GL.UniformMatrix4(modelLocationA, true, ref model);
+
+        _blockVao.Bind();
+        _blockSSBO.Bind(1);
+
+        GL.DrawArrays(PrimitiveType.Triangles, 0, _blockData.Count * 36);
+        
+        _blockSSBO.Unbind();
+        _blockVao.Unbind();
+
+        _blockShader.Unbind();
+    }
+
 
     private static void UpdateVertexCount()
     {

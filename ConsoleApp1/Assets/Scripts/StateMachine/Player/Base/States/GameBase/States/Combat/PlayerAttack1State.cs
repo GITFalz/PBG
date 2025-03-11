@@ -18,9 +18,6 @@ public class PlayerAttack1State : PlayerGameBaseState
         
         attacked = false;
         
-        playerGameState.PlayerStateMachine.physicsBody.EnableGravity();
-        //playerGameState.PlayerStateMachine.physicsBody.SetAcceleration(Camera.FrontYto0() * 0.2f);
-        
         OldAnimationManager.Instance.SetAnimation("Sword", "attack1");
         OldAnimationManager.Instance.SetAnimation("Player", "attack1");
     }

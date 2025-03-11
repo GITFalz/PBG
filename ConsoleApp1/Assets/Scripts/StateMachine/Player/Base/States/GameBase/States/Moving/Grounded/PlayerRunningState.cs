@@ -7,9 +7,12 @@ public class PlayerRunningState : PlayerGameBaseState
     
     public override void Enter(PlayerGameState playerGameState)
     {
-        Console.WriteLine("Entering walking state");
-        
-        playerGameState.NextMovingState = playerGameState.WalkingState;
+        Console.WriteLine("Entering running state");
+
+        playerGameState.PlayerStateMachine.physicsBody.Drag = 7f;
+        playerGameState.NextMovingState = playerGameState.RunningState;
+        playerGameState.MovementSpeed = PlayerMovementSpeed.Walk;
+
         Game.camera.SetFOV(50);
     }
 
@@ -64,5 +67,6 @@ public class PlayerRunningState : PlayerGameBaseState
     public override void Exit(PlayerGameState playerGameState)
     {
         Game.camera.SetFOV(45);
+        playerGameState.PlayerStateMachine.physicsBody.Drag = 0.1f;
     }
 }

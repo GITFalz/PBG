@@ -13,12 +13,12 @@ public static class ChunkManager
 
     public static void SaveChunk(ChunkData chunk)
     {
-        Vector3 regionPos = RegionPosition(chunk.position);
+        Vector3 regionPos = RegionPosition(chunk.GetRelativePosition());
         string filePath = Path.Combine(Game.chunkPath, $"Region_{regionPos.X}_{regionPos.Y}_{regionPos.Z}.chunk");
 
         InitializeFile(filePath);
 
-        int chunkIndex = ChunkIndex(chunk.position);
+        int chunkIndex = ChunkIndex(chunk.GetRelativePosition());
         
         using (FileStream fileStream = File.Open(filePath, FileMode.OpenOrCreate))
         using (BinaryReader reader = new BinaryReader(fileStream))
@@ -66,13 +66,13 @@ public static class ChunkManager
 
     public static bool LoadChunk(ChunkData chunkData)
     {
-        Vector3 regionPos = RegionPosition(chunkData.position);
+        Vector3 regionPos = RegionPosition(chunkData.GetRelativePosition());
         string filePath = Path.Combine(Game.chunkPath, $"Region_{regionPos.X}_{regionPos.Y}_{regionPos.Z}.chunk");
 
         if (!File.Exists(filePath))
             return false;
 
-        int chunkIndex = ChunkIndex(chunkData.position);
+        int chunkIndex = ChunkIndex(chunkData.GetRelativePosition());
 
         FileStream fileStream = File.Open(filePath, FileMode.Open);
         using BinaryReader reader = new BinaryReader(fileStream);
@@ -102,8 +102,6 @@ public static class ChunkManager
                 blocks[j] = new Block(true, data);
                 blockCount++;
             }
-
-            Console.WriteLine($"Region: {regionPos}, Chunk: {chunkData.position}, SubChunk: {chunkData.blockStorage.SubPositions[i]}, BlockCount: {blockCount}");
 
             if (blockCount == 0)
             {
@@ -137,103 +135,6 @@ public static class ChunkManager
             writer.Write(ushort.MaxValue);
         }
     }
-
-    /*
-    public void StoreData()
-    {
-        int i = 0;
-        
-        if (!Directory.Exists(filePath))
-            Directory.CreateDirectory(filePath);
-        
-        foreach (var subPos in blockStorage.SubPositions)
-        {
-            string subFilePath = Path.Combine(filePath, $"SubChunk_{subPos.X}_{subPos.Y}_{subPos.Z}.chunk");
-            
-            Block[]? blocks = blockStorage.Blocks[i];
-            
-            if (blockStorage.BlockCount[i] == 0 || blocks == null)
-                SaveEmptyChunk(subFilePath);
-            else
-                SaveChunk(blocks, subFilePath);
-            
-            i++;
-        }
-    }
-    
-    public void SaveChunk(Block[] data, string filePath)
-    {
-        using (BinaryWriter writer = new BinaryWriter(File.Open(filePath, FileMode.Create)))
-        {
-            foreach (Block block in data)
-            {
-                if (block.IsAir())
-                    writer.Write((short)-1);
-                else
-                    writer.Write(block.blockData);
-            }
-        }
-    }
-    
-    public void SaveEmptyChunk(string filePath)
-    {
-        using (BinaryWriter writer = new BinaryWriter(File.Open(filePath, FileMode.Create)))
-        {
-            writer.Write(-2);
-        }
-    }
-    
-    public bool FolderExists()
-    {
-        return Directory.Exists(filePath);
-    }
-    
-    public void LoadData()
-    {
-        int i = 0;
-        
-        if (!Directory.Exists(filePath))
-            Directory.CreateDirectory(filePath);
-        
-        foreach (var subPos in blockStorage.SubPositions)
-        {
-            string subFilePath = Path.Combine(filePath, $"SubChunk_{subPos.X}_{subPos.Y}_{subPos.Z}.chunk");
-            blockStorage.Blocks[i] = LoadChunk(subFilePath, out int count);
-            blockStorage.BlockCount[i] = count;
-            
-            i++;
-        }
-    }
-
-    public Block[]? LoadChunk(string subFilePath, out int count)
-    {
-        count = 0;
-        
-        using (BinaryReader reader = new BinaryReader(File.Open(subFilePath, FileMode.Open)))
-        {
-            short value = reader.ReadInt16();
-            if (value == -2)
-                return null;
-            
-            Block[] blocks = new Block[4096];
-            blocks[0] = value == -1 ? new Block(false, 0) : new Block(true, value);
-            
-            for (int i = 1; i < 4096; i++)
-            {
-                short data = reader.ReadInt16();
-                if (data == -1)
-                    blocks[i] = new Block(false, 0);
-                else
-                {
-                    blocks[i] = new Block(true, data);
-                    count++;
-                }
-            }
-            
-            return blocks;
-        }
-    }
-    */
 
     private static Vector3i RegionPosition(Vector3i position)
     {

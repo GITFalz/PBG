@@ -22,6 +22,11 @@ public class BlockStorage
             position + new Vector3i(16, 16, 16),
         };
     }
+
+    public void SetBlock(Vector3i position, Block block)
+    {
+        SetBlock(position.X, position.Y, position.Z, block);
+    }
     
     public void SetBlock(int x, int y, int z, Block block)
     {

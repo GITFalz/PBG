@@ -58,6 +58,9 @@ public class Game : GameWindow
     private Action Resize = () => { };
 
     public static Action<Keys> InputActions = (e) => { };
+
+
+    private bool physicsStep = false;
     
     
     public Game(int width, int height) : base(GameWindowSettings.Default, new NativeWindowSettings
@@ -162,7 +165,7 @@ public class Game : GameWindow
         worldGenerationNode.AddChild(new WorldManager());
 
         TransformNode playerNode = new TransformNode();
-        playerNode.AddChild(new PhysicsBody(false), new PlayerStateMachine());
+        playerNode.AddChild(new PhysicsBody(), new PlayerStateMachine());
 
         _worldScene.AddNode(worldGenerationNode, playerNode);
 
@@ -192,18 +195,30 @@ public class Game : GameWindow
         {
             MoveTest = !MoveTest;
 
-            UpdateCamera = () =>
+            if (MoveTest)
             {
-                SetCursorState(MoveTest ? CursorState.Grabbed : CursorState.Normal);
-                camera.SetMoveFirst();
-                camera.Update();
-                UpdateCamera = () => { camera.Update(); };
-            };
+                SetCursorState(CursorState.Grabbed);
+                UpdateCamera = () =>
+                {
+                    camera.SetMoveFirst();
+                    camera.Update();
+                    UpdateCamera = () => { camera.Update(); };
+                };
+            }
+            else
+            {
+                SetCursorState(CursorState.Normal);
+                UpdateCamera = () => { };
+            }
+            
         }
-
-        if (e.Key == Keys.P)
+        else if (e.Key == Keys.P)
         {
             camera.SetCameraMode(camera.GetCameraMode() == CameraMode.Follow ? CameraMode.Free : CameraMode.Follow);
+        }
+        else if (e.Key == Keys.L)
+        {
+            physicsStep = true;
         }
     }
 
@@ -290,10 +305,11 @@ public class Game : GameWindow
         {
             double time = stopwatch.Elapsed.TotalSeconds;
             
-            if (time - totalTime >= GameTime.FixedDeltaTime)
+            double fixedTime = time - totalTime;
+            if (fixedTime >= GameTime.FixedDeltaTime)
             {
-                _worldScene.OnFixedUpdate();
-                
+                GameTime.FixedTime = (float)fixedTime;
+                _worldScene.OnFixedUpdate();  
                 totalTime = time;
             }
             

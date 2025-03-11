@@ -37,8 +37,7 @@ public class WorldManager : ScriptingNode
     
     public WorldManager()
     {
-        chunks = [];
-        
+        chunks = [];  
         activeChunks = [];
         chunksToGenerate = [];
         chunksToCreate = [];
@@ -78,14 +77,14 @@ public class WorldManager : ScriptingNode
         
         if (chunksToCreate.TryDequeue(out var chunk))
         {
-            if (activeChunks.TryAdd(chunk.position, chunk))
+            if (activeChunks.TryAdd(chunk.GetWorldPosition(), chunk))
             {
                 chunk.SaveChunk();
                 chunk.CreateChunk.Invoke();
             }
             else
             {
-                chunksToGenerate.Enqueue(chunk.position);
+                chunksToGenerate.Enqueue(chunk.GetWorldPosition());
                 chunk.Clear();
             }
         }
@@ -132,7 +131,7 @@ public class WorldManager : ScriptingNode
                 continue;
 
             renderCount++;
-            Info.VertexCount += chunk.VertexData.Count;
+            Info.VertexCount += chunk.GridAlignedFaces.Count;
             model = Matrix4.CreateTranslation(chunk.GetWorldPosition());
             GL.UniformMatrix4(modelLocationA, true, ref model);
             chunk.Render.Invoke();
@@ -194,7 +193,7 @@ public class WorldManager : ScriptingNode
                 continue;
 
             renderCount++;
-            Info.VertexCount += chunk.VertexData.Count;
+            Info.VertexCount += chunk.GridAlignedFaces.Count;
             Matrix4 model = Matrix4.CreateTranslation(chunk.GetWorldPosition());
             GL.UniformMatrix4(modelLocation, true, ref model);
             chunk.Render.Invoke();
@@ -231,8 +230,7 @@ public class WorldManager : ScriptingNode
             {
                 for (int z = -render; z < render; z++)
                 {
-                    Vector3i position = new Vector3i(playerChunk.X + x, y, playerChunk.Z + z);
-                    chunkPositions.Add(position);
+                    chunkPositions.Add(new Vector3i(playerChunk.X + x, y, playerChunk.Z + z) * 32);
                 }
             }
         }
@@ -258,7 +256,7 @@ public class WorldManager : ScriptingNode
         {
             chunksToRemove.Remove(chunk);
             
-            if (!activeChunks.ContainsKey(chunk) && !chunksToGenerate.Contains(chunk) && chunksToCreate.All(c => c.position != chunk))
+            if (!activeChunks.ContainsKey(chunk) && !chunksToGenerate.Contains(chunk) && chunksToCreate.All(c => c.GetWorldPosition() != chunk))
             {
                 chunksToGenerate.Enqueue(chunk);
             }
@@ -277,15 +275,43 @@ public class WorldManager : ScriptingNode
         }
     }
 
-    public static int GetBlock(Vector3i blockPosition, out Block? block)
+    public static int GetBlock(Vector3i blockPosition, out Block block)
     {
-        block = null;
+        block = Block.Air;
         Vector3i chunkPosition = VoxelData.BlockToChunkPosition(blockPosition);
 
         if (!activeChunks.TryGetValue(chunkPosition, out var chunk)) return chunks.Contains(chunkPosition) ? 2 : 1;
         
         block = chunk.blockStorage.GetBlock(VoxelData.BlockToRelativePosition(blockPosition));
-        return block == null ? 1 : 0;
+        return block.IsAir() ? 1 : 0;
+    }
+
+    public static bool GetBlock(Vector3i blockPosition)
+    {
+        GetBlock(blockPosition, out var block);
+        return block.IsSolid();
+    }
+
+    public static bool GetBlocks(Vector3i min, Vector3i max, out List<(Vector3i, Block)> blocks)
+    {
+        blocks = [];
+        Vector3i position;
+
+        for (int x = min.X; x <= max.X; x++)
+        {
+            for (int y = min.Y; y <= max.Y; y++)
+            {
+                for (int z = min.Z; z <= max.Z; z++)
+                {
+                    position = (x, y, z);
+                    int result = GetBlock(position, out var block);
+                    if (result == 0)
+                        blocks.Add((position, block));
+                }
+            }
+        }
+
+        return blocks.Count > 0;
     }
 
     private void GenerateChunks()
@@ -295,8 +321,9 @@ public class WorldManager : ScriptingNode
             if (activeChunks.ContainsKey(position) || chunksToIgnore.Contains(position)) 
                 return;
 
-            ChunkData chunkData = new ChunkData(_renderType, position);
-            bool loaded = ChunkManager.LoadChunk(chunkData);
+            ChunkData chunkData = new ChunkData(_renderType, VoxelData.ChunkToRelativePosition(position));
+            bool loaded = chunkData.LoadChunk();
+            chunkData.Save = !loaded;
             ThreadPool.QueueAction(() => GenerateChunk(chunkData, loaded));
         }
     }
@@ -308,8 +335,28 @@ public class WorldManager : ScriptingNode
             Block[] blocks;
 
             if (!loaded)
+                Chunk.GenerateChunk(ref chunkData, chunkData.GetWorldPosition());
+
+            if (chunkData.position == (0, 2, 0))
             {
-                Chunk.GenerateChunk(ref chunkData, chunkData.position * 32);
+                HashSet<Vector3i> blocksToCheck = new HashSet<Vector3i>();
+
+                Vector3 halfSize = new Vector3(0.5f, 1, 0.5f);
+
+                VoxelData.RaycastSteps(new Vector3i(1, 65, 0), new Vector3i(1, 2, 1), 20, out var steps);
+
+                foreach (var step in steps)
+                {
+                    VoxelData.GetNewBlockPositions(step - halfSize, step + halfSize, blocksToCheck);
+                }
+
+                foreach (var block in blocksToCheck)
+                {
+                    chunkData.blockStorage.SetBlock(VoxelData.BlockToRelativePosition(block), new Block(true, 1));
+                }
+
+
+                //chunkData.blockStorage.SetBlock(VoxelData.BlockToRelativePosition(block), new Block(true, 1));
             }
 
             blocks = chunkData.blockStorage.GetFullBlockArray();
@@ -322,7 +369,7 @@ public class WorldManager : ScriptingNode
     
     public static bool IsBlockChecks(Vector3i[] positions)
     {
-        Block? block;
+        Block block;
 
         foreach (var position in positions)
         {
@@ -337,7 +384,7 @@ public class WorldManager : ScriptingNode
     
     public static bool IsBlockChecks(Vector3i position)
     {
-        Block? block;
+        Block block;
         
         int result = GetBlock(position, out block);
 
