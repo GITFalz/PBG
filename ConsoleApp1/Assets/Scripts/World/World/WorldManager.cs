@@ -137,12 +137,18 @@ public class WorldManager : ScriptingNode
             chunk.Render.Invoke();
         }
 
+        Shader.Error("After Render End0");
+
         model = Matrix4.Identity;
         GL.UniformMatrix4(modelLocationA, true, ref model);
-        LodBase.Render();
+        //LodBase.Render();
+
+        Shader.Error("After Render End1");
         
         pullingShader.Unbind();
         _textures.Unbind();
+
+        Shader.Error("After Render End2");
 
         if (renderCount != _oldRenderedChunks)
         {
@@ -150,7 +156,7 @@ public class WorldManager : ScriptingNode
             _oldRenderedChunks = renderCount;
         }
 
-        Shader.Error("After Render End");
+        Shader.Error("After Render End3");
     }
 
     public void CheckFrustum()
