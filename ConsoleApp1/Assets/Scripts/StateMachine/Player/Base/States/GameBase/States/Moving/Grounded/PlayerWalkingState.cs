@@ -57,8 +57,6 @@ public class PlayerWalkingState : PlayerGameBaseState
             playerGameState.SwitchState(playerGameState.FallingState);
             return;
         }
-
-        playerGameState.PlayerStateMachine.MeshRotateUpdate();
     }
     
     public override void FixedUpdate(PlayerGameState playerGameState)

@@ -1,13 +1,11 @@
-﻿using System.Collections;
-using ConsoleApp1.Assets.Scripts.Inputs;
-using ConsoleApp1.Engine.Scripts.Core;
-using OpenTK.Graphics.OpenGL4;
+﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
-using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PlayerStateMachine : ScriptingNode
 {
+    public static PlayerStateMachine Instance;
+    public CameraMode cameraMode = CameraMode.Follow;
     public const float WALK_SPEED = 7;
     public const float RUN_SPEED = 14;
     public const float DASH_SPEED = 24;
@@ -18,6 +16,9 @@ public class PlayerStateMachine : ScriptingNode
     
     public Vector3 forward = (0, 0, -1);
     private Vector3 _oldPosition = (0, 0, 0);
+
+    private ShaderProgram _hitShader = new ShaderProgram("Info/Hit.vert", "Info/Hit.frag");
+    private VAO _hitVao = new VAO();
     
     public static readonly Dictionary<PlayerMovementSpeed, float> Speeds = new Dictionary<PlayerMovementSpeed, float>()
     {
@@ -36,7 +37,6 @@ public class PlayerStateMachine : ScriptingNode
     
     // Animation
     private OldAnimationMesh _playerMesh;
-    private EntityMesh _mesh;
     public PhysicsBody physicsBody;
 
     private ShaderProgram _shaderProgram;
@@ -51,6 +51,14 @@ public class PlayerStateMachine : ScriptingNode
     private Vector3 _lastCameraPosition;
     private float _lastCameraYaw;
     private float _lastCameraPitch;
+
+    private Action _renderHit = () => {};
+
+    public PlayerStateMachine()
+    {
+        // To be changed (make PLAYER state machine static???)
+        Instance = this;
+    }
     
     public override void Start()
     {
@@ -69,11 +77,6 @@ public class PlayerStateMachine : ScriptingNode
         
         Transform.Position = new Vector3(0, 200, 0);
         physicsBody.SetPosition(Transform.Position);
-        
-        //Mesh
-        _mesh = new EntityMesh();
-        VoxelData.GetEntityBoxMesh(_mesh, new Vector3(0.8f, 1.75f, 0.8f), new Vector3(0, 0, 0), 0);
-        _mesh.GenerateBuffers();
         
         _playerMesh = new OldAnimationMesh();
         VoxelData.GenerateStandardMeshBox(_playerMesh, 
@@ -96,7 +99,7 @@ public class PlayerStateMachine : ScriptingNode
     {
         Camera camera = Game.camera;
 
-        camera.SetCameraMode(CameraMode.Free);
+        camera.SetCameraMode(CameraMode.Follow);
         
         camera.Position = _lastCameraPosition;
         camera.yaw = _lastCameraYaw;
@@ -114,21 +117,30 @@ public class PlayerStateMachine : ScriptingNode
             
         Camera camera = Game.camera;
 
-        camera.Center = Transform.Position + new Vector3(0, 1.7f, 0);
-
         Vector2 input = Input.GetMovementInput();
         
         if (input != Vector2.Zero)
             yaw = -camera.yaw + _inputAngle[input];
         
         forward = Mathf.YAngleToDirection(-yaw);
-        
+            
         _currentState.Update(this);
 
-        IsHuggingWall();
+        if (input != Vector2.Zero)
+            Info.SetPositionText(_oldPosition, Transform.Position - (0f, 0.875f, 0f));
 
-        if (camera.GetCameraMode() == CameraMode.Follow)
-            Info.SetPositionText(_oldPosition, Transform.Position);
+        camera.Center = Transform.Position + (0f, 0.5f, 0f);
+
+        if (VoxelData.Raycast(camera.Center, camera.front, 4, out Hit hit))
+        {
+            Vector3i blockPos = hit.BlockPosition;
+            Vector3i n = hit.Normal;
+            int index = n.X != 0 ? (n.X == 1 ? 1 : 3) : (n.Y != 0 ? (n.Y == 1 ? 2 : 4) : n.Y == 1 ? 5 : 0);
+            _renderHit = () => RenderHit((blockPos.X, blockPos.Y, blockPos.Z, index));
+
+            if (Input.IsMousePressed(MouseButton.Right)) 
+                WorldManager.SetBlock(blockPos + n, out ChunkData chunkData);
+        }
 
         _oldPosition = Transform.Position;
     }
@@ -162,6 +174,42 @@ public class PlayerStateMachine : ScriptingNode
         _playerMesh.RenderMesh();
         
         _shaderProgram.Unbind();
+
+        _renderHit();
+    }
+
+    private void RenderHit(Vector4i data)
+    {
+        _hitShader.Bind();
+
+        Matrix4 model = Matrix4.Identity;
+        Matrix4 view = Game.camera.viewMatrix;
+        Matrix4 projection = Game.camera.projectionMatrix;
+
+        int modelLocationA = GL.GetUniformLocation(_hitShader.ID, "model");
+        int viewLocationA = GL.GetUniformLocation(_hitShader.ID, "view");
+        int projectionLocationA = GL.GetUniformLocation(_hitShader.ID, "projection");
+        int faceDataLocationA = GL.GetUniformLocation(_hitShader.ID, "faceData");
+
+        GL.UniformMatrix4(viewLocationA, true, ref view);
+        GL.UniformMatrix4(projectionLocationA, true, ref projection);
+        GL.UniformMatrix4(modelLocationA, true, ref model);
+        GL.Uniform4(faceDataLocationA, data);
+
+        _hitVao.Bind();
+
+        GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
+    
+        _hitVao.Unbind();
+
+        _hitShader.Unbind();
+
+        _renderHit = () => {};
+    }
+
+    public void Teleport(Vector3 position)
+    {
+        physicsBody.physicsPosition = position;
     }
 
     public override void Exit()
@@ -175,36 +223,6 @@ public class PlayerStateMachine : ScriptingNode
         _lastCameraPitch = camera.pitch;
         
         base.Exit();
-    }
-
-    public int MeshUpdate()
-    {
-        _mesh.Position = Transform.Position + new Vector3(-0.4f, 0, -0.4f);
-
-        _mesh.UpdatePosition();
-        _mesh.UpdateRotation(_mesh.Position + new Vector3(0.5f, 0, 0.5f), new Vector3(0, 1, 0), yaw);
-        _mesh.UpdateMesh();
- 
-        return 1;
-    }
-
-    public void MeshRotateUpdate()
-    {
-        _mesh.Position = Transform.Position + new Vector3(-0.5f, 0, -0.5f);
-        
-        _mesh.UpdatePosition();
-        _mesh.UpdateRotation(_mesh.Position + new Vector3(0.5f, 0, 0.5f), new Vector3(0, 1, 0), yaw);
-        _mesh.UpdateMesh();
-    }
-
-    public void SnapToBlockUnder()
-    {
-        physicsBody.SnapToBlockY();
-        _mesh.Position = Transform.Position + new Vector3(-0.5f, 0, -0.5f);
-        
-        _mesh.UpdatePosition();
-        _mesh.UpdateRotation(_mesh.Position + new Vector3(0.5f, 0, 0.5f), new Vector3(0, 1, 0), yaw);
-        _mesh.UpdateMesh();
     }
 
     public bool IsGrounded()
@@ -241,6 +259,11 @@ public class PlayerStateMachine : ScriptingNode
     {
         direction = Mathf.Normalize(direction);
         physicsBody.AddForce(direction, Speeds[playerMovementSpeed]);
+    }
+
+    public void ToggleView()
+    {
+        Game.camera.SetCameraMode(cameraMode == CameraMode.Centered ? CameraMode.Follow : CameraMode.Centered);
     }
 
     public bool IsHuggingWall()

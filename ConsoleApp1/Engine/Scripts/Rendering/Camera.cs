@@ -70,7 +70,8 @@ public class Camera
         {
             {CameraMode.Free, FreeCamera},
             {CameraMode.Fixed, FixedCamera},
-            {CameraMode.Follow, FollowCamera}
+            {CameraMode.Follow, FollowCamera},
+            {CameraMode.Centered, CenteredCamera}
         };
 
         FirstMove = FirstMove1;
@@ -322,6 +323,13 @@ public class Camera
         CameraZoom();
     }
 
+    private void CenteredCamera()
+    {
+        Position = Center;
+        RotateCamera();
+        UpdateVectors();
+    }
+
 
     public void SetMoveFirst()
     {
@@ -365,7 +373,6 @@ public class Camera
         float scroll = Input.GetMouseScroll().Y;
             
         CameraDistance -= (scroll - oldScroll) * SCROLL_SENSITIVITY;
-        //_currentCameraDistance = Mathf.Lerp(_currentCameraDistance, Math.Clamp(CameraDistance, 3, 10), 30f * GameTime.DeltaTime);
         CameraDistance = Math.Clamp(CameraDistance, 3, 10);
         oldScroll = scroll;
 
@@ -385,15 +392,10 @@ public class Camera
     }
 }
 
-public enum CameraType
-{
-    FirstPerson,
-    ThirdPerson
-}
-
 public enum CameraMode
 {
     Free,
     Fixed,
-    Follow
+    Follow,
+    Centered
 }

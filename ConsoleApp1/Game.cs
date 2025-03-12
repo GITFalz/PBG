@@ -220,6 +220,14 @@ public class Game : GameWindow
         {
             physicsStep = true;
         }
+        else if (e.Key == Keys.F5)
+        {
+            PlayerStateMachine.Instance.ToggleView();
+        }
+        else if (e.Key == Keys.Q)
+        {
+            PlayerStateMachine.Instance.Teleport((0, 200, 0));
+        }
     }
 
     protected override void OnMouseDown(MouseButtonEventArgs e)

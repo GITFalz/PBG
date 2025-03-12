@@ -40,9 +40,6 @@ public class PlayerJumpingState : PlayerGameBaseState
             playerGameState.SwitchState(playerGameState.GroundedState);
             return;
         }
-        
-        playerGameState.PlayerStateMachine.MeshUpdate();
-        return;
     }
     
     public override void FixedUpdate(PlayerGameState playerGameState)

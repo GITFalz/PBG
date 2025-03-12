@@ -39,9 +39,6 @@ public class PlayerFallingState : PlayerGameBaseState
             return;
         }
         
-        playerGameState.PlayerStateMachine.MeshUpdate();
-        return;
-
         timer += GameTime.DeltaTime;
     }
     

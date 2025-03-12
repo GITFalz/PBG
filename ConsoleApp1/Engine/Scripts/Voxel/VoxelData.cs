@@ -236,7 +236,7 @@ public static class VoxelData
     /// <returns></returns>
     public static bool RaycastBlocks(Vector3 origin, Vector3 direction, float maxDistance, out List<Vector3i> blocks)
     {
-        return Raycast(origin, direction, maxDistance, out blocks, out _, out _);
+        return Raycast(origin, direction, maxDistance, out blocks, out _);
     }
 
     /// <summary>
@@ -249,22 +249,7 @@ public static class VoxelData
     /// <returns></returns>
     public static bool RaycastSteps(Vector3 origin, Vector3 direction, float maxDistance, out List<Vector3> steps)
     {
-        return Raycast(origin, direction, maxDistance, out _, out steps, out _);
-    }
-    
-    /// <summary>
-    /// Returns the normals of the raycast
-    /// </summary>
-    /// <param name="origin"></param>
-    /// <param name="direction"></param>
-    /// <param name="maxDistance"></param>
-    /// <param name="blocks"></param>
-    /// <param name="steps"></param>
-    /// <param name="normals"></param>
-    /// <returns></returns>
-    public static bool RaycastNormals(Vector3 origin, Vector3 direction, float maxDistance, out List<Vector3i> normals)
-    {
-        return Raycast(origin, direction, maxDistance, out _, out _, out normals);
+        return Raycast(origin, direction, maxDistance, out _, out steps);
     }
     
     /// <summary>
@@ -275,13 +260,11 @@ public static class VoxelData
     /// <param name="maxDistance"></param>
     /// <param name="blocks"></param>
     /// <param name="steps"></param>
-    /// <param name="normals"></param>
     /// <returns></returns>
-    public static bool Raycast(Vector3 origin, Vector3 direction, float maxDistance, out List<Vector3i> blocks, out List<Vector3> steps, out List<Vector3i> normals)
+    public static bool Raycast(Vector3 origin, Vector3 direction, float maxDistance, out List<Vector3i> blocks, out List<Vector3> steps)
     {
         blocks = new List<Vector3i>();
         steps = new List<Vector3>();
-        normals = new List<Vector3i>();
 
         if (direction.LengthSquared == 0) return false;
         direction.Normalize();
@@ -326,21 +309,18 @@ public static class VoxelData
                 totalDistance = sideDist.X;
                 blockPos.X += step.X;
                 sideDist.X += deltaDist.X;
-                normals.Add(new Vector3i(-step.X, 0, 0));
             }
             else if (sideDist.Y < sideDist.Z)
             {
                 totalDistance = sideDist.Y;
                 blockPos.Y += step.Y;
                 sideDist.Y += deltaDist.Y;
-                normals.Add(new Vector3i(0, -step.Y, 0));
             }
             else
             {
                 totalDistance = sideDist.Z;
                 blockPos.Z += step.Z;
                 sideDist.Z += deltaDist.Z;
-                normals.Add(new Vector3i(0, 0, -step.Z));
             }
 
             if (totalDistance > maxDistance) break;
@@ -351,26 +331,15 @@ public static class VoxelData
         return blocks.Count > 0;
     }
 
-    /// <summary>
-    /// Returns every block a hitbox hits
-    /// </summary>
-    /// <param name="origin"></param>
-    /// <param name="halfSize">The half size of the hitbox</param>
-    /// <param name="direction"></param>
-    /// <param name="maxDistance"></param>
-    /// <param name="blocks"></param>
-    /// <param name="steps"></param>
-    /// <param name="normals"></param>
-    /// <returns></returns>
-    public static bool ColliderRaycast(Collider collider, Vector3 direction, float maxDistance, out HashSet<Vector3i> blocks)
+    public static bool Raycast(Vector3 origin, Vector3 direction, float maxDistance, out Hit hit)
     {
-        Console.WriteLine("---Raycast---");
-        blocks = [];
+        hit = Hit.Base;
 
-        if (direction.LengthSquared == 0) return false;
+        if (direction.LengthSquared == 0) 
+            return false;
         direction.Normalize();
 
-        Vector3 pos = collider.Center;
+        Vector3 pos = origin;
         Vector3i blockPos = new Vector3i(
             Mathf.FloorToInt(pos.X),
             Mathf.FloorToInt(pos.Y),
@@ -402,6 +371,7 @@ public static class VoxelData
         );
 
         float totalDistance = 0f;
+        Vector3i normal;
 
         while (totalDistance <= maxDistance)
         {
@@ -410,32 +380,36 @@ public static class VoxelData
                 totalDistance = sideDist.X;
                 blockPos.X += step.X;
                 sideDist.X += deltaDist.X;
+                normal = (-step.X, 0, 0);
             }
             else if (sideDist.Y < sideDist.Z)
             {
                 totalDistance = sideDist.Y;
                 blockPos.Y += step.Y;
                 sideDist.Y += deltaDist.Y;
+                normal = (0, -step.Y, 0);
             }
             else
             {
                 totalDistance = sideDist.Z;
                 blockPos.Z += step.Z;
                 sideDist.Z += deltaDist.Z;
+                normal = (0, 0, -step.Z);
             }
 
             if (totalDistance > maxDistance) break;
 
-            Vector3 stepPos = direction * totalDistance;
-            Vector3 min = collider.Min + stepPos - direction;
-            Vector3 max = collider.Max + stepPos - direction;
-
-            Console.WriteLine($"HitboxRaycast: {blockPos} - {min} - {max} - {stepPos}");
-
-            GetNewBlockPositions(min, max, blocks);
+            if (WorldManager.GetBlock(blockPos, out var block) == 0)
+            {
+                hit.Distance = totalDistance;
+                hit.Normal = normal;
+                hit.BlockPosition = blockPos;
+                hit.Block = block;
+                return true;
+            }
         }
 
-        return blocks.Count > 0;
+        return false;
     }
 
     /// <summary>
@@ -488,4 +462,20 @@ public static class VoxelData
     { 
         return (position.X >> 5, position.Y >> 5, position.Z >> 5); 
     }  
+}
+
+public struct Hit
+{
+    public static Hit Base = new();
+    public float Distance = float.PositiveInfinity;
+    public Vector3i Normal = (0, 0, 0);
+    public Vector3i BlockPosition = (0, 0, 0);
+    public Block Block = Block.Air;
+
+    public Hit(float distance, Vector3i normal, Block block)
+    {
+        Distance = distance;
+        Normal = normal;
+        Block = block;
+    }
 }

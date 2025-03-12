@@ -4,8 +4,10 @@ using Vortice.Mathematics;
 
 public class ChunkData
 {
+    public static ChunkData Empty = new();
+
     public Vector3i position = (0, 0, 0);
-    public BlockStorage blockStorage = new(new Vector3i(0, 0, 0));
+    public BlockStorage blockStorage = BlockStorage.Empty;
     public BoundingBox boundingBox = new(new System.Numerics.Vector3(0, 0, 0), new System.Numerics.Vector3(0, 0, 0));
 
     public List<Vector3> Wireframe = [];
@@ -23,7 +25,9 @@ public class ChunkData
 
     private VAO _chunkVao = new VAO();
     public SSBO VertexSSBO = new SSBO(new List<Vector2i>());
-    public List<Vector2i> GridAlignedFaces = new List<Vector2i>();
+    public List<Vector2i> GridAlignedFaces = [];
+
+    public ChunkData() { }
 
     public void AddFace(byte posX, byte posY, byte posZ, byte width, byte height, int blockIndex, byte side)
     {

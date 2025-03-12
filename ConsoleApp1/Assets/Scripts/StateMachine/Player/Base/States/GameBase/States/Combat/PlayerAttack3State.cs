@@ -60,8 +60,6 @@ public class PlayerAttack3State : PlayerGameBaseState
             playerGameState.SwitchState(playerGameState.JumpingState);
             return;
         }
-        
-        playerGameState.PlayerStateMachine.MeshRotateUpdate();
     }
 
     public override void FixedUpdate(PlayerGameState playerGameState)

@@ -6,17 +6,15 @@ using ErrorCode = OpenTK.Graphics.OpenGL4.ErrorCode;
 
 public class WorldManager : ScriptingNode
 {
-    public static HashSet<Vector3i> chunks;
+    public static HashSet<Vector3i> chunks = [];
     
-    public static ConcurrentDictionary<Vector3i, ChunkData> activeChunks;
-    public static ConcurrentQueue<Vector3i> chunksToGenerate;
-    public static ConcurrentQueue<ChunkData> chunksToCreate;
-    public static ConcurrentQueue<ChunkData> chunksToStore;
+    public static Dictionary<Vector3i, ChunkData> activeChunks = [];
+    public static ConcurrentQueue<Vector3i> chunksToGenerate = [];
+    public static ConcurrentQueue<ChunkData> chunksToRegenerate = [];
+    public static ConcurrentQueue<ChunkData> chunksToCreate = [];
+    public static ConcurrentQueue<ChunkData> chunksToStore = [];
 
-    private static ConcurrentBag<Vector3i> chunksToIgnore;
-    
-    private Task?[] currentTask = new Task?[4];
-    private Task?[] storeTask = new Task?[6];
+    private static ConcurrentBag<Vector3i> chunksToIgnore = [];
     
     
     public static ShaderProgram _shaderProgram = new ShaderProgram("World/World.vert", "World/World.frag");
@@ -74,18 +72,14 @@ public class WorldManager : ScriptingNode
     {
         CheckRenderDistance();
         GenerateChunks();
+        RegenerateChunks();
         
         if (chunksToCreate.TryDequeue(out var chunk))
         {
-            if (activeChunks.TryAdd(chunk.GetWorldPosition(), chunk))
+            if (activeChunks.TryAdd(chunk.GetWorldPosition(), chunk) || activeChunks.ContainsKey(chunk.GetWorldPosition()))
             {
                 chunk.SaveChunk();
                 chunk.CreateChunk.Invoke();
-            }
-            else
-            {
-                chunksToGenerate.Enqueue(chunk.GetWorldPosition());
-                chunk.Clear();
             }
         }
 
@@ -274,7 +268,7 @@ public class WorldManager : ScriptingNode
         {
             chunksToIgnore.Add(chunk);
             
-            if (activeChunks.TryRemove(chunk, out var data))
+            if (activeChunks.Remove(chunk, out var data))
             {
                 data.Clear();
             }
@@ -320,6 +314,22 @@ public class WorldManager : ScriptingNode
         return blocks.Count > 0;
     }
 
+
+    public static bool SetBlock(Vector3i blockPosition, out ChunkData chunkData)
+    {
+        chunkData = ChunkData.Empty;
+
+        Vector3i chunkPosition = VoxelData.BlockToChunkPosition(blockPosition);
+
+        if (!activeChunks.TryGetValue(chunkPosition, out var chunk) || !chunks.Contains(chunkPosition))
+            return false;
+
+        chunk.blockStorage.SetBlock(VoxelData.BlockToRelativePosition(blockPosition), new Block(true, 1));
+        chunksToRegenerate.Enqueue(chunk);
+        return true;
+    }
+
+
     private void GenerateChunks()
     {
         if (chunksToGenerate.TryDequeue(out var position))
@@ -334,36 +344,27 @@ public class WorldManager : ScriptingNode
         }
     }
 
-    private static async Task GenerateChunk(ChunkData chunkData, bool loaded)
+    private void RegenerateChunks()
+    {
+        if (chunksToRegenerate.TryDequeue(out var chunkData))
+        {
+            Vector3i position = chunkData.GetWorldPosition();
+            if (!activeChunks.ContainsKey(position) || chunksToIgnore.Contains(position)) 
+                return;
+
+            chunkData.Save = true;
+
+            ThreadPool.QueueAction(() => GenerateChunk(chunkData, true));
+        }
+    }
+
+    private static async Task GenerateChunk(ChunkData chunkData, bool loaded, bool create = true)
     {
         await Task.Run(() =>
         {
             Block[] blocks;
 
-            if (!loaded)
-                Chunk.GenerateChunk(ref chunkData, chunkData.GetWorldPosition());
-
-            if (chunkData.position == (0, 2, 0))
-            {
-                HashSet<Vector3i> blocksToCheck = new HashSet<Vector3i>();
-
-                Vector3 halfSize = new Vector3(0.5f, 1, 0.5f);
-
-                VoxelData.RaycastSteps(new Vector3i(1, 65, 0), new Vector3i(1, 2, 1), 20, out var steps);
-
-                foreach (var step in steps)
-                {
-                    VoxelData.GetNewBlockPositions(step - halfSize, step + halfSize, blocksToCheck);
-                }
-
-                foreach (var block in blocksToCheck)
-                {
-                    chunkData.blockStorage.SetBlock(VoxelData.BlockToRelativePosition(block), new Block(true, 1));
-                }
-
-
-                //chunkData.blockStorage.SetBlock(VoxelData.BlockToRelativePosition(block), new Block(true, 1));
-            }
+            if (!loaded) Chunk.GenerateChunk(ref chunkData, chunkData.GetWorldPosition());
 
             blocks = chunkData.blockStorage.GetFullBlockArray();
             blocks = Chunk.GenerateOcclusion(chunkData, blocks);

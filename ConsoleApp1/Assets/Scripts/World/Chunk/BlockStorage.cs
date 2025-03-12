@@ -2,9 +2,13 @@ using OpenTK.Mathematics;
 
 public class BlockStorage
 {
-    public List<Block[]?> Blocks;
-    public List<Vector3i> SubPositions;
-    public int[] BlockCount;
+    public static BlockStorage Empty = new();
+
+    public List<Block[]?> Blocks = [];
+    public List<Vector3i> SubPositions = [];
+    public int[] BlockCount = [];
+
+    public BlockStorage() { }
 
     public BlockStorage(Vector3i position)
     {
