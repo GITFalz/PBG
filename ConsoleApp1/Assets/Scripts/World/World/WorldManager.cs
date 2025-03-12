@@ -315,7 +315,7 @@ public class WorldManager : ScriptingNode
     }
 
 
-    public static bool SetBlock(Vector3i blockPosition, out ChunkData chunkData)
+    public static bool SetBlock(Vector3i blockPosition, Block block, out ChunkData chunkData)
     {
         chunkData = ChunkData.Empty;
 
@@ -324,7 +324,7 @@ public class WorldManager : ScriptingNode
         if (!activeChunks.TryGetValue(chunkPosition, out var chunk) || !chunks.Contains(chunkPosition))
             return false;
 
-        chunk.blockStorage.SetBlock(VoxelData.BlockToRelativePosition(blockPosition), new Block(true, 1));
+        chunk.blockStorage.SetBlock(VoxelData.BlockToRelativePosition(blockPosition), block);
         chunksToRegenerate.Enqueue(chunk);
         return true;
     }

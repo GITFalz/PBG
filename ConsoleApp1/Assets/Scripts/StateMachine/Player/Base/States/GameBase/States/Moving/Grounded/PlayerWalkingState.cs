@@ -11,7 +11,7 @@ public class PlayerWalkingState : PlayerGameBaseState
         Console.WriteLine("Entering walking state");
         
         playerGameState.NextMovingState = playerGameState.WalkingState;
-        playerGameState.PlayerStateMachine.physicsBody.Drag = 7f;
+        playerGameState.PlayerStateMachine.physicsBody.Drag = 10f;
         playerGameState.MovementSpeed = PlayerMovementSpeed.Walk;
         
         OldAnimationManager.Instance.LoopAnimation("Player", "walking");
@@ -34,16 +34,19 @@ public class PlayerWalkingState : PlayerGameBaseState
             return;
         }
 
-        if (Input.IsMousePressed(MouseButton.Right))
+        if (!playerGameState.PlayerStateMachine.BlockSwitch)
         {
-            playerGameState.SwitchState(playerGameState.DashState);
-            return;
-        }
-        
-        if (Input.IsMousePressed(MouseButton.Left))
-        {
-            playerGameState.SwitchState(playerGameState.Attack1State);
-            return;
+            if (Input.IsMousePressed(MouseButton.Right))
+            {
+                playerGameState.SwitchState(playerGameState.DashState);
+                return;
+            }
+            
+            if (Input.IsMousePressed(MouseButton.Left))
+            {
+                playerGameState.SwitchState(playerGameState.Attack1State);
+                return;
+            }
         }
         
         if (Input.IsKeyDown(Keys.Space) && Game.MoveTest)
@@ -66,6 +69,6 @@ public class PlayerWalkingState : PlayerGameBaseState
 
     public override void Exit(PlayerGameState playerGameState)
     {
-        playerGameState.PlayerStateMachine.physicsBody.Drag = 0.1f;
+        playerGameState.PlayerStateMachine.physicsBody.Drag = 0.3f;
     }
 }

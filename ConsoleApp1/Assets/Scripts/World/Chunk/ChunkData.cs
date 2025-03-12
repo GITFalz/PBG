@@ -25,6 +25,7 @@ public class ChunkData
 
     private VAO _chunkVao = new VAO();
     public SSBO VertexSSBO = new SSBO(new List<Vector2i>());
+    private List<Vector2i> _gridAlignedData = [];
     public List<Vector2i> GridAlignedFaces = [];
 
     public ChunkData() { }
@@ -103,8 +104,11 @@ public class ChunkData
     
     public void CreateChunkSolid()
     {
+        _gridAlignedData = [.. GridAlignedFaces];
+        GridAlignedFaces.Clear();
+        
         _chunkVao = new VAO();
-        VertexSSBO = new SSBO(GridAlignedFaces);
+        VertexSSBO = new SSBO(_gridAlignedData);
     }
 
     public void CreateChunkWireframe()
@@ -121,7 +125,7 @@ public class ChunkData
         _chunkVao.Bind();
         VertexSSBO.Bind(0);
 
-        GL.DrawArrays(PrimitiveType.Triangles, 0, GridAlignedFaces.Count * 6);
+        GL.DrawArrays(PrimitiveType.Triangles, 0, _gridAlignedData.Count * 6);
         
         VertexSSBO.Unbind();
         _chunkVao.Unbind();

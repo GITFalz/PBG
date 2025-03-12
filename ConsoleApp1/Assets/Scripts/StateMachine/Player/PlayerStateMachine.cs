@@ -54,6 +54,8 @@ public class PlayerStateMachine : ScriptingNode
 
     private Action _renderHit = () => {};
 
+    public bool BlockSwitch = false;
+
     public PlayerStateMachine()
     {
         // To be changed (make PLAYER state machine static???)
@@ -116,31 +118,40 @@ public class PlayerStateMachine : ScriptingNode
             return;
             
         Camera camera = Game.camera;
-
         Vector2 input = Input.GetMovementInput();
         
         if (input != Vector2.Zero)
+        {
             yaw = -camera.yaw + _inputAngle[input];
+            Info.SetPositionText(_oldPosition, Transform.Position - (0f, 0.875f, 0f));
+        }
         
         forward = Mathf.YAngleToDirection(-yaw);
-            
-        _currentState.Update(this);
-
-        if (input != Vector2.Zero)
-            Info.SetPositionText(_oldPosition, Transform.Position - (0f, 0.875f, 0f));
-
         camera.Center = Transform.Position + (0f, 0.5f, 0f);
+
+        BlockSwitch = false;
 
         if (VoxelData.Raycast(camera.Center, camera.front, 4, out Hit hit))
         {
             Vector3i blockPos = hit.BlockPosition;
             Vector3i n = hit.Normal;
-            int index = n.X != 0 ? (n.X == 1 ? 1 : 3) : (n.Y != 0 ? (n.Y == 1 ? 2 : 4) : n.Y == 1 ? 5 : 0);
+            int index = n.X != 0 ? (n.X == 1 ? 1 : 3) : (n.Y != 0 ? (n.Y == 1 ? 2 : 4) : n.Z == 1 ? 5 : 0);
             _renderHit = () => RenderHit((blockPos.X, blockPos.Y, blockPos.Z, index));
 
+            if (Input.IsMousePressed(MouseButton.Left)) 
+            {
+                WorldManager.SetBlock(blockPos, Block.Air, out ChunkData chunkData);
+                BlockSwitch = true;
+            }     
+
             if (Input.IsMousePressed(MouseButton.Right)) 
-                WorldManager.SetBlock(blockPos + n, out ChunkData chunkData);
+            {
+                WorldManager.SetBlock(blockPos + n, new Block(true, 1), out ChunkData chunkData);
+                BlockSwitch = true;
+            } 
         }
+            
+        _currentState.Update(this);
 
         _oldPosition = Transform.Position;
     }

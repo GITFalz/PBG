@@ -11,7 +11,7 @@ public class PlayerSprintingState : PlayerGameBaseState
     {
         Console.WriteLine("Entering sprinting state");
 
-        playerGameState.PlayerStateMachine.physicsBody.Drag = 7f;
+        playerGameState.PlayerStateMachine.physicsBody.Drag = 10f;
         playerGameState.NextMovingState = playerGameState.SprintingState;
         playerGameState.MovementSpeed = PlayerMovementSpeed.Run;
         
@@ -29,16 +29,19 @@ public class PlayerSprintingState : PlayerGameBaseState
             return;
         }
         
-        if (Input.IsMousePressed(MouseButton.Right))
+        if (!playerGameState.PlayerStateMachine.BlockSwitch)
         {
-            playerGameState.SwitchState(playerGameState.DashState);
-            return;
-        }
-        
-        if (Input.IsMousePressed(MouseButton.Left))
-        {
-            playerGameState.SwitchState(playerGameState.Attack1State);
-            return;
+            if (Input.IsMousePressed(MouseButton.Right))
+            {
+                playerGameState.SwitchState(playerGameState.DashState);
+                return;
+            }
+            
+            if (Input.IsMousePressed(MouseButton.Left))
+            {
+                playerGameState.SwitchState(playerGameState.Attack1State);
+                return;
+            }
         }
         
         if (Input.IsKeyDown(Keys.Space) && Game.MoveTest)
@@ -62,6 +65,6 @@ public class PlayerSprintingState : PlayerGameBaseState
     public override void Exit(PlayerGameState playerGameState)
     {
         Camera.SetFOV(45);
-        playerGameState.PlayerStateMachine.physicsBody.Drag = 0.1f;
+        playerGameState.PlayerStateMachine.physicsBody.Drag = 0.3f;
     }
 }

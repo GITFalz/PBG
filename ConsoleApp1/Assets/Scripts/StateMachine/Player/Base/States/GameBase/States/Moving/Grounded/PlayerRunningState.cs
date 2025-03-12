@@ -9,7 +9,7 @@ public class PlayerRunningState : PlayerGameBaseState
     {
         Console.WriteLine("Entering running state");
 
-        playerGameState.PlayerStateMachine.physicsBody.Drag = 7f;
+        playerGameState.PlayerStateMachine.physicsBody.Drag = 10f;
         playerGameState.NextMovingState = playerGameState.RunningState;
         playerGameState.MovementSpeed = PlayerMovementSpeed.Walk;
 
@@ -32,16 +32,19 @@ public class PlayerRunningState : PlayerGameBaseState
             return;
         }
 
-        if (Input.IsMousePressed(MouseButton.Right))
+        if (!playerGameState.PlayerStateMachine.BlockSwitch)
         {
-            playerGameState.SwitchState(playerGameState.DashState);
-            return;
-        }
-        
-        if (Input.IsMousePressed(MouseButton.Left))
-        {
-            playerGameState.SwitchState(playerGameState.Attack1State);
-            return;
+            if (Input.IsMousePressed(MouseButton.Right))
+            {
+                playerGameState.SwitchState(playerGameState.DashState);
+                return;
+            }
+            
+            if (Input.IsMousePressed(MouseButton.Left))
+            {
+                playerGameState.SwitchState(playerGameState.Attack1State);
+                return;
+            }
         }
         
         if (Input.IsKeyDown(Keys.Space) && Game.MoveTest)
@@ -65,6 +68,6 @@ public class PlayerRunningState : PlayerGameBaseState
     public override void Exit(PlayerGameState playerGameState)
     {
         Game.camera.SetFOV(45);
-        playerGameState.PlayerStateMachine.physicsBody.Drag = 0.1f;
+        playerGameState.PlayerStateMachine.physicsBody.Drag = 0.3f;
     }
 }

@@ -6,7 +6,7 @@ public class PlayerIdleState : PlayerGameBaseState
     public override void Enter(PlayerGameState playerGameState)
     {
         Console.WriteLine("Entering idle state");
-        playerGameState.PlayerStateMachine.physicsBody.Drag = 7f;
+        playerGameState.PlayerStateMachine.physicsBody.Drag = 10f;
         playerGameState.NextMovingState = playerGameState.WalkingState;
     }
 
@@ -26,7 +26,7 @@ public class PlayerIdleState : PlayerGameBaseState
             return;
         }
 
-        if (Input.IsMousePressed(MouseButton.Left))
+        if (!playerGameState.PlayerStateMachine.BlockSwitch && Input.IsMousePressed(MouseButton.Left))
         {
             playerGameState.SwitchState(playerGameState.Attack1State);
             return;
@@ -49,6 +49,6 @@ public class PlayerIdleState : PlayerGameBaseState
 
     public override void Exit(PlayerGameState playerGameState)
     {
-        playerGameState.PlayerStateMachine.physicsBody.Drag = 0.1f;
+        playerGameState.PlayerStateMachine.physicsBody.Drag = 0.3f;
     }
 }

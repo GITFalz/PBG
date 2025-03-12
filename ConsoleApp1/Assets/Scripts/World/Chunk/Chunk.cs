@@ -130,8 +130,6 @@ public class Chunk
     {
         byte[] _checks = new byte[WIDTH * HEIGHT * DEPTH];
         int index = 0;
-
-        chunkData.GridAlignedFaces.Clear();
         
         for (int y = 0; y < 32; y++)
         {
