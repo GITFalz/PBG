@@ -1,56 +1,33 @@
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using System;
+using System.Collections.Generic;
 
-public class SSBO
+public class SSBO<T> where T : struct
 {
     public int ID;
-    private const int Matrix4SizeInBytes = sizeof(float) * 16;
-    private const int IntSizeInBytes = sizeof(int);
+    private int _currentSize;  // Keep track of allocated size
+    private readonly int _elementSize;
 
-
-    public SSBO(List<Matrix4> data)
+    public SSBO(List<T> data)
     {
+        _elementSize = System.Runtime.InteropServices.Marshal.SizeOf<T>();
+        _currentSize = data.Count * _elementSize;
+
         ID = GL.GenBuffer();
         GL.BindBuffer(BufferTarget.ShaderStorageBuffer, ID);
-        GL.BufferData(BufferTarget.ShaderStorageBuffer, data.Count * Matrix4SizeInBytes, data.ToArray(), BufferUsageHint.DynamicDraw);
+        GL.BufferData(BufferTarget.ShaderStorageBuffer, _currentSize, data.ToArray(), BufferUsageHint.DynamicDraw);
     }
 
-    public SSBO(List<int> data)
+    public SSBO(int size)
     {
-        ID = GL.GenBuffer();
+        GL.GenBuffers(1, out ID);
         GL.BindBuffer(BufferTarget.ShaderStorageBuffer, ID);
-        GL.BufferData(BufferTarget.ShaderStorageBuffer, data.Count * IntSizeInBytes, data.ToArray(), BufferUsageHint.DynamicDraw);
+
+        GL.BufferData(BufferTarget.ShaderStorageBuffer, size, IntPtr.Zero, BufferUsageHint.DynamicDraw);
+
+        Unbind();
     }
-
-    public SSBO(List<Vector3> data)
-    {
-        ID = GL.GenBuffer();
-        GL.BindBuffer(BufferTarget.ShaderStorageBuffer, ID);
-        GL.BufferData(BufferTarget.ShaderStorageBuffer, data.Count * Vector3.SizeInBytes, data.ToArray(), BufferUsageHint.DynamicDraw);
-    }
-
-    public SSBO(List<Vector4i> data)
-    {
-        ID = GL.GenBuffer();
-        GL.BindBuffer(BufferTarget.ShaderStorageBuffer, ID);
-        GL.BufferData(BufferTarget.ShaderStorageBuffer, data.Count * Vector4i.SizeInBytes, data.ToArray(), BufferUsageHint.DynamicDraw);
-    }
-
-    public SSBO(List<Vector4> data)
-    {
-        ID = GL.GenBuffer();
-        GL.BindBuffer(BufferTarget.ShaderStorageBuffer, ID);
-        GL.BufferData(BufferTarget.ShaderStorageBuffer, data.Count * Vector4.SizeInBytes, data.ToArray(), BufferUsageHint.DynamicDraw);
-    }
-
-    public SSBO(List<Vector2i> data)
-    {
-        ID = GL.GenBuffer();
-        GL.BindBuffer(BufferTarget.ShaderStorageBuffer, ID);
-        GL.BufferData(BufferTarget.ShaderStorageBuffer, data.Count * Vector2i.SizeInBytes, data.ToArray(), BufferUsageHint.DynamicDraw);
-    }
-
-
 
     public void Bind(int bindingPoint)
     {
@@ -63,55 +40,50 @@ public class SSBO
         GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
     }
 
-    public void Update(List<Matrix4> newData, int bindingPoint)
+    public void Update(List<T> newData)
     {
-        Bind(bindingPoint);
-        GL.BufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, newData.Count * Matrix4SizeInBytes, newData.ToArray());
-        Unbind();
-    }
+        int newSize = newData.Count * _elementSize;
 
-    public void Update(List<int> newData, int bindingPoint)
-    {
-        Bind(bindingPoint);
-        GL.BufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, newData.Count * IntSizeInBytes, newData.ToArray());
-        Unbind();
-    }
+        if (newSize > _currentSize)
+        {
+            ResizeBuffer(newSize);
+        }
 
-    public void Update(List<Vector3> newData, int bindingPoint)
-    {
-        Bind(bindingPoint);
-        GL.BufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, newData.Count * Vector3.SizeInBytes, newData.ToArray());
-        Unbind();
-    }
-
-    public void Update(List<Vector4i> newData, int bindingPoint)
-    {
-        Bind(bindingPoint);
-        GL.BufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, newData.Count * Vector4i.SizeInBytes, newData.ToArray());
-        Unbind();
-    }
-
-    public void Update(List<Vector2i> newData, int bindingPoint)
-    {
-        Bind(bindingPoint);
-        GL.BufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, newData.Count * Vector2i.SizeInBytes, newData.ToArray());
-        Unbind();
-    }
-
-
-
-    public int[] ReadData(int count)
-    {
-        int[] data = new int[count];
         GL.BindBuffer(BufferTarget.ShaderStorageBuffer, ID);
-        GL.GetBufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, count * IntSizeInBytes, data);
+        GL.BufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, newSize, newData.ToArray());
+        Unbind();
+    }
+
+    public void ResizeBuffer(int newSizeInElements)
+    {
+        if (newSizeInElements == _currentSize) return;
+        
+        int newBuffer = GL.GenBuffer();
+        GL.BindBuffer(BufferTarget.ShaderStorageBuffer, newBuffer);
+        GL.BufferData(BufferTarget.ShaderStorageBuffer, newSizeInElements * _elementSize, IntPtr.Zero, BufferUsageHint.DynamicDraw);
+
+        GL.BindBuffer(BufferTarget.CopyReadBuffer, ID);
+        GL.BindBuffer(BufferTarget.CopyWriteBuffer, newBuffer);
+
+        int sizeToCopy = Math.Min(_currentSize, newSizeInElements) * _elementSize;
+        GL.CopyBufferSubData(BufferTarget.CopyReadBuffer, BufferTarget.CopyWriteBuffer, IntPtr.Zero, IntPtr.Zero, sizeToCopy);
+        
+        GL.DeleteBuffer(ID);
+        ID = newBuffer;
+        _currentSize = newSizeInElements;
+    }
+
+    public T[] ReadData(int count)
+    {
+        T[] data = new T[count];
+        GL.BindBuffer(BufferTarget.ShaderStorageBuffer, ID);
+        GL.GetBufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, count * _elementSize, data);
         Unbind();
         return data;
     }
 
     public void Delete()
     {
-        Unbind();
         GL.DeleteBuffer(ID);
     }
 }

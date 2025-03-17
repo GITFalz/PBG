@@ -140,13 +140,13 @@ public class PlayerStateMachine : ScriptingNode
 
             if (Input.IsMousePressed(MouseButton.Left)) 
             {
-                WorldManager.SetBlock(blockPos, Block.Air, out ChunkData chunkData);
+                WorldManager.SetBlock(blockPos, Block.Air, out Chunk chunkData);
                 BlockSwitch = true;
             }     
 
-            if (Input.IsMousePressed(MouseButton.Right)) 
+            if (Input.IsMousePressed(MouseButton.Right) && !BlockCollision.IsColliding(physicsBody.GetCollider(), blockPos + n, 1)) 
             {
-                WorldManager.SetBlock(blockPos + n, new Block(true, 1), out ChunkData chunkData);
+                WorldManager.SetBlock(blockPos + n, new Block(true, 1), out Chunk chunkData);
                 BlockSwitch = true;
             } 
         }

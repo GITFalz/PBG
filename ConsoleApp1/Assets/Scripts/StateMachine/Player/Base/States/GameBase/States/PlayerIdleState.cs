@@ -20,7 +20,7 @@ public class PlayerIdleState : PlayerGameBaseState
             return;
         }
         
-        if (Input.IsKeyPressed(Keys.Space) && Game.MoveTest)
+        if (Input.IsKeyDown(Keys.Space) && Game.MoveTest)
         {
             playerGameState.SwitchState(playerGameState.JumpingState);
             return;
@@ -34,7 +34,6 @@ public class PlayerIdleState : PlayerGameBaseState
         
         if (!playerGameState.PlayerStateMachine.IsGrounded())
         {
-            Console.WriteLine("Falling");
             playerGameState.SwitchState(playerGameState.FallingState);
             return;
         }

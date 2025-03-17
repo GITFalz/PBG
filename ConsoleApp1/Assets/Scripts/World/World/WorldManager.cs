@@ -1,47 +1,22 @@
-﻿using System.Collections.Concurrent;
-using OpenTK.Graphics.OpenGL4;
+﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
-using OpenTK.Windowing.GraphicsLibraryFramework;
-using ErrorCode = OpenTK.Graphics.OpenGL4.ErrorCode;
 
 public class WorldManager : ScriptingNode
 {
-    public static HashSet<Vector3i> chunks = [];
-    
-    public static Dictionary<Vector3i, ChunkData> activeChunks = [];
-    public static ConcurrentQueue<Vector3i> chunksToGenerate = [];
-    public static ConcurrentQueue<ChunkData> chunksToRegenerate = [];
-    public static ConcurrentQueue<ChunkData> chunksToCreate = [];
-    public static ConcurrentQueue<ChunkData> chunksToStore = [];
-
-    private static ConcurrentBag<Vector3i> chunksToIgnore = [];
-    
-    
     public static ShaderProgram _shaderProgram = new ShaderProgram("World/World.vert", "World/World.frag");
     public static ShaderProgram _wireframeShader = new ShaderProgram("World/Wireframe.vert", "World/Wireframe.frag");
-    public Texture _textures = new Texture("Test_TextureAtlas.png");
-    
+    public TextureArray _textures = new TextureArray("Test_TextureAtlas.png", 32, 32);  
 
     private static RenderType _renderType = RenderType.Solid;
     private Action _render = () => { };
 
     private int _oldRenderedChunks = 0;
 
-
-
-
-    public ChunkData chunkData = new ChunkData(RenderType.Solid, new Vector3i(0, 0, 0));
+    public Chunk chunkData = new Chunk(RenderType.Solid, new Vector3i(0, 0, 0));
     public ShaderProgram pullingShader = new ShaderProgram("World/Pulling.vert", "World/Pulling.frag");
     
     public WorldManager()
     {
-        chunks = [];  
-        activeChunks = [];
-        chunksToGenerate = [];
-        chunksToCreate = [];
-        chunksToStore = [];
-        chunksToIgnore = [];
-    
         _render = _renderType == RenderType.Solid ? RenderSolid : RenderWireframe;
     }
     
@@ -49,18 +24,14 @@ public class WorldManager : ScriptingNode
     {
         Console.WriteLine("World Manager");
         
-        activeChunks.Clear();
-        chunksToGenerate.Clear();
-        chunksToCreate.Clear();
-        chunksToStore.Clear();
-        chunksToIgnore.Clear();
+        ChunkManager.Clear();
         
         SetChunks();
     }
 
     public void SetRenderType(RenderType type)
     {
-        foreach (var chunk in activeChunks)
+        foreach (var chunk in ChunkManager.ActiveChunks)
         {
             chunk.Value.SetRenderType(type);
         }
@@ -73,10 +44,12 @@ public class WorldManager : ScriptingNode
         CheckRenderDistance();
         GenerateChunks();
         RegenerateChunks();
+        PopulateChunks();
+        GenerateMeshChunks();
         
-        if (chunksToCreate.TryDequeue(out var chunk))
+        if (ChunkManager.CreateQueue.TryDequeue(out var chunk))
         {
-            if (activeChunks.TryAdd(chunk.GetWorldPosition(), chunk) || activeChunks.ContainsKey(chunk.GetWorldPosition()))
+            if (ChunkManager.ActiveChunks.ContainsKey(chunk.GetWorldPosition()))
             {
                 chunk.SaveChunk();
                 chunk.CreateChunk.Invoke();
@@ -119,7 +92,7 @@ public class WorldManager : ScriptingNode
         GL.UniformMatrix4(projectionLocationA, true, ref projection);
         GL.Uniform3(camPosLocationA, camera.Position); 
 
-        foreach (var (_, chunk) in activeChunks)
+        foreach (var (_, chunk) in ChunkManager.ActiveChunks)
         {   
             if (chunk.IsDisabled)
                 continue;
@@ -156,10 +129,9 @@ public class WorldManager : ScriptingNode
     public void CheckFrustum()
     {
         Camera camera = Game.camera;
-
         camera.CalculateFrustumPlanes();
         
-        foreach (var (_, chunk) in activeChunks)
+        foreach (var (_, chunk) in ChunkManager.ActiveChunks)
         {
             chunk.IsDisabled = !chunk.HasBlocks || !camera.FrustumIntersects(chunk.boundingBox);
         }
@@ -187,7 +159,7 @@ public class WorldManager : ScriptingNode
         GL.UniformMatrix4(viewLocation, true, ref view);
         GL.UniformMatrix4(projectionLocation, true, ref projection);
         
-        foreach (var (_, chunk) in activeChunks)
+        foreach (var (_, chunk) in ChunkManager.ActiveChunks)
         {   
             if (chunk.IsDisabled)
                 continue;
@@ -217,37 +189,69 @@ public class WorldManager : ScriptingNode
         base.Exit();
     }
 
-    public void SetChunks()
+    public HashSet<Vector3i> SetChunks()
     {
         int render = World.renderDistance;
-        Vector3i playerChunk = new Vector3i(0, 0, 0);
+
+        Vector3i playerChunk = (0, 0, 0);
+        Vector2i startPosition = (-1, -1);
         
         HashSet<Vector3i> chunkPositions = new HashSet<Vector3i>();
         
-        for (int x = -render; x < render; x++)
+        for (int x = 1; x < render*2+1; x+=2)
         {
-            for (int y = 0; y < 4; y++)
+            for (int i = 0; i < x; i++)
             {
-                for (int z = -render; z < render; z++)
+                startPosition.X++;
+                for (int y = -1; y < 4; y++)
                 {
-                    chunkPositions.Add(new Vector3i(playerChunk.X + x, y, playerChunk.Z + z) * 32);
+                    chunkPositions.Add(((startPosition.X, y, startPosition.Y) + playerChunk) * 32);
                 }
-            }
+            }   
+
+            for (int i = 0; i < x; i++)
+            {
+                startPosition.Y++;
+                for (int y = -1; y < 4; y++)
+                {
+                    chunkPositions.Add(((startPosition.X, y, startPosition.Y) + playerChunk) * 32);
+                }
+            }   
+
+            for (int i = 0; i < x; i++)
+            {
+                startPosition.X--;
+                for (int y = -1; y < 4; y++)
+                {
+                    chunkPositions.Add(((startPosition.X, y, startPosition.Y) + playerChunk) * 32);
+                }
+            }   
+
+            for (int i = 0; i < x; i++)
+            {
+                startPosition.Y--;
+                for (int y = -1; y < 4; y++)
+                {
+                    chunkPositions.Add(((startPosition.X, y, startPosition.Y) + playerChunk) * 32);
+                }
+            }   
+
+            startPosition -= (1, 1);
         }
         
-        chunks = chunkPositions;
+        return chunkPositions;
     }
 
     public void CheckRenderDistance()
     {
-        SetChunks();
+        var chunks = SetChunks();
         
         int render = World.renderDistance;
         Vector3i playerChunk = new Vector3i(0, 0, 0);
         
         HashSet<Vector3i> chunksToRemove = new HashSet<Vector3i>();
         
-        foreach (var chunk in activeChunks)
+        foreach (var chunk in ChunkManager.ActiveChunks)
         {
             chunksToRemove.Add(chunk.Key);
         }
@@ -256,19 +260,18 @@ public class WorldManager : ScriptingNode
         {
             chunksToRemove.Remove(chunk);
             
-            if (!activeChunks.ContainsKey(chunk) && !chunksToGenerate.Contains(chunk) && chunksToCreate.All(c => c.GetWorldPosition() != chunk))
+            if (!ChunkManager.ActiveChunks.ContainsKey(chunk) && !ChunkManager.GenerateChunkQueue.Contains(chunk) && ChunkManager.CreateQueue.All(c => c.GetWorldPosition() != chunk))
             {
-                chunksToGenerate.Enqueue(chunk);
+                ChunkManager.GenerateChunkQueue.Enqueue(chunk);
             }
         }
-        
-        chunksToIgnore.Clear();
-        
+
+        ChunkManager.IgnoreList.Clear();
+
         foreach (var chunk in chunksToRemove)
-        {
-            chunksToIgnore.Add(chunk);
-            
-            if (activeChunks.Remove(chunk, out var data))
+        {    
+            ChunkManager.IgnoreList.Add(chunk);
+            if (ChunkManager.ActiveChunks.TryRemove(chunk, out var data))
             {
                 data.Clear();
             }
@@ -277,12 +280,21 @@ public class WorldManager : ScriptingNode
 
     public static int GetBlock(Vector3i blockPosition, out Block block)
     {
+        return GetBlock(blockPosition, out block, out _, out _);
+    }
+
+    public static int GetBlock(Vector3i blockPosition, out Block block, out int blockIndex, out int arrayIndex)
+    {
         block = Block.Air;
+        blockIndex = -1;
+        arrayIndex = -1;
+
         Vector3i chunkPosition = VoxelData.BlockToChunkPosition(blockPosition);
 
-        if (!activeChunks.TryGetValue(chunkPosition, out var chunk)) return chunks.Contains(chunkPosition) ? 2 : 1;
+        if (!ChunkManager.ActiveChunks.TryGetValue(chunkPosition, out var chunk)) 
+            return -1;
         
-        block = chunk.blockStorage.GetBlock(VoxelData.BlockToRelativePosition(blockPosition));
+        block = chunk.blockStorage.GetBlock(VoxelData.BlockToRelativePosition(blockPosition), out blockIndex, out arrayIndex);
         return block.IsAir() ? 1 : 0;
     }
 
@@ -315,62 +327,125 @@ public class WorldManager : ScriptingNode
     }
 
 
-    public static bool SetBlock(Vector3i blockPosition, Block block, out ChunkData chunkData)
+    public static bool SetBlock(Vector3i blockPosition, Block block, out Chunk chunkData)
     {
-        chunkData = ChunkData.Empty;
+        chunkData = Chunk.Empty;
 
         Vector3i chunkPosition = VoxelData.BlockToChunkPosition(blockPosition);
 
-        if (!activeChunks.TryGetValue(chunkPosition, out var chunk) || !chunks.Contains(chunkPosition))
+        if (!ChunkManager.ActiveChunks.TryGetValue(chunkPosition, out var chunk))
             return false;
 
         chunk.blockStorage.SetBlock(VoxelData.BlockToRelativePosition(blockPosition), block);
-        chunksToRegenerate.Enqueue(chunk);
+        ChunkManager.RegenerateMeshQueue.Enqueue(chunk);
         return true;
     }
 
 
     private void GenerateChunks()
     {
-        if (chunksToGenerate.TryDequeue(out var position))
+        if (ChunkManager.GenerateChunkQueue.TryDequeue(out var position))
         {
-            if (activeChunks.ContainsKey(position) || chunksToIgnore.Contains(position)) 
+            if (ChunkManager.ActiveChunks.ContainsKey(position) || ChunkManager.IgnoreList.Contains(position)) 
                 return;
 
-            ChunkData chunkData = new ChunkData(_renderType, VoxelData.ChunkToRelativePosition(position));
+            Chunk chunkData = new Chunk(_renderType, VoxelData.ChunkToRelativePosition(position));
             bool loaded = chunkData.LoadChunk();
             chunkData.Save = !loaded;
-            ThreadPool.QueueAction(() => GenerateChunk(chunkData, loaded));
+            if (ChunkManager.TryAddActiveChunk(chunkData))
+            {
+                chunkData.Stage = ChunkStage.Instance;
+                ThreadPool.QueueAction(() => GenerateChunk(chunkData, loaded), TaskPriority.High);
+            }
         }
     }
 
     private void RegenerateChunks()
     {
-        if (chunksToRegenerate.TryDequeue(out var chunkData))
+        if (ChunkManager.RegenerateMeshQueue.TryDequeue(out var chunkData))
         {
             Vector3i position = chunkData.GetWorldPosition();
-            if (!activeChunks.ContainsKey(position) || chunksToIgnore.Contains(position)) 
+            if (!ChunkManager.ActiveChunks.ContainsKey(position) || ChunkManager.IgnoreList.Contains(position)) 
                 return;
 
-            chunkData.Save = true;
-
-            ThreadPool.QueueAction(() => GenerateChunk(chunkData, true));
+            ThreadPool.QueueAction(() => GenerateMeshChunk(chunkData), TaskPriority.Urgent);
         }
     }
 
-    private static async Task GenerateChunk(ChunkData chunkData, bool loaded, bool create = true)
+    private void PopulateChunks()
+    {
+        if (ChunkManager.PopulateChunkQueue.TryDequeue(out var chunkData))
+        {
+            Vector3i position = chunkData.GetWorldPosition();
+            if (!ChunkManager.ActiveChunks.ContainsKey(position) || ChunkManager.IgnoreList.Contains(position)) 
+                return;
+
+            ThreadPool.QueueAction(() => PopulateChunk(chunkData), TaskPriority.High);
+        }
+    }
+
+    private void GenerateMeshChunks()
+    {
+        if (ChunkManager.GenerateMeshQueue.TryDequeue(out var chunkData))
+        {
+            Vector3i position = chunkData.GetWorldPosition();
+            if (!ChunkManager.ActiveChunks.ContainsKey(position) || ChunkManager.IgnoreList.Contains(position)) 
+                return;
+
+            ThreadPool.QueueAction(() => GenerateMeshChunk(chunkData), TaskPriority.Normal);
+        }
+    }
+
+    private static async Task GenerateChunk(Chunk chunkData, bool loaded, bool create = true)
     {
         await Task.Run(() =>
         {
-            Block[] blocks;
+            if (!loaded)
+            {
+                ChunkGenerator.GenerateChunk(ref chunkData, chunkData.GetWorldPosition());
+                chunkData.Stage = ChunkStage.Generated;
+                if (chunkData.AllNeighbourChunkStageSuperiorOrEqual(ChunkStage.Generated))
+                {
+                    ChunkManager.PopulateChunkQueue.Enqueue(chunkData);
+                    chunkData.Save = true;
+                }
 
-            if (!loaded) Chunk.GenerateChunk(ref chunkData, chunkData.GetWorldPosition());
+                foreach (var chunk in chunkData.GetNeighbourChunks())
+                {
+                    if (chunk.Stage == ChunkStage.Generated && chunk.AllNeighbourChunkStageSuperiorOrEqual(ChunkStage.Generated))
+                    {
+                        ChunkManager.PopulateChunkQueue.Enqueue(chunk);
+                        chunk.Save = true;
+                    }
+                }
+            } 
+            else
+            {
+                chunkData.Stage = ChunkStage.Populated;
+                ChunkManager.GenerateMeshQueue.Enqueue(chunkData);
+                chunkData.Save = false;
+            }
+        });
+    }
 
-            blocks = chunkData.blockStorage.GetFullBlockArray();
-            blocks = Chunk.GenerateOcclusion(chunkData, blocks);
-            Chunk.GenerateMesh(blocks, chunkData);
-                
-            chunksToCreate.Enqueue(chunkData);
+    private static async Task PopulateChunk(Chunk chunkData)
+    {
+        await Task.Run(() =>
+        {
+            ChunkGenerator.PopulateChunk(ref chunkData);
+            chunkData.Stage = ChunkStage.Populated;
+            ChunkManager.GenerateMeshQueue.Enqueue(chunkData);
+        });
+    }
+
+    private static async Task GenerateMeshChunk(Chunk chunkData)
+    {
+        await Task.Run(() =>
+        {
+            if (!chunkData.Loaded) ChunkGenerator.GenerateOcclusion(chunkData);
+            ChunkGenerator.GenerateMesh(chunkData);
+            chunkData.Stage = ChunkStage.Rendered;
+            ChunkManager.CreateQueue.Enqueue(chunkData);
         });
     }
     
@@ -403,7 +478,7 @@ public class WorldManager : ScriptingNode
     
     public void Delete()
     {
-        foreach (var (_, chunk) in activeChunks)
+        foreach (var (_, chunk) in ChunkManager.ActiveChunks)
         {
             chunk.Delete();
         }

@@ -4,12 +4,15 @@ public class ComputeShader
 {
     public int ID;
 
-    public ComputeShader(string computeShaderFilePath)
+    public ComputeShader(string data, bool isFile = true)
     {
         ID = GL.CreateProgram();
 
-        int computeShader = GL.CreateShader(ShaderType.ComputeShader);
-        GL.ShaderSource(computeShader, Shader.LoadShaderSource(computeShaderFilePath));
+        int computeShader = GL.CreateShader(ShaderType.ComputeShader);       
+
+        if (isFile) data = Shader.LoadShaderSource(data);
+
+        GL.ShaderSource(computeShader, data);
         GL.CompileShader(computeShader);
 
         string compileStatus = GL.GetShaderInfoLog(computeShader);
@@ -38,6 +41,7 @@ public class ComputeShader
     {
         GL.DispatchCompute(workGroupX, workGroupY, workGroupZ);
         GL.MemoryBarrier(MemoryBarrierFlags.ShaderStorageBarrierBit);
+        GL.Finish();
     }
 
     public void Delete() { GL.DeleteProgram(ID); }

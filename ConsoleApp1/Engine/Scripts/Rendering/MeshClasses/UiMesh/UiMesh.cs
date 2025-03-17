@@ -21,7 +21,7 @@ public class UIMesh
     private VBO _transformationVbo = new VBO(new List<int>());
     private VBO _sliceVbo = new VBO(new List<Vector2>());
     private VBO _colorVbo = new VBO(new List<Vector3>());
-    private SSBO _transformationSsbo = new SSBO(new List<Matrix4>{});
+    private SSBO<Matrix4> _transformationSsbo = new(new List<Matrix4>{});
     public int ElementCount = 0;
 
     public void AddElement(UIPanel element, ref int uiIndex)
@@ -97,7 +97,7 @@ public class UIMesh
         _transformationVbo = new VBO(TransformationIndex);
         _sliceVbo = new VBO(Slices);
         _colorVbo = new VBO(Colors);
-        _transformationSsbo = new SSBO(TransformationMatrices);
+        _transformationSsbo = new(TransformationMatrices);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
         _vao.LinkToVAO(1, 2, _uvVbo);
@@ -125,7 +125,7 @@ public class UIMesh
 
     public void UpdateMatrices()
     {
-        _transformationSsbo.Update(TransformationMatrices, 0);
+        _transformationSsbo.Update(TransformationMatrices);
     }
 
     public void UpdateVertices()

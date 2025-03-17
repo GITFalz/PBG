@@ -1,10 +1,14 @@
-public class BlockManager
+using System.Text;
+
+public static class BlockManager
 {
     public static Dictionary<int, CWorldBlock> Blocks = new Dictionary<int, CWorldBlock>();
 
     public static CWorldBlock GetBlock(int index)
     {
-        return Blocks.GetValueOrDefault(index);
+        if (Blocks.TryGetValue(index, out var block))
+            return block;
+        return CWorldBlock.Base;
     }
 
     public static bool Exists(CWorldBlock block)
@@ -47,33 +51,54 @@ public class BlockManager
         block.priority = priority;
         return true;
     }
+
+    public static List<CWorldBlock> GetSortedPriorityList()
+    {
+        List<int> sortedKeys = [.. Blocks.Keys];
+        sortedKeys.Sort();
+
+        Console.WriteLine("Sorted Array:");
+        List<CWorldBlock> sortedValues = [];
+        foreach (int key in sortedKeys)
+        {
+            sortedValues.Add(Blocks[key]);
+            Console.WriteLine(Blocks[key]);
+        }
+
+        return sortedValues;
+    }
 }
 
-[System.Serializable]
 public class CWorldBlock
 {
+    public static CWorldBlock Base = new();
+
     public string blockName;
     public int index;
     public int priority;
     public UVmaps blockUVs = UVmaps.DefaultIndexUVmap;
+    public BlockChecker BlockChecker;
 
     public CWorldBlock()
     {
         blockName = "";
         index = 0;
+        BlockChecker = new();
     }
     public CWorldBlock(int index)
     {
         blockName = "";
         this.index = index;
+        BlockChecker = new();
     }
     
-    public CWorldBlock(string name, int index, int priority, UVmaps blockUVs)
+    public CWorldBlock(string name, int index, int priority, UVmaps blockUVs, BlockChecker blockChecker)
     {
         blockName = name;
         this.index = index;
         this.priority = priority;
         this.blockUVs = blockUVs;
+        BlockChecker = blockChecker;
     }
 
     public void SetUv(int index, int value)
@@ -85,6 +110,11 @@ public class CWorldBlock
     {
         return blockUVs.textureIndices;
     }
+
+    public override string ToString()
+    {
+        return $"Block: {blockName} Index: {index} Priority: {priority}\nUvs: {blockUVs}";
+    }
 }
 
 public struct UVmaps
@@ -94,6 +124,16 @@ public struct UVmaps
     public UVmaps(int[] textureIndices)
     {
         this.textureIndices = textureIndices;
+    }
+
+    public override string ToString()
+    {
+        StringBuilder stringBuilder = new();
+        foreach (var i in textureIndices)
+        {
+            stringBuilder.Append($"{i}, ");
+        }
+        return stringBuilder.ToString();
     }
 
     public static UVmaps DefaultIndexUVmap => new UVmaps(new int[] {0, 0, 0, 0, 0, 0});

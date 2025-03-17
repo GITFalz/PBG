@@ -6,14 +6,14 @@ public class LodChunk : LodTreeBase
     public Vector3 position = Vector3.Zero;
 
     private VAO _vao;
-    private SSBO _vertexSSBO;
+    private SSBO<Vector2i> _vertexSSBO;
     private List<Vector2i> _vertices = [];
 
     public LodChunk()
     {
         AddFace(position, 16, 16, 0, 2, 0);
         _vao = new VAO();
-        _vertexSSBO = new SSBO(_vertices);
+        _vertexSSBO = new(_vertices);
     }
 
     public void AddFace(byte posX, byte posY, byte posZ, byte width, byte height, int blockIndex, byte side, byte mutliplier)

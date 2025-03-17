@@ -10,7 +10,7 @@ public static class ThreadPool
     public static int ThreadCount { get; private set; } = 4;
 
     private static PriorityQueue _actions = new PriorityQueue();
-    private static readonly ConcurrentBag<Task> _runningTasks = new ConcurrentBag<Task>();
+    private static int _currentTaskCount = 0;
 
     public static void SetThreadCount(int count)
     {
@@ -29,28 +29,42 @@ public static class ThreadPool
 
     private static async void ProcessTasks()
     {
-        for (int i = _runningTasks.Count; i < ThreadCount - 1; i++)
+        while (_currentTaskCount < ThreadCount - 1)
         {
             if (_actions.TryDequeue(out var action))
             {
-                var task = action();
-                _runningTasks.Add(task);
-                await task;
-                _runningTasks.TryTake(out task);
+                Interlocked.Increment(ref _currentTaskCount);
+                try
+                {
+                    await action();
+                }
+                finally
+                {
+                    Interlocked.Decrement(ref _currentTaskCount);
+                }
+            }
+            else
+            {
+                break;
             }
         }
     }
 
     private class PriorityQueue 
     {
-        private readonly ConcurrentQueue<Func<Task>> _highPriorityActions = new ConcurrentQueue<Func<Task>>();
-        private readonly ConcurrentQueue<Func<Task>> _normalPriorityActions = new ConcurrentQueue<Func<Task>>();
-        private readonly ConcurrentQueue<Func<Task>> _lowPriorityActions = new ConcurrentQueue<Func<Task>>();
+        private readonly ConcurrentQueue<Func<Task>> _urgentPriorityActions = [];
+        private readonly ConcurrentQueue<Func<Task>> _highPriorityActions = [];
+        private readonly ConcurrentQueue<Func<Task>> _normalPriorityActions = [];
+        private readonly ConcurrentQueue<Func<Task>> _lowPriorityActions = [];
+        private readonly ConcurrentQueue<Func<Task>> _backgroundPriorityActions = [];
 
         public void Enqueue(Func<Task> action, TaskPriority priority = TaskPriority.Normal)
         {
             switch (priority)
             {
+                case TaskPriority.Background:
+                    _backgroundPriorityActions.Enqueue(action);
+                    break;
                 case TaskPriority.Low:
                     _lowPriorityActions.Enqueue(action);
                     break;
@@ -60,23 +74,20 @@ public static class ThreadPool
                 case TaskPriority.High:
                     _highPriorityActions.Enqueue(action);
                     break;
+                case TaskPriority.Urgent:
+                    _urgentPriorityActions.Enqueue(action);
+                    break;
             }
         }
 
         public bool TryDequeue(out Func<Task> action)
         {
             action = () => { return Task.CompletedTask; };
-            if (_highPriorityActions.TryDequeue(out var a))
-            {
-                action = a;
-                return true;
-            }
-            if (_normalPriorityActions.TryDequeue(out a))
-            {
-                action = a;
-                return true;
-            }
-            if (_lowPriorityActions.TryDequeue(out a))
+            if (_urgentPriorityActions.TryDequeue(out var a) ||
+                _highPriorityActions.TryDequeue(out a) ||
+                _normalPriorityActions.TryDequeue(out a) ||
+                _lowPriorityActions.TryDequeue(out a) ||
+                _backgroundPriorityActions.TryDequeue(out a))
             {
                 action = a;
                 return true;
@@ -88,7 +99,9 @@ public static class ThreadPool
 
 public enum TaskPriority
 {
+    Background,
     Low,
     Normal,
-    High
+    High,
+    Urgent,
 }

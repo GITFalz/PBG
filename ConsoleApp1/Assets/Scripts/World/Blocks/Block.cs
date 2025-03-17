@@ -1,9 +1,11 @@
-﻿public struct Block
+﻿using System.Diagnostics.CodeAnalysis;
+
+public struct Block
 {
     // Structure of block data: |0000|00   0   0|00   00|0000  |0000|0000|0000|0000|
     //                          ^-------^ ^-^ ^----^ ^-------^ ^-------------------^
     // 6 bits, unused
-    // 1 bit, state (0 = air, 1 = solid)
+    // 1 bit, state (0 = air, 1 = solid) (to be expanded)
     // 3 bits, rotation
     // 6 bits, occlusion
     // 16 bits, block id       
@@ -12,6 +14,7 @@
     public short ID => BlockId();
 
     public static Block Air = new Block(false, 0);
+    public static Block Solid = new Block(true, 0);
 
     public Block(int blockData) : this(false, blockData) { }
     public Block(bool isSolid, int blockData)
@@ -28,6 +31,11 @@
         return (short)(blockData & 0xFFFF);
     }
 
+    public void SetBlockId(short id)
+    {
+        blockData |= (int)id;
+    }
+
     public bool Equal(Block block)
     {
         return BlockId() == block.BlockId();
@@ -41,6 +49,11 @@
     public byte Occlusion()
     {
         return (byte)((blockData >> 16) & 0x3F); // binary: 0000 0000 0011 1111
+    }
+
+    public void ResetOcclusion()
+    {
+        blockData &= ~0x3F00;
     }
 
     public bool Occluded(int side)
@@ -66,6 +79,11 @@
     public bool IsSolid()
     {
         return !IsAir();
+    }
+
+    public byte State()
+    {
+        return (byte)((blockData >> 25) & 7);
     }
 
     public void SetAir()

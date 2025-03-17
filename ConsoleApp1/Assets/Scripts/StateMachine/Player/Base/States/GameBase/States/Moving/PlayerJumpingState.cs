@@ -10,6 +10,7 @@ public class PlayerJumpingState : PlayerGameBaseState
     {
         Console.WriteLine("Entering jumping state");
         
+        playerGameState.PlayerStateMachine.physicsBody.Drag = 2;
         Camera = Game.camera;
         
         playerGameState.PlayerStateMachine.physicsBody.AddForce(new Vector3(0, PlayerStateMachine.JUMP_SPEED, 0));
@@ -50,6 +51,6 @@ public class PlayerJumpingState : PlayerGameBaseState
 
     public override void Exit(PlayerGameState playerGameState)
     {
-
+        playerGameState.PlayerStateMachine.physicsBody.Drag = 0.1f;
     }
 }

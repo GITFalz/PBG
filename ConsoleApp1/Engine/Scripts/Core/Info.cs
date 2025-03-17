@@ -29,7 +29,7 @@ public class Info
 
 
     private static VAO _blockVao = new VAO();
-    private static SSBO _blockSSBO = new SSBO([(0, 0, 0, 0)]);
+    private static SSBO<Vector4> _blockSSBO = new([(0, 0, 0, 0)]);
     private static List<Vector4> _blockData = [];
     private static ConcurrentBag<Vector4> _blocks = new ConcurrentBag<Vector4>();
     private static ShaderProgram _blockShader = new ShaderProgram("Info/InfoBlock.vert", "Info/InfoBlock.frag");
@@ -90,7 +90,7 @@ public class Info
     public static void GenerateBlocks()
     {
         _blockVao = new VAO();
-        _blockSSBO = new SSBO(_blockData);
+        _blockSSBO = new(_blockData);
     }
 
     public static void ClearBlocks()

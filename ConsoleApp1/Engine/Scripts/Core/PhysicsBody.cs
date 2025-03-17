@@ -3,7 +3,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PhysicsBody : ScriptingNode
 {
-    private float gravity = 50f;
+    private float gravity = 30f;
     private float maxFallSpeed = 150f;
     
     public Vector3 Acceleration = Vector3.Zero;
@@ -142,28 +142,10 @@ public class PhysicsBody : ScriptingNode
 
             foreach (var position in blockPositions)
             {
-                //Console.WriteLine($"Checking block at {position}");
-
-                if (!WorldManager.GetBlock(position) || !BlockCollision.GetSubBoundingBoxes(1, out var colliders))
+                if (!WorldManager.GetBlock(position))
                     continue;
 
-                //Console.WriteLine($"Block at {position} is solid");
-
-                foreach (var collider in colliders)
-                {
-                    if (!((currentCollider + checkDistance) & (collider + position)))
-                        continue;
-
-                    (float newEntry, Vector3? newNormal) = currentCollider.Collide(collider + position, checkDistance);
-
-                    //Console.WriteLine($"Testing collision with Collider: Min: {currentCollider.Min} Max: {currentCollider.Max}\nwith the block Collider: Min {(collider + position).Min} Max: {(collider + position).Max}\nblock at {position} - entry: {newEntry}, normal: {newNormal}");
-                    
-                    if (newNormal == null)
-                        continue;
-
-                    if (newEntry < entryData.entryTime)
-                        entryData = (newEntry - 0.001f, newNormal.Value);
-                }
+                entryData = BlockCollision.GetEntry(currentCollider, checkDistance, position, 1, entryData);
             }
 
             if (entryData.normal != null)
@@ -193,9 +175,9 @@ public class PhysicsBody : ScriptingNode
         physicsPosition += Velocity * GameTime.FixedTime;
     }
 
-    public bool IsGroundedCheck()
+    public Collider GetCollider()
     {
-        return IsGrounded;
+        return collider + physicsPosition;
     }
     
     #region Getters

@@ -21,7 +21,7 @@ public class AnimationMesh
     private VBO _textureVbo = new VBO([0]);
     private VBO _normalVbo = new VBO([(0, 0, 0)]);
     private VBO _boneVbo = new VBO([(0, 0, 0, 0)]);
-    private SSBO _boneSSBO = new SSBO(new List<Matrix4>{});
+    private SSBO<Matrix4> _boneSSBO = new(new List<Matrix4>{});
     public Bone RootBone;
     public int BoneCount;
 
@@ -41,7 +41,7 @@ public class AnimationMesh
         _textureVbo = new VBO(TextureIndices);
         _normalVbo = new VBO(Normals);
         _boneVbo = new VBO(BoneIndices);
-        _boneSSBO = new SSBO(BoneMatrices);
+        _boneSSBO = new(BoneMatrices);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
         _vao.LinkToVAO(1, 2, _uvVbo);
@@ -85,6 +85,6 @@ public class AnimationMesh
 
     public void UpdateBoneMatrices()
     {
-        _boneSSBO.Update(BoneMatrices, 0);
+        _boneSSBO.Update(BoneMatrices);
     }
 }

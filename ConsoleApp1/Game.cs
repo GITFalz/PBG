@@ -61,6 +61,8 @@ public class Game : GameWindow
 
 
     private bool physicsStep = false;
+
+    public static ComputeShader computeTest = new("Chunk/GreedyMesh.compute");
     
     
     public Game(int width, int height) : base(GameWindowSettings.Default, new NativeWindowSettings
@@ -147,14 +149,22 @@ public class Game : GameWindow
         
         Input.Start(keyboard, mouse);
         
-        // Blocks
-        //CWorldBlock editor = new CWorldBlock("editor_block", 1, 1, new([0, 0, 0, 0, 0, 0]));
+        BlockChecker grassMask = new BlockChecker(
+            new BlockMask((0, 0, 0), new BlockTest(Block.Solid, MaskType.State)),
+            new BlockMask((0, 1, 0), new BlockTest(Block.Air, MaskType.State))
+        );
 
-        //BlockManager.Add(editor);
+        BlockChecker dirtMask = new BlockChecker(
+            new BlockMask((0, 0, 0), new BlockTest(Block.Solid, MaskType.State)),
+            new BlockMask((0, 1, 0), new BlockTest(Block.Solid, MaskType.State)),
+            new BlockMask((0, 2, 0), new BlockTest(Block.Solid, MaskType.State), new BlockTest(Block.Air, MaskType.State)),
+            new BlockMask((0, 3, 0), new BlockTest(Block.Air, MaskType.State))
+        );
+
         
-        CWorldBlock grass = new("grass_block", 0, 1, new([ 0, 0, 1, 0, 2, 0]));
-        CWorldBlock dirt = new("dirt_block", 1, 2, new([2, 2, 2, 2, 2, 2]));
-        CWorldBlock stone = new("stone_block", 2, 3, new([3, 3, 3, 3, 3, 3]));
+        CWorldBlock grass = new("grass_block", 0, 1, new([ 0, 0, 1, 0, 2, 0]), grassMask);
+        CWorldBlock dirt = new("dirt_block", 1, 2, new([2, 2, 2, 2, 2, 2]), dirtMask);
+        CWorldBlock stone = new("stone_block", 2, 3, new([3, 3, 3, 3, 3, 3]), new());
         
         BlockManager.Add(grass);
         BlockManager.Add(dirt);
@@ -165,7 +175,7 @@ public class Game : GameWindow
         worldGenerationNode.AddChild(new WorldManager());
 
         TransformNode playerNode = new TransformNode();
-        playerNode.AddChild(new PhysicsBody(), new PlayerStateMachine());
+        playerNode.AddChild(new PlayerStateMachine(), new PhysicsBody());
 
         _worldScene.AddNode(worldGenerationNode, playerNode);
 
@@ -184,6 +194,52 @@ public class Game : GameWindow
         Info.GPUText.SetText($"GPU: {GL.GetString(StringName.Renderer)}", 0.5f).GenerateChars().UpdateText();
 
         base.OnLoad();
+    }
+
+    public void SSBOTest()
+    {
+        List<int> initialData = new List<int> { 1, 2, 3, 4, 5 };
+
+        // Create SSBO and initialize with data
+        SSBO<int> testSSBO = new(20);
+        Console.WriteLine("SSBO ID: " + testSSBO.ID);
+
+        computeTest.Bind();
+        testSSBO.Update(initialData);
+
+        // Bind SSBO to a binding point
+        int bindingPoint = 2;
+        testSSBO.Bind(bindingPoint);
+        Console.WriteLine("Bind SSBO to binding point " + bindingPoint);
+
+        int sizeLoc = GL.GetUniformLocation(computeTest.ID, "dataSize");
+        
+        GL.Uniform1(sizeLoc, 5);
+
+        computeTest.DispatchCompute(1, 1, 1);
+
+        // Read the data back to verify
+        int[] values = testSSBO.ReadData(initialData.Count);
+        Console.WriteLine("Read data");
+        string output = "Values: " + string.Join(", ", values);
+        Console.WriteLine(output);
+
+        computeTest.Unbind();
+
+        // Update the SSBO with new data
+        List<int> newData = new List<int> { 10, 20, 30, 40, 50, 60 };
+        testSSBO.Update(newData);
+        Console.WriteLine("Updated SSBO with new data");
+
+        // Read the updated data back to verify
+        values = testSSBO.ReadData(newData.Count);
+        Console.WriteLine("Read updated data");
+        output = "Updated Values: " + string.Join(", ", values);
+        Console.WriteLine(output);
+
+        // Delete the SSBO
+        testSSBO.Delete();
+        Console.WriteLine("Deleted SSBO");
     }
     
     protected override void OnKeyDown(KeyboardKeyEventArgs e)

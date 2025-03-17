@@ -31,6 +31,16 @@ public static class VoxelData
             _ => false
         };
     }
+
+    public static readonly Vector3i[] SideNormal =
+    [
+        (0, 0, -1), // Front
+        (1, 0, 0), // Right
+        (0, 1, 0), // Top
+        (-1, 0, 0), // Left
+        (0, -1, 0), // Bottom
+        (0, 0, 1), // Back
+    ];
     
     public static readonly int[] FirstOffsetBase =
     {
@@ -457,6 +467,10 @@ public static class VoxelData
     public static Vector3i BlockToRelativePosition(Vector3 position) 
     { 
         return ((int)position.X & 31, (int)position.Y & 31, (int)position.Z & 31 ); 
+    }
+    public static Vector3i BlockToRelativePosition(Vector3i position) 
+    { 
+        return (position.X & 31, position.Y & 31, position.Z & 31 ); 
     }
     public static Vector3i ChunkToRelativePosition(Vector3i position) 
     { 
