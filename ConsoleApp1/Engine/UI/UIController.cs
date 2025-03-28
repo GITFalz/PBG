@@ -407,7 +407,6 @@ public class UIController
 
         GL.Disable(EnableCap.StencilTest);
         GL.DepthMask(true);
-        GL.Enable(EnableCap.DepthTest);
         GL.DepthFunc(DepthFunction.Lequal);
     }
 }

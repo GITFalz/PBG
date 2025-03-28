@@ -27,9 +27,9 @@ public class ModelingEditor : BaseEditor
 
     public UIController Ui = new UIController();
 
-
+    public Vector3 selectedCenter = Vector3.Zero;
+    public float rotation = 0;
     public float scale = 1;
-    public Vector3 scaleCenter = Vector3.Zero;
 
     public bool regenerateVertexUi = true;
 
@@ -140,6 +140,11 @@ public class ModelingEditor : BaseEditor
         
         // Extrude
         if (Input.IsKeyPressed(Keys.E)) Handle_Extrusion();
+
+        // Rotation
+        if (Input.IsKeyPressed(Keys.R)) RotationInit();
+        if (Input.IsKeyDown(Keys.R)) Handle_RotateSelectedVertices();
+        if (Input.IsKeyReleased(Keys.R)) UpdateVertexPosition();
 
         // Scaling
         if (Input.IsKeyPressed(Keys.S)) ScalingInit();
@@ -497,18 +502,38 @@ public class ModelingEditor : BaseEditor
         Mesh.UpdateMesh();
     }
 
+    public void RotationInit()
+    {
+        StashMesh();
+        rotation = 0;
+        selectedCenter = GetSelectedCenter();
+    }
+
+    public void Handle_RotateSelectedVertices()
+    {
+        if (SelectedVertices.Count == 0)
+            return;
+
+        float mouseDelta = Input.GetMouseDelta().X * (GameTime.DeltaTime * 100);
+        rotation += mouseDelta;
+        Vector3 axis = Game.camera.front;
+
+        foreach (var vert in SelectedVertices)
+        {
+            vert.Position = RotatePoint(vert.Position, selectedCenter, axis, rotation);
+        }
+
+        rotation = 0;
+
+        Mesh.Init();
+        Mesh.UpdateVertices();
+    }
+
     public void ScalingInit()
     {
         StashMesh();
-        SelectedVerticesPosition.Clear();
-        SelectedVerticesPosition.AddRange(SelectedVertices.Select(v => v.Position));
         scale = 1;
-        scaleCenter = Vector3.Zero;
-        foreach (var vert in SelectedVertices)
-        {
-            scaleCenter += vert.Position;
-        }
-        scaleCenter /= SelectedVertices.Count;
+        selectedCenter = GetSelectedCenter();
     }
 
     public void Handle_ScalingSelectedVertices()
@@ -517,13 +542,12 @@ public class ModelingEditor : BaseEditor
             return;
 
         float mouseDelta = Input.GetMouseDelta().X * (GameTime.DeltaTime * 10);
-        Console.WriteLine(mouseDelta);
         scale += mouseDelta;
 
         foreach (var vert in SelectedVertices)
         {
-            Vector3 direction = vert.Position - scaleCenter;
-            vert.Position = scaleCenter + direction * scale;
+            Vector3 direction = vert.Position - selectedCenter;
+            vert.Position = selectedCenter + direction * scale;
         }
 
         scale = 1;
@@ -656,6 +680,7 @@ public class ModelingEditor : BaseEditor
         GenerateVertexColor();
     }
 
+    // Stashing
     public void StashMesh(int maxCount = 30)
     {
         string fileName = Editor.currentModelName + "_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss-fff");
@@ -707,6 +732,7 @@ public class ModelingEditor : BaseEditor
         Mesh.LoadModel(name, Path.Combine(Game.undoModelPath, Editor.currentModelName));
     }
 
+    // Helper
     public HashSet<Triangle> GetSelectedFullTriangles()
     {
         HashSet<Triangle> triangles = new HashSet<Triangle>();
@@ -742,6 +768,38 @@ public class ModelingEditor : BaseEditor
                SelectedVertices.Contains(triangle.C);
     }
 
+    public Vector3 GetSelectedCenter()
+    {
+        Vector3 center = Vector3.Zero;
+        if (SelectedVertices.Count == 0)
+            return center;
+
+        SelectedVerticesPosition.Clear();
+        SelectedVerticesPosition.AddRange(SelectedVertices.Select(v => v.Position));
+        foreach (var vert in SelectedVertices)
+        {
+            center += vert.Position;
+        }
+        return center / SelectedVertices.Count;
+    }
+
+    public static Vector3 RotatePoint(Vector3 point, Vector3 center, Vector3 axis, float degrees)
+    {
+        float radians = MathHelper.DegreesToRadians(degrees);
+        float sinHalfAngle = MathF.Sin(radians / 2);
+
+        axis.Normalize();
+        Vector3 relativePoint = point - center;
+
+        Quaternion rotation = new Quaternion(axis * sinHalfAngle, MathF.Cos(radians / 2));
+        Quaternion pQuat = new Quaternion(relativePoint, 0);
+        Quaternion rotatedQuat = rotation * pQuat * rotation.Inverted();
+
+        return (rotatedQuat.X, rotatedQuat.Y, rotatedQuat.Z) + center;
+    }
+
+
+    // Data
     public readonly List<Vector3> AxisIgnore = new()
     {
         new Vector3(0, 1, 1), // X

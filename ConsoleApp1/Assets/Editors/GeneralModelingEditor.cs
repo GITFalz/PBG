@@ -288,12 +288,26 @@ public class GeneralModelingEditor : ScriptingNode
         UIText testPanel1 = new("TestPanel1", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
         UIText testPanel2 = new("TestPanel2", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
         UIText testPanel3 = new("TestPanel3", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
+        UIText testPanel4 = new("TestPanel4", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
+        UIText testPanel5 = new("TestPanel5", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
+        UIText testPanel6 = new("TestPanel6", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
+        UIText testPanel7 = new("TestPanel7", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
+        UIText testPanel8 = new("TestPanel8", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
+        UIText testPanel9 = new("TestPanel9", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
+        UIText testPanel10 = new("TestPanel10", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
 
         testPanel1.SetMaxCharCount(5).SetText("Test1", 1f);
         testPanel2.SetMaxCharCount(5).SetText("Test2", 1f);
         testPanel3.SetMaxCharCount(5).SetText("Test3", 1f);
+        testPanel4.SetMaxCharCount(5).SetText("Test4", 1f);
+        testPanel5.SetMaxCharCount(5).SetText("Test5", 1f);
+        testPanel6.SetMaxCharCount(5).SetText("Test6", 1f);
+        testPanel7.SetMaxCharCount(5).SetText("Test7", 1f);
+        testPanel8.SetMaxCharCount(5).SetText("Test8", 1f);
+        testPanel9.SetMaxCharCount(5).SetText("Test9", 1f);
+        testPanel10.SetMaxCharCount(6).SetText("Test10", 1f);
 
-        scrollView.AddElement(testPanel1, testPanel2, testPanel3);
+        scrollView.AddElement(testPanel1, testPanel2, testPanel3, testPanel4, testPanel5, testPanel6, testPanel7, testPanel8, testPanel9, testPanel10);
         scrollViewCollection.AddElement(scrollView, scrollViewBg);
 
         // Add elements to ui
