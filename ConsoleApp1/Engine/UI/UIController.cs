@@ -201,6 +201,7 @@ public class UIController
         if (key == Keys.Backspace)
         {
             activeInputField.RemoveCharacter();
+            activeInputField.OnTextChange?.Invoke();
             return;
         }
         

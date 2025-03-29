@@ -10,6 +10,9 @@ using Vector3 = OpenTK.Mathematics.Vector3;
 public class Game : GameWindow
 {
     public static Game Instance;
+
+    public static int PreviousWidth;
+    public static int PreviousHeight;
     
     public static int Width;
     public static int Height;
@@ -46,8 +49,8 @@ public class Game : GameWindow
     // Miscaleanous Ui
     private PopUp _popUp;
 
-    private bool DoResize = false;
     
+    public DrawingBuffer PaintingEditor;
     
     public Game(int width, int height) : base(GameWindowSettings.Default, new NativeWindowSettings
         {
@@ -70,6 +73,9 @@ public class Game : GameWindow
     
     protected override void OnResize(ResizeEventArgs e)
     {
+        PreviousWidth = Width;
+        PreviousHeight = Height;
+
         Width = e.Width;
         Height = e.Height;
 
@@ -127,6 +133,8 @@ public class Game : GameWindow
         LoadScene("Modeling");
 
         _popUp = new PopUp();
+
+        PaintingEditor = new DrawingBuffer(300, 300);
         
         GL.Enable(EnableCap.DepthTest);
         
@@ -149,6 +157,16 @@ public class Game : GameWindow
     
     protected override void OnUnload()
     {
+        FBO.DeleteAll();
+        IBO.Delete();
+        ShaderProgram.Delete();
+        SSBOBase.Delete(); // Because of multiple types of SSBOs
+        TBOBase.Delete(); // Because of multiple types of TBOs
+        Texture.Delete();
+        TextureArray.Delete();
+        VAO.Delete();
+        VBOBase.Delete(); // Because of multiple types of VBOs
+
         GC.Collect();
         GC.WaitForPendingFinalizers();
         
@@ -162,11 +180,13 @@ public class Game : GameWindow
         // Sky blue background
         GL.ClearColor(BackgroundColor.X, BackgroundColor.Y, BackgroundColor.Z, 1.0f);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-        
-        GL.Viewport(0, 0, Width, Height);
-        
+
         GL.Enable(EnableCap.CullFace);
         GL.FrontFace(FrontFaceDirection.Ccw);
+
+        DrawingBuffer.Render();
+        
+        GL.Viewport(0, 0, Width, Height);
         
         Skybox.Render();
         CurrentScene?.OnRender();

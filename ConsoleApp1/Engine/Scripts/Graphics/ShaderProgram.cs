@@ -2,6 +2,8 @@
 
 public class ShaderProgram
 {
+    public static List<ShaderProgram> ShaderPrograms = new List<ShaderProgram>();
+
     public int ID;
     
     public ShaderProgram(string vertexShaderFilePath, string fragmentShaderFilePath)
@@ -23,9 +25,18 @@ public class ShaderProgram
         
         GL.DeleteShader(vertexShader);
         GL.DeleteShader(fragmentShader);
+
+        ShaderPrograms.Add(this);
     }
     
     public void Bind() { GL.UseProgram(ID); }
     public void Unbind() { GL.UseProgram(0); }
-    public void Delete() { GL.DeleteShader(ID); }
+    public static void Delete() 
+    { 
+        foreach (var shaderProgram in ShaderPrograms) 
+        { 
+            GL.DeleteProgram(shaderProgram.ID); 
+        }
+        ShaderPrograms.Clear();
+    }
 }

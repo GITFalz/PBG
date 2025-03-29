@@ -17,17 +17,17 @@ public class AnimationMesh : Meshes
     public List<Matrix4> BoneMatrices = new List<Matrix4>();  
     private VAO _vao = new VAO();
     private IBO _ibo = new IBO([]);
-    private VBO _vertVbo = new VBO([(0, 0, 0)]);
-    private VBO _uvVbo = new VBO([(0, 0)]);
-    private VBO _textureVbo = new VBO([0]);
-    private VBO _normalVbo = new VBO([(0, 0, 0)]);
-    private VBO _boneVbo = new VBO([(0, 0, 0, 0)]);
-    private SSBO _boneSSBO = new SSBO(new List<Matrix4>());
+    private VBO<Vector3> _vertVbo = new(new List<Vector3>());
+    private VBO<Vector2> _uvVbo = new(new List<Vector2>());
+    private VBO<int> _textureVbo = new(new List<int>());
+    private VBO<Vector3> _normalVbo = new(new List<Vector3>());
+    private VBO<int> _boneVbo = new(new List<int>());
+    private SSBO<Matrix4> _boneSSBO = new(new List<Matrix4>());
 
     private VAO _boneVao = new VAO();
-    private VBO _boneVertexVbo = new VBO([(0, 0, 0)]);
-    private VBO _boneColorVbo = new VBO([(0, 0, 0)]);
-    private VBO _boneSizeVbo = new VBO([(0, 0, 0)]);
+    private VBO<Vector3> _boneVertexVbo = new(new List<Vector3>());
+    private VBO<Vector3> _boneColorVbo = new(new List<Vector3>());
+    private VBO<float> _boneSizeVbo = new(new List<float>());
     public List<Vector3> BoneVertices = new List<Vector3>();
     public List<Vector3> BoneColors = new List<Vector3>();
     public List<float> BoneSizes = new List<float>();
@@ -66,12 +66,12 @@ public class AnimationMesh : Meshes
         GenerateIndices();
         GenerateBasicBoneMatrices();
 
-        _vertVbo = new VBO(Vertices);
-        _uvVbo = new VBO(Uvs);
-        _textureVbo = new VBO(TextureIndices);
-        _normalVbo = new VBO(Normals);
-        _boneVbo = new VBO(BoneIndices);
-        _boneSSBO = new SSBO(BoneMatrices);
+        _vertVbo = new(Vertices);
+        _uvVbo = new(Uvs);
+        _textureVbo = new(TextureIndices);
+        _normalVbo = new(Normals);
+        _boneVbo = new(BoneIndices);
+        _boneSSBO = new(BoneMatrices);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
         _vao.LinkToVAO(1, 2, _uvVbo);
@@ -86,9 +86,9 @@ public class AnimationMesh : Meshes
 
     public void GenerateRigBuffers()
     {
-        _boneVertexVbo = new VBO(BoneVertices);
-        _boneColorVbo = new VBO(BoneColors);
-        _boneSizeVbo = new VBO(BoneSizes);
+        _boneVertexVbo = new(BoneVertices);
+        _boneColorVbo = new(BoneColors);
+        _boneSizeVbo = new(BoneSizes);
 
         _boneVao.LinkToVAO(0, 3, _boneVertexVbo);
         _boneVao.LinkToVAO(1, 3, _boneColorVbo);

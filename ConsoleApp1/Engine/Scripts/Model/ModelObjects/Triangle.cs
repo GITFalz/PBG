@@ -2,6 +2,8 @@ using OpenTK.Mathematics;
 
 public class Triangle
 {
+    public static Triangle Empty = new Triangle(new Vertex(Vector3.Zero), new Vertex(Vector3.Zero), new Vertex(Vector3.Zero));
+
     public Vertex A;
     public Vertex B;
     public Vertex C;
@@ -71,6 +73,9 @@ public class Triangle
         AB.SetVertexTo(oldVertex, newVertex);
         BC.SetVertexTo(oldVertex, newVertex);
         CA.SetVertexTo(oldVertex, newVertex);
+
+        oldVertex.ParentTriangles.Remove(this);
+        newVertex.ParentTriangles.Add(this);
     }
 
     public void SetEdgeTo(Edge oldEdge, Edge newEdge)
@@ -81,6 +86,9 @@ public class Triangle
             BC = newEdge;
         else if (CA == oldEdge)
             CA = newEdge;
+
+        oldEdge.ParentTriangles.Remove(this);
+        newEdge.ParentTriangles.Add(this);
     }
 
     public bool GetEdgeWithout(Vertex vertex, out Edge? edge)

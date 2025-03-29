@@ -8,6 +8,7 @@ public class GeneralModelingEditor : ScriptingNode
     public ModelingEditor modelingEditor = new ModelingEditor();
     public RiggingEditor riggingEditor = new RiggingEditor();
     public AnimationEditor animationEditor = new AnimationEditor();
+    public TextureEditor textureEditor = new TextureEditor();
 
     public UIController MainUi = new UIController();
     public UIController ModelingUi = new UIController();
@@ -15,12 +16,14 @@ public class GeneralModelingEditor : ScriptingNode
     public Model model = new Model();
 
     public string currentModelName = "cube";
+    public List<string> MeshSaveNames = new List<string>();
 
     // Ui Elements
     public static UIText BackfaceCullingText;
     public static UIText MeshAlphaText;
     public static UIInputField SnappingText;
     public static UIText MirrorText;
+    public static UIText AxisText;
     public static UIText BonePivotX;
     public static UIText BonePivotY;
     public static UIText BonePivotZ;
@@ -91,6 +94,24 @@ public class GeneralModelingEditor : ScriptingNode
         set => ModelSettings.mirror.Z = value;
     }
 
+    public int AxisX
+    {
+        get => ModelSettings.axis.X;
+        set => ModelSettings.axis.X = value;
+    }
+
+    public int AxisY
+    {
+        get => ModelSettings.axis.Y;
+        set => ModelSettings.axis.Y = value;
+    }
+
+    public int AxisZ
+    {
+        get => ModelSettings.axis.Z;
+        set => ModelSettings.axis.Z = value;
+    }
+
     
     public bool freeCamera = false;
     public int _selectedModel = 0;
@@ -137,6 +158,9 @@ public class GeneralModelingEditor : ScriptingNode
         UIButton animationButton = new("AnimationButton", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (75, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), uiMesh, UIState.Static);
         animationButton.OnClick = new SerializableEvent(() => SwitchScene("Animation"));
 
+        UIButton textureButton = new("TextureButton", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (75, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), uiMesh, UIState.Static);
+        textureButton.OnClick = new SerializableEvent(() => SwitchScene("Texture"));
+
         UIButton vertexSelectionButton = new("VertexSelectionButton", AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 97, (0, 0), uiMesh, UIState.Static);
         vertexSelectionButton.OnClick = new SerializableEvent(() => ModelingEditor.SwitchSelection(RenderType.Vertex));
 
@@ -176,6 +200,7 @@ public class GeneralModelingEditor : ScriptingNode
         snappingCollection.AddElement(SnappingText);
 
 
+
         UIHorizontalCollection fileStacking = new("FileStacking", AnchorType.TopRight, PositionType.Relative, (0, 0, 0), (0, 0), (0, 0, 0, 0), (7, 7, 7, 7), 5, 0);
 
         FileName = new("ModelName", AnchorType.MiddleCenter, PositionType.Relative, (0, 0, 0), (200, 36), (0, 0, 0, 0), 0, 0, (10, 0.15f), textMesh);
@@ -213,6 +238,7 @@ public class GeneralModelingEditor : ScriptingNode
         stateStacking.AddElement(modelingButton);
         stateStacking.AddElement(riggingButton);
         stateStacking.AddElement(animationButton);
+        stateStacking.AddElement(textureButton);
         stateStacking.AddElement(vertexCollection);
         stateStacking.AddElement(edgeCollection);
         stateStacking.AddElement(faceCollection);
@@ -242,13 +268,31 @@ public class GeneralModelingEditor : ScriptingNode
         MeshAlphaText = new("AlphaText", AnchorType.TopLeft, PositionType.Relative, (0, 20, 0), (400, 20), (10, 60, 10, 10), 0, 0, (10, 0.05f), modelingTextMesh);
         MeshAlphaText.SetText("alpha: " + MeshAlpha.ToString("F2"), 0.7f);
 
+        UIText WireframeVisibilityText = new("WireframeVisibilityText", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (400, 20), (10, 85, 10, 10), 0, 0, (10, 0.05f), modelingTextMesh);
+        WireframeVisibilityText.MaxCharCount = 12; 
+        WireframeVisibilityText.SetText("frame: " + ModelSettings.WireframeVisible, 0.7f);
+
         MirrorText = new UIText("MirrorText", AnchorType.TopLeft, PositionType.Relative, (0, 60, 0), (400, 20), (10, 110, 10, 10), 0, 0, (10, 0.05f), modelingTextMesh);
         MirrorText.SetText("mirror: " + (Mirror.X == 1 ? "X" : "-") + (Mirror.Y == 1 ? "Y" : "-") + (Mirror.Z == 1 ? "Z" : "-"), 0.7f);
 
-        mainPanelCollection.AddElement(mainPanel);
-        mainPanelCollection.AddElement(BackfaceCullingText);
-        mainPanelCollection.AddElement(MeshAlphaText);
-        mainPanelCollection.AddElement(MirrorText);
+        AxisText = new UIText("AxisText", AnchorType.TopLeft, PositionType.Relative, (0, 80, 0), (400, 20), (10, 135, 10, 10), 0, 0, (10, 0.05f), modelingTextMesh);
+        AxisText.SetText("axis: " + (AxisX == 1 ? "X" : "-") + (AxisY == 1 ? "Y" : "-") + (AxisZ == 1 ? "Z" : "-"), 0.7f);
+
+        UIText GridAlignedText = new("GridAlignedText", AnchorType.TopLeft, PositionType.Relative, (0, 100, 0), (400, 20), (10, 160, 10, 10), 0, 0, (10, 0.05f), modelingTextMesh);
+        GridAlignedText.MaxCharCount = 11;
+        GridAlignedText.SetText("grid: " + ModelSettings.GridAligned, 0.7f);
+
+        UICollection cameraSpeedStacking = new("CameraSpeedStacking", AnchorType.BottomLeft, PositionType.Relative, (0, 0, 0), (400, 20), (10, -10, 10, 10), 0);
+
+        UIText CameraSpeedTextLabel = new("CameraSpeedTextLabel", AnchorType.BottomLeft, PositionType.Relative, (0, 0, 0), (400, 20), (0, 0, 0, 0), 0, 0, (10, 0.05f), modelingTextMesh);
+        CameraSpeedTextLabel.SetText("Cam Speed: ", 0.7f);
+        UIImage CameraSpeedFieldPanel = new("CameraSpeedTextLabelPanel", AnchorType.BottomLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (45, 30), (142, 8, 0, 0), 0, 1, (10, 0.05f), modelingUiMesh);
+        UIInputField CameraSpeedField = new("CameraSpeedText", AnchorType.BottomLeft, PositionType.Relative, (0, 100, 0), (400, 20), (150, 0, 0, 0), 0, 0, (10, 0.05f), modelingTextMesh);
+        CameraSpeedField.MaxCharCount = 2;
+        CameraSpeedField.SetText("50", 0.7f).SetTextType(TextType.Numeric);
+        CameraSpeedField.OnTextChange = new SerializableEvent(() => { try { Game.camera.SPEED = int.Parse(CameraSpeedField.Text); } catch { Game.camera.SPEED = 1; } });
+
+        cameraSpeedStacking.AddElement(CameraSpeedTextLabel, CameraSpeedFieldPanel, CameraSpeedField);
 
 
         UIButton cullingButton = new("CullingButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (40, 20), (-5, 35, 10, 10), 0, 0, (10, 0.05f), modelingUiMesh, UIState.Static);
@@ -256,6 +300,12 @@ public class GeneralModelingEditor : ScriptingNode
 
         UIButton alphaButton = new("AlphaUpButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (40, 20), (-5, 60, 10, 10), 0, 0, (10, 0.05f), modelingUiMesh, UIState.Static);
         alphaButton.OnHold = new SerializableEvent(AlphaControl);
+
+        UIButton WireframeVisibilitySwitch = new("WireframeVisibilitySwitch", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (40, 20),  (-5, 85, 10, 10), 0, 0, (10, 0.05f), modelingUiMesh, UIState.Static);
+        WireframeVisibilitySwitch.OnClick = new SerializableEvent(() => {
+            ModelSettings.WireframeVisible = !ModelSettings.WireframeVisible; 
+            WireframeVisibilityText.SetText("frame: " + ModelSettings.WireframeVisible).GenerateChars().UpdateText();
+        });
 
         UIButton mirrorButton = new("MirrorButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (40, 20), (-5, 110, 10, 10), 0, 0, (10, 0.05f), modelingUiMesh, UIState.Static);
         mirrorButton.OnClick = new SerializableEvent(ApplyMirror);
@@ -269,8 +319,26 @@ public class GeneralModelingEditor : ScriptingNode
         UIButton mirrorXButton = new("MirrorXButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (15, 20), (-115, 110, 10, 10), 0, 0, (10, 0.05f), modelingUiMesh, UIState.InvisibleInteractable);
         mirrorXButton.OnClick = new SerializableEvent(() => SwitchMirror("X"));
 
+        UIButton axisZButton = new("AxisZButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (15, 20), (-113, 135, 10, 10), 0, 0, (10, 0.05f), modelingUiMesh, UIState.InvisibleInteractable);
+        axisZButton.OnClick = new SerializableEvent(() => SwitchAxis("Z"));
 
-        mainPanelCollection.AddElement(cullingButton, alphaButton, mirrorButton, mirrorXButton, mirrorYButton, mirrorZButton);
+        UIButton axisYButton = new("AxisYButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (15, 20), (-128, 135, 10, 10), 0, 0, (10, 0.05f), modelingUiMesh, UIState.InvisibleInteractable);
+        axisYButton.OnClick = new SerializableEvent(() => SwitchAxis("Y"));
+
+        UIButton axisXButton = new("AxisXButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (15, 20), (-143, 135, 10, 10), 0, 0, (10, 0.05f), modelingUiMesh, UIState.InvisibleInteractable);
+        axisXButton.OnClick = new SerializableEvent(() => SwitchAxis("X"));
+
+        UIButton gridAlignedButton = new("GridAlignedButton", AnchorType.TopRight, PositionType.Relative, (1, 1, 1), (0, 0, 0), (40, 20), (-5, 160, 10, 10), 0, 0, (10, 0.05f), modelingUiMesh, UIState.Static);
+        gridAlignedButton.OnClick = new SerializableEvent(() => {
+            ModelSettings.GridAligned = !ModelSettings.GridAligned; 
+            GridAlignedText.SetText("grid: " + ModelSettings.GridAligned).GenerateChars().UpdateText();
+        });
+
+
+        mainPanelCollection.AddElement(
+            mainPanel, BackfaceCullingText, MeshAlphaText, WireframeVisibilityText, MirrorText, AxisText, GridAlignedText, cameraSpeedStacking,
+            cullingButton, alphaButton, WireframeVisibilitySwitch, mirrorButton, mirrorXButton, mirrorYButton, mirrorZButton, axisXButton, axisYButton, axisZButton, gridAlignedButton
+        );
 
 
         // Scroll view test
@@ -280,47 +348,9 @@ public class GeneralModelingEditor : ScriptingNode
         TextMesh scrollViewTextMesh = UIScrollViewTest.textMesh;
         TextMesh scrollViewMaskedTextMesh = UIScrollViewTest.maskedTextMesh;
 
-        UICollection scrollViewCollection = new("ScrollViewCollection", AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (250, 500), (0, 100, 0, 0), 0);
-
-        UIImage scrollViewBg = new("ScrollViewBg", AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (250, 250), (0, 0, 0, 0), 0, 1, (10, 0.05f), scrollViewUiMesh);
-        UIScrollView scrollView = new("ScrollView", AnchorType.TopLeft, PositionType.Relative, CollectionType.Vertical, (236, 236), (7, 7, 7, 7), scrollViewMaskMesh);
-        
-        UIText testPanel1 = new("TestPanel1", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
-        UIText testPanel2 = new("TestPanel2", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
-        UIText testPanel3 = new("TestPanel3", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
-        UIText testPanel4 = new("TestPanel4", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
-        UIText testPanel5 = new("TestPanel5", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
-        UIText testPanel6 = new("TestPanel6", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
-        UIText testPanel7 = new("TestPanel7", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
-        UIText testPanel8 = new("TestPanel8", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
-        UIText testPanel9 = new("TestPanel9", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
-        UIText testPanel10 = new("TestPanel10", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (236, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f), scrollViewMaskedTextMesh);
-
-        testPanel1.SetMaxCharCount(5).SetText("Test1", 1f);
-        testPanel2.SetMaxCharCount(5).SetText("Test2", 1f);
-        testPanel3.SetMaxCharCount(5).SetText("Test3", 1f);
-        testPanel4.SetMaxCharCount(5).SetText("Test4", 1f);
-        testPanel5.SetMaxCharCount(5).SetText("Test5", 1f);
-        testPanel6.SetMaxCharCount(5).SetText("Test6", 1f);
-        testPanel7.SetMaxCharCount(5).SetText("Test7", 1f);
-        testPanel8.SetMaxCharCount(5).SetText("Test8", 1f);
-        testPanel9.SetMaxCharCount(5).SetText("Test9", 1f);
-        testPanel10.SetMaxCharCount(6).SetText("Test10", 1f);
-
-        testPanel1.OnClick = new SerializableEvent(() => testPanel1.SetVisibility(!testPanel1.Visible));
-
-        scrollView.AddElement(testPanel1, testPanel2, testPanel3, testPanel4, testPanel5, testPanel6, testPanel7, testPanel8, testPanel9, testPanel10);
-        scrollViewCollection.AddElement(scrollView, scrollViewBg);
-
-        scrollViewCollection.OnClick = new SerializableEvent(() =>
-        {
-            scrollViewCollection.SetVisibility(!scrollViewCollection.Visible);
-        });
-
         // Add elements to ui
         MainUi.AddElement(stateCollection);
         ModelingUi.AddElement(mainPanelCollection);
-        UIScrollViewTest.AddElement(scrollViewCollection);
 
         model.Init();
         
@@ -359,6 +389,7 @@ public class GeneralModelingEditor : ScriptingNode
         modelingEditor.Resize(this);
         riggingEditor.Resize(this);
         animationEditor.Resize(this);
+        textureEditor.Resize(this);
     }
 
     public override void Awake()
@@ -397,7 +428,8 @@ public class GeneralModelingEditor : ScriptingNode
     {
         CurrentEditor.Exit(this);
         CurrentEditor = editor;
-        CurrentEditor.Start(this);
+        if (!CurrentEditor.Started)
+            CurrentEditor.Start(this);
         CurrentEditor.Awake(this);
     }
 
@@ -447,7 +479,10 @@ public class GeneralModelingEditor : ScriptingNode
     public void Load(string fileName)
     {
         if (model.CurrentMesh.LoadModel(fileName))
+        {
             currentModelName = fileName;
+            MeshSaveNames.Clear();
+        }
     }
 
     public void SwitchScene(string editor)
@@ -462,6 +497,9 @@ public class GeneralModelingEditor : ScriptingNode
                 break;
             case "Animation":
                 DoSwitchScene(animationEditor);
+                break;
+            case "Texture":
+                DoSwitchScene(textureEditor);
                 break;
         }
     }
@@ -521,6 +559,24 @@ public class GeneralModelingEditor : ScriptingNode
         
         UpdateMirrorText();
     }
+
+    public void SwitchAxis(string axis)
+    {
+        switch (axis)
+        {
+            case "X":
+                AxisX = AxisX == 0 ? 1 : 0;
+                break;
+            case "Y":
+                AxisY = AxisY == 0 ? 1 : 0;
+                break;
+            case "Z":
+                AxisZ = AxisZ == 0 ? 1 : 0;
+                break;
+        }
+        
+        UpdateAxisText();
+    }
     
     public void ApplyMirror()
     {
@@ -556,10 +612,10 @@ public class GeneralModelingEditor : ScriptingNode
 
     public void SnappingField()
     {
-        string text = SnappingText.Text.EndsWith('.') ? SnappingText.Text + "0" : SnappingText.Text;
+        string text = SnappingText.Text.EndsWith('.') ? SnappingText.Text[..^1] : SnappingText.Text;
         SnappingFactor = Mathf.Clamp(0, 100, Float.Parse(text));
         SnappingText.SetText(SnappingFactor.ToString() + (SnappingText.Text.EndsWith('.') ? "." : "")).GenerateChars().UpdateText();
-        Snapping = SnappingFactor > 0;
+        Snapping = SnappingFactor != 0.0f;
     }
     
     public void SetBonePivot(string axis)
@@ -613,6 +669,16 @@ public class GeneralModelingEditor : ScriptingNode
         MirrorText.SetText("mirror: " + text).GenerateChars().UpdateText();
     }
 
+    public void UpdateAxisText()
+    {
+        string text = "";
+        text += AxisX == 1 ? "X" : "-";
+        text += AxisY == 1 ? "Y" : "-";
+        text += AxisZ == 1 ? "Z" : "-";
+        
+        AxisText.SetText("axis: " + text).GenerateChars().UpdateText();
+    }
+
     public List<Link<Vector2>> GetLinkPositions(List<Link<Vector3>> worldLinks)
     {
         Camera camera = Game.camera;
@@ -662,6 +728,8 @@ public class GeneralModelingEditor : ScriptingNode
 
 public abstract class BaseEditor 
 { 
+    public bool Started = false;
+
     public abstract void Start(GeneralModelingEditor editor);
     public abstract void Resize(GeneralModelingEditor editor);
     public abstract void Awake(GeneralModelingEditor editor);

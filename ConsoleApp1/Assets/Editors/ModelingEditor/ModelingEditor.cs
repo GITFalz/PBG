@@ -8,7 +8,6 @@ using SharpGen.Runtime;
 public class ModelingEditor : BaseEditor
 {
     public static RenderType selectionType = RenderType.Vertex;
-    public bool _started = false;
     public GeneralModelingEditor Editor;
     public ModelMesh Mesh;
 
@@ -34,19 +33,21 @@ public class ModelingEditor : BaseEditor
     public bool regenerateVertexUi = true;
 
 
-    public List<string> MeshSaveNames = new List<string>();
+    public Vector2 oldMousePos = Vector2.Zero;
+    public bool renderSelection = false;
+
+    // Selection Rendering
+    public ShaderProgram selectionShader = new ShaderProgram("Selection/Selection.vert", "Selection/Selection.frag");
+    public VAO selectionVao = new();
 
     
     public ModelCopy Copy = new();
 
     public override void Start(GeneralModelingEditor editor)
     {
-        Console.WriteLine("Start Modeling Editor");
+        Started = true;
 
-        if (_started)
-        {
-            return;
-        }
+        Console.WriteLine("Start Modeling Editor");
 
         Editor = editor;
         Mesh = editor.model.modelMesh;
@@ -64,8 +65,6 @@ public class ModelingEditor : BaseEditor
         Deletion[0] = HandleVertexDeletion;
         Deletion[1] = HandleEdgeDeletion;
         Deletion[2] = HandleTriangleDeletion;
-
-        _started = true;
     }
 
     public override void Resize(GeneralModelingEditor editor)
@@ -82,6 +81,7 @@ public class ModelingEditor : BaseEditor
     public override void Update(GeneralModelingEditor editor)
     {
         Ui.Test();
+        renderSelection = false;
 
         if (Input.IsKeyPressed(Keys.Escape))
         {
@@ -127,6 +127,9 @@ public class ModelingEditor : BaseEditor
             
             // New Face
             if (Input.IsKeyPressed(Keys.F)) Handle_GenerateNewFace();
+
+            // Flip Selection
+            if (Input.IsKeyPressed(Keys.H)) Handle_FlipSelection();
             
             // Flipping triangle
             if (Input.IsKeyPressed(Keys.I)) Handle_FlipTriangleNormal();
@@ -159,6 +162,8 @@ public class ModelingEditor : BaseEditor
         {
             ModelSettings.SnappingOffset = Vector3.Zero;
             Mesh.CombineDuplicateVertices();
+            Mesh.CheckUselessEdges();
+            Mesh.CheckUselessTriangles();
             UpdateVertexPosition();
         }
         
@@ -180,7 +185,46 @@ public class ModelingEditor : BaseEditor
             
             if (Input.IsMousePressed(MouseButton.Left))
             {
+                oldMousePos = Input.GetMousePosition();
                 Selection[(int)selectionType]();
+            }
+
+            if (Input.IsMouseDown(MouseButton.Left))
+            {
+                renderSelection = true;
+                
+                Vector2 mousePos = Input.GetMousePosition();
+                Vector2 max = Mathf.Max(mousePos, oldMousePos);
+                Vector2 min = Mathf.Min(mousePos, oldMousePos);
+                float distance = Vector2.Distance(mousePos, oldMousePos);
+                bool regenColor = false;
+
+                if (distance < 5)
+                    return;
+
+                foreach (var vert in Vertices)
+                {
+                    Vector2 vPos = vert.Value;
+                    if (vPos.X >= min.X && vPos.X <= max.X && vPos.Y >= min.Y && vPos.Y <= max.Y)
+                    {
+                        if (!SelectedVertices.Contains(vert.Key))
+                        {
+                            regenColor = true;
+                            SelectedVertices.Add(vert.Key);
+                        }
+                    }
+                    else
+                    {
+                        if (!Input.IsKeyDown(Keys.LeftShift) && SelectedVertices.Contains(vert.Key))
+                        {
+                            regenColor = true;
+                            SelectedVertices.Remove(vert.Key);
+                        }
+                    }
+                }
+
+                if (regenColor)
+                    GenerateVertexColor();
             }
         }
     }
@@ -189,6 +233,34 @@ public class ModelingEditor : BaseEditor
     {
         editor.RenderModel();
         Ui.Render();
+
+        if (renderSelection)
+        {
+            selectionShader.Bind();
+
+            Matrix4 model = Matrix4.CreateTranslation((oldMousePos.X, oldMousePos.Y, 0));
+            Matrix4 projection = UIController.OrthographicProjection;
+            Vector2 selectionSize = Input.GetMousePosition() - oldMousePos;
+            Vector3 color = new Vector3(1, 0.5f, 0.25f);
+
+            var modelLoc = GL.GetUniformLocation(selectionShader.ID, "model");
+            var projectionLoc = GL.GetUniformLocation(selectionShader.ID, "projection");
+            var selectionSizeLoc = GL.GetUniformLocation(selectionShader.ID, "selectionSize");
+            var colorLoc = GL.GetUniformLocation(selectionShader.ID, "color");
+
+            GL.UniformMatrix4(modelLoc, true, ref model);
+            GL.UniformMatrix4(projectionLoc, true, ref projection);
+            GL.Uniform2(selectionSizeLoc, selectionSize);
+            GL.Uniform3(colorLoc, color);
+
+            selectionVao.Bind();
+
+            GL.DrawArrays(PrimitiveType.Lines, 0, 8);
+
+            selectionVao.Unbind();
+
+            selectionShader.Unbind();
+        }
     }
 
     public override void Exit(GeneralModelingEditor editor)
@@ -223,7 +295,9 @@ public class ModelingEditor : BaseEditor
         StashMesh();
 
         Copy.Clear();
-        Copy.selectedTriangles = GetSelectedFullTriangles().ToList();
+        Copy.selectedVertices = [.. SelectedVertices];
+        Copy.selectedEdges = [.. GetSelectedFullEdges()];
+        Copy.selectedTriangles = [.. GetSelectedFullTriangles()];
 
         foreach (var triangle in Copy.selectedTriangles)
         {
@@ -390,6 +464,20 @@ public class ModelingEditor : BaseEditor
 
     public void HandleEdgeDeletion()
     {
+        if (SelectedVertices.Count == 0)
+            return;
+
+        HashSet<Edge> edges = GetSelectedFullEdges();
+        foreach (var edge in edges)
+        {
+            Mesh.RemoveEdge(edge);
+        }
+
+        SelectedVertices.Clear();
+        SelectedEdges.Clear();
+
+        Mesh.Init();
+        Mesh.GenerateBuffers();
     }
 
     public void HandleTriangleDeletion()
@@ -440,7 +528,7 @@ public class ModelingEditor : BaseEditor
     {
         foreach (var vert in SelectedVertices)
         {
-            if (ModelSettings.Snapping)
+            if (ModelSettings.GridAligned && ModelSettings.Snapping)
                 vert.SnapPosition(move, ModelSettings.SnappingFactor);
             else
                 vert.MovePosition(move);
@@ -514,19 +602,33 @@ public class ModelingEditor : BaseEditor
         if (SelectedVertices.Count == 0)
             return;
 
+        Vector3 axis = Game.camera.front * ModelSettings.axis;
+        if (axis.Length == 0) return;
+        axis.Normalize();
+
         float mouseDelta = Input.GetMouseDelta().X * (GameTime.DeltaTime * 100);
         rotation += mouseDelta;
-        Vector3 axis = Game.camera.front;
+
+        if (ModelSettings.Snapping)
+        {
+            if (Mathf.Abs(rotation) >= ModelSettings.SnappingFactor)
+                rotation = ModelSettings.SnappingFactor * Mathf.Sign(rotation);
+            else    
+                return;
+        }
 
         foreach (var vert in SelectedVertices)
         {
-            vert.Position = RotatePoint(vert.Position, selectedCenter, axis, rotation);
+            vert.SetPosition(RotatePoint(vert.Position, selectedCenter, axis, rotation));
         }
 
         rotation = 0;
 
         Mesh.Init();
         Mesh.UpdateVertices();
+
+        UpdateVertexPosition();
+        GenerateVertexColor();
     }
 
     public void ScalingInit()
@@ -541,13 +643,31 @@ public class ModelingEditor : BaseEditor
         if (SelectedVertices.Count < 2)
             return;
 
-        float mouseDelta = Input.GetMouseDelta().X * (GameTime.DeltaTime * 10);
+        float mouseDelta = Input.GetMouseDelta().X * (GameTime.DeltaTime * 50);
         scale += mouseDelta;
 
-        foreach (var vert in SelectedVertices)
+        if (ModelSettings.Snapping)
         {
+            if (Mathf.Abs(scale) - 1 >= ModelSettings.SnappingFactor)
+                scale = ModelSettings.SnappingFactor * Mathf.Sign(scale) + 1;
+            else    
+                return;
+        }
+
+        foreach (var vert in SelectedVertices)
+        { 
+            Vector3 oldPosition = vert.Position;
             Vector3 direction = vert.Position - selectedCenter;
-            vert.Position = selectedCenter + direction * scale;
+            Vector3 newPosition = selectedCenter + direction * scale;
+
+            if (ModelSettings.axis.X == 0)
+                newPosition.X = oldPosition.X;
+            if (ModelSettings.axis.Y == 0)
+                newPosition.Y = oldPosition.Y;
+            if (ModelSettings.axis.Z == 0)
+                newPosition.Z = oldPosition.Z;
+
+            vert.SetPosition(newPosition);
         }
 
         scale = 1;
@@ -563,8 +683,8 @@ public class ModelingEditor : BaseEditor
         Vector2 mouseDelta = Input.GetMouseDelta() * (GameTime.DeltaTime * 10);
         Vector3 move = camera.right * mouseDelta.X + camera.up * -mouseDelta.Y;
 
-        if (Input.AreKeysDown(out int index, Keys.X, Keys.C, Keys.V))
-            move *= AxisIgnore[index];
+        move *= ModelSettings.axis;
+        if (move.Length == 0) return Vector3.Zero;
         
         if (ModelSettings.Snapping)
         {
@@ -574,41 +694,45 @@ public class ModelingEditor : BaseEditor
             float snappingFactor = ModelSettings.SnappingFactor;
 
             snappingOffset += move;
-            if (snappingOffset.X > ModelSettings.SnappingFactor)
+            if (snappingOffset.X > snappingFactor)
             {
-                Offset.X = ModelSettings.SnappingFactor;
-                snappingOffset.X -= ModelSettings.SnappingFactor;
+                Offset.X = snappingFactor;
+                snappingOffset.X -= snappingFactor;
             }
-            if (snappingOffset.X < -ModelSettings.SnappingFactor)
+            if (snappingOffset.X < -snappingFactor)
             {
-                Offset.X = -ModelSettings.SnappingFactor;
-                snappingOffset.X += ModelSettings.SnappingFactor;
+                Offset.X = -snappingFactor;
+                snappingOffset.X += snappingFactor;
             }
-            if (snappingOffset.Y > ModelSettings.SnappingFactor)
+            if (snappingOffset.Y > snappingFactor)
             {
-                Offset.Y = ModelSettings.SnappingFactor;
-                snappingOffset.Y -= ModelSettings.SnappingFactor;
+                Offset.Y = snappingFactor;
+                snappingOffset.Y -= snappingFactor;
             }
-            if (snappingOffset.Y < -ModelSettings.SnappingFactor)
+            if (snappingOffset.Y < -snappingFactor)
             {
-                Offset.Y = -ModelSettings.SnappingFactor;
-                snappingOffset.Y += ModelSettings.SnappingFactor;
+                Offset.Y = -snappingFactor;
+                snappingOffset.Y += snappingFactor;
             }
-            if (snappingOffset.Z > ModelSettings.SnappingFactor)
+            if (snappingOffset.Z > snappingFactor)
             {
-                Offset.Z = ModelSettings.SnappingFactor;
-                snappingOffset.Z -= ModelSettings.SnappingFactor;
+                Offset.Z = snappingFactor;
+                snappingOffset.Z -= snappingFactor;
             }
-            if (snappingOffset.Z < -ModelSettings.SnappingFactor)
+            if (snappingOffset.Z < -snappingFactor)
             {
-                Offset.Z = -ModelSettings.SnappingFactor;
-                snappingOffset.Z += ModelSettings.SnappingFactor;
+                Offset.Z = -snappingFactor;
+                snappingOffset.Z += snappingFactor;
             }
 
             ModelSettings.SnappingOffset = snappingOffset;
-            ModelSettings.SnappingFactor = snappingFactor;
         
             move = Offset;
+        }
+
+        if (ModelSettings.GridAligned)
+        {
+
         }
 
         return move;
@@ -616,8 +740,6 @@ public class ModelingEditor : BaseEditor
 
     public void Handle_VertexMerging()
     {
-        Console.WriteLine("Merging verts");
-        
         StashMesh();
                 
         if (SelectedVertices.Count < 2)
@@ -667,6 +789,29 @@ public class ModelingEditor : BaseEditor
 
         GenerateVertexColor();
     }
+
+    public void Handle_FlipSelection()
+    {
+        StashMesh();
+        Vector3 center = GetSelectedCenter();
+
+        foreach (var vert in SelectedVertices)
+        {
+            Vector3 centeredPosition = vert.Position - center;
+            centeredPosition.X *= ModelSettings.axis.X == 1 ? -1 : 1;
+            centeredPosition.Y *= ModelSettings.axis.Y == 1 ? -1 : 1;
+            centeredPosition.Z *= ModelSettings.axis.Z == 1 ? -1 : 1;
+            vert.SetPosition(center + centeredPosition);
+        }
+
+        Mesh.RecalculateNormals();
+        Mesh.Init();
+        Mesh.UpdateMesh();
+
+        GenerateVertexColor();
+        UpdateVertexPosition();
+    }
+
     public void Handle_SelectAllVertices()
     {
         Console.WriteLine("Select all");
@@ -689,18 +834,18 @@ public class ModelingEditor : BaseEditor
         if (!Directory.Exists(folderPath))
             Directory.CreateDirectory(folderPath);
 
-        if (!(MeshSaveNames.Count < 0) && MeshSaveNames.Count >= maxCount)
+        if (Editor.MeshSaveNames.Count >= maxCount)
         {
-            string name = MeshSaveNames[0];
-            string path = Path.Combine(folderPath, name);
+            string name = Editor.MeshSaveNames[0];
+            string path = Path.Combine(folderPath, name + ".model");
             if (!File.Exists(path))
-                return;
+                throw new FileNotFoundException($"File {path} not found");
 
             File.Delete(path);
-            MeshSaveNames.RemoveAt(0);
+            Editor.MeshSaveNames.RemoveAt(0);
         }
         Console.WriteLine("Stashing mesh");
-        MeshSaveNames.Add(fileName);
+        Editor.MeshSaveNames.Add(fileName);
         Mesh.SaveModel(fileName, folderPath);
     }
 
@@ -715,10 +860,10 @@ public class ModelingEditor : BaseEditor
 
     public void GetLastMesh()
     {
-        if (MeshSaveNames.Count == 0)
+        if (Editor.MeshSaveNames.Count == 0)
             return;
 
-        string name = MeshSaveNames[MeshSaveNames.Count - 1];
+        string name = Editor.MeshSaveNames[^1];
         string path = Path.Combine(Path.Combine(Game.undoModelPath, Editor.currentModelName), $"{name}.model");
 
         Console.WriteLine(path);
@@ -728,14 +873,30 @@ public class ModelingEditor : BaseEditor
 
         Console.WriteLine("Getting last mesh");
         
-        MeshSaveNames.RemoveAt(MeshSaveNames.Count - 1);
+        Editor.MeshSaveNames.RemoveAt(Editor.MeshSaveNames.Count - 1);
         Mesh.LoadModel(name, Path.Combine(Game.undoModelPath, Editor.currentModelName));
     }
 
     // Helper
+    public HashSet<Edge> GetSelectedFullEdges()
+    {
+        HashSet<Edge> edges = [];
+                
+        foreach (var vert in SelectedVertices)
+        {
+            foreach (var edge in vert.ParentEdges)
+            {
+                if (SelectedVertices.Contains(edge.Not(vert)))
+                    edges.Add(edge);
+            }
+        }
+
+        return edges;
+    }
+
     public HashSet<Triangle> GetSelectedFullTriangles()
     {
-        HashSet<Triangle> triangles = new HashSet<Triangle>();
+        HashSet<Triangle> triangles = [];
                 
         foreach (var triangle in GetSelectedTriangles())
         {
@@ -748,7 +909,7 @@ public class ModelingEditor : BaseEditor
 
     public HashSet<Triangle> GetSelectedTriangles()
     {
-        HashSet<Triangle> triangles = new HashSet<Triangle>();
+        HashSet<Triangle> triangles = [];
                 
         foreach (var vert in SelectedVertices)
         {

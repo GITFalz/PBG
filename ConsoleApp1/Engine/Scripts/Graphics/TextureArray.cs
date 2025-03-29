@@ -4,6 +4,8 @@ using StbImageSharp;
 
 public class TextureArray
 {
+    public static List<TextureArray> TextureArrays = new List<TextureArray>();
+
     public int ID;
 
     public TextureArray(string atlasPath, int cellWidth, int cellHeight)
@@ -29,6 +31,7 @@ public class TextureArray
         }
         
         Unbind();
+        TextureArrays.Add(this);
     }
 
     public void Bind()
@@ -37,5 +40,12 @@ public class TextureArray
         GL.BindTexture(TextureTarget.Texture2DArray, ID);
     }
     public void Unbind() { GL.BindTexture(TextureTarget.Texture2DArray, 0); }
-    public void Delete() { GL.DeleteTexture(ID); }
+    public static void Delete() 
+    {
+        foreach (var textureArray in TextureArrays)
+        {
+            GL.DeleteTexture(textureArray.ID);
+        }
+        TextureArrays.Clear();
+    }
 }

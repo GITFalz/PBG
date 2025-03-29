@@ -16,7 +16,7 @@ public class UIScrollView : UICollection
         SubElements.SetScale(scale);
 
         MaskPanel = new UIImage($"{name}MaskPanel", anchorType, PositionType.Relative, (1, 1, 1), (0, 0, 0), scale, (0, 0, 0, 0), 0, -1, (0, 0), maskMesh);
-        MaskPanel.test = true;
+        MaskPanel.CanTest = true;
         MaskPanel.OnHover = new SerializableEvent(() => 
         {
             float scrollDelta = Input.GetMouseScrollDelta().Y;

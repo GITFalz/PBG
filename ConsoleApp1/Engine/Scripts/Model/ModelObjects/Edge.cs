@@ -2,10 +2,12 @@
 
 public class Edge
 {
+    public static Edge Empty = new Edge(new Vertex(Vector3.Zero), new Vertex(Vector3.Zero));
+
     public Vertex A;
     public Vertex B;
 
-    public List<Triangle> ParentTriangles = new List<Triangle>();
+    public HashSet<Triangle> ParentTriangles = new HashSet<Triangle>();
 
     public Edge(Vertex v1, Vertex v2)
     {
@@ -28,6 +30,9 @@ public class Edge
             A = newVertex;
         else if (B == oldVertex)
             B = newVertex;
+
+        oldVertex.ParentEdges.Remove(this);
+        newVertex.ParentEdges.Add(this);
     }
 
     public bool HasNotVertex(Vertex v)
@@ -38,6 +43,14 @@ public class Edge
     public Vector3 GetDirectionFrom(Vertex vertex)
     {
         return vertex == A ? B.Position - A.Position : A.Position - B.Position;
+    }
+
+    public void ReplaceWith(Edge edge)
+    {
+        foreach (Triangle triangle in ParentTriangles)
+        {
+            triangle.SetEdgeTo(this, edge);
+        }
     }
 
     public Vertex Not(Vertex v)

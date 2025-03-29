@@ -19,7 +19,7 @@ public abstract class UIElement
     public Vector4 totalOffset = (0, 0, 0, 0);
     public float Rotation = 0f;
     public bool Rotated = false;
-    public bool test = false;
+    public bool CanTest = true;
     public int ElementIndex = 0;
     public float Depth = 0;
 
@@ -72,6 +72,9 @@ public abstract class UIElement
     public virtual void UpdateTexture() {}
     public virtual bool Test(Vector2 offset = default)
     { 
+        if (!CanTest || !Visible) 
+            return false;
+
         TestButtons(IsMouseOver(offset));  
         return true;
     }

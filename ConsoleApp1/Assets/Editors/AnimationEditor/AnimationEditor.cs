@@ -6,27 +6,22 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 public class AnimationEditor : BaseEditor
 {
     private bool freeCamera = false;
-    private bool regenerateUi = false;
-    private bool _started = false;
     public Model model;
     public AnimationMesh Mesh;
     public UIController Timeline;
     
     public override void Start(GeneralModelingEditor editor)
     {
+        Started = true;
+
         Console.WriteLine("Start Animation Editor");
 
         editor.model.SwitchState("Animation");
 
-        if (_started)
-            return;
-        
         model = editor.model;
         Mesh = model.animationMesh;
 
         Timeline = new UIController();
-
-        _started = true;
     }
 
     public override void Resize(GeneralModelingEditor editor)

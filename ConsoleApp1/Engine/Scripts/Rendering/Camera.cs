@@ -7,7 +7,7 @@ using Vector3 = OpenTK.Mathematics.Vector3;
 
 public class Camera
 {
-    public float SPEED { get; private set; } = 50f;
+    public int SPEED = 50;
     public float SCREEN_WIDTH { get; private set; }
     public float SCREEN_HEIGHT { get; private set; }
     public float SENSITIVITY { get; private set; } = 65f;

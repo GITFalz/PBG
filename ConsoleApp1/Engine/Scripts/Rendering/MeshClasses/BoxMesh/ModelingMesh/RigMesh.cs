@@ -10,8 +10,8 @@ public class RigMesh : Meshes
 {
     private VAO _vao = new VAO();
     private IBO _ibo = new IBO([]);
-    private VBO _vertVbo = new VBO([(0, 0, 0)]);
-    private VBO _normalVbo = new VBO([(0, 0, 0)]);
+    private VBO<Vector3> _vertVbo = new VBO<Vector3>([]);
+    private VBO<Vector3> _normalVbo = new VBO<Vector3>([]);
 
     public List<Vertex> VertexList = new List<Vertex>();
     public List<uint> Indices = new List<uint>();
@@ -20,9 +20,9 @@ public class RigMesh : Meshes
 
 
     private VAO _vertexVao = new VAO();
-    private VBO _vertexVbo = new VBO([0, 0, 0]);
-    private VBO _colorVbo = new VBO([(0, 0, 0)]);
-    private VBO _vertexSizeVbo = new VBO([(0, 0, 0)]);
+    private VBO<Vector3> _vertexVbo = new VBO<Vector3>([]);
+    private VBO<Vector3> _colorVbo = new VBO<Vector3>([]);
+    private VBO<float> _vertexSizeVbo = new VBO<float>([]);
 
     public List<Vector3> Vertices = new List<Vector3>();
     public List<Vector3> VertexColors = new List<Vector3>();
@@ -30,9 +30,9 @@ public class RigMesh : Meshes
 
 
     private VAO _boneVao = new VAO();
-    private VBO _boneVbo = new VBO([(0, 0, 0)]);
-    private VBO _boneColorVbo = new VBO([(0, 0, 0)]);
-    private VBO _boneSizeVbo = new VBO([(0, 0, 0)]);
+    private VBO<Vector3> _boneVbo = new VBO<Vector3>([]);
+    private VBO<Vector3> _boneColorVbo = new VBO<Vector3>([]);
+    private VBO<float> _boneSizeVbo = new VBO<float>([]);
     public List<Vector3> BoneVertices = new List<Vector3>();
     public List<Vector3> BoneColors = new List<Vector3>();
     public List<float> BoneSizes = new List<float>();
@@ -70,12 +70,12 @@ public class RigMesh : Meshes
     {
         GenerateIndices();
         
-        _vertVbo = new VBO(MeshVertices);
-        _normalVbo = new VBO(Normals);
+        _vertVbo = new(MeshVertices);
+        _normalVbo = new(Normals);
 
-        _vertexVbo = new VBO(Vertices);
-        _colorVbo = new VBO(VertexColors);
-        _vertexSizeVbo = new VBO(VertexSizes); 
+        _vertexVbo = new(Vertices);
+        _colorVbo = new(VertexColors);
+        _vertexSizeVbo = new(VertexSizes); 
         
         _vao.LinkToVAO(0, 3, _vertVbo);
         _vao.LinkToVAO(1, 3, _normalVbo);
@@ -91,9 +91,9 @@ public class RigMesh : Meshes
 
     public void GenerateRigBuffers()
     {
-        _boneVbo = new VBO(BoneVertices);
-        _boneColorVbo = new VBO(BoneColors);
-        _boneSizeVbo = new VBO(BoneSizes);
+        _boneVbo = new(BoneVertices);
+        _boneColorVbo = new(BoneColors);
+        _boneSizeVbo = new(BoneSizes);
 
         _boneVao.LinkToVAO(0, 3, _boneVbo);
         _boneVao.LinkToVAO(1, 3, _boneColorVbo);

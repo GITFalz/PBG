@@ -22,6 +22,7 @@ public class ObjectEditor : BaseEditor
 
     public override void Start(GeneralModelingEditor editor)
     {
+        Started = true;
         /*
         Console.WriteLine("Start Modeling Editor");
 

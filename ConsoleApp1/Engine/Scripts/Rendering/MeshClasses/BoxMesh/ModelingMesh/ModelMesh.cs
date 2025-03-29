@@ -6,10 +6,10 @@ public class ModelMesh : Meshes
     // Mesh
     private VAO _vao = new VAO();
     private IBO _ibo = new IBO([]);
-    private VBO _vertVbo = new VBO([(0, 0, 0)]);
-    private VBO _uvVbo = new VBO([(0, 0)]);
-    private VBO _textureVbo = new VBO([0]);
-    private VBO _normalVbo = new VBO([(0, 0, 0)]);
+    private VBO<Vector3> _vertVbo = new(new List<Vector3>());
+    private VBO<Vector2> _uvVbo = new(new List<Vector2>());
+    private VBO<int> _textureVbo = new(new List<int>());
+    private VBO<Vector3> _normalVbo = new(new List<Vector3>());
 
     public List<Vector2> Uvs = new List<Vector2>();
     public List<uint> Indices = new List<uint>();
@@ -19,9 +19,9 @@ public class ModelMesh : Meshes
 
     // Vertex
     private VAO _vertexVao = new VAO();
-    private VBO _vertexVbo = new VBO([new Vector3(0, 0, 0)]);
-    private VBO _vertexColorVbo = new VBO([new Vector3(0, 0, 0)]);
-    private VBO _vertexSizeVbo = new VBO([0.0f]);
+    private VBO<Vector3> _vertexVbo = new(new List<Vector3>());
+    private VBO<Vector3> _vertexColorVbo = new(new List<Vector3>());
+    private VBO<float> _vertexSizeVbo = new(new List<float>());
 
     public List<Vector3> Vertices = new List<Vector3>();
     public List<Vector3> VertexColors = new List<Vector3>();
@@ -29,8 +29,8 @@ public class ModelMesh : Meshes
 
     // Edge
     private VAO _edgeVao = new VAO();
-    private VBO _edgeVbo = new VBO([(0, 0, 0)]);
-    private VBO _edgeColorVbo = new VBO([new Vector3(0, 0, 0)]);
+    private VBO<Vector3> _edgeVbo = new(new List<Vector3>());
+    private VBO<Vector3> _edgeColorVbo = new(new List<Vector3>());
 
     public List<Vector3> EdgeVertices = new List<Vector3>();
     public List<Vector3> EdgeColors = new List<Vector3>();
@@ -204,6 +204,26 @@ public class ModelMesh : Meshes
 
     public void AddCopy(ModelCopy copy)
     {
+        foreach (var vertex in copy.newSelectedVertices)
+        {
+            if (!VertexList.Contains(vertex))
+            {
+                VertexList.Add(vertex);
+                Vertices.Add(vertex.Position);
+                VertexColors.Add(new Vector3(0f, 0f, 0f));
+            }
+        }
+
+        foreach (var edge in copy.newSelectedEdges)
+        {
+            if (!EdgeList.Contains(edge))
+            {
+                EdgeList.Add(edge);
+                EdgeVertices.AddRange(edge.A.Position, edge.B.Position);
+                EdgeColors.AddRange(edge.A.Color, edge.B.Color);
+            }
+        }
+
         foreach (var triangle in copy.newSelectedTriangles)
         {
             AddTriangle(triangle);
@@ -226,12 +246,14 @@ public class ModelMesh : Meshes
 
         foreach (var triangle in triangles)
         {
-            RemoveTriangle(triangle);
+            triangle.Delete();
+            TriangleList.Remove(triangle);
         }
 
         foreach (var edge in edges)
         {
-            RemoveEdge(edge);
+            edge.Delete();
+            EdgeList.Remove(edge);
         }
     }
 
@@ -357,11 +379,13 @@ public class ModelMesh : Meshes
 
         foreach (var edge in edgesToRemove)
         {
+            edge.Delete();
             EdgeList.Remove(edge);
         }
 
         foreach (var triangle in trianglesToRemove)
         {
+            triangle.Delete();
             TriangleList.Remove(triangle);
         }
 
@@ -373,19 +397,19 @@ public class ModelMesh : Meshes
         UpdateMesh();
     }
 
-    public void ChangeVertexTo(Vertex oldVertex, Vertex newVertex)
-    {
-        foreach (var triangle in oldVertex.ParentTriangles)
-        {
-            triangle.SetVertexTo(oldVertex, newVertex);
-        }
-    }
-
 
     public void CheckUselessEdges()
     {
         List<Edge> edges = [.. EdgeList];
-
+        for (int i = 0; i < edges.Count; i++)
+        {
+            Edge edge = edges[i];
+            if (!VertexList.Contains(edge.A) || !VertexList.Contains(edge.B))
+            {
+                edge.Delete();
+                EdgeList.Remove(edge);
+            }
+        }
     }
 
     public void CheckUselessTriangles()
@@ -394,15 +418,10 @@ public class ModelMesh : Meshes
         for (int i = 0; i < triangles.Count; i++)
         {
             Triangle triangle = triangles[i];
-            if (!VertexList.Contains(triangle.A) || !VertexList.Contains(triangle.B) || !VertexList.Contains(triangle.C))
+            if (!VertexList.Contains(triangle.A) || !VertexList.Contains(triangle.B) || !VertexList.Contains(triangle.C) || !EdgeList.Contains(triangle.AB) || !EdgeList.Contains(triangle.BC) || !EdgeList.Contains(triangle.CA))
             {
+                triangle.Delete();
                 TriangleList.Remove(triangle);
-                triangle.A.ParentTriangles.Remove(triangle);
-                triangle.B.ParentTriangles.Remove(triangle);
-                triangle.C.ParentTriangles.Remove(triangle);
-                triangle.AB.ParentTriangles.Remove(triangle);
-                triangle.BC.ParentTriangles.Remove(triangle);
-                triangle.CA.ParentTriangles.Remove(triangle);
             }
         }
     }
@@ -418,8 +437,7 @@ public class ModelMesh : Meshes
                 Vertex other = vertices[j];
                 if (vertex.Position == other.Position)
                 {
-                    ChangeVertexTo(other, vertex);
-                    VertexList.Remove(other);
+                    MergeVertices([vertex, other]);
                 }
             }
         }
@@ -589,17 +607,17 @@ public class ModelMesh : Meshes
     {
         GenerateIndices();
         
-        _vertVbo = new VBO(_transformedVerts);
-        _uvVbo = new VBO(Uvs);
-        _textureVbo = new VBO(TextureIndices);
-        _normalVbo = new VBO(Normals);
+        _vertVbo = new(_transformedVerts);
+        _uvVbo = new(Uvs);
+        _textureVbo = new(TextureIndices);
+        _normalVbo = new(Normals);
 
-        _vertexVbo = new VBO(Vertices);
-        _vertexColorVbo = new VBO(VertexColors);
-        _vertexSizeVbo = new VBO(VertexSize);
+        _vertexVbo = new(Vertices);
+        _vertexColorVbo = new(VertexColors);
+        _vertexSizeVbo = new(VertexSize);
 
-        _edgeVbo = new VBO(EdgeVertices);
-        _edgeColorVbo = new VBO(EdgeColors);
+        _edgeVbo = new(EdgeVertices);
+        _edgeColorVbo = new(EdgeColors);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
         _vao.LinkToVAO(1, 2, _uvVbo);
@@ -651,10 +669,5 @@ public class ModelMesh : Meshes
         GL.DrawArrays(PrimitiveType.Lines, 0, EdgeVertices.Count);
 
         _edgeVao.Unbind();
-    }
-
-    public void Delete()
-    {
-        _textureVbo.Delete();
     }
 }

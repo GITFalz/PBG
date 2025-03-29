@@ -10,8 +10,8 @@ public abstract class Mesh
     public List<Vector3> transformedVertices = new List<Vector3>();
     
     public VAO _vao;
-    public VBO _vertVbo;
-    public VBO _uvVbo;
+    public VBO<Vector3> _vertVbo;
+    public VBO<Vector2> _uvVbo;
     public IBO _ibo;
     
     public Vector3 Position = Vector3.Zero;
@@ -27,8 +27,8 @@ public abstract class Mesh
             transformedVertices.Add(t + Position);
         }
         
-        _vertVbo = new VBO(transformedVertices);
-        _uvVbo = new VBO(Uvs);
+        _vertVbo = new(transformedVertices);
+        _uvVbo = new(Uvs);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
         _vao.LinkToVAO(1, 2, _uvVbo);
@@ -98,14 +98,6 @@ public abstract class Mesh
         Indices.Clear();
         
         _updateMesh = true;
-    }
-    
-    public virtual void Delete()
-    {
-        _vao.Delete();
-        _vertVbo.Delete();
-        _uvVbo.Delete();
-        _ibo.Delete();
     }
     
     public struct Bounds

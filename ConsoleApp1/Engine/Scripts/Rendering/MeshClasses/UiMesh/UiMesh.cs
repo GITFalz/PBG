@@ -11,9 +11,9 @@ public class UIMesh
 
     
     private VAO _vao = new VAO();
-    private SSBO _transformationSsbo = new SSBO(new List<Matrix4>());
-    private SSBO _floatDataSsbo = new SSBO(new List<Vector4>());
-    private SSBO _intDataSsbo = new SSBO(new List<Vector4i>());
+    private SSBO<Matrix4> _transformationSsbo = new(new List<Matrix4>());
+    private SSBO<Vector4> _floatDataSsbo = new(new List<Vector4>());
+    private SSBO<Vector4i> _intDataSsbo = new(new List<Vector4i>());
     public int ElementCount = 0;
     public int VisibleElementCount = 0;
 
@@ -96,9 +96,9 @@ public class UIMesh
 
     public void GenerateBuffers()
     {
-        _transformationSsbo = new SSBO(TransformationMatrices);
-        _floatDataSsbo = new SSBO(_ssboFloatData);
-        _intDataSsbo = new SSBO(_ssboIntData);
+        _transformationSsbo = new(TransformationMatrices);
+        _floatDataSsbo = new(_ssboFloatData);
+        _intDataSsbo = new(_ssboIntData);
     }
 
     public void Render()

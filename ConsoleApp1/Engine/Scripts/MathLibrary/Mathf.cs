@@ -115,6 +115,21 @@ public static class Mathf
     {
         return a > b ? a : b;
     }
+
+    public static Vector2 Max(Vector2 a, Vector2 b)
+    {
+        return new Vector2(Max(a.X, b.X), Max(a.Y, b.Y));
+    }
+
+    public static Vector3 Max(Vector3 a, Vector3 b)
+    {
+        return new Vector3(Max(a.X, b.X), Max(a.Y, b.Y), Max(a.Z, b.Z));
+    }
+
+    public static Vector4 Max(Vector4 a, Vector4 b)
+    {
+        return new Vector4(Max(a.X, b.X), Max(a.Y, b.Y), Max(a.Z, b.Z), Max(a.W, b.W));
+    }
     
     public static double Min(double a, double b)
     {
@@ -129,6 +144,21 @@ public static class Mathf
     public static int Min(int a, int b)
     {
         return a < b ? a : b;
+    }
+
+    public static Vector2 Min(Vector2 a, Vector2 b)
+    {
+        return new Vector2(Min(a.X, b.X), Min(a.Y, b.Y));
+    }
+
+    public static Vector3 Min(Vector3 a, Vector3 b)
+    {
+        return new Vector3(Min(a.X, b.X), Min(a.Y, b.Y), Min(a.Z, b.Z));
+    }
+
+    public static Vector4 Min(Vector4 a, Vector4 b)
+    {
+        return new Vector4(Min(a.X, b.X), Min(a.Y, b.Y), Min(a.Z, b.Z), Min(a.W, b.W));
     }
     
     public static int Sign(float value)

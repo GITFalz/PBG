@@ -10,10 +10,10 @@ public class TextMesh
     public List<Vector4i> Data = [];
 
     private VAO _vao = new VAO();
-    private SSBO _transformationSsbo = new SSBO(new List<Matrix4>());
-    private SSBO _sizeSsbo = new SSBO(new List<Vector2>());
-    private SSBO _dataSsbo = new SSBO(new List<Vector4i>());
-    private TBO _textTbo = new TBO([]);
+    private SSBO<Matrix4> _transformationSsbo = new(new List<Matrix4>());
+    private SSBO<Vector2> _sizeSsbo = new(new List<Vector2>());
+    private SSBO<Vector4i> _dataSsbo = new(new List<Vector4i>());
+    private TBO<int> _textTbo = new([]);
 
     private List<UIText> _textElements = new List<UIText>();
 
@@ -95,10 +95,10 @@ public class TextMesh
 
     public void GenerateBuffers()
     {
-        _transformationSsbo = new SSBO(TransformationMatrices);
-        _sizeSsbo = new SSBO(Sizes);
-        _dataSsbo = new SSBO(Data);
-        _textTbo = new TBO(chars);
+        _transformationSsbo = new(TransformationMatrices);
+        _sizeSsbo = new(Sizes);
+        _dataSsbo = new(Data);
+        _textTbo = new(chars);
     }
 
     public void Render()

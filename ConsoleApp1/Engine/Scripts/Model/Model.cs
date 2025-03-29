@@ -370,41 +370,44 @@ public class ModelModeling : ModelBase
 
         _shaderProgram.Unbind();
 
-        GL.Enable(EnableCap.DepthTest);
-        GL.DepthFunc(DepthFunction.Always);
+        if (ModelSettings.WireframeVisible)
+        {
+            GL.Enable(EnableCap.DepthTest);
+            GL.DepthFunc(DepthFunction.Always);
 
-        Model = Matrix4.Identity;
+            Model = Matrix4.Identity;
 
-        ModelSettings.EdgeShader.Bind();
+            ModelSettings.EdgeShader.Bind();
 
-        modelLocation = GL.GetUniformLocation(ModelSettings.EdgeShader.ID, "model");
-        viewLocation = GL.GetUniformLocation(ModelSettings.EdgeShader.ID, "view");
-        projectionLocation = GL.GetUniformLocation(ModelSettings.EdgeShader.ID, "projection");
+            modelLocation = GL.GetUniformLocation(ModelSettings.EdgeShader.ID, "model");
+            viewLocation = GL.GetUniformLocation(ModelSettings.EdgeShader.ID, "view");
+            projectionLocation = GL.GetUniformLocation(ModelSettings.EdgeShader.ID, "projection");
 
-        GL.UniformMatrix4(modelLocation, true, ref Model);
-        GL.UniformMatrix4(viewLocation, true, ref view);
-        GL.UniformMatrix4(projectionLocation, true, ref projection);
+            GL.UniformMatrix4(modelLocation, true, ref Model);
+            GL.UniformMatrix4(viewLocation, true, ref view);
+            GL.UniformMatrix4(projectionLocation, true, ref projection);
 
-        model.modelMesh.RenderEdges();
+            model.modelMesh.RenderEdges();
 
-        ModelSettings.EdgeShader.Unbind();
+            ModelSettings.EdgeShader.Unbind();
 
-        ModelSettings.VertexShader.Bind();
+            ModelSettings.VertexShader.Bind();
 
-        modelLocation = GL.GetUniformLocation(ModelSettings.VertexShader.ID, "model");
-        viewLocation = GL.GetUniformLocation(ModelSettings.VertexShader.ID, "view");
-        projectionLocation = GL.GetUniformLocation(ModelSettings.VertexShader.ID, "projection");
+            modelLocation = GL.GetUniformLocation(ModelSettings.VertexShader.ID, "model");
+            viewLocation = GL.GetUniformLocation(ModelSettings.VertexShader.ID, "view");
+            projectionLocation = GL.GetUniformLocation(ModelSettings.VertexShader.ID, "projection");
 
-        GL.UniformMatrix4(modelLocation, true, ref Model);
-        GL.UniformMatrix4(viewLocation, true, ref view);
-        GL.UniformMatrix4(projectionLocation, true, ref projection);
+            GL.UniformMatrix4(modelLocation, true, ref Model);
+            GL.UniformMatrix4(viewLocation, true, ref view);
+            GL.UniformMatrix4(projectionLocation, true, ref projection);
 
-        model.modelMesh.RenderVertices();
+            model.modelMesh.RenderVertices();
 
-        ModelSettings.VertexShader.Unbind();
+            ModelSettings.VertexShader.Unbind();
 
-        GL.Disable(EnableCap.DepthTest);
-        GL.DepthFunc(DepthFunction.Lequal);
+            GL.Disable(EnableCap.DepthTest);
+            GL.DepthFunc(DepthFunction.Lequal);
+        }
     }
 }
 
@@ -420,13 +423,16 @@ public static class ModelSettings
 
     // Ui values
     public static float MeshAlpha = 1.0f;
+    public static bool WireframeVisible = true;
     public static bool BackfaceCulling = true;
     public static bool Snapping = false;
+    public static bool GridAligned = false;
     public static float SnappingFactor = 1;
     public static int SnappingFactorIndex = 0;
     public static Vector3 SnappingOffset = new Vector3(0, 0, 0);
 
     public static Vector3i mirror = (0, 0, 0);
+    public static Vector3i axis = (1, 1, 1);
     public static Vector3[] Mirrors => Mirroring[mirror];
     public static bool[] Swaps => Swapping[mirror];
     public static readonly Dictionary<Vector3i, Vector3[]> Mirroring = new Dictionary<Vector3i, Vector3[]>()

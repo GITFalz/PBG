@@ -19,11 +19,12 @@ public class RiggingEditor : BaseEditor
     public Dictionary<Vertex, Vector2> Vertices = new Dictionary<Vertex, Vector2>();
     public Dictionary<BoneVertex, Vector2> Bones = [];
 
-    private bool _started = false;
     private bool regenerateVertexUi = true;
 
     public override void Start(GeneralModelingEditor editor)
     {
+        Started = true;
+
         Console.WriteLine("Start Rigging Editor");
 
         Mesh = editor.model.rigMesh;
