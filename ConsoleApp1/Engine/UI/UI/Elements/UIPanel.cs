@@ -15,6 +15,15 @@ public abstract class UIPanel : UIElement
         this.uIMesh = uIMesh;
     }
 
+    public override void SetVisibility(bool visible)
+    {
+        if (uIMesh == null || Visible == visible)
+            return;
+
+        base.SetVisibility(visible);
+        uIMesh.SetVisibility(visible, ElementIndex);
+    }
+
     public override void SetUIMesh(UIMesh uIMesh)
     {
         this.uIMesh = uIMesh;

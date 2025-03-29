@@ -22,7 +22,7 @@ public class AnimationMesh : Meshes
     private VBO _textureVbo = new VBO([0]);
     private VBO _normalVbo = new VBO([(0, 0, 0)]);
     private VBO _boneVbo = new VBO([(0, 0, 0, 0)]);
-    private SSBO _boneSSBO = new SSBO([]);
+    private SSBO _boneSSBO = new SSBO(new List<Matrix4>());
 
     private VAO _boneVao = new VAO();
     private VBO _boneVertexVbo = new VBO([(0, 0, 0)]);

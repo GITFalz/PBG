@@ -307,8 +307,15 @@ public class GeneralModelingEditor : ScriptingNode
         testPanel9.SetMaxCharCount(5).SetText("Test9", 1f);
         testPanel10.SetMaxCharCount(6).SetText("Test10", 1f);
 
+        testPanel1.OnClick = new SerializableEvent(() => testPanel1.SetVisibility(!testPanel1.Visible));
+
         scrollView.AddElement(testPanel1, testPanel2, testPanel3, testPanel4, testPanel5, testPanel6, testPanel7, testPanel8, testPanel9, testPanel10);
         scrollViewCollection.AddElement(scrollView, scrollViewBg);
+
+        scrollViewCollection.OnClick = new SerializableEvent(() =>
+        {
+            scrollViewCollection.SetVisibility(!scrollViewCollection.Visible);
+        });
 
         // Add elements to ui
         MainUi.AddElement(stateCollection);

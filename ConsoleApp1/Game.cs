@@ -45,6 +45,8 @@ public class Game : GameWindow
 
     // Miscaleanous Ui
     private PopUp _popUp;
+
+    private bool DoResize = false;
     
     
     public Game(int width, int height) : base(GameWindowSettings.Default, new NativeWindowSettings
@@ -68,18 +70,18 @@ public class Game : GameWindow
     
     protected override void OnResize(ResizeEventArgs e)
     {
-        GL.Viewport(0, 0, e.Width, e.Height);
+        Width = e.Width;
+        Height = e.Height;
+
+        GL.Viewport(0, 0, Width, Height);
         
-        Game.Width = e.Width;
-        Game.Height = e.Height;
-        
-        CenterX = e.Width / 2;
-        CenterY = e.Height / 2;
+        CenterX = Width / 2;
+        CenterY = Height / 2;
         
         try
         {
-            UIController.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, e.Width, e.Height, 0, -2, 2);
-            ModelSettings.Camera?.UpdateProjectionMatrix(e.Width, e.Height);
+            UIController.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, Width, Height, 0, -2, 2);
+            ModelSettings.Camera?.UpdateProjectionMatrix(Width, Height);
         }
         catch (Exception ex)
         {
@@ -93,7 +95,7 @@ public class Game : GameWindow
             if (scene != CurrentScene)
                 scene.Resize = true;
         }
-        
+
         base.OnResize(e);
     }
     
@@ -195,15 +197,7 @@ public class Game : GameWindow
         if (Input.IsKeyPressed(Keys.LeftAlt))
         {
             MoveTest = !MoveTest;
-
-            if (MoveTest)
-            {
-                Game.SetCursorState(CursorState.Grabbed);
-            }
-            else
-            {
-                Game.SetCursorState(CursorState.Normal);
-            }
+            SetCursorState(MoveTest ? CursorState.Grabbed : CursorState.Normal);
         }
 
         _popUp.Update();

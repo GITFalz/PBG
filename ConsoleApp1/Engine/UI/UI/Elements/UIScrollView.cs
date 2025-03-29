@@ -36,6 +36,16 @@ public class UIScrollView : UICollection
         SubElements.ParentElement = this;
     }
 
+    public override void SetVisibility(bool visible)
+    {
+        if (Visible == visible)
+            return;
+
+        base.SetVisibility(visible);
+        MaskPanel.SetVisibility(visible);
+        SubElements.SetVisibility(visible);
+    }
+
     public UIScrollView SetScrollSpeed(float speed)
     {
         ScrollSpeed = speed;

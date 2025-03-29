@@ -34,6 +34,16 @@ public class UICollection : UIElement
         return this;
     }
 
+    public override void SetVisibility(bool visible)
+    {
+        if (Visible == visible)
+            return;
+            
+        base.SetVisibility(visible);
+        foreach (UIElement element in Elements)
+            element.SetVisibility(visible);
+    }
+
     public override void Align()
     {
         base.Align();

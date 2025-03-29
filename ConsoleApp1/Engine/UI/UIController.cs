@@ -267,12 +267,6 @@ public class UIController
         maskedTextMesh.UpdateMatrices();
     }
 
-    public void UpdateTextures()
-    {
-        uIMesh.UpdateTexture();
-        maskeduIMesh.UpdateTexture();
-    }
-
     public List<string> ToLines()
     {
         List<string> lines = new List<string>();
@@ -306,7 +300,6 @@ public class UIController
         }
 
         UpdateMatrices();
-        uIMesh.UpdateVertices();
     }
 
     public void Update()
