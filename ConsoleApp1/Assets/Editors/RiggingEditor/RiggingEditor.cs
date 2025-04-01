@@ -192,7 +192,7 @@ public class RiggingEditor : BaseEditor
 
         foreach (var vert in Mesh.VertexList)
         {
-            Vector2? screenPos = Mathf.WorldToScreen(vert.Position, projection, view);
+            Vector2? screenPos = Mathf.WorldToScreen(vert, projection, view);
             if (screenPos == null)
                 continue;
             

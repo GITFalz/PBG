@@ -39,6 +39,7 @@ public class ModelMesh : Meshes
     public List<Vertex> VertexList = new List<Vertex>();
     public List<Edge> EdgeList = new List<Edge>();
     public List<Triangle> TriangleList = new List<Triangle>();
+
     
     public void Init()
     {
@@ -47,7 +48,7 @@ public class ModelMesh : Meshes
         VertexSize.Clear();
         foreach (var v in VertexList)
         {
-            Vertices.Add(v.Position);
+            Vertices.Add(v);
             VertexColors.Add(v.Color);
             VertexSize.Add(10f);
         }
@@ -56,11 +57,15 @@ public class ModelMesh : Meshes
         EdgeColors.Clear();
         foreach (var e in EdgeList)
         {
-            EdgeVertices.AddRange(e.A.Position, e.B.Position);
+            EdgeVertices.AddRange(e.A, e.B);
             EdgeColors.AddRange(e.A.Color, e.B.Color);
         }
 
         _transformedVerts.Clear();
+
+        if (TriangleList.Count == 0)
+            return;
+
         foreach (var t in TriangleList)
         {
             _transformedVerts.AddRange(t.GetVerticesPosition());
@@ -83,13 +88,13 @@ public class ModelMesh : Meshes
 
             for (int i = 0; i < currentVertices.Count; i++)
             {
-                Vector3 position = currentVertices[i].Position * flip[j];
+                Vector3 position = currentVertices[i] * flip[j];
                 Vertex vertex = new Vertex(position);
 
-                if (VertexSharePosition(vertex.Position, out var v)) vertex = v;
+                if (VertexSharePosition(vertex, out var v)) vertex = v;
 
                 VertexList.Add(vertex);
-                Vertices.Add(vertex.Position);
+                Vertices.Add(vertex);
                 VertexColors.Add(new Vector3(0f, 0f, 0f));
             }
 
@@ -131,7 +136,7 @@ public class ModelMesh : Meshes
         vertex = new Vertex(Vector3.Zero);
         foreach (var v in VertexList)
         {
-            if (v.Position == position)
+            if (v == position)
             {
                 vertex = v;
                 return true;
@@ -140,19 +145,45 @@ public class ModelMesh : Meshes
         return false;
     }
 
+    public void AddVertex(Vertex vertex, bool updateMesh = true)
+    {
+        if (!VertexList.Contains(vertex))
+        {
+            VertexList.Add(vertex);
+            Vertices.Add(vertex);
+            VertexColors.Add(new Vector3(0f, 0f, 0f));
+        }
+
+        if (updateMesh)
+            UpdateMesh();
+    }
+
     public void AddVertices(List<Vertex> vertices)
     {
         foreach (var vertex in vertices)
         {
             if (!VertexList.Contains(vertex))
             {
-                VertexList.Add(vertex);
-                Vertices.Add(vertex.Position);
-                VertexColors.Add(new Vector3(0f, 0f, 0f));
+                AddVertex(vertex, false);
             }
         }
 
         UpdateMesh();
+    }
+
+    public Edge AddOrReplace(Edge edge)
+    {
+        foreach (var e in EdgeList)
+        {
+            if (e.HasSameVertex(edge))
+                return e;
+        }
+
+        EdgeList.Add(edge);
+        EdgeVertices.AddRange(edge.A, edge.B);
+        EdgeColors.AddRange(edge.A.Color, edge.B.Color);
+
+        return edge;
     }
 
     public void AddTriangle(Triangle triangle)
@@ -188,7 +219,7 @@ public class ModelMesh : Meshes
         if (TriangleList.Contains(triangle))
             return false;
 
-        triangle.UpdateNormals();
+        triangle.UpdateNormal();
         TriangleList.Add(triangle);
        
         Normals.Add(triangle.Normal);
@@ -209,7 +240,7 @@ public class ModelMesh : Meshes
             if (!VertexList.Contains(vertex))
             {
                 VertexList.Add(vertex);
-                Vertices.Add(vertex.Position);
+                Vertices.Add(vertex);
                 VertexColors.Add(new Vector3(0f, 0f, 0f));
             }
         }
@@ -219,7 +250,7 @@ public class ModelMesh : Meshes
             if (!EdgeList.Contains(edge))
             {
                 EdgeList.Add(edge);
-                EdgeVertices.AddRange(edge.A.Position, edge.B.Position);
+                EdgeVertices.AddRange(edge.A, edge.B);
                 EdgeColors.AddRange(edge.A.Color, edge.B.Color);
             }
         }
@@ -282,9 +313,9 @@ public class ModelMesh : Meshes
         Edge BC = triangle.BC;
         Edge CA = triangle.CA;
 
-        if (AB.ParentTriangles.Count == 1) EdgeList.Remove(AB.Delete()); else Console.WriteLine("Removed triangle from edge AB: " + AB.ParentTriangles.Remove(triangle));
-        if (BC.ParentTriangles.Count == 1) EdgeList.Remove(BC.Delete()); else Console.WriteLine("Removed triangle from edge BC: " + BC.ParentTriangles.Remove(triangle));
-        if (CA.ParentTriangles.Count == 1) EdgeList.Remove(CA.Delete()); else Console.WriteLine("Removed triangle from edge CA: " + CA.ParentTriangles.Remove(triangle));
+        if (AB.ParentTriangles.Count == 1) EdgeList.Remove(AB.Delete()); else AB.ParentTriangles.Remove(triangle);
+        if (BC.ParentTriangles.Count == 1) EdgeList.Remove(BC.Delete()); else BC.ParentTriangles.Remove(triangle);
+        if (CA.ParentTriangles.Count == 1) EdgeList.Remove(CA.Delete()); else CA.ParentTriangles.Remove(triangle);
 
         TriangleList.Remove(triangle.Delete());
     }
@@ -334,23 +365,27 @@ public class ModelMesh : Meshes
         return true;
     }
 
-    public void UpdateNormals(Triangle triangle)
-    {
-        int index = TriangleList.IndexOf(triangle) * 3;
-
-        triangle.UpdateNormals();
-        
-        Normals[index+0] = triangle.Normal;
-        Normals[index+1] = triangle.Normal;
-        Normals[index+2] = triangle.Normal;
-    }
-
     public void RecalculateNormals()
     {
-        for (int i = 0; i < TriangleList.Count; i++)
+        Normals.Clear();
+        foreach (var triangle in TriangleList)
         {
-            UpdateNormals(TriangleList[i]);
+            triangle.UpdateNormal();
+            Normals.AddRange(triangle.Normal, triangle.Normal, triangle.Normal);
         }
+
+        _normalVbo.Update(Normals);
+    }
+
+    public void RecalculateUvs()
+    {
+        Uvs.Clear();
+        foreach (var triangle in TriangleList)
+        {
+            Uvs.AddRange(triangle.UvA, triangle.UvB, triangle.UvC);
+        }
+
+        _uvVbo.Update(Uvs);
     }
 
     public void GenerateIndices()
@@ -372,7 +407,7 @@ public class ModelMesh : Meshes
 
         for (int i = 1; i < vertices.Count; i++)
         {
-            vertices[0].Position += vertices[i].Position;
+            vertices[0].Position += vertices[i];
             vertices[i].ReplaceWith(vertices[0], edgesToRemove, trianglesToRemove);
             VertexList.Remove(vertices[i]);
         }
@@ -410,6 +445,22 @@ public class ModelMesh : Meshes
                 EdgeList.Remove(edge);
             }
         }
+
+        // Check for duplicate edges
+        for (int i = 0; i < edges.Count - 1; i++)
+        {
+            Edge edgeA = edges[i];
+            for (int j = i + 1; j < edges.Count; j++)
+            {
+                Edge edgeB = edges[j];
+
+                if (edgeA.HasSameVertex(edgeB))
+                {
+                    edgeB.Delete();
+                    EdgeList.Remove(edgeB);
+                }
+            }
+        }
     }
 
     public void CheckUselessTriangles()
@@ -426,10 +477,23 @@ public class ModelMesh : Meshes
         }
     }
 
-    public void CombineDuplicateVertices()
+    public void CheckUselessVertices()
     {
         List<Vertex> vertices = [.. VertexList];
         for (int i = 0; i < vertices.Count; i++)
+        {
+            Vertex vertex = vertices[i];
+            if (vertex.ParentEdges.Count == 0 && vertex.ParentTriangles.Count == 0)
+            {
+                VertexList.Remove(vertex);
+            }
+        }
+    }
+
+    public void CombineDuplicateVertices()
+    {
+        List<Vertex> vertices = [.. VertexList];
+        for (int i = 0; i < vertices.Count - 1; i++)
         {
             Vertex vertex = vertices[i];
             for (int j = i + 1; j < vertices.Count; j++)
@@ -479,40 +543,45 @@ public class ModelMesh : Meshes
 
     public override void SaveModel(string modelName, string basePath)
     {
+        CheckUselessVertices();
+        CheckUselessEdges();
+        CheckUselessTriangles();
+
         string path = Path.Combine(basePath, $"{modelName}.model");
         if (!File.Exists(path)) File.WriteAllText(path, "0\n0\n0\n0\n0");
         List<string> oldLines = [.. File.ReadAllLines(path)];
         List<string> newLines = new List<string>();
 
         int oldVertexCount = int.Parse(oldLines[0]);
-        int oldEdgeCount = int.Parse(oldLines[oldVertexCount + 1]);
-        int oldTriangleCount = int.Parse(oldLines[oldVertexCount + oldEdgeCount + 2]);
-        int oldTextureCount = int.Parse(oldLines[oldVertexCount + oldEdgeCount + oldTriangleCount + 3]);
-        int oldNormalCount = int.Parse(oldLines[oldVertexCount + oldEdgeCount + oldTriangleCount + oldTextureCount + 4]);
-        int rigStart = oldVertexCount + oldEdgeCount + oldTriangleCount + oldTextureCount + oldNormalCount + 5;
+        int oldTriangleCount = int.Parse(oldLines[oldVertexCount + 1]);
+        int oldTextureCount = int.Parse(oldLines[oldVertexCount + oldTriangleCount + 2]);
+        int oldNormalCount = int.Parse(oldLines[oldVertexCount + oldTriangleCount + oldTextureCount + 3]);
+        int rigStart = oldVertexCount + oldTriangleCount + oldTextureCount + oldNormalCount + 4;
 
         newLines.Add(VertexList.Count.ToString());
         foreach (var vertex in VertexList)
         {
-            newLines.Add($"v {vertex.Position.X} {vertex.Position.Y} {vertex.Position.Z} {vertex.Index}");
+            newLines.Add($"v {vertex.X} {vertex.Y} {vertex.Z} {vertex.Index}");
         }
-    
+
         newLines.Add(EdgeList.Count.ToString());
         foreach (var edge in EdgeList)
         {
             newLines.Add($"e {VertexList.IndexOf(edge.A)} {VertexList.IndexOf(edge.B)}");
         }
 
+        newLines.Add((TriangleList.Count * 3).ToString());
+        foreach (var triangle in TriangleList)
+        {
+            newLines.Add($"uv {triangle.UvA.X} {triangle.UvA.Y}");
+            newLines.Add($"uv {triangle.UvB.X} {triangle.UvB.Y}");
+            newLines.Add($"uv {triangle.UvC.X} {triangle.UvC.Y}");
+        }
+
         newLines.Add(TriangleList.Count.ToString());
         foreach (var triangle in TriangleList)
         {
             newLines.Add($"f {VertexList.IndexOf(triangle.A)} {VertexList.IndexOf(triangle.B)} {VertexList.IndexOf(triangle.C)} {EdgeList.IndexOf(triangle.AB)} {EdgeList.IndexOf(triangle.BC)} {EdgeList.IndexOf(triangle.CA)}");
-        }
-
-        newLines.Add(Uvs.Count.ToString());
-        foreach (var uv in Uvs)
-        {
-            newLines.Add($"uv {uv.X} {uv.Y}");
         }
 
         newLines.Add(Normals.Count.ToString());
@@ -549,13 +618,14 @@ public class ModelMesh : Meshes
 
         int vertexCount = int.Parse(lines[0]);
         int edgeCount = int.Parse(lines[vertexCount + 1]);
-        int triangleCount = int.Parse(lines[vertexCount + edgeCount + 2]);
-        int uvCount = int.Parse(lines[vertexCount + edgeCount + triangleCount + 3]);
+        int uvCount = int.Parse(lines[vertexCount + edgeCount + 2]);
+        int triangleCount = int.Parse(lines[vertexCount + edgeCount + uvCount + 3]);
 
         for (int i = 1; i <= vertexCount; i++)
         {
             string[] values = lines[i].Split(' ');
             Vertex vertex = new Vertex(new Vector3(float.Parse(values[1]), float.Parse(values[2]), float.Parse(values[3])));
+            vertex.Name = "Vertex " + i;
             vertex.Index = int.Parse(values[4]);
             VertexList.Add(vertex);
             VertexColors.Add(new Vector3(0f, 0f, 0f));
@@ -564,22 +634,62 @@ public class ModelMesh : Meshes
         for (int i = vertexCount + 2; i <= vertexCount + edgeCount + 1; i++)
         {
             string[] values = lines[i].Split(' ');
-            Edge edge = new Edge(VertexList[int.Parse(values[1])], VertexList[int.Parse(values[2])]);
-            EdgeList.Add(edge);
+            EdgeList.Add(new Edge(VertexList[int.Parse(values[1])], VertexList[int.Parse(values[2])]));
         }
 
-        for (int i = vertexCount + edgeCount + 3; i <= vertexCount + edgeCount + triangleCount + 2; i++)
-        {
-            string[] values = lines[i].Split(' ');
-            Triangle triangle = new Triangle(VertexList[int.Parse(values[1])], VertexList[int.Parse(values[2])], VertexList[int.Parse(values[3])], EdgeList[int.Parse(values[4])], EdgeList[int.Parse(values[5])], EdgeList[int.Parse(values[6])]);
-            AddTriangleSimple(triangle);
-        }
-
-        for (int i = vertexCount + edgeCount + triangleCount + 4; i <= vertexCount + edgeCount + triangleCount + uvCount + 3; i++)
+        for (int i = vertexCount + edgeCount + 3; i <= vertexCount + edgeCount + uvCount + 2; i++)
         {
             string[] values = lines[i].Split(' ');
             Uvs.Add(new Vector2(float.Parse(values[1]), float.Parse(values[2])));
         }
+
+        int index = 0;
+        for (int i = vertexCount + edgeCount + uvCount + 4; i <= vertexCount + edgeCount + uvCount + triangleCount + 3; i++)
+        {
+            string[] values = lines[i].Split(' ');
+            
+            Vertex a, b, c;
+
+            try
+            {
+                a = VertexList[int.Parse(values[1])];
+                b = VertexList[int.Parse(values[2])];
+                c = VertexList[int.Parse(values[3])];
+            }
+            catch (Exception)
+            {
+                PopUp.AddPopUp("An error happened when loading the model: Getting vertices for the faces");
+                Unload();
+                return false;
+            }
+            
+            Uv uvA = Uvs.ElementAtOrDefault(index + 0);
+            Uv uvB = Uvs.ElementAtOrDefault(index + 1);
+            Uv uvC = Uvs.ElementAtOrDefault(index + 2);
+
+            Edge ab, bc, ca;
+
+            try
+            {
+                ab = EdgeList[int.Parse(values[4])];
+                bc = EdgeList[int.Parse(values[5])];
+                ca = EdgeList[int.Parse(values[6])];
+            }
+            catch (Exception)
+            {
+                PopUp.AddPopUp("An error happened when loading the model: Getting edges for the faces");
+                Unload();
+                return false;
+            }
+
+            Triangle triangle = new Triangle(a, b, c, uvA, uvB, uvC, ab, bc, ca);
+            AddTriangleSimple(triangle);
+            index += 3;
+        }
+
+        CheckUselessVertices();
+        CheckUselessEdges();
+        CheckUselessTriangles();
 
         Init();
         GenerateBuffers();

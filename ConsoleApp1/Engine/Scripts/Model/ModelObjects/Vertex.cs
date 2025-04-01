@@ -2,8 +2,29 @@ using OpenTK.Mathematics;
 
 public class Vertex
 {
+    public static Vertex Empty = new Vertex(Vector3.Zero);
+
+    public string Name = "0";
+
     private Vector3 _position = Vector3.Zero;
     public Vector3 Position;
+
+    public float X
+    {
+        get { return Position.X;}
+        set { Position.X = value; }
+    }
+    public float Y
+    {
+        get { return Position.Y;}
+        set { Position.Y = value; }
+    }
+    public float Z
+    {
+        get { return Position.Z;}
+        set { Position.Z = value; }
+    }
+
     public Vector3 Color = (0, 0, 0);
     public HashSet<Triangle> ParentTriangles = new HashSet<Triangle>();
     public HashSet<Edge> ParentEdges = new HashSet<Edge>();
@@ -12,8 +33,7 @@ public class Vertex
 
     public Vertex(Vector3 position, Triangle? parentTriangle = null)
     {
-        Position = position;
-        _position = position;
+        SetPosition(position);
         if (parentTriangle != null && !ParentTriangles.Contains(parentTriangle))
             ParentTriangles.Add(parentTriangle);
     }
@@ -146,8 +166,17 @@ public class Vertex
 
     public Vertex Copy()
     {
-        return new Vertex(Position);
+        Vertex vertex = new Vertex(Position);
+        vertex.Name = Name;
+        return vertex;
     }
+
+
+    // Operators
+    public static implicit operator Vector3(Vertex vertex) => vertex.Position;
+    public static bool operator &(Vertex vertex1, Vertex vertex2) => vertex1.Position == vertex2.Position;
+    public static Vector3 operator -(Vertex vertex1, Vertex vertex2) => vertex1.Position - vertex2.Position;
+    public static Vector3 operator +(Vertex vertex1, Vertex vertex2) => vertex1.Position + vertex2.Position;
     
     public override string ToString()
     {

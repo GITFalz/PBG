@@ -12,8 +12,6 @@ public class Model
     public ModelRigging ModelRigging = new ModelRigging();
     public ModelModeling ModelModeling = new ModelModeling();
 
-    public Camera camera;
-
     public Dictionary<string, Animation> Animations = new Dictionary<string, Animation>();
     public List<Bone> Bones = new List<Bone>();
     public AnimationMesh animationMesh = new AnimationMesh();

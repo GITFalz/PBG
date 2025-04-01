@@ -201,7 +201,7 @@ public static class ModelingHelper
         triangle1.InvertIfInverted();
         triangle2.InvertIfInverted();
 
-        Mesh.UpdateNormals(triangle1);
-        Mesh.UpdateNormals(triangle2);
+        triangle1.UpdateNormal();
+        triangle2.UpdateNormal();
     }
 }

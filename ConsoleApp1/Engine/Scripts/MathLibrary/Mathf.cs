@@ -245,6 +245,21 @@ public static class Mathf
     {
         return Quaternion.FromAxisAngle(axis, angle) * rotation;
     }
+
+    public static Vector3 RotatePoint(Vector3 point, Vector3 center, Vector3 axis, float degrees)
+    {
+        float radians = MathHelper.DegreesToRadians(degrees);
+        float sinHalfAngle = MathF.Sin(radians / 2);
+
+        axis.Normalize();
+        Vector3 relativePoint = point - center;
+
+        Quaternion rotation = new Quaternion(axis * sinHalfAngle, MathF.Cos(radians / 2));
+        Quaternion pQuat = new Quaternion(relativePoint, 0);
+        Quaternion rotatedQuat = rotation * pQuat * rotation.Inverted();
+
+        return (rotatedQuat.X, rotatedQuat.Y, rotatedQuat.Z) + center;
+    }
     
     public static Vector2? WorldToScreen(Vector3 worldPosition, System.Numerics.Matrix4x4 projectionMatrix, System.Numerics.Matrix4x4 vMatrix)
     {
@@ -320,5 +335,107 @@ public static class Mathf
         float t = MathHelper.Clamp(dot / lineLengthSq, 0f, 1f);
         Vector2 closestPoint = pointA + (lineDirection * t);
         return (point - closestPoint).LengthSquared <= distance * distance;
+    }
+
+    public static void GetSmallestBoundingBox(List<Vertex> vertices, out Vector3 min, out Vector3 max)
+    {
+        if (vertices.Count == 0)
+        {
+            min = Vector3.Zero;
+            max = Vector3.Zero;
+            return;
+        }
+
+        List<Vector3> positions = [];
+        foreach (var vertex in vertices)
+        {
+            positions.Add(vertex.Position);
+        }
+
+        Vector3 center = Vector3.Zero;
+        Vector3 rotationAxis = (0, 1, 0);
+        foreach (var vertex in vertices)
+        {
+            center += vertex.Position;
+        }
+        center /= vertices.Count;
+
+        Vector3 axisX = (1, 0, 0);
+
+        List<Edge> edges = Edge.GetEdges(vertices);
+        List<Vector3> copy = [.. positions];
+
+        if (edges.Count == 0)
+        {
+            min = Vector3.Zero;
+            max = Vector3.Zero;
+            return;
+        }
+
+        Edge best = edges[0];
+        Vector3 direction = edges[0].GetDirection();
+        float angle = MathHelper.RadiansToDegrees(Vector3.CalculateAngle(axisX, direction));
+
+        for (int i = 0; i < copy.Count; i++)
+        {
+            copy[i] = RotateAround(copy[i], center, rotationAxis, angle);
+        }
+
+        Vector3 minC = copy[0];
+        Vector3 maxC = copy[0];
+
+        for (int i = 1; i < copy.Count; i++)
+        {
+            minC = Vector3.ComponentMin(minC, copy[i]);
+            maxC = Vector3.ComponentMax(maxC, copy[i]);
+        }
+
+        Vector3 size = maxC - minC;
+        min = minC;
+        max = maxC;
+
+        for (int i = 1; i < edges.Count; i++)
+        {
+            copy = [.. positions];
+
+            direction = edges[i].GetDirection();
+            float a = MathHelper.RadiansToDegrees(Vector3.CalculateAngle(axisX, direction));
+
+            for (int j = 0; j < copy.Count; j++)
+            {
+                copy[j] = RotateAround(copy[j], center, rotationAxis, a);
+            }
+
+            minC = copy[0];
+            maxC = copy[0];
+
+            for (int j = 1; j < copy.Count; j++)
+            {
+                minC = Vector3.ComponentMin(minC, copy[j]);
+                maxC = Vector3.ComponentMax(maxC, copy[j]);
+            }
+
+            Vector3 sizeC = maxC - minC;
+
+            //Console.WriteLine("Size original: " + size + " Volume: " + size.X * size.Y * size.Z);
+            //Console.WriteLine("Size rotated: " + sizeC + " Volume: " + sizeC.X * sizeC.Y * sizeC.Z);
+
+            if (sizeC.X * sizeC.Z < size.X * size.Z)
+            {
+                min = minC;
+                max = maxC;
+                size = sizeC;
+                angle = a;
+                best = edges[i];
+            }
+        }
+
+        best.A.Color = (0.25f, 0.3f, 1);
+        best.B.Color = (0.25f, 0.3f, 1);
+
+        foreach (var vertex in vertices)
+        {
+            vertex.SetPosition(RotateAround(vertex, center, rotationAxis, angle));
+        }
     }
 }

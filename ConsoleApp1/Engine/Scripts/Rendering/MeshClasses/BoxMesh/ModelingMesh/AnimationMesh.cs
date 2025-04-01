@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
@@ -231,7 +227,7 @@ public class AnimationMesh : Meshes
             Vertex b = VertexList[int.Parse(values[2])];
             Vertex c = VertexList[int.Parse(values[3])];
 
-            Vertices.AddRange(a.Position, b.Position, c.Position);
+            Vertices.AddRange(a, b, c);
             BoneIndices.AddRange(a.Index, b.Index, c.Index);
         }
 

@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using ConsoleApp1.Engine.Scripts.Core;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
@@ -155,7 +150,7 @@ public class RigMesh : Meshes
             string line = oldLines[i];
             if (line.StartsWith("v"))
             {
-                line = $"v {VertexList[j].Position.X} {VertexList[j].Position.Y} {VertexList[j].Position.Z} {VertexList[j].Index}";
+                line = $"v {VertexList[j].X} {VertexList[j].Y} {VertexList[j].Z} {VertexList[j].Index}";
                 j++;
             }
             newLines.Add(line);
@@ -226,7 +221,7 @@ public class RigMesh : Meshes
         for (int i = edgeTotal + 3; i <= triangleTotal + 2; i++)
         {
             string[] values = lines[i].Split(' ');
-            MeshVertices.AddRange(VertexList[int.Parse(values[1])].Position, VertexList[int.Parse(values[2])].Position, VertexList[int.Parse(values[3])].Position);
+            MeshVertices.AddRange(VertexList[int.Parse(values[1])], VertexList[int.Parse(values[2])], VertexList[int.Parse(values[3])]);
         }
 
         for (int i = uvTotal + 5; i <= normalTotal + 4; i++)
