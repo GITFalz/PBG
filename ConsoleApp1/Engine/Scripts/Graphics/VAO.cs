@@ -2,15 +2,18 @@
 
 public class VAO
 {
+    public static List<VAO> VAOs = new List<VAO>();
+
     public int ID;
     
     public VAO()
     {
         ID = GL.GenVertexArray();
         GL.BindVertexArray(ID);
+        VAOs.Add(this);
     }
     
-    public void LinkToVAO(int location, int size, VBO vbo)
+    public void LinkToVAO<T>(int location, int size, VBO<T> vbo) where T : struct
     {
         Bind();
         vbo.Bind();
@@ -21,5 +24,12 @@ public class VAO
     
     public void Bind() { GL.BindVertexArray(ID); }
     public void Unbind() { GL.BindVertexArray(0); }
-    public void Delete() { GL.DeleteVertexArray(ID); }
+    public static void Delete()
+    {
+        foreach (var vao in VAOs)
+        {
+            GL.DeleteVertexArray(vao.ID);
+        }
+        VAOs.Clear();
+    }
 }

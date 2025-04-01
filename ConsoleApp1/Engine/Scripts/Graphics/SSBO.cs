@@ -1,16 +1,36 @@
+using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
-using OpenTK.Mathematics;
 
-public class SSBO
+// Deletion Class
+public class SSBOBase 
 {
+    public static List<SSBOBase> SSBOs = new List<SSBOBase>();
+    
     public int ID;
-    private const int Matrix4SizeInBytes = sizeof(float) * 16;
+    
+    public SSBOBase()
+    {
+        SSBOs.Add(this);
+    }
 
-    public SSBO(List<Matrix4> data)
+    public static void Delete()
+    {
+        foreach (var ssbo in SSBOs)
+        {
+            GL.DeleteBuffer(ssbo.ID);
+        }
+        SSBOs.Clear();
+    }
+}
+
+public class SSBO<T> : SSBOBase where T : struct
+{
+    public SSBO(List<T> data) : base()
     {
         ID = GL.GenBuffer();
         GL.BindBuffer(BufferTarget.ShaderStorageBuffer, ID);
-        GL.BufferData(BufferTarget.ShaderStorageBuffer, data.Count * Matrix4SizeInBytes, data.ToArray(), BufferUsageHint.DynamicDraw);
+        GL.BufferData(BufferTarget.ShaderStorageBuffer, data.Count * Marshal.SizeOf(typeof(T)), data.ToArray(), BufferUsageHint.DynamicDraw);
+        SSBOs.Add(this);
     }
 
     public void Bind(int bindingPoint)
@@ -24,15 +44,10 @@ public class SSBO
         GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
     }
 
-    public void Delete()
-    {
-        GL.DeleteBuffer(ID);
-    }
-
-    public void Update(List<Matrix4> newData, int bindingPoint)
+    public void Update(List<T> newData, int bindingPoint)
     {
         Bind(bindingPoint);
-        GL.BufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, newData.Count * Matrix4SizeInBytes, newData.ToArray());
+        GL.BufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, newData.Count * Marshal.SizeOf(typeof(T)), newData.ToArray());
         Unbind();
     }
 }

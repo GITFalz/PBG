@@ -2,6 +2,8 @@
 
 public class IBO
 {
+    public static List<IBO> IBOs = new List<IBO>();
+
     public int ID;
     
     public IBO(List<uint> data)
@@ -9,13 +11,23 @@ public class IBO
         ID = GL.GenBuffer();
         GL.BindBuffer(BufferTarget.ElementArrayBuffer, ID);
         GL.BufferData(BufferTarget.ElementArrayBuffer, data.Count * sizeof(uint), data.ToArray(), BufferUsageHint.StaticDraw);
+        IBOs.Add(this);
     }
     
-    public void Bind() { GL.BindBuffer(BufferTarget.ElementArrayBuffer, ID); }
-    public void Unbind() { GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0); }
-    public void Delete() { GL.DeleteBuffer(ID); }
-    public void Update(List<uint> newData)
-    {
-        GL.BufferSubData(BufferTarget.ElementArrayBuffer, IntPtr.Zero, newData.Count * sizeof(uint), newData.ToArray());
+    public void Bind() 
+    { 
+        GL.BindBuffer(BufferTarget.ElementArrayBuffer, ID); 
+    }
+
+    public void Unbind() 
+    { 
+        GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0); 
+    }
+
+    public static void Delete() 
+    { 
+        foreach (var ibo in IBOs) 
+            GL.DeleteBuffer(ibo.ID); 
+        IBOs.Clear();
     }
 }

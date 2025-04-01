@@ -2,6 +2,8 @@ using OpenTK.Graphics.OpenGL4;
 
 public class ComputeShader
 {
+    public static List<ComputeShader> ComputeShaders = new List<ComputeShader>();
+
     public int ID;
 
     public ComputeShader(string computeShaderFilePath)
@@ -28,6 +30,7 @@ public class ComputeShader
         }
 
         GL.DeleteShader(computeShader);
+        ComputeShaders.Add(this);
     }
 
     public void Bind() { GL.UseProgram(ID); }
@@ -40,5 +43,13 @@ public class ComputeShader
         GL.MemoryBarrier(MemoryBarrierFlags.ShaderStorageBarrierBit);
     }
 
-    public void Delete() { GL.DeleteProgram(ID); }
+    public static void Delete()
+    {
+        foreach (var computeShader in ComputeShaders)
+        {
+            GL.DeleteProgram(computeShader.ID);
+        }
+
+        ComputeShaders.Clear();
+    }
 }

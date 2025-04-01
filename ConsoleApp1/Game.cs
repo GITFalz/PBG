@@ -1,8 +1,5 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Drawing;
-using ConsoleApp1.Assets.Scripts.Inputs;
-using ConsoleApp1.Assets.Scripts.World.Blocks;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -57,10 +54,6 @@ public class Game : GameWindow
     
     
     public static Scene? CurrentScene;
-
-    // Miscaleanous Ui
-    private PopUp _popUp;
-    
     
     public Game(int width, int height) : base(GameWindowSettings.Default, new NativeWindowSettings
         {
@@ -141,43 +134,6 @@ public class Game : GameWindow
         KeyboardState keyboard = KeyboardState;
         
         Input.Start(keyboard, mouse);
-
-        
-        // Blocks
-        UVmaps editorUvs = new UVmaps( new int[] { 0, 0, 0, 0, 0, 0 });
-        
-        //UVmaps grassUvs = new UVmaps( new int[] { 0, 0, 1, 0, 2, 0 });
-        //UVmaps dirtUvs = new UVmaps( new int[] { 2, 2, 2, 2, 2, 2 });
-        //UVmaps stoneUvs = new UVmaps( new int[] { 3, 3, 3, 3, 3, 3 });
-    
-        
-        CWorldBlock editor = new CWorldBlock("editor_block", 1, 1, editorUvs);
-        
-        //CWorldBlock grass = new CWorldBlock("grass_block", 0, 1, grassUvs);
-        //CWorldBlock dirt = new CWorldBlock("dirt_block", 1, 2, dirtUvs);
-        //CWorldBlock stone = new CWorldBlock("stone_block", 2, 3, stoneUvs);
-        
-        BlockManager.Add(editor);
-        
-        //BlockManager.Add(grass);
-        //BlockManager.Add(dirt);
-        //BlockManager.Add(stone);
-        
-        
-        // World
-        _worldScene.AddGameObject(["Root"], new PlayerStateMachine(), new PhysicsBody(false));
-        _worldScene.AddGameObject(["Root"], new WorldManager());
-
-        // Modeling
-        _modelingScene.AddGameObject(["Root"], new GeneralModelingEditor());
-        
-        // UI
-        _uiEditorScene.AddGameObject(["Root"], new UiEditor());
-        
-        AddScenes(_worldScene, _modelingScene, _uiScene, _uiEditorScene);
-        LoadScene("Modeling");
-
-        _popUp = new PopUp();
     
         _physicsThread = new Thread(PhysicsThread);
         _physicsThread.Start();
@@ -210,6 +166,18 @@ public class Game : GameWindow
         _physicsThread.Join();
         
         CurrentScene?.OnExit();
+
+        ComputeShader.Delete();
+        FBO.DeleteAll();
+        IBO.Delete();
+        ShaderProgram.Delete();
+        SSBOBase.Delete();
+        TBOBase.Delete();
+        Texture.Delete();
+        TextureArray.Delete();
+        VAO.Delete();
+        VBOBase.Delete();
+
         
         base.OnUnload();
     }
@@ -227,7 +195,6 @@ public class Game : GameWindow
         
         Skybox.Render();
         CurrentScene?.OnRender();
-        _popUp.Render();
         
         Context.SwapBuffers();
         
@@ -284,8 +251,6 @@ public class Game : GameWindow
             }
         }
 
-        _popUp.Update();
-        
         CurrentScene?.OnUpdate();
         
         base.OnUpdateFrame(args);
