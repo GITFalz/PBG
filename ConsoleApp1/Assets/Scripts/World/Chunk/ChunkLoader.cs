@@ -2,6 +2,25 @@ using OpenTK.Mathematics;
 
 public static class ChunkLoader
 {
+    public static bool IsChunkStored(Chunk chunkData)
+    {
+        Vector3 regionPos = ChunkGenerator.RegionPosition(chunkData.GetRelativePosition());
+        string filePath = Path.Combine(Game.chunkPath, $"Region_{regionPos.X}_{regionPos.Y}_{regionPos.Z}.chunk");
+
+        if (!File.Exists(filePath))
+            return false;
+
+        int chunkIndex = ChunkGenerator.ChunkIndex(chunkData.GetRelativePosition());
+
+        FileStream fileStream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+        using BinaryReader reader = new BinaryReader(fileStream);
+
+        fileStream.Seek(2 + chunkIndex * 2, SeekOrigin.Begin);
+
+        int index = reader.ReadUInt16();
+        return index != ushort.MaxValue;
+    }
+
     public static bool LoadChunk(Chunk chunkData)
     {
         Vector3 regionPos = ChunkGenerator.RegionPosition(chunkData.GetRelativePosition());
@@ -12,7 +31,7 @@ public static class ChunkLoader
 
         int chunkIndex = ChunkGenerator.ChunkIndex(chunkData.GetRelativePosition());
 
-        FileStream fileStream = File.Open(filePath, FileMode.Open);
+        FileStream fileStream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
         using BinaryReader reader = new BinaryReader(fileStream);
 
         fileStream.Seek(2 + chunkIndex * 2, SeekOrigin.Begin);

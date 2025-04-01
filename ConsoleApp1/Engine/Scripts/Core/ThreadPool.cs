@@ -29,7 +29,7 @@ public static class ThreadPool
 
     private static async void ProcessTasks()
     {
-        while (_currentTaskCount < ThreadCount - 1)
+        while (_currentTaskCount < ThreadCount)
         {
             if (_actions.TryDequeue(out var action))
             {

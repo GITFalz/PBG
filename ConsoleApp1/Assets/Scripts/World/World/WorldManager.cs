@@ -344,25 +344,25 @@ public class WorldManager : ScriptingNode
 
     private void GenerateChunks()
     {
-        if (ChunkManager.GenerateChunkQueue.TryDequeue(out var position))
+        while (ChunkManager.GenerateChunkQueue.TryDequeue(out var position))
         {
             if (ChunkManager.ActiveChunks.ContainsKey(position) || ChunkManager.IgnoreList.Contains(position)) 
                 return;
 
             Chunk chunkData = new Chunk(_renderType, VoxelData.ChunkToRelativePosition(position));
-            bool loaded = chunkData.LoadChunk();
+            bool loaded = ChunkLoader.IsChunkStored(chunkData);
             chunkData.Save = !loaded;
             if (ChunkManager.TryAddActiveChunk(chunkData))
             {
                 chunkData.Stage = ChunkStage.Instance;
-                ThreadPool.QueueAction(() => GenerateChunk(chunkData, loaded), TaskPriority.High);
+                ThreadPool.QueueAction(() => GenerateChunk(chunkData, loaded), TaskPriority.Low);
             }
         }
     }
 
     private void RegenerateChunks()
     {
-        if (ChunkManager.RegenerateMeshQueue.TryDequeue(out var chunkData))
+        while (ChunkManager.RegenerateMeshQueue.TryDequeue(out var chunkData))
         {
             Vector3i position = chunkData.GetWorldPosition();
             if (!ChunkManager.ActiveChunks.ContainsKey(position) || ChunkManager.IgnoreList.Contains(position)) 
@@ -374,25 +374,25 @@ public class WorldManager : ScriptingNode
 
     private void PopulateChunks()
     {
-        if (ChunkManager.PopulateChunkQueue.TryDequeue(out var chunkData))
+        while (ChunkManager.PopulateChunkQueue.TryDequeue(out var chunkData))
         {
             Vector3i position = chunkData.GetWorldPosition();
             if (!ChunkManager.ActiveChunks.ContainsKey(position) || ChunkManager.IgnoreList.Contains(position)) 
                 return;
 
-            ThreadPool.QueueAction(() => PopulateChunk(chunkData), TaskPriority.High);
+            ThreadPool.QueueAction(() => PopulateChunk(chunkData), TaskPriority.Normal);
         }
     }
 
     private void GenerateMeshChunks()
     {
-        if (ChunkManager.GenerateMeshQueue.TryDequeue(out var chunkData))
+        while (ChunkManager.GenerateMeshQueue.TryDequeue(out var chunkData))
         {
             Vector3i position = chunkData.GetWorldPosition();
             if (!ChunkManager.ActiveChunks.ContainsKey(position) || ChunkManager.IgnoreList.Contains(position)) 
                 return;
 
-            ThreadPool.QueueAction(() => GenerateMeshChunk(chunkData), TaskPriority.Normal);
+            ThreadPool.QueueAction(() => GenerateMeshChunk(chunkData), TaskPriority.High);
         }
     }
 
@@ -421,6 +421,7 @@ public class WorldManager : ScriptingNode
             } 
             else
             {
+                chunkData.LoadChunk();
                 chunkData.Stage = ChunkStage.Populated;
                 ChunkManager.GenerateMeshQueue.Enqueue(chunkData);
                 chunkData.Save = false;
