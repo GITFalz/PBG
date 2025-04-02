@@ -13,12 +13,12 @@ public class TextMesh
     
     private VAO _vao = new VAO();
     private IBO _ibo = new IBO([]);
-    private VBO _vertVbo = new VBO(new List<Vector3>());
-    private VBO _uvVbo = new VBO(new List<Vector2>());
-    private VBO _transformationVbo = new VBO(new List<int>());
-    public VBO _textUvVbo = new VBO(new List<Vector2i>());
+    private VBO<Vector3> _vertVbo = new VBO<Vector3>(new List<Vector3>());
+    private VBO<Vector2> _uvVbo = new VBO<Vector2>(new List<Vector2>());
+    private VBO<Vector2i> _textUvVbo = new VBO<Vector2i>(new List<Vector2i>());
+    private VBO<int> _transformationVbo = new VBO<int>(new List<int>());
     private SSBO<Matrix4> _transformationSsbo = new(new List<Matrix4>{});
-    public TBO _textTbo = new TBO([]);
+    public TBO<int> _textTbo = new TBO<int>(new List<int>());
     public int ElementCount = 0;
 
     public void SetCharacters(UIText uIText, int offset)
@@ -57,12 +57,12 @@ public class TextMesh
     {
         GenerateIndices();
 
-        _vertVbo = new VBO(Vertices);
-        _uvVbo = new VBO(Uvs);
-        _textUvVbo = new VBO(TextUvs);
-        _transformationVbo = new VBO(TransformationIndex);
+        _vertVbo = new(Vertices);
+        _uvVbo = new(Uvs);
+        _textUvVbo = new(TextUvs);
+        _transformationVbo = new(TransformationIndex);
         _transformationSsbo = new(TransformationMatrices);
-        _textTbo = new TBO(chars);
+        _textTbo = new(chars);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
         _vao.LinkToVAO(1, 2, _uvVbo);
@@ -89,7 +89,7 @@ public class TextMesh
 
     public void UpdateMatrices()
     {
-        _transformationSsbo.Update(TransformationMatrices);
+        _transformationSsbo.Update(TransformationMatrices, 0);
     }
 
     public void UpdateText()

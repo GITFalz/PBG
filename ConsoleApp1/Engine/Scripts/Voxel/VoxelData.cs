@@ -69,7 +69,7 @@ public static class VoxelData
         (x, z) => 31 - x,
     };
 
-    public static BoxMesh GetEntityBoxMesh(BoxMesh mesh, Vector3 size, Vector3 offset, int color)
+    public static OldAnimationMesh GetEntityBoxMesh(OldAnimationMesh mesh, Vector3 size, Vector3 offset, int color)
     {
         MeshHelper.GenerateMeshIndices(mesh);
         mesh.Uvs.AddRange(VoxelData.UVTable);
@@ -152,7 +152,7 @@ public static class VoxelData
         return mesh;
     }
 
-    public static void GenerateStandardMeshBox(BoxMesh mesh, Vector3 size, Vector3 position, Vector3 rotation, int color)
+    public static void GenerateStandardMeshBox(OldAnimationMesh mesh, Vector3 size, Vector3 position, Vector3 rotation, int color)
     {
         Quaternion rot = Quaternion.FromEulerAngles(MathHelper.DegreesToRadians(rotation.X), MathHelper.DegreesToRadians(rotation.Y), MathHelper.DegreesToRadians(rotation.Z));
         Vector3 center = new Vector3(0, 0, 0);
@@ -455,7 +455,7 @@ public static class VoxelData
     }
 
 
-    public static void AddVertToBoxMesh(BoxMesh mesh, Vector3 scale, Quaternion rotation, Vector3 position)
+    public static void AddVertToBoxMesh(OldAnimationMesh mesh, Vector3 scale, Quaternion rotation, Vector3 position)
     {
         mesh.Vertices.Add(Mathf.RotateAround(scale + position, new Vector3(0, 0, 0), rotation));
     }

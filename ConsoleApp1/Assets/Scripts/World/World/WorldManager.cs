@@ -14,6 +14,8 @@ public class WorldManager : ScriptingNode
 
     public Chunk chunkData = new Chunk(RenderType.Solid, new Vector3i(0, 0, 0));
     public ShaderProgram pullingShader = new ShaderProgram("World/Pulling.vert", "World/Pulling.frag");
+
+    public ArrayIDBO IndirectDrawingChunkBuffer = new(new List<DrawArraysIndirectCommand>());
     
     public WorldManager()
     {
@@ -482,17 +484,6 @@ public class WorldManager : ScriptingNode
         foreach (var (_, chunk) in ChunkManager.ActiveChunks)
         {
             chunk.Delete();
-        }
-        
-        try
-        {
-            _shaderProgram.Delete();
-            _wireframeShader.Delete();
-            _textures.Delete();
-        }
-        catch (Exception e)
-        {
-            // ignored
         }
     }
 }

@@ -21,12 +21,12 @@ public static class Shader
         return shaderSource;
     }
 
-    public static void Error(string context)
+    public static void Error(string message = "Error: ")
     {
         ErrorCode error = GL.GetError();
         if (error != ErrorCode.NoError)
         {
-            Console.WriteLine($"OpenGL Error: {context} - {error}");
+            Console.WriteLine(message + error);
         }
     }
 }

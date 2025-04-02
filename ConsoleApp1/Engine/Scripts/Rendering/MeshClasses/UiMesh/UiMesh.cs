@@ -14,13 +14,13 @@ public class UIMesh
     public List<Matrix4> TransformationMatrices = [];  
     private VAO _vao = new VAO();
     private IBO _ibo = new IBO([]);
-    private VBO _vertVbo = new VBO(new List<Vector3>());
-    private VBO _uvVbo = new VBO(new List<Vector2>());
-    private VBO _textureVbo = new VBO(new List<int>());
-    public VBO _uiSizeVbo = new VBO(new List<Vector2>());
-    private VBO _transformationVbo = new VBO(new List<int>());
-    private VBO _sliceVbo = new VBO(new List<Vector2>());
-    private VBO _colorVbo = new VBO(new List<Vector3>());
+    private VBO<Vector3> _vertVbo = new(new List<Vector3>());
+    private VBO<Vector2> _uvVbo = new(new List<Vector2>());
+    private VBO<int> _textureVbo = new(new List<int>());
+    public VBO<Vector2> _uiSizeVbo = new(new List<Vector2>());
+    private VBO<int> _transformationVbo = new(new List<int>());
+    private VBO<Vector2> _sliceVbo = new(new List<Vector2>());
+    private VBO<Vector3> _colorVbo = new(new List<Vector3>());
     private SSBO<Matrix4> _transformationSsbo = new(new List<Matrix4>{});
     public int ElementCount = 0;
 
@@ -90,13 +90,13 @@ public class UIMesh
     {
         GenerateIndices();
 
-        _vertVbo = new VBO(Vertices);
-        _uvVbo = new VBO(Uvs);
-        _textureVbo = new VBO(TextureIndices);
-        _uiSizeVbo = new VBO(UiSizes);
-        _transformationVbo = new VBO(TransformationIndex);
-        _sliceVbo = new VBO(Slices);
-        _colorVbo = new VBO(Colors);
+        _vertVbo = new(Vertices);
+        _uvVbo = new(Uvs);
+        _textureVbo = new(TextureIndices);
+        _uiSizeVbo = new(UiSizes);
+        _transformationVbo = new(TransformationIndex);
+        _sliceVbo = new(Slices);
+        _colorVbo = new(Colors);
         _transformationSsbo = new(TransformationMatrices);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
@@ -125,7 +125,7 @@ public class UIMesh
 
     public void UpdateMatrices()
     {
-        _transformationSsbo.Update(TransformationMatrices);
+        _transformationSsbo.Update(TransformationMatrices, 0);
     }
 
     public void UpdateVertices()

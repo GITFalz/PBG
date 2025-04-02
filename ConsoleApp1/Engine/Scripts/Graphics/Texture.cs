@@ -3,6 +3,8 @@ using StbImageSharp;
 
 public class Texture
 {
+    public static List<Texture> Textures = new List<Texture>();
+
     public int ID;
     
     public int Width { get; private set; }
@@ -29,6 +31,7 @@ public class Texture
         GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, texture.Width, texture.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, texture.Data);
 
         Unbind();
+        Textures.Add(this);
     }
 
     public void Bind()
@@ -36,6 +39,29 @@ public class Texture
         GL.ActiveTexture(TextureUnit.Texture0);
         GL.BindTexture(TextureTarget.Texture2D, ID);
     }
-    public void Unbind() { GL.BindTexture(TextureTarget.Texture2D, 0); }
-    public void Delete() { GL.DeleteTexture(ID); }
+
+    public static void Bind(int id)
+    {
+        GL.ActiveTexture(TextureUnit.Texture0);
+        GL.BindTexture(TextureTarget.Texture2D, id);
+    }
+
+    public void Unbind() 
+    { 
+        GL.BindTexture(TextureTarget.Texture2D, 0); 
+    }
+
+    public static void UnbindAll()
+    {
+        GL.BindTexture(TextureTarget.Texture2D, 0);
+    }
+
+    public static void Delete()
+    {
+        foreach (var texture in Textures)
+        {
+            GL.DeleteTexture(texture.ID);
+        }
+        Textures.Clear();
+    }
 }

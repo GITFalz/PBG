@@ -195,52 +195,6 @@ public class Game : GameWindow
 
         base.OnLoad();
     }
-
-    public void SSBOTest()
-    {
-        List<int> initialData = new List<int> { 1, 2, 3, 4, 5 };
-
-        // Create SSBO and initialize with data
-        SSBO<int> testSSBO = new(20);
-        Console.WriteLine("SSBO ID: " + testSSBO.ID);
-
-        computeTest.Bind();
-        testSSBO.Update(initialData);
-
-        // Bind SSBO to a binding point
-        int bindingPoint = 2;
-        testSSBO.Bind(bindingPoint);
-        Console.WriteLine("Bind SSBO to binding point " + bindingPoint);
-
-        int sizeLoc = GL.GetUniformLocation(computeTest.ID, "dataSize");
-        
-        GL.Uniform1(sizeLoc, 5);
-
-        computeTest.DispatchCompute(1, 1, 1);
-
-        // Read the data back to verify
-        int[] values = testSSBO.ReadData(initialData.Count);
-        Console.WriteLine("Read data");
-        string output = "Values: " + string.Join(", ", values);
-        Console.WriteLine(output);
-
-        computeTest.Unbind();
-
-        // Update the SSBO with new data
-        List<int> newData = new List<int> { 10, 20, 30, 40, 50, 60 };
-        testSSBO.Update(newData);
-        Console.WriteLine("Updated SSBO with new data");
-
-        // Read the updated data back to verify
-        values = testSSBO.ReadData(newData.Count);
-        Console.WriteLine("Read updated data");
-        output = "Updated Values: " + string.Join(", ", values);
-        Console.WriteLine(output);
-
-        // Delete the SSBO
-        testSSBO.Delete();
-        Console.WriteLine("Deleted SSBO");
-    }
     
     protected override void OnKeyDown(KeyboardKeyEventArgs e)
     {
@@ -306,6 +260,18 @@ public class Game : GameWindow
     
     protected override void OnUnload()
     {
+        ComputeShader.Delete();
+        FBO.DeleteAll();
+        IBO.Delete();
+        IDBOBase.Delete();
+        ShaderProgram.Delete();
+        SSBOBase.Delete();
+        TBOBase.Delete();
+        Texture.Delete();
+        TextureArray.Delete();
+        VAO.Delete();
+        VBOBase.Delete(); 
+
         GC.Collect();
         GC.WaitForPendingFinalizers();
         

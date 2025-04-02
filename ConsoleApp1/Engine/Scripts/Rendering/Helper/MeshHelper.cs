@@ -2,7 +2,7 @@
 
 public static class MeshHelper
 {
-    public static void GenerateMeshIndices(Mesh mesh)
+    public static void GenerateMeshIndices(OldAnimationMesh mesh)
     {
         uint count = (uint)mesh.Vertices.Count;
         

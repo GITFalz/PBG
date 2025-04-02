@@ -16,11 +16,11 @@ public class AnimationMesh
     public List<Matrix4> BoneMatrices = new List<Matrix4>();  
     private VAO _vao = new VAO();
     private IBO _ibo = new IBO([]);
-    private VBO _vertVbo = new VBO([(0, 0, 0)]);
-    private VBO _uvVbo = new VBO([(0, 0)]);
-    private VBO _textureVbo = new VBO([0]);
-    private VBO _normalVbo = new VBO([(0, 0, 0)]);
-    private VBO _boneVbo = new VBO([(0, 0, 0, 0)]);
+    private VBO<Vector3> _vertVbo = new([(0, 0, 0)]);
+    private VBO<Vector2> _uvVbo = new([(0, 0)]);
+    private VBO<int> _textureVbo = new([0]);
+    private VBO<Vector3> _normalVbo = new([(0, 0, 0)]);
+    private VBO<Vector4i> _boneVbo = new([(0, 0, 0, 0)]);
     private SSBO<Matrix4> _boneSSBO = new(new List<Matrix4>{});
     public Bone RootBone;
     public int BoneCount;
@@ -36,11 +36,11 @@ public class AnimationMesh
         GenerateIndices();
         GenerateBasicBoneMatrices();
         
-        _vertVbo = new VBO(Vertices);
-        _uvVbo = new VBO(Uvs);
-        _textureVbo = new VBO(TextureIndices);
-        _normalVbo = new VBO(Normals);
-        _boneVbo = new VBO(BoneIndices);
+        _vertVbo = new(Vertices);
+        _uvVbo = new(Uvs);
+        _textureVbo = new(TextureIndices);
+        _normalVbo = new(Normals);
+        _boneVbo = new(BoneIndices);
         _boneSSBO = new(BoneMatrices);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
@@ -85,6 +85,6 @@ public class AnimationMesh
 
     public void UpdateBoneMatrices()
     {
-        _boneSSBO.Update(BoneMatrices);
+        _boneSSBO.Update(BoneMatrices, 0);
     }
 }

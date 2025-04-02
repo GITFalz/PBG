@@ -2,17 +2,16 @@ using OpenTK.Graphics.OpenGL4;
 
 public class ComputeShader
 {
+    public static List<ComputeShader> ComputeShaders = new List<ComputeShader>();
+
     public int ID;
 
-    public ComputeShader(string data, bool isFile = true)
+    public ComputeShader(string computeShaderFilePath)
     {
         ID = GL.CreateProgram();
 
-        int computeShader = GL.CreateShader(ShaderType.ComputeShader);       
-
-        if (isFile) data = Shader.LoadShaderSource(data);
-
-        GL.ShaderSource(computeShader, data);
+        int computeShader = GL.CreateShader(ShaderType.ComputeShader);
+        GL.ShaderSource(computeShader, Shader.LoadShaderSource(computeShaderFilePath));
         GL.CompileShader(computeShader);
 
         string compileStatus = GL.GetShaderInfoLog(computeShader);
@@ -31,6 +30,8 @@ public class ComputeShader
         }
 
         GL.DeleteShader(computeShader);
+
+        ComputeShaders.Add(this);
     }
 
     public void Bind() { GL.UseProgram(ID); }
@@ -41,8 +42,14 @@ public class ComputeShader
     {
         GL.DispatchCompute(workGroupX, workGroupY, workGroupZ);
         GL.MemoryBarrier(MemoryBarrierFlags.ShaderStorageBarrierBit);
-        GL.Finish();
     }
 
-    public void Delete() { GL.DeleteProgram(ID); }
+    public static void Delete()
+    {
+        foreach (var computeShader in ComputeShaders)
+        {
+            GL.DeleteProgram(computeShader.ID);
+        }
+        ComputeShaders.Clear();
+    }
 }

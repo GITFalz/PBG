@@ -1,14 +1,12 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
 public class Info
 {
     private static UIController _infoController = new();
-    private static UIVerticalCollection _timesCollection = new("Times", AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (100, 1000), (-5, 5, 5, 5), (0, 0, 0, 0), 5, 0);
-    private static List<(UIText, UIText)> _timesPool = new List<(UIText, UIText)>();
-    private static List<(string, double)> _times = new List<(string, double)>();
     private static TextMesh _textMesh = _infoController.textMesh;
 
     public static UIText FpsText = new("FpsTest", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, 0, (0, 0), _textMesh);
@@ -29,12 +27,15 @@ public class Info
 
 
     private static VAO _blockVao = new VAO();
-    private static SSBO<Vector4> _blockSSBO = new([(0, 0, 0, 0)]);
-    private static List<Vector4> _blockData = [];
-    private static ConcurrentBag<Vector4> _blocks = new ConcurrentBag<Vector4>();
+    private static SSBO<InfoBlockData> _blockSSBO = new([]);
+    private static List<InfoBlockData> _blockData = [];
+    private static ConcurrentBag<InfoBlockData> _blocks = new ConcurrentBag<InfoBlockData>();
     private static ShaderProgram _blockShader = new ShaderProgram("Info/InfoBlock.vert", "Info/InfoBlock.frag");
 
     private static Action _updateBlocks = () => { };
+
+    private static ArrayIDBO indirectBuffer = new([]);
+    private static List<DrawArraysIndirectCommand> _indirectCommands = [];
 
 
     public Info()
@@ -98,24 +99,45 @@ public class Info
         _blocks.Clear();
     }
 
-    public static void AddBlock(Vector3 position)
+    public static void AddBlock(InfoBlockData block)
     {
-        _blocks.Add((position.X, position.Y, position.Z, 0));
+        _blocks.Add(block);
     }
+
+    public static void AddBlock(params InfoBlockData[] block)
+    {
+        foreach (var b in block)
+            AddBlock(b);
+    }
+
 
     public static void UpdateBlocks()
     {
         _updateBlocks = () => 
         {
-            _blockData = _blocks.ToList();
-            Console.WriteLine($"Block Count: {_blockData.Count}");
+            _blockData = [.. _blocks];
             GenerateBlocks();
+            indirectBuffer = new([
+                new DrawArraysIndirectCommand
+                {
+                    count = (uint)_blockData.Count * 36,
+                    instanceCount = 1,
+                    first = 0,
+                    baseInstance = 0
+                }
+            ]);
             _updateBlocks = () => { };
         };
     }
 
     public static void RenderBlocks()
     {
+        if (_blockData.Count == 0)
+            return;
+
+        GL.Disable(EnableCap.CullFace);
+        GL.Disable(EnableCap.DepthTest);
+
         _blockShader.Bind();
 
         Matrix4 model = Matrix4.Identity;
@@ -132,13 +154,22 @@ public class Info
 
         _blockVao.Bind();
         _blockSSBO.Bind(1);
+        indirectBuffer.Bind();
 
-        GL.DrawArrays(PrimitiveType.Triangles, 0, _blockData.Count * 36);
+        Shader.Error("Before multi draw: ");
+
+        GL.MultiDrawArraysIndirect(PrimitiveType.Triangles, IntPtr.Zero, indirectBuffer.Commands.Count, 0);
+
+        Shader.Error("After multi draw: ");
         
         _blockSSBO.Unbind();
         _blockVao.Unbind();
+        indirectBuffer.Unbind();
 
         _blockShader.Unbind();
+
+        GL.Enable(EnableCap.CullFace);
+        GL.Enable(EnableCap.DepthTest);
     }
 
 
@@ -197,5 +228,22 @@ public class Info
         }
         
         return false;
+    }
+}
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct InfoBlockData
+{
+    public Vector3 Position;
+    private float Padding1 = 0;
+    public Vector3 Size;
+    private float Padding2 = 0;
+    public Vector4 Color;
+
+    public InfoBlockData(Vector3 position, Vector3 size, Vector4 color)
+    {
+        Position = position;
+        Size = size;
+        Color = color;
     }
 }

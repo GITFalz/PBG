@@ -5,12 +5,12 @@ public class ChunkMesh
 {
     private VAO _vao = new VAO();
     private IBO _ibo = new IBO([]);
-    private VBO _vertVbo = new VBO([(0, 0, 0)]);
-    private VBO _uvVbo = new VBO([(0, 0)]);
-    private VBO _textureVbo = new VBO([0]);
-    private VBO _normalVbo = new VBO([(0, 0, 0)]);
+    private VBO<Vector3> _vertVbo = new([(0, 0, 0)]);
+    private VBO<Vector2> _uvVbo = new([(0, 0)]);
+    private VBO<int> _textureVbo = new([0]);
+    private VBO<Vector3> _normalVbo = new([(0, 0, 0)]);
 
-    private TBO _blockTbo = new TBO([]);
+    private TBO<int> _blockTbo = new([]);
 
     public List<Vector2> Uvs = new List<Vector2>();
     public List<uint> Indices = new List<uint>();
@@ -47,10 +47,10 @@ public class ChunkMesh
 
     public void GenerateBuffers()
     {
-        _vertVbo = new VBO(Vertices);
-        _uvVbo = new VBO(Uvs);
-        _textureVbo = new VBO(TextureIndices);
-        _normalVbo = new VBO(Normals);
+        _vertVbo = new(Vertices);
+        _uvVbo = new(Uvs);
+        _textureVbo = new(TextureIndices);
+        _normalVbo = new(Normals);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
         _vao.LinkToVAO(1, 2, _uvVbo);

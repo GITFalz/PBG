@@ -1,8 +1,19 @@
-﻿using OpenTK.Mathematics;
+﻿using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 
-public class OldAnimationMesh : BoxMesh
+public class OldAnimationMesh
 {
-    private VBO _textureVbo;
+    public List<Vector3> Vertices = new List<Vector3>();
+    public List<Vector2> Uvs = new List<Vector2>();
+    public List<uint> Indices = new List<uint>();
+    public List<int> TextureIndices = new List<int>();
+    public List<Vector3> _transformedVerts = new List<Vector3>();
+
+    private VAO _vao = new VAO();
+    private IBO _ibo = new IBO(new List<uint>());
+    private VBO<Vector3> _vertVbo = new(new List<Vector3>());
+    private VBO<Vector2> _uvVbo = new(new List<Vector2>());
+    private VBO<int> _textureVbo = new(new List<int>());
     
     public Vector3 WorldPosition = Vector3.Zero;
     public Quaternion LastRotation = Quaternion.Identity;
@@ -19,12 +30,12 @@ public class OldAnimationMesh : BoxMesh
         _transformedVerts = new List<Vector3>();
     }
 
-    public override void UpdateMesh()
+    public void UpdateMesh()
     {
         _vertVbo.Update(_transformedVerts);
     }
     
-    public override void GenerateBuffers()
+    public void GenerateBuffers()
     {
         _transformedVerts.Clear();
         for (int i = 0; i < Vertices.Count; i++)
@@ -32,9 +43,9 @@ public class OldAnimationMesh : BoxMesh
             _transformedVerts.Add(Vertices[i]);
         }
         
-        _vertVbo = new VBO(_transformedVerts);
-        _uvVbo = new VBO(Uvs);
-        _textureVbo = new VBO(TextureIndices);
+        _vertVbo = new(_transformedVerts);
+        _uvVbo = new(Uvs);
+        _textureVbo = new(TextureIndices);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
         _vao.LinkToVAO(1, 2, _uvVbo);
@@ -43,10 +54,14 @@ public class OldAnimationMesh : BoxMesh
         _ibo = new IBO(Indices);
     }
 
-    public override void Delete()
+    public void RenderMesh()
     {
-        _textureVbo.Delete();
+        _vao.Bind();
+        _ibo.Bind();
         
-        base.Delete();
+        GL.DrawElements(PrimitiveType.Triangles, Indices.Count, DrawElementsType.UnsignedInt, 0);
+
+        _ibo.Unbind();
+        _vao.Unbind();
     }
 }

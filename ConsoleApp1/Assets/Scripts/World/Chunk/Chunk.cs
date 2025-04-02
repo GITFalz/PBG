@@ -31,7 +31,7 @@ public class Chunk
     public int ChunkCount = 0;
 
     private VAO _edgeVao = new VAO();
-    private VBO _edgeVbo = new VBO([(0, 0, 0)]);
+    private VBO<Vector3> _edgeVbo = new([(0, 0, 0)]);
 
     public bool Save = true;
     public bool Loaded = false;
@@ -99,7 +99,7 @@ public class Chunk
         }
         else if (type == RenderType.Wireframe)
         {
-            _edgeVbo = new VBO(Wireframe);
+            _edgeVbo = new(Wireframe);
             _edgeVao.LinkToVAO(0, 3, _edgeVbo);
 
             Render = RenderWireframe;
@@ -126,12 +126,6 @@ public class Chunk
 
     public void Delete()
     {
-        _chunkVao.Delete();
-        VertexSSBO.Delete();
-
-        _edgeVao.Delete();
-        _edgeVbo.Delete();
-
         blockStorage.Clear();
     }
 
@@ -142,9 +136,6 @@ public class Chunk
         _gridAlignedData = [.. GridAlignedFaces];
         GridAlignedFaces.Clear();
 
-        _chunkVao.Delete();
-        VertexSSBO.Delete();
-        
         _chunkVao = new VAO();
         VertexSSBO = new(_gridAlignedData);
     }
@@ -152,7 +143,7 @@ public class Chunk
     public void CreateChunkWireframe()
     {
         _edgeVao = new VAO();
-        _edgeVbo = new VBO(Wireframe);
+        _edgeVbo = new(Wireframe);
         
         _edgeVao.LinkToVAO(0, 3, _edgeVbo);
     }
