@@ -1,16 +1,13 @@
-﻿using System.Numerics;
-using OpenTK.Mathematics;
-using OpenTK.Windowing.Common;
+﻿using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using Vortice.Mathematics;
-using Vector2 = OpenTK.Mathematics.Vector2;
-using Vector3 = OpenTK.Mathematics.Vector3;
+using Plane = System.Numerics.Plane;
 
 public class Camera
 {
     public float SPEED { get; private set; } = 50f;
-    public float SCREEN_WIDTH { get; private set; }
-    public float SCREEN_HEIGHT { get; private set; }
+    public float SCREEN_WIDTH { get; set; }
+    public float SCREEN_HEIGHT { get; set; }
     public float SENSITIVITY { get; private set; } = 65f;
     public float SCROLL_SENSITIVITY { get; private set; } = 0.4f;
     
@@ -18,16 +15,18 @@ public class Camera
     public float targetFOV { get; private set; } = 45f;
     public float FOV_SMOTH_FACTOR { get; private set; } = 20f;
 
+    private Vector3 _lastPosition = (0, 0, 0);
     public Vector3 Position = (0, 0, 0);
 
     public Vector3 Center = (0, 0, 0);
     private Vector3 _currentCenter = (0, 0, 0);
     private float _centerLerpSpeed = 30f;
 
-    public float pitch = 0;
-    public float yaw = -90;
+    public float Pitch = 0;
+    public float Yaw = -90;
     
     public Vector3 up = Vector3.UnitY;
+    private Vector3 _lastFront = Vector3.Zero;
     public Vector3 front = -Vector3.UnitZ;
     public Vector3 right = Vector3.UnitX;
     
@@ -59,6 +58,12 @@ public class Camera
     
 
     private Plane[] frustumPlanes = new Plane[6];
+    public Plane LeftPlane => frustumPlanes[0];
+    public Plane RightPlane => frustumPlanes[1];
+    public Plane BottomPlane => frustumPlanes[2];
+    public Plane TopPlane => frustumPlanes[3];
+    public Plane NearPlane => frustumPlanes[4];
+    public Plane FarPlane => frustumPlanes[5];
 
     public Camera(float width, float height, Vector3 position)
     {
@@ -94,10 +99,15 @@ public class Camera
         return projectionMatrix;
     }
 
+    public Matrix4 GetRotationMatrix()
+    {
+        return Matrix4.CreateRotationX(OpenTK.Mathematics.MathHelper.DegreesToRadians(Pitch)) * Matrix4.CreateRotationY(OpenTK.Mathematics.MathHelper.DegreesToRadians(Yaw));
+    }
+
     public void CalculateFrustumPlanes()
     {
         Matrix4 viewProjectionMatrix = GetViewProjectionMatrix();
-        Matrix4x4 viewProjectionMatrixNumerics = Mathf.ToNumerics(viewProjectionMatrix);
+        System.Numerics.Matrix4x4 viewProjectionMatrixNumerics = Mathf.ToNumerics(viewProjectionMatrix);
 
         // Extract the frustum planes from the view-projection matrix
         frustumPlanes[0] = new Plane( // Left
@@ -149,47 +159,30 @@ public class Camera
         }
     }
 
-    public bool IsPointInFrustum(Vector3 point)
-    {
-        foreach (var plane in frustumPlanes)
-        {
-            if (Plane.DotCoordinate(plane, Mathf.ToNumerics(point)) < 0)
-                return false;
-        }
-        return true;
-    }
-
     public bool FrustumIntersects(BoundingBox boundingBox)
     {
         foreach (var plane in frustumPlanes)
         {
-            if (Plane.DotCoordinate(plane, boundingBox.Min) >= 0)
-                continue;
-            if (Plane.DotCoordinate(plane, new System.Numerics.Vector3(boundingBox.Max.X, boundingBox.Min.Y, boundingBox.Min.Z)) >= 0)
-                continue;
-            if (Plane.DotCoordinate(plane, new System.Numerics.Vector3(boundingBox.Min.X, boundingBox.Max.Y, boundingBox.Min.Z)) >= 0)
-                continue;
-            if (Plane.DotCoordinate(plane, new System.Numerics.Vector3(boundingBox.Max.X, boundingBox.Max.Y, boundingBox.Min.Z)) >= 0)
-                continue;
-            if (Plane.DotCoordinate(plane, new System.Numerics.Vector3(boundingBox.Min.X, boundingBox.Min.Y, boundingBox.Max.Z)) >= 0)
-                continue;
-            if (Plane.DotCoordinate(plane, new System.Numerics.Vector3(boundingBox.Max.X, boundingBox.Min.Y, boundingBox.Max.Z)) >= 0)
-                continue;
-            if (Plane.DotCoordinate(plane, new System.Numerics.Vector3(boundingBox.Min.X, boundingBox.Max.Y, boundingBox.Max.Z)) >= 0)
-                continue;
-            if (Plane.DotCoordinate(plane, boundingBox.Max) >= 0)
-                continue;
-            return false;
+            // Get the positive vertex (furthest point in direction of the plane normal)
+            var positive = new System.Numerics.Vector3(
+                plane.Normal.X >= 0 ? boundingBox.Max.X : boundingBox.Min.X,
+                plane.Normal.Y >= 0 ? boundingBox.Max.Y : boundingBox.Min.Y,
+                plane.Normal.Z >= 0 ? boundingBox.Max.Z : boundingBox.Min.Z
+            );
+
+            // If the positive vertex is behind the plane, the box is fully outside
+            if (Plane.DotCoordinate(plane, positive) < 0)
+                return false;
         }
         return true;
     }
     
-    public Matrix4x4 GetNumericsViewMatrix()
+    public System.Numerics.Matrix4x4 GetNumericsViewMatrix()
     {
         return Mathf.ToNumerics(GetViewMatrix());
     }
     
-    public Matrix4x4 GetNumericsProjectionMatrix()
+    public System.Numerics.Matrix4x4 GetNumericsProjectionMatrix()
     {
         return Mathf.ToNumerics(GetProjectionMatrix());
     }
@@ -216,9 +209,9 @@ public class Camera
 
     public void UpdateVectors()
     {
-        front.X = MathF.Cos(OpenTK.Mathematics.MathHelper.DegreesToRadians(pitch)) * MathF.Cos(OpenTK.Mathematics.MathHelper.DegreesToRadians(yaw));
-        front.Y = MathF.Sin(OpenTK.Mathematics.MathHelper.DegreesToRadians(pitch));
-        front.Z = MathF.Cos(OpenTK.Mathematics.MathHelper.DegreesToRadians(pitch)) * MathF.Sin(OpenTK.Mathematics.MathHelper.DegreesToRadians(yaw));
+        front.X = MathF.Cos(OpenTK.Mathematics.MathHelper.DegreesToRadians(Pitch)) * MathF.Cos(OpenTK.Mathematics.MathHelper.DegreesToRadians(Yaw));
+        front.Y = MathF.Sin(OpenTK.Mathematics.MathHelper.DegreesToRadians(Pitch));
+        front.Z = MathF.Cos(OpenTK.Mathematics.MathHelper.DegreesToRadians(Pitch)) * MathF.Sin(OpenTK.Mathematics.MathHelper.DegreesToRadians(Yaw));
         
         front = Vector3.Normalize(front);
         right = Vector3.Normalize(Vector3.Cross(front, Vector3.UnitY));
@@ -252,11 +245,13 @@ public class Camera
     
     public float GetYaw()
     {
-        return yaw;
+        return Yaw;
     }
 
     public void Update()
     {
+        _lastPosition = Position;
+        _lastFront = front;
         _cameraModes[_cameraMode].Invoke();
     }
     
@@ -271,26 +266,12 @@ public class Camera
         FOV = Mathf.Lerp(FOV, targetFOV, FOV_SMOTH_FACTOR * GameTime.DeltaTime);
         
         float speed = SPEED * GameTime.DeltaTime;
-        Vector3 oldPos = Position;
+        Vector2 input = Input.GetMovementInput();
 
-        if (Input.IsKeyDown(Keys.W))
+        if (input != Vector2.Zero)
         {
-            Position += Yto0(front) * speed;
-        }
-
-        if (Input.IsKeyDown(Keys.A))
-        {
-            Position -= Yto0(right) * speed;
-        }
-
-        if (Input.IsKeyDown(Keys.S))
-        {
-            Position -= Yto0(front) * speed;
-        }
-
-        if (Input.IsKeyDown(Keys.D))
-        {
-            Position += Yto0(right) * speed;
+            Position += Yto0(front) * input.Y * speed;
+            Position -= Yto0(right) * input.X * speed;
         }
 
         if (Input.IsKeyDown(Keys.Space))
@@ -303,7 +284,8 @@ public class Camera
             Position.Y -= speed;
         }
 
-        Info.SetPositionText(oldPos, Position);
+        if (GetCameraMode() == CameraMode.Free)
+            Info.SetPositionText(_lastPosition, Position);
 
         FirstMove.Invoke();
 
@@ -346,7 +328,13 @@ public class Camera
     {
         lastPos = Input.GetMousePosition();
         FirstMove = () => { };
+    }   
+
+    public bool IsMoving()
+    {
+        return Position != _lastPosition || front != _lastFront;
     }
+
 
     private void RotateCamera()
     {
@@ -362,10 +350,10 @@ public class Camera
         deltaX *= SENSITIVITY * GameTime.DeltaTime;
         deltaY *= SENSITIVITY * GameTime.DeltaTime;
 
-        yaw += deltaX;
-        pitch -= deltaY;
+        Yaw += deltaX;
+        Pitch -= deltaY;
 
-        pitch = Math.Clamp(pitch, -89.0f, 89.0f);
+        Pitch = Math.Clamp(Pitch, -89.0f, 89.0f);
     }
 
     private void CameraZoom()

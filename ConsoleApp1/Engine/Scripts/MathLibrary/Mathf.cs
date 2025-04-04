@@ -1,76 +1,26 @@
 using OpenTK.Mathematics;
+using Vec4 = System.Numerics.Vector4;
+using Vec3 = System.Numerics.Vector3;
+using Vec2 = System.Numerics.Vector2;
 
 public static class Mathf
 {
-    public static int FloorToInt(float value)
-    {
-        return (int)Math.Floor(value);
-    }
-    
-    public static int FloorToInt(double value)
-    {
-        return (int)Math.Floor(value);
-    }
+    public static int FloorToInt(float value) => (int)Math.Floor(value);
+    public static int FloorToInt(double value) => (int)Math.Floor(value);
+    public static Vector3i FloorToInt(Vector3 value) => new Vector3i(FloorToInt(value.X), FloorToInt(value.Y), FloorToInt(value.Z));
+    public static float Floor(float value) => (float)Math.Floor(value);
 
-    public static Vector3i FloorToInt(Vector3 value)
-    {
-        return new Vector3i(FloorToInt(value.X), FloorToInt(value.Y), FloorToInt(value.Z));
-    }
-    
-    public static int RoundToInt(float value)
-    {
-        return (int)Math.Round(value);
-    }
+    public static int RoundToInt(float value) => (int)Math.Round(value);
 
-    public static int CeilToInt(float value)
-    {
-        return (int)Math.Ceiling(value);
-    }
+    public static int CeilToInt(float value) => (int)Math.Ceiling(value);
 
-    public static float Clamp(float min, float max, float value)
-    {
-        return value < min ? min : value > max ? max : value;
-    }
-    
-    public static int Clamp(int min, int max, int value)
-    {
-        return value < min ? min : value > max ? max : value;
-    }
-    
-    public static float Clamp01(float value)
-    {
-        return value < 0 ? 0 : value > 1 ? 1 : value;
-    }
-    
-    public static int Clamp01(int value)
-    {
-        return value < 0 ? 0 : value > 1 ? 1 : value;
-    }
+    public static float Clamp(float min, float max, float value) => value < min ? min : value > max ? max : value; 
+    public static int Clamp(int min, int max, int value) => value < min ? min : value > max ? max : value;
+    public static float Clamp01(float value) => value < 0 ? 0 : value > 1 ? 1 : value;
+    public static int Clamp01(int value) => value < 0 ? 0 : value > 1 ? 1 : value;
 
-    public static float Pow(float value, float power)
-    {
-        return (float)Math.Pow(value, power);
-    }
-
-    public static double Pow(double value, double power)
-    {
-        return Math.Pow(value, power);
-    }
-
-    public static float Floor(float value)
-    {
-        return (float)Math.Floor(value);
-    }
-    
-    public static Vector3 Floor(Vector3 value)
-    {
-        return new Vector3(Floor(value.X), Floor(value.Y), Floor(value.Z));
-    }
-
-    public static Vector3 Transform(Vector3 value, Matrix4 matrix)
-    {
-        return ToOpenTK(System.Numerics.Vector3.Transform(ToNumerics(value), ToNumerics(matrix)));
-    }
+    public static float Pow(float value, float power) => (float)Math.Pow(value, power);
+    public static double Pow(double value, double power) => Math.Pow(value, power);
     
     public static Vector3 Normalize(Vector3 value)
     {
@@ -80,22 +30,10 @@ public static class Mathf
         return value / length;
     }
 
-    public static float Lerp(float a, float b, float t)
-    {
-        return a + t * (b - a);
-    }
-    
-    public static Vector3 Lerp(Vector3 a, Vector3 b, float t)
-    {
-        return a + (b - a) * t;
-    }
-    
-    public static float Ease_I_O_Lerp(float a, float b, float t)
-    {
-        t = t * t * (3f - 2f * t);
-        return Lerp(a, b, t);
-    }
-    
+    public static float Lerp(float a, float b, float t) => a + t * (b - a); 
+    public static Vector3 Lerp(Vector3 a, Vector3 b, float t) => a + (b - a) * t;
+    public static float Ease_I_O_Lerp(float a, float b, float t) => Lerp(a, b, t * t * (3f - 2f * t));
+
     public static Vector3 YAngleToDirection(float yAngleDegrees)
     {
         float yAngleRadians = yAngleDegrees * (float)Math.PI / 180.0f;
@@ -113,10 +51,7 @@ public static class Mathf
             max = Max(max, values[i]);
         return max;
     } 
-    public static double Max(double a, double b)
-    {
-        return a > b ? a : b;
-    }
+    public static double Max(double a, double b) => a > b ? a : b;
 
 
     public static float Max(params float[] values)
@@ -126,10 +61,7 @@ public static class Mathf
             max = Max(max, values[i]);
         return max;
     }
-    public static float Max(float a, float b)
-    {
-        return a > b ? a : b;
-    }
+    public static float Max(float a, float b) => a > b ? a : b;
 
     
     public static int Max(params int[] values)
@@ -139,10 +71,7 @@ public static class Mathf
             max = Max(max, values[i]);
         return max;
     }
-    public static int Max(int a, int b)
-    {
-        return a > b ? a : b;
-    }
+    public static int Max(int a, int b) => a > b ? a : b;
     
 
     public static double Min(params double[] values)
@@ -152,10 +81,7 @@ public static class Mathf
             min = Min(min, values[i]);
         return min;
     }
-    public static double Min(double a, double b)
-    {
-        return a < b ? a : b;
-    }
+    public static double Min(double a, double b) => a < b ? a : b;
     
 
     public static float Min(params float[] values)
@@ -165,10 +91,7 @@ public static class Mathf
             min = Min(min, values[i]);
         return min;
     }
-    public static float Min(float a, float b)
-    {
-        return a < b ? a : b;
-    }
+    public static float Min(float a, float b) => a < b ? a : b;
     
 
     public static int Min(params int[] values)
@@ -178,30 +101,13 @@ public static class Mathf
             min = Min(min, values[i]);
         return min;
     }
-    public static int Min(int a, int b)
-    {
-        return a < b ? a : b;
-    }
+    public static int Min(int a, int b) => a < b ? a : b;
     
-    public static int Sign(float value)
-    {
-        return value > 0 ? 1 : value < 0 ? -1 : 0;
-    }
-
-    public static int SignNo0(float value)
-    {
-        return value < 0 ? -1 : 1;
-    }
+    public static int Sign(float value) => value > 0 ? 1 : value < 0 ? -1 : 0;
+    public static int SignNo0(float value) => value < 0 ? -1 : 1;
     
-    public static float Abs(float value)
-    {
-        return value < 0 ? -value : value;
-    }
-    
-    public static Vector3 Abs(Vector3 value)
-    {
-        return new Vector3(Abs(value.X), Abs(value.Y), Abs(value.Z));
-    }
+    public static float Abs(float value) => value < 0 ? -value : value;
+    public static Vector3 Abs(Vector3 value) => new Vector3(Abs(value.X), Abs(value.Y), Abs(value.Z));
     
     /// <summary>
     /// turns the range [a, b] into [0, 1] based on t
@@ -214,44 +120,37 @@ public static class Mathf
         return (t - a) / (b - a);
     }
     
-    public static System.Numerics.Matrix4x4 ToNumerics(Matrix4 matrix)
-    {
-        return new System.Numerics.Matrix4x4(
+    public static System.Numerics.Matrix4x4 ToNumerics(Matrix4 matrix) => new System.Numerics.Matrix4x4(
             matrix.M11, matrix.M12, matrix.M13, matrix.M14,
             matrix.M21, matrix.M22, matrix.M23, matrix.M24,
             matrix.M31, matrix.M32, matrix.M33, matrix.M34,
             matrix.M41, matrix.M42, matrix.M43, matrix.M44);
-    }
     
-    public static System.Numerics.Vector4 ToNumerics(OpenTK.Mathematics.Vector4 vector)
-    {
-        return new System.Numerics.Vector4(vector.X, vector.Y, vector.Z, vector.W);
-    }
-    
-    public static System.Numerics.Vector3 ToNumerics(OpenTK.Mathematics.Vector3 vector)
-    {
-        return new System.Numerics.Vector3(vector.X, vector.Y, vector.Z);
-    }
+    public static Vec4 Num(Vector4 vector) => new Vec4(vector.X, vector.Y, vector.Z, vector.W);
+    public static Vec3 Num(Vector3 vector) => new Vec3(vector.X, vector.Y, vector.Z);
+    public static Vec2 Num(Vector2 vector) => new Vec2(vector.X, vector.Y);
 
-    public static System.Numerics.Vector2 ToNumerics(OpenTK.Mathematics.Vector2 vector)
-    {
-        return new System.Numerics.Vector2(vector.X, vector.Y);
-    }
+    // Vector4 Adding
+    public static Vec4 Add(Vec4 vector, Vector4 add) => new Vec4(vector.X + add.X, vector.Y + add.Y, vector.Z + add.Z, vector.W + add.W);
+    public static Vector4 Add(Vector4 vector, Vec4 add) => new Vector4(vector.X + add.X, vector.Y + add.Y, vector.Z + add.Z, vector.W + add.W);
+
+    // Vector3 Adding
+    public static Vec3 Add(Vec3 vector, Vector3 add) => new Vec3(vector.X + add.X, vector.Y + add.Y, vector.Z + add.Z);
+    public static Vector3 Add(Vector3 vector, Vec3 add) => new Vector3(vector.X + add.X, vector.Y + add.Y, vector.Z + add.Z);
+
+    // Vector2 Adding
+    public static Vec2 Add(Vec2 vector, Vector2 add) => new Vec2(vector.X + add.X, vector.Y + add.Y);
+    public static Vector2 Add(Vector2 vector, Vec2 add) => new Vector2(vector.X + add.X, vector.Y + add.Y);
 
 
-    public static Vector3 ToOpenTK(System.Numerics.Vector3 vector)
-    {
-        return new Vector3(vector.X, vector.Y, vector.Z);
-    }
+    public static Vector3 Xyz(Vector4 vector) => (vector.X, vector.Y, vector.Z);
+    public static Vec3 Xyz(Vec4 vector) => new Vec3(vector.X, vector.Y, vector.Z);
 
-    public static Vector3 DegreesToRadians(Vector3 degrees)
-    {
-        return new Vector3(
+    public static Vector3 DegreesToRadians(Vector3 degrees) => new Vector3(
             MathHelper.DegreesToRadians(degrees.X),
             MathHelper.DegreesToRadians(degrees.Y),
             MathHelper.DegreesToRadians(degrees.Z)
         );
-    }
     
     public static Vector3 RotateAround(Vector3 point, Vector3 center, Vector3 axis, float angleDegrees)
     {
@@ -269,22 +168,19 @@ public static class Mathf
         return rotatedPoint + center;
     }
     
-    public static Quaternion RotateAround(Vector3 axis, Quaternion rotation, float angle)
-    {
-        return Quaternion.FromAxisAngle(axis, angle) * rotation;
-    }
+    public static Quaternion RotateAround(Vector3 axis, Quaternion rotation, float angle) => Quaternion.FromAxisAngle(axis, angle) * rotation;
     
     public static Vector2? WorldToScreen(Vector3 worldPosition, System.Numerics.Matrix4x4 projectionMatrix, System.Numerics.Matrix4x4 vMatrix)
     {
         System.Numerics.Matrix4x4 viewMatrix = vMatrix;
         System.Numerics.Matrix4x4 projMatrix = projectionMatrix;
 
-        System.Numerics.Vector4 viewSpace = System.Numerics.Vector4.Transform(
-            new System.Numerics.Vector4(ToNumerics(worldPosition), 1.0f),
+        Vec4 viewSpace = Vec4.Transform(
+            new Vec4(Num(worldPosition), 1.0f),
             viewMatrix
         );
 
-        System.Numerics.Vector4 clipSpace = System.Numerics.Vector4.Transform(viewSpace, projMatrix);
+        Vec4 clipSpace = Vec4.Transform(viewSpace, projMatrix);
 
         if (clipSpace.W <= 0)
             return null;

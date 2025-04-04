@@ -5,6 +5,23 @@ public class ShaderProgram
     public static List<ShaderProgram> ShaderPrograms = new List<ShaderProgram>();
 
     public int ID;
+
+    public ShaderProgram(string vertexShaderFilePath)
+    {
+        ID = GL.CreateProgram();
+        
+        int vertexShader = GL.CreateShader(ShaderType.VertexShader);
+        GL.ShaderSource(vertexShader, Shader.LoadShaderSource(vertexShaderFilePath));
+        GL.CompileShader(vertexShader);
+        
+        GL.AttachShader(ID, vertexShader);
+        
+        GL.LinkProgram(ID);
+        
+        GL.DeleteShader(vertexShader);
+
+        ShaderPrograms.Add(this);
+    }
     
     public ShaderProgram(string vertexShaderFilePath, string fragmentShaderFilePath)
     {

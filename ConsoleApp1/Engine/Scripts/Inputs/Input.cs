@@ -2,7 +2,6 @@
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using MouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
-using Vector3 = System.Numerics.Vector3;
 
 public static class Input
 {
@@ -142,7 +141,7 @@ public static class Input
         
         return input;
     }
-    
+
     public static Vector2 GetMouseScrollDelta()
     {
         return _previousMouseState.ScrollDelta;

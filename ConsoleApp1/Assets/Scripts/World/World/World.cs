@@ -1,4 +1,4 @@
 ﻿public static class World
 {
-    public static int renderDistance = 2;
+    public static int renderDistance = 8;
 }

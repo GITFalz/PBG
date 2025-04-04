@@ -61,8 +61,6 @@ public class Game : GameWindow
 
 
     private bool physicsStep = false;
-
-    public static ComputeShader computeTest = new("Chunk/GreedyMesh.compute");
     
     
     public Game(int width, int height) : base(GameWindowSettings.Default, new NativeWindowSettings
@@ -87,6 +85,22 @@ public class Game : GameWindow
         CenterY = height / 2;
 
         Resize = () => { Resize = OnResize; };
+
+        /* // Example of using the DataMerger class to merge two SSBOs
+        ComputeShader MergeShader = new ComputeShader("DataTransfer/MergeSSBO.compute");
+
+        List<int> largeSSBOData = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        List<int> smallSSBOData = [1, 1, 1, 1, 1];
+
+        SSBO<int> LargeSSBO = new SSBO<int>(largeSSBOData);
+        SSBO<int> SmallSSBO = new SSBO<int>(smallSSBOData);
+
+        DataMerger.Merge(LargeSSBO, SmallSSBO, 2);
+
+        int[] data = LargeSSBO.ReadData(10);
+        string dataString = string.Join(", ", data);
+        Console.WriteLine("Data: " + dataString);
+        */
     }
     
     protected override void OnResize(ResizeEventArgs e)
@@ -108,7 +122,8 @@ public class Game : GameWindow
 
     private void OnResize()
     {
-        camera = new Camera(Width, Height, new Vector3(0, 0, 0));
+        camera.SCREEN_WIDTH = Width;
+        camera.SCREEN_HEIGHT = Height;
 
         _popUp.Resize();
         Info.Resize();
@@ -287,6 +302,7 @@ public class Game : GameWindow
 
     protected override void OnUpdateFrame(FrameEventArgs args)
     {
+
         MouseState mouse = MouseState;
         KeyboardState keyboard = KeyboardState;
         
@@ -295,12 +311,9 @@ public class Game : GameWindow
 
         Timer.Update();
         Info.Update();
-
         _popUp.Update();
-        
         UpdateCamera.Invoke();
         CurrentScene?.OnUpdate();
-
         ThreadPool.Update();
 
         base.OnUpdateFrame(args);
@@ -319,8 +332,8 @@ public class Game : GameWindow
         Skybox.Render();
         CurrentScene?.OnRender();
         _popUp.Render();
-        //Timer.Render();
         Info.Render();
+        Timer.Render();
         
         Context.SwapBuffers();
         

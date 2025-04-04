@@ -7,12 +7,17 @@ public class Chunk
     public static Chunk Empty = new();
 
     public ChunkStage Stage = ChunkStage.Empty;
+    private ChunkStage _lastStage = ChunkStage.Empty;
+    public ChunkStatus Status = ChunkStatus.Empty;
+    private ChunkStatus _lastStatus = ChunkStatus.Empty;
 
     public Vector3i position = (0, 0, 0);
     public BlockStorage blockStorage = BlockStorage.Empty;
     public BoundingBox boundingBox = new(new System.Numerics.Vector3(0, 0, 0), new System.Numerics.Vector3(0, 0, 0));
 
     public List<Vector3> Wireframe = [];
+
+    private double _inactiveTimer = 0;
 
     public Chunk?[] NeighbourCunks = 
     [
@@ -41,6 +46,7 @@ public class Chunk
 
     public bool IsDisabled = true;
     public bool HasBlocks = false;
+    public int VertexCount = 0;
 
     private VAO _chunkVao = new VAO();
     public SSBO <Vector2i>VertexSSBO = new(new List<Vector2i>());
@@ -68,7 +74,7 @@ public class Chunk
 
         blockStorage = new BlockStorage(position * 32);
         
-        System.Numerics.Vector3 min = Mathf.ToNumerics(position * 32);
+        System.Numerics.Vector3 min = Mathf.Num(position * 32);
         System.Numerics.Vector3 max = min + new System.Numerics.Vector3(ChunkGenerator.WIDTH, ChunkGenerator.HEIGHT, ChunkGenerator.DEPTH);
         
         boundingBox = new BoundingBox(min, max);
@@ -112,9 +118,49 @@ public class Chunk
         return position * 32;
     }
 
+    public Vector3i GetCenterPosition()
+    {
+        return GetWorldPosition() + (16, 16, 16);
+    }
+
     public Vector3i GetRelativePosition()
     {
         return position;
+    }
+
+    public Matrix4 GetModel()
+    {
+        return Matrix4.CreateTranslation(GetWorldPosition());
+    }
+
+    public void Update()
+    {
+        if (Vector3.Distance(PlayerData.Position, GetCenterPosition()) <= 64)
+        {
+            if (!IsActive())
+            {
+                Status = ChunkStatus.Active;
+                _inactiveTimer = 0;
+            }
+        }
+
+        _lastStatus = Status;
+
+        if (Status == ChunkStatus.Inactive)
+        {
+            _inactiveTimer += GameTime.DeltaTime;
+        }
+    }
+
+    public void ActivityCheck()
+    {
+        if (Vector3.Distance(PlayerData.Position, GetCenterPosition()) > 64)
+        {
+            if (_inactiveTimer >= ChunkManager.ChunkInactiveTime)
+                Status = ChunkStatus.Independent;
+            else
+                Status = ChunkStatus.Inactive;
+        }
     }
 
     public void Clear()
@@ -134,6 +180,7 @@ public class Chunk
     {   
         _gridAlignedData.Clear();
         _gridAlignedData = [.. GridAlignedFaces];
+        VertexCount = _gridAlignedData.Count * 6;
         GridAlignedFaces.Clear();
 
         _chunkVao = new VAO();
@@ -280,6 +327,36 @@ public class Chunk
             }
             return chunks;
         }
+    }
+
+    public bool IsActive()
+    {
+        return Status == ChunkStatus.Active;
+    }
+
+    public bool IsInactive()
+    {
+        return Status == ChunkStatus.Inactive;
+    }
+
+    public bool IsIndependent()
+    {
+        return Status == ChunkStatus.Independent;
+    }
+
+    public bool WasActive()
+    {
+        return _lastStatus == ChunkStatus.Active;
+    }
+
+    public bool WasInactive()
+    {
+        return _lastStatus == ChunkStatus.Inactive;
+    }
+
+    public bool WasIndependent()
+    {
+        return _lastStatus == ChunkStatus.Independent;
     }
 
     private static readonly int[] SideIndices = [

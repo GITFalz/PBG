@@ -63,7 +63,7 @@ public class PhysicsBody : ScriptingNode
     
     public override void FixedUpdate()
     {
-        if (!Game.MoveTest)
+        if (!Game.MoveTest || Game.camera.GetCameraMode() != CameraMode.Follow)
             return;
         
         previousPosition = physicsPosition;

@@ -44,6 +44,12 @@ public class ComputeShader
         GL.MemoryBarrier(MemoryBarrierFlags.ShaderStorageBarrierBit);
     }
 
+    public void Unload()
+    {
+        GL.DeleteProgram(ID);
+        ComputeShaders.Remove(this);
+    }
+
     public static void Delete()
     {
         foreach (var computeShader in ComputeShaders)

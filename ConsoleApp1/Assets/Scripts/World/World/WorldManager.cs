@@ -5,7 +5,7 @@ public class WorldManager : ScriptingNode
 {
     public static ShaderProgram _shaderProgram = new ShaderProgram("World/World.vert", "World/World.frag");
     public static ShaderProgram _wireframeShader = new ShaderProgram("World/Wireframe.vert", "World/Wireframe.frag");
-    public TextureArray _textures = new TextureArray("Test_TextureAtlas.png", 32, 32);  
+    public static TextureArray _textures = new TextureArray("Test_TextureAtlas.png", 32, 32);  
 
     private static RenderType _renderType = RenderType.Solid;
     private Action _render = () => { };
@@ -13,13 +13,34 @@ public class WorldManager : ScriptingNode
     private int _oldRenderedChunks = 0;
 
     public Chunk chunkData = new Chunk(RenderType.Solid, new Vector3i(0, 0, 0));
+    public ShaderProgram DepthPrePassShader = new ShaderProgram("World/Pulling.vert");
     public ShaderProgram pullingShader = new ShaderProgram("World/Pulling.vert", "World/Pulling.frag");
 
     public ArrayIDBO IndirectDrawingChunkBuffer = new(new List<DrawArraysIndirectCommand>());
+
+    private Vector3i _currentPlayerChunk = Vector3i.Zero;
+    private Vector3i _lastPlayerPosition = (int.MaxValue, int.MaxValue, int.MaxValue);
     
     public WorldManager()
     {
         _render = _renderType == RenderType.Solid ? RenderSolid : RenderWireframe;
+
+        /*
+        // 1000 blocks
+        for (int i = 0; i < 1000; i++)
+        {
+            InfoBlockData blockData = new InfoBlockData
+            {
+                Position = (i * 25, 0, 0),
+                Size = (20, 20, 20),
+                // light green
+                Color = (0.5f, 1, 0.5f, 0.5f),
+            };
+            
+            Info.AddBlock(blockData);
+        }
+        Info.UpdateBlocks();
+        */
     }
     
     public override void Awake()
@@ -53,19 +74,16 @@ public class WorldManager : ScriptingNode
         {
             if (ChunkManager.ActiveChunks.ContainsKey(chunk.GetWorldPosition()))
             {
-                chunk.SaveChunk();
                 chunk.CreateChunk.Invoke();
             }
         }
-
+        //ChunkManager.Update();
         CheckFrustum();
     }
 
     public override void Render()
     {
-        Timer.DisplayTime("Render Start");
         _render.Invoke();
-        Timer.DisplayTime("Render End");
     }
 
     public void RenderSolid()
@@ -100,7 +118,7 @@ public class WorldManager : ScriptingNode
                 continue;
 
             renderCount++;
-            Info.VertexCount += chunk.GridAlignedFaces.Count;
+            Info.VertexCount += chunk.VertexCount;
             model = Matrix4.CreateTranslation(chunk.GetWorldPosition());
             GL.UniformMatrix4(modelLocationA, true, ref model);
             chunk.Render.Invoke();
@@ -117,6 +135,8 @@ public class WorldManager : ScriptingNode
         pullingShader.Unbind();
         _textures.Unbind();
 
+        ChunkManager.RenderChunks();
+
         Shader.Error("After Render End2");
 
         if (renderCount != _oldRenderedChunks)
@@ -131,11 +151,14 @@ public class WorldManager : ScriptingNode
     public void CheckFrustum()
     {
         Camera camera = Game.camera;
+        if (!camera.IsMoving())
+            return;
+
         camera.CalculateFrustumPlanes();
         
         foreach (var (_, chunk) in ChunkManager.ActiveChunks)
         {
-            chunk.IsDisabled = !chunk.HasBlocks || !camera.FrustumIntersects(chunk.boundingBox);
+            chunk.IsDisabled = !chunk.HasBlocks || !camera.FrustumIntersects(chunk.boundingBox);// || chunk.IsIndependent(); // testing
         }
     }
 
@@ -146,17 +169,46 @@ public class WorldManager : ScriptingNode
         int renderCount = 0;
         Info.VertexCount = 0;
 
+        GL.ColorMask(false, false, false, false);
         GL.Enable(EnableCap.DepthTest);
+        GL.DepthFunc(DepthFunction.Less);
         GL.Enable(EnableCap.CullFace);
-        
-        _wireframeShader.Bind();
-        
+
+        DepthPrePassShader.Bind();
+
         Matrix4 view = camera.viewMatrix;
         Matrix4 projection = camera.projectionMatrix;
 
-        int modelLocation = GL.GetUniformLocation(_wireframeShader.ID, "model");
-        int viewLocation = GL.GetUniformLocation(_wireframeShader.ID, "view");
-        int projectionLocation = GL.GetUniformLocation(_wireframeShader.ID, "projection");
+        int modelLocation = GL.GetUniformLocation(DepthPrePassShader.ID, "model");
+        int viewLocation = GL.GetUniformLocation(DepthPrePassShader.ID, "view");
+        int projectionLocation = GL.GetUniformLocation(DepthPrePassShader.ID, "projection");
+
+        GL.UniformMatrix4(viewLocation, true, ref view);
+        GL.UniformMatrix4(projectionLocation, true, ref projection);
+
+        foreach (var (_, chunk) in ChunkManager.ActiveChunks)
+        {   
+            if (chunk.IsDisabled)
+                continue;
+
+            Matrix4 model = Matrix4.CreateTranslation(chunk.GetWorldPosition());
+            GL.UniformMatrix4(modelLocation, true, ref model);
+            chunk.Render.Invoke();
+        }
+
+        DepthPrePassShader.Unbind();
+
+        GL.ColorMask(true, true, true, true);
+        GL.Disable(EnableCap.DepthTest);
+        
+        _wireframeShader.Bind();
+        
+        view = camera.viewMatrix;
+        projection = camera.projectionMatrix;
+
+        modelLocation = GL.GetUniformLocation(_wireframeShader.ID, "model");
+        viewLocation = GL.GetUniformLocation(_wireframeShader.ID, "view");
+        projectionLocation = GL.GetUniformLocation(_wireframeShader.ID, "projection");
         
         GL.UniformMatrix4(viewLocation, true, ref view);
         GL.UniformMatrix4(projectionLocation, true, ref projection);
@@ -174,9 +226,6 @@ public class WorldManager : ScriptingNode
         }
         
         _wireframeShader.Unbind();
-        
-        GL.Disable(EnableCap.DepthTest);
-        GL.Disable(EnableCap.CullFace);
 
         if (renderCount != _oldRenderedChunks)
         {
@@ -195,7 +244,6 @@ public class WorldManager : ScriptingNode
     {
         int render = World.renderDistance;
 
-        Vector3i playerChunk = (0, 0, 0);
         Vector2i startPosition = (-1, -1);
         
         HashSet<Vector3i> chunkPositions = new HashSet<Vector3i>();
@@ -207,7 +255,7 @@ public class WorldManager : ScriptingNode
                 startPosition.X++;
                 for (int y = -1; y < 4; y++)
                 {
-                    chunkPositions.Add(((startPosition.X, y, startPosition.Y) + playerChunk) * 32);
+                    chunkPositions.Add(new Vector3i(startPosition.X, y, startPosition.Y) * 32 + _currentPlayerChunk);
                 }
             }   
 
@@ -216,7 +264,7 @@ public class WorldManager : ScriptingNode
                 startPosition.Y++;
                 for (int y = -1; y < 4; y++)
                 {
-                    chunkPositions.Add(((startPosition.X, y, startPosition.Y) + playerChunk) * 32);
+                    chunkPositions.Add(new Vector3i(startPosition.X, y, startPosition.Y) * 32 + _currentPlayerChunk);
                 }
             }   
 
@@ -225,7 +273,7 @@ public class WorldManager : ScriptingNode
                 startPosition.X--;
                 for (int y = -1; y < 4; y++)
                 {
-                    chunkPositions.Add(((startPosition.X, y, startPosition.Y) + playerChunk) * 32);
+                    chunkPositions.Add(new Vector3i(startPosition.X, y, startPosition.Y) * 32 + _currentPlayerChunk);
                 }
             }   
 
@@ -234,7 +282,7 @@ public class WorldManager : ScriptingNode
                 startPosition.Y--;
                 for (int y = -1; y < 4; y++)
                 {
-                    chunkPositions.Add(((startPosition.X, y, startPosition.Y) + playerChunk) * 32);
+                    chunkPositions.Add(new Vector3i(startPosition.X, y, startPosition.Y) * 32 + _currentPlayerChunk);
                 }
             }   
 
@@ -246,10 +294,16 @@ public class WorldManager : ScriptingNode
 
     public void CheckRenderDistance()
     {
+        _currentPlayerChunk = VoxelData.BlockToChunkPosition(Mathf.FloorToInt(PlayerData.Position));
+        _currentPlayerChunk.Y = 0;
+
+        if (_currentPlayerChunk == _lastPlayerPosition) 
+            return;
+
+        Console.WriteLine($"Render Distance: {_currentPlayerChunk}");
+
         var chunks = SetChunks();
-        
         int render = World.renderDistance;
-        Vector3i playerChunk = new Vector3i(0, 0, 0);
         
         HashSet<Vector3i> chunksToRemove = new HashSet<Vector3i>();
         
@@ -278,6 +332,8 @@ public class WorldManager : ScriptingNode
                 data.Clear();
             }
         }
+
+        _lastPlayerPosition = _currentPlayerChunk;
     }
 
     public static int GetBlock(Vector3i blockPosition, out Block block)
@@ -438,6 +494,8 @@ public class WorldManager : ScriptingNode
             ChunkGenerator.PopulateChunk(ref chunkData);
             chunkData.Stage = ChunkStage.Populated;
             ChunkManager.GenerateMeshQueue.Enqueue(chunkData);
+            chunkData.SaveChunk();
+            chunkData.Save = false;
         });
     }
 

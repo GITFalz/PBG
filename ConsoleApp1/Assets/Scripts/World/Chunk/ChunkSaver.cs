@@ -19,49 +19,54 @@ public static class ChunkSaver
 
         string filePath = Path.Combine(Game.chunkPath, $"Region_{regionPos.X}_{regionPos.Y}_{regionPos.Z}.chunk");
 
-        InitializeFile(filePath);
+        ChunkLoader.fileLocks.GetOrAdd(filePath, new object());
 
-        int chunkIndex = ChunkGenerator.ChunkIndex(chunk.GetRelativePosition());
-        
-        using (FileStream fileStream = File.Open(filePath, FileMode.OpenOrCreate))
-        using (BinaryReader reader = new BinaryReader(fileStream))
-        using (BinaryWriter writer = new BinaryWriter(fileStream))
+        lock (ChunkLoader.fileLocks[filePath])
         {
-            fileStream.Seek(0, SeekOrigin.Begin);
-            short chunkCount = reader.ReadInt16();
+            InitializeFile(filePath);
 
-            fileStream.Seek(2 + chunkIndex * 2, SeekOrigin.Begin);
-            ushort chunkData = reader.ReadUInt16();
-
-            if (chunkCount == -1)
-                return;
-
-            int index = chunkData;
-
-            if (chunkData == ushort.MaxValue)
+            int chunkIndex = ChunkGenerator.ChunkIndex(chunk.GetRelativePosition());
+            
+            using (FileStream fileStream = File.Open(filePath, FileMode.OpenOrCreate))
+            using (BinaryReader reader = new BinaryReader(fileStream))
+            using (BinaryWriter writer = new BinaryWriter(fileStream))
             {
-                writer.Seek(0, SeekOrigin.Begin);
-                writer.Write((short)(chunkCount + 1));
+                fileStream.Seek(0, SeekOrigin.Begin);
+                short chunkCount = reader.ReadInt16();
 
                 fileStream.Seek(2 + chunkIndex * 2, SeekOrigin.Begin);
-                writer.Write((ushort)chunkCount);
-                index = chunkCount;
-            }
+                ushort chunkData = reader.ReadUInt16();
 
-            int offset = 8194 + index * 32768 * 4; // Header size + chunk index * block count * 4 bytes
-            fileStream.Seek(offset, SeekOrigin.Begin);
+                if (chunkCount == -1)
+                    return;
 
-            foreach (var storage in chunk.blockStorage.Blocks)
-            {
-                if (storage == null)
+                int index = chunkData;
+
+                if (chunkData == ushort.MaxValue)
                 {
-                    for (int i = 0; i < 4096; i++)
-                        writer.Write(0);
+                    writer.Seek(0, SeekOrigin.Begin);
+                    writer.Write((short)(chunkCount + 1));
+
+                    fileStream.Seek(2 + chunkIndex * 2, SeekOrigin.Begin);
+                    writer.Write((ushort)chunkCount);
+                    index = chunkCount;
                 }
-                else
+
+                int offset = 8194 + index * 32768 * 4; // Header size + chunk index * block count * 4 bytes
+                fileStream.Seek(offset, SeekOrigin.Begin);
+
+                foreach (var storage in chunk.blockStorage.Blocks)
                 {
-                    foreach (var block in storage)
-                        writer.Write(block.blockData);
+                    if (storage == null)
+                    {
+                        for (int i = 0; i < 4096; i++)
+                            writer.Write(0);
+                    }
+                    else
+                    {
+                        foreach (var block in storage)
+                            writer.Write(block.blockData);
+                    }
                 }
             }
         }

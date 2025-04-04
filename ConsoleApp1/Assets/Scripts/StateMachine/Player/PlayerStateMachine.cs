@@ -66,8 +66,8 @@ public class PlayerStateMachine : ScriptingNode
     {
         new OldAnimationManager();
         
-        _lastCameraPitch = Game.camera.pitch;
-        _lastCameraYaw = Game.camera.yaw;
+        _lastCameraPitch = Game.camera.Pitch;
+        _lastCameraYaw = Game.camera.Yaw;
         _lastCameraPosition = Game.camera.Position;
         
         physicsBody = Transform.GetComponent<PhysicsBody>();
@@ -104,8 +104,8 @@ public class PlayerStateMachine : ScriptingNode
         camera.SetCameraMode(CameraMode.Follow);
         
         camera.Position = _lastCameraPosition;
-        camera.yaw = _lastCameraYaw;
-        camera.pitch = _lastCameraPitch;
+        camera.Yaw = _lastCameraYaw;
+        camera.Pitch = _lastCameraPitch;
         
         camera.UpdateVectors();
         
@@ -113,17 +113,18 @@ public class PlayerStateMachine : ScriptingNode
     }
 
     public override void Update()
-    {
-        if (!Game.MoveTest)
-            return;
-            
+    {      
         Camera camera = Game.camera;
+        if (!Game.MoveTest || camera.GetCameraMode() != CameraMode.Follow)
+            return;
+
         Vector2 input = Input.GetMovementInput();
         
         if (input != Vector2.Zero)
         {
-            yaw = -camera.yaw + _inputAngle[input];
-            Info.SetPositionText(_oldPosition, Transform.Position - (0f, 0.875f, 0f));
+            yaw = -camera.Yaw + _inputAngle[input];
+            if (camera.GetCameraMode() == CameraMode.Follow)
+                Info.SetPositionText(_oldPosition, Transform.Position - (0f, 0.875f, 0f));
         }
         
         forward = Mathf.YAngleToDirection(-yaw);
@@ -154,6 +155,7 @@ public class PlayerStateMachine : ScriptingNode
         _currentState.Update(this);
 
         _oldPosition = Transform.Position;
+        PlayerData.Position = Transform.Position;
     }
     
     public override void FixedUpdate()
@@ -230,8 +232,8 @@ public class PlayerStateMachine : ScriptingNode
         Console.WriteLine("Exiting Player State Machine");
         
         _lastCameraPosition = camera.Position;
-        _lastCameraYaw = camera.yaw;
-        _lastCameraPitch = camera.pitch;
+        _lastCameraYaw = camera.Yaw;
+        _lastCameraPitch = camera.Pitch;
         
         base.Exit();
     }

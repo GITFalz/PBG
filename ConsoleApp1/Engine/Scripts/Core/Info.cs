@@ -27,7 +27,7 @@ public class Info
 
 
     private static VAO _blockVao = new VAO();
-    private static SSBO<InfoBlockData> _blockSSBO = new([]);
+    private static SSBO<InfoBlockData> _blockSSBO = new();
     private static List<InfoBlockData> _blockData = [];
     private static ConcurrentBag<InfoBlockData> _blocks = new ConcurrentBag<InfoBlockData>();
     private static ShaderProgram _blockShader = new ShaderProgram("Info/InfoBlock.vert", "Info/InfoBlock.frag");
@@ -117,15 +117,19 @@ public class Info
         {
             _blockData = [.. _blocks];
             GenerateBlocks();
-            indirectBuffer = new([
-                new DrawArraysIndirectCommand
+            List<DrawArraysIndirectCommand> commands = new List<DrawArraysIndirectCommand>();
+            for (int i = 0; i < _blockData.Count; i++)
+            {
+                DrawArraysIndirectCommand command = new DrawArraysIndirectCommand
                 {
-                    count = (uint)_blockData.Count * 36,
+                    count = 36,
                     instanceCount = 1,
-                    first = 0,
+                    first = i * 36,
                     baseInstance = 0
-                }
-            ]);
+                };
+                commands.Add(command);
+            }
+            indirectBuffer = new ArrayIDBO(commands);
             _updateBlocks = () => { };
         };
     }
@@ -156,11 +160,7 @@ public class Info
         _blockSSBO.Bind(1);
         indirectBuffer.Bind();
 
-        Shader.Error("Before multi draw: ");
-
         GL.MultiDrawArraysIndirect(PrimitiveType.Triangles, IntPtr.Zero, indirectBuffer.Commands.Count, 0);
-
-        Shader.Error("After multi draw: ");
         
         _blockSSBO.Unbind();
         _blockVao.Unbind();

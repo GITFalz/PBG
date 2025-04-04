@@ -21,7 +21,7 @@ public static class TextureData
         {
             for (int col = 0; col < cols; col++)
             {
-                byte[] subImage = ExtractSubImage(atlas, col * width, row * height, width, height);
+                byte[] subImage = ExtractSubImage(atlas, col * width, (rows - row - 1) * height, width, height);
                 textures.Add(subImage);
             }
         }

@@ -1,7 +1,10 @@
+using System.Collections.Concurrent;
 using OpenTK.Mathematics;
 
 public static class ChunkLoader
 {
+    public static readonly ConcurrentDictionary<string, object> fileLocks = [];
+
     public static bool IsChunkStored(Chunk chunkData)
     {
         Vector3 regionPos = ChunkGenerator.RegionPosition(chunkData.GetRelativePosition());
@@ -31,6 +34,21 @@ public static class ChunkLoader
 
         int chunkIndex = ChunkGenerator.ChunkIndex(chunkData.GetRelativePosition());
 
+        if (fileLocks.TryGetValue(filePath, out var fileLock))
+        {
+            lock (fileLock)
+            {
+                return Load(chunkData, chunkIndex, filePath);
+            }
+        }
+        else
+        {
+            return Load(chunkData, chunkIndex, filePath);
+        }
+    }
+
+    private static bool Load(Chunk chunkData, int chunkIndex, string filePath)
+    {
         FileStream fileStream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
         using BinaryReader reader = new BinaryReader(fileStream);
 
