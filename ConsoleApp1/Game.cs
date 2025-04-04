@@ -48,9 +48,6 @@ public class Game : GameWindow
 
     // Miscaleanous Ui
     private PopUp _popUp;
-
-    
-    public DrawingBuffer PaintingEditor;
     
     public Game(int width, int height) : base(GameWindowSettings.Default, new NativeWindowSettings
         {
@@ -133,8 +130,6 @@ public class Game : GameWindow
         LoadScene("Modeling");
 
         _popUp = new PopUp();
-
-        PaintingEditor = new DrawingBuffer(300, 300);
         
         GL.Enable(EnableCap.DepthTest);
         
@@ -183,8 +178,6 @@ public class Game : GameWindow
 
         GL.Enable(EnableCap.CullFace);
         GL.FrontFace(FrontFaceDirection.Ccw);
-
-        DrawingBuffer.Render();
         
         GL.Viewport(0, 0, Width, Height);
         

@@ -27,6 +27,14 @@ public class UIController
     public bool render = true;
     public static int TextOffset = 0;
 
+    public void AddElements(params UIElement[] elements)
+    {
+        foreach (var element in elements)
+        {
+            AddElement(element);
+        }
+    }
+
     public void AddElement(UIElement element, MeshType type = MeshType.UnMasked, bool test = false)
     {
         if (element.PositionType == PositionType.Absolute)
@@ -313,8 +321,8 @@ public class UIController
         if (!render)
             return;
 
-        GL.Disable(EnableCap.DepthTest);
-        GL.DepthMask(false);
+        ///GL.Disable(EnableCap.DepthTest);
+        //GL.DepthMask(false);
         GL.Enable(EnableCap.Blend);
         GL.Disable(EnableCap.CullFace);
         GL.FrontFace(FrontFaceDirection.Ccw);
