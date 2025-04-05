@@ -80,6 +80,32 @@ public class DrawingPanel
     private static float _drawingCanvasSize = 2f;
 
     public static DrawingMode DrawingMode = DrawingMode.None;
+    public static bool DisplayBrushCircle = false;
+    public static void SetDrawingMode(DrawingMode mode) 
+    { 
+        DrawingMode = mode;
+        switch (mode)
+        {
+            case DrawingMode.Eraser:
+                DisplayBrushCircle = true;
+                break;
+            case DrawingMode.Brush:
+                DisplayBrushCircle = true;
+                break;
+            case DrawingMode.Blur:
+                DisplayBrushCircle = true;
+                break;
+            default:
+                DisplayBrushCircle = false;
+                break;
+        }
+    }
+
+    public static float Falloff = 2f;
+
+    public static float BrushStrength = 1f;
+
+    public static int RenderSet = 0;
 
     public DrawingPanel(int width, int height)
     {
@@ -122,6 +148,9 @@ public class DrawingPanel
         int pointLocation = GL.GetUniformLocation(_paintingShader.ID, "point");
         int radiusLocation = GL.GetUniformLocation(_paintingShader.ID, "radius");  
         int colorLocation = GL.GetUniformLocation(_paintingShader.ID, "color");
+        int modeLocation = GL.GetUniformLocation(_paintingShader.ID, "paintMode");
+        int falloffLocation = GL.GetUniformLocation(_paintingShader.ID, "falloff");
+        int brushStrengthLocation = GL.GetUniformLocation(_paintingShader.ID, "brushStrength");
 
         GL.UniformMatrix4(modelLocation, false, ref model);
         GL.UniformMatrix4(projectionLocation, true, ref _projectionMatrix);
@@ -129,6 +158,9 @@ public class DrawingPanel
         GL.Uniform2(pointLocation, mousePos);
         GL.Uniform1(radiusLocation, _drawingCanvasSize * _brushHalfSize);
         GL.Uniform4(colorLocation, BrushColor.X, BrushColor.Y, BrushColor.Z, BrushColor.W);
+        GL.Uniform1(modeLocation, (int)DrawingMode);
+        GL.Uniform1(falloffLocation, Falloff);
+        GL.Uniform1(brushStrengthLocation, BrushStrength);
 
         _fbo.BindTexture();
         _vao.Bind();
@@ -201,12 +233,18 @@ public class DrawingPanel
         int sizeLocation = GL.GetUniformLocation(_brushCircleShader.ID, "size");
         int pointLocation = GL.GetUniformLocation(_brushCircleShader.ID, "point");
         int radiusLocation = GL.GetUniformLocation(_brushCircleShader.ID, "radius");
+        int doFalloffLocation = GL.GetUniformLocation(_brushCircleShader.ID, "brushSet");
+        int falloffLocation = GL.GetUniformLocation(_brushCircleShader.ID, "falloff");
+        int brushStrengthLocation = GL.GetUniformLocation(_brushCircleShader.ID, "brushStrength");
 
         GL.UniformMatrix4(modelLocation, true, ref model);
         GL.UniformMatrix4(projectionLocation, true, ref _textureProjectionMatrix);
         GL.Uniform2(sizeLocation, new Vector2(_brushSize, _brushSize));
         GL.Uniform2(pointLocation, brushPos);
         GL.Uniform1(radiusLocation, _brushHalfSize);
+        GL.Uniform1(doFalloffLocation, RenderSet);
+        GL.Uniform1(falloffLocation, Falloff);
+        GL.Uniform1(brushStrengthLocation, BrushStrength);
 
         _vao.Bind();
 
@@ -216,6 +254,8 @@ public class DrawingPanel
 
         _brushCircleShader.Unbind();
 
+        RenderSet = 0;
+
         GL.Disable(EnableCap.Blend);
 
         GL.Viewport(0, 0, Game.Width, Game.Height);
@@ -224,7 +264,9 @@ public class DrawingPanel
 
 public enum DrawingMode
 {
-    None,
-    Move,
-    Brush
+    None = -2,
+    Move = -1,
+    Eraser = 0,
+    Brush = 1,
+    Blur = 2,
 }

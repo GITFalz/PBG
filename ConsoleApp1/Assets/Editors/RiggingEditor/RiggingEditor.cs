@@ -11,7 +11,7 @@ public class RiggingEditor : BaseEditor
 {
     public ShaderProgram _shaderProgram;
     public UIController BoneUi = new UIController();
-    public Model model;
+    public OldModel model;
     public RigMesh Mesh;
 
     public List<Vertex> SelectedVertices = new();

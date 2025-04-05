@@ -372,7 +372,6 @@ public static class Mathf
             return;
         }
 
-        Edge best = edges[0];
         Vector3 direction = edges[0].GetDirection();
         float angle = MathHelper.RadiansToDegrees(Vector3.CalculateAngle(axisX, direction));
 
@@ -426,16 +425,17 @@ public static class Mathf
                 max = maxC;
                 size = sizeC;
                 angle = a;
-                best = edges[i];
             }
         }
 
-        best.A.Color = (0.25f, 0.3f, 1);
-        best.B.Color = (0.25f, 0.3f, 1);
-
         foreach (var vertex in vertices)
         {
-            vertex.SetPosition(RotateAround(vertex, center, rotationAxis, angle));
+            Vector3 rotatedPoint = RotateAround(vertex, center, rotationAxis, angle);
+            rotatedPoint.Y = 0;
+            vertex.SetPosition(rotatedPoint);
         }
+
+        min.Y = 0;
+        max.Y = 0;
     }
 }

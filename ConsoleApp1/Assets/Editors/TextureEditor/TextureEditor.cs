@@ -169,8 +169,6 @@ public class TextureEditor : BaseEditor
 
         DrawingPanel.BrushColor *= ColorPicker.Brightness;
         DrawingPanel.BrushColor.W = 1f;
-
-        Console.WriteLine($"Color: {DrawingPanel.BrushColor} {ColorPicker.Brightness} {ColorPicker.Saturation}");
     }
 
     public void DrawingPanelHold()
@@ -257,9 +255,31 @@ public class TextureEditor : BaseEditor
         if (Input.IsKeyDown(Keys.LeftControl))
         {
             delta = Input.GetMouseScrollDelta().Y;
-            if (delta != 0)
+            if (Input.IsKeyDown(Keys.B)) // Brush size
             {
-                DrawingPanel.ZoomBrush(delta * GameTime.DeltaTime * 100 * (1 + DrawingPanel.BrushSize));
+                if (delta != 0)
+                {
+                    DrawingPanel.BrushSize += delta * GameTime.DeltaTime * 100 * (1 + DrawingPanel.BrushSize);
+                    DrawingPanel.BrushSize = Mathf.Clamp(1, 100, DrawingPanel.BrushSize);
+                }
+            }
+            if (Input.IsKeyDown(Keys.F)) // Falloff
+            {
+                if (delta != 0)
+                {
+                    DrawingPanel.Falloff += delta * GameTime.DeltaTime * 50 * (1 + DrawingPanel.Falloff);
+                    DrawingPanel.Falloff = Mathf.Clamp(0, 5, DrawingPanel.Falloff);
+                }
+                DrawingPanel.RenderSet = 1;
+            }
+            if (Input.IsKeyDown(Keys.W)) // brush strength
+            {
+                if (delta != 0)
+                {
+                    DrawingPanel.BrushStrength += delta * GameTime.DeltaTime * 10 * (1 + DrawingPanel.BrushStrength);
+                    DrawingPanel.BrushStrength = Mathf.Clamp(0, 1, DrawingPanel.BrushStrength);
+                }
+                DrawingPanel.RenderSet = 2;
             }
 
             return;
@@ -273,11 +293,15 @@ public class TextureEditor : BaseEditor
         }
 
         if (Input.IsKeyPressed(Keys.N))
-            DrawingPanel.DrawingMode = DrawingMode.None;
+            DrawingPanel.SetDrawingMode(DrawingMode.None);
         else if (Input.IsKeyPressed(Keys.M))
-            DrawingPanel.DrawingMode = DrawingMode.Move;
+            DrawingPanel.SetDrawingMode(DrawingMode.Move);
+        else if (Input.IsKeyPressed(Keys.E))
+            DrawingPanel.SetDrawingMode(DrawingMode.Eraser);
         else if (Input.IsKeyPressed(Keys.B))
-            DrawingPanel.DrawingMode = DrawingMode.Brush;
+            DrawingPanel.SetDrawingMode(DrawingMode.Brush);
+        else if (Input.IsKeyPressed(Keys.G))
+            DrawingPanel.SetDrawingMode(DrawingMode.Blur);
 
         if (DrawingPanel.DrawingMode == DrawingMode.Move)
         {
@@ -311,7 +335,7 @@ public class TextureEditor : BaseEditor
 
         DrawingPanel.RenderTexture(WindowPosition, WindowWidth, WindowHeight, CanvasPosition.X, CanvasPosition.Y);
 
-        if (RenderBrushCircle && !MaskCanvas && DrawingPanel.DrawingMode == DrawingMode.Brush)
+        if (RenderBrushCircle && !MaskCanvas && DrawingPanel.DisplayBrushCircle)
             DrawingPanel.RenderBrushCircle(WindowPosition, WindowWidth, WindowHeight);
         ColorPicker.RenderTexture(ColorPickerPosition, ColorPickerWidth, ColorPickerHeight);
 

@@ -13,7 +13,7 @@ public class GeneralModelingEditor : ScriptingNode
     public UIController MainUi = new UIController();
     public UIController ModelingUi = new UIController();
     public UIController UIScrollViewTest = new UIController();
-    public Model model = new Model();
+    public OldModel model = new OldModel();
 
     public string currentModelName = "cube";
     public List<string> MeshSaveNames = new List<string>();

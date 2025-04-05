@@ -159,22 +159,29 @@ public class ModelingEditor : BaseEditor
 
                 Handle_SelectAllVertices();
                 List<Triangle> triangles = GetSelectedFullTriangles().ToList();
+                List<BoundingBoxRegion> boundingBoxes = [];
 
-                Vector3 offset = (20, 0, 0);
+                Vector3 offset = (0, 0, 0);
 
+                // Basic flattening and packing
                 while (triangles.Count > 0)
                 {
+                    // Get a region of triangles from a mesh to flatten out
                     SelectedTriangles = triangles[0].GetTriangleRegion([]).ToList();
                     SelectedVertices = GetVertices(SelectedTriangles).ToList();
                     triangles.RemoveAll(t => SelectedTriangles.Contains(t));
 
+                    // Remove region from the original mesh and flatten the region
                     Handle_SeperateSelection();
                     MoveSelectedVertices(offset);
                     Handle_Flattening();
 
+                    // if any vertices are present:
+                    // 1. Flip the region if the normal of the first triangle is facing down
+                    // 2. Get the smallest possible bounding box of the selected region and rotate it if needed before moving it next to the last one
                     if (SelectedVertices.Count != 0)
                     {
-                        Mathf.GetSmallestBoundingBox(SelectedVertices, out Vector3 min, out Vector3 max);
+                        // Flip the region if the normal of the first triangle is facing down
                         List<Triangle> tris = GetSelectedFullTriangles().ToList();
                         if (tris.Count > 0)
                         {
@@ -197,7 +204,140 @@ public class ModelingEditor : BaseEditor
                             }
                         }
 
-                        offset.X += 20;
+                        // Get the smallest possible bounding box of the selected region and rotate it if needed before moving it next to the last one
+                        Mathf.GetSmallestBoundingBox(SelectedVertices, out Vector3 min, out Vector3 max);
+                        Vector3 size = max - min;
+                        Vector3 vOffset = (offset.X - min.X, 0, -min.Z);
+                        BoundingBoxRegion region = new BoundingBoxRegion(min + vOffset, max + vOffset, [.. SelectedVertices]);
+                        boundingBoxes.Add(region);
+
+                        foreach (var vert in SelectedVertices)
+                        {
+                            vert.MovePosition(vOffset);
+                        }
+
+                        offset.X += size.X + 1;
+                    }
+                }
+
+                // Better packing algorithm
+
+                // Calculate the approximate volume of the packed regions
+                float approximateVolume = 0;
+                foreach (var region in boundingBoxes)
+                {
+                    Vector2 size = (region.Max.X - region.Min.X + 2, region.Max.Z - region.Min.Z + 2); // +2 to avoid overlapping
+                    float volume = size.X * size.Y;
+                    approximateVolume += volume;
+                }
+
+                double sideLength = Math.Sqrt(approximateVolume) + 2; // +2 to avoid overlapping
+
+                // Packing algorithm
+                bool packed = false;
+                while (!packed)
+                {
+                    bool needsPacking = false;
+
+                    // Get the last region and remove it from the list so we can test it against the others
+                    BoundingBoxRegion last = boundingBoxes[^1];
+                    boundingBoxes.RemoveAt(boundingBoxes.Count - 1);
+                    Vector3 lastSize = last.Size;
+
+                    Vector3 bestMin = Vector3.Zero;
+                    int bestIndex = 0;
+                    bool foundAtLeastOne = false;
+
+                    for (int i = 0; i < boundingBoxes.Count; i++)
+                    {
+                        Vector3 min = boundingBoxes[i].Min;
+                        Vector3 max = boundingBoxes[i].Max;
+
+                        if (min.X >= sideLength) // If the region is too far to the right, skip it
+                        {
+                            needsPacking = true;
+                            continue;
+                        }
+
+                        Vector3 testMinLeft = (min.X, 0, max.Z + 2); // Tesing the region above the current one on the left side
+                        Vector3 testMinRight = (max.X - lastSize.X, 0, max.Z + 2); // Tesing the region above the current one on the right side
+
+                        bool collidingLeft = false;
+                        for (int j = 0; j < boundingBoxes.Count; j++)
+                        {
+                            if (i == j)
+                                continue;
+                            
+                            last.SetMin(testMinLeft);
+                            var bB = boundingBoxes[j];
+
+                            if (last & bB)
+                            {
+                                collidingLeft = true;
+                                break;
+                            }
+                        }
+
+                        if (!collidingLeft)
+                        {
+                            bestIndex = i;
+
+                            if (!foundAtLeastOne || testMinLeft.Z < bestMin.Z) // Only set the best index if it is the first one or if it is smaller than the current best
+                            {
+                                bestMin = testMinLeft;
+                                foundAtLeastOne = true;
+                            }
+                            continue;
+                        }
+
+                        if (max.X < sideLength) // Only test the right side if the region is not too far to the right
+                        {
+                            bool collidingRight = false;
+                            for (int j = 0; j < boundingBoxes.Count; j++)
+                            {
+                                if (i == j)
+                                    continue;
+                                
+                                last.SetMin(testMinRight);
+                                var bB = boundingBoxes[j];
+
+                                if (last & bB)
+                                {
+                                    collidingRight = true;
+                                    break;
+                                }
+                            }
+
+                            if (!collidingRight)
+                            {
+                                bestIndex = i;
+                                if (!foundAtLeastOne || testMinRight.Z < bestMin.Z)
+                                {
+                                    bestMin = testMinRight;
+                                    foundAtLeastOne = true;
+                                }
+                                continue;
+                            }
+                        }
+                    }
+
+                    last.SetMin(bestMin);
+                    boundingBoxes.Insert(bestIndex, last);
+
+                    if (!needsPacking) 
+                    {
+                        packed = true;
+                        break;
+                    }
+                }
+
+                // Move the regions to their new positions
+                foreach (var region in boundingBoxes)
+                {
+                    Vector3 o = region.Min - region.OriginalMin;
+                    foreach (var vert in region.Vertices)
+                    {
+                        vert.MovePosition(o);
                     }
                 }
 
@@ -211,7 +351,7 @@ public class ModelingEditor : BaseEditor
                 Mesh.GenerateBuffers();
 
                 UpdateVertexPosition();
-                //GenerateVertexColor();
+                GenerateVertexColor();
             }
 
             // Seperate selection
@@ -1101,6 +1241,8 @@ public class ModelingEditor : BaseEditor
         }
                 
         GenerateVertexColor();
+
+        Console.WriteLine(GetSelectedFullTriangles().Count);
     }
 
     // Stashing
@@ -1283,6 +1425,43 @@ public class ModelingEditor : BaseEditor
         new Vector3(1, 0, 1), // Y
         new Vector3(1, 1, 0), // Z
     };
+
+    private struct BoundingBoxRegion
+    {
+        public Vector3 Min;
+        public Vector3 Max;
+        public Vector3 OriginalMin;
+        public Vector3 Size;
+        public List<Vertex> Vertices;
+
+        public BoundingBoxRegion(Vector3 min, Vector3 max, List<Vertex> vertices)
+        {
+            Min = min;
+            Max = max;
+            OriginalMin = min;
+            Size = max - min;
+            Vertices = vertices;
+        }
+
+        public void SetMin(Vector3 min)
+        {
+            Min = min;
+            Max = Min + Size;
+        }
+
+        public bool Intersects(BoundingBoxRegion other)
+        {
+            return (Mathf.Min(Max.X, other.Max.X) >= Mathf.Max(Min.X, other.Min.X)) &&
+                (Mathf.Min(Max.Y, other.Max.Y) >= Mathf.Max(Min.Y, other.Min.Y)) &&
+                (Mathf.Min(Max.Z, other.Max.Z) >= Mathf.Max(Min.Z, other.Min.Z));
+        }
+
+        /// Check if two bounding boxes intersect
+        public static bool operator &(BoundingBoxRegion a, BoundingBoxRegion b)
+        {
+            return a.Intersects(b);
+        }
+    }
 }
 
 public enum RenderType

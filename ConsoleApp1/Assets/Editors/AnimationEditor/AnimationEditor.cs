@@ -6,7 +6,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 public class AnimationEditor : BaseEditor
 {
     private bool freeCamera = false;
-    public Model model;
+    public OldModel model;
     public AnimationMesh Mesh;
     public UIController Timeline;
     

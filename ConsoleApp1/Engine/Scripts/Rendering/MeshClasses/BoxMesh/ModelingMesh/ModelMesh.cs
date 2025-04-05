@@ -553,10 +553,11 @@ public class ModelMesh : Meshes
         List<string> newLines = new List<string>();
 
         int oldVertexCount = int.Parse(oldLines[0]);
-        int oldTriangleCount = int.Parse(oldLines[oldVertexCount + 1]);
-        int oldTextureCount = int.Parse(oldLines[oldVertexCount + oldTriangleCount + 2]);
-        int oldNormalCount = int.Parse(oldLines[oldVertexCount + oldTriangleCount + oldTextureCount + 3]);
-        int rigStart = oldVertexCount + oldTriangleCount + oldTextureCount + oldNormalCount + 4;
+        int oldEdgeCount = int.Parse(oldLines[oldVertexCount + 1]);
+        int oldUvCount = int.Parse(oldLines[oldVertexCount + oldEdgeCount + 2]);
+        int oldTriangleCount = int.Parse(oldLines[oldVertexCount + oldEdgeCount + oldUvCount + 3]);
+        int oldNormalCount = int.Parse(oldLines[oldVertexCount + oldEdgeCount + oldUvCount + oldTriangleCount + 4]);
+        int rigStart = oldVertexCount + oldEdgeCount + oldUvCount + oldTriangleCount + oldNormalCount + 5;
 
         newLines.Add(VertexList.Count.ToString());
         foreach (var vertex in VertexList)
