@@ -319,10 +319,7 @@ public class ModelingEditor : BaseEditor
 
     public override void Render(GeneralModelingEditor editor)
     {
-        Console.WriteLine("Render Modeling Editor");
-        Shader.Error("before editor render: ");
         editor.RenderModel();
-        Shader.Error("before ui render: ");
         Ui.Render();
 
         if (renderSelection)

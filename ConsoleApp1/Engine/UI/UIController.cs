@@ -321,42 +321,30 @@ public class UIController
         if (!render)
             return;
 
-        ///GL.Disable(EnableCap.DepthTest);
+        //GL.Disable(EnableCap.DepthTest);
         //GL.DepthMask(false);
         GL.Enable(EnableCap.Blend);
-
-        Shader.Error("Before depth: ");
-
         GL.Disable(EnableCap.CullFace);
-
-        Shader.Error("Before cull: ");
-
         GL.FrontFace(FrontFaceDirection.Ccw);
-
-        Shader.Error("Before front: ");
-        
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
         Matrix4 model = Matrix4.Identity;
 
-        Shader.Error("Before binding: ");
-
         _uItexture.Bind();
-
-        //Shader.Error("Binding error: ");
-
         _uiShader.Bind();
 
         int modelLoc = GL.GetUniformLocation(_uiShader.ID, "model");
         int projectionLoc = GL.GetUniformLocation(_uiShader.ID, "projection");
+        int cycleLoc = GL.GetUniformLocation(_uiShader.ID, "cycle");
 
         GL.UniformMatrix4(modelLoc, true, ref model);
         GL.UniformMatrix4(projectionLoc, true, ref OrthographicProjection);
+        GL.Uniform1(cycleLoc, 6);
+        if (Input.IsKeyPressed(Keys.H))
+            Console.WriteLine((int)GameTime.TotalTime * 5);
 
         uIMesh.Render();
 
-        //Shader.Error("Render: ");
-        
         _uiShader.Unbind();
         _uItexture.Unbind();
 

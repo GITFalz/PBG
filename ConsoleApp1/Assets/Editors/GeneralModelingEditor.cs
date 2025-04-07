@@ -410,9 +410,7 @@ public class GeneralModelingEditor : ScriptingNode
     }
 
     public override void Render()
-    {
-        Shader.Error("general render: ");
-
+    {     
         CurrentEditor.Render(this);
         ModelingUi.Render();
         MainUi.Render();

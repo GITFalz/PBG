@@ -327,13 +327,8 @@ public class TextureEditor : BaseEditor
     {
         GL.Enable(EnableCap.DepthTest);
 
-        Shader.Error("after depth test: ");
-
         GL.DepthMask(true);
 
-        Shader.Error("after depth mask: ");
-
-        Console.WriteLine("Render TextureEditor");
         TextureUI.Render();
 
         if (RenderBrushCircle && !MaskCanvas)

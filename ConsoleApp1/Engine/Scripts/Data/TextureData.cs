@@ -16,11 +16,20 @@ public static class TextureData
         
         List<byte[]> textures = new List<byte[]>();
 
+        bool isLinux = Environment.OSVersion.Platform == PlatformID.Unix;
+
         for (int row = 0; row < rows; row++)
         {
             for (int col = 0; col < cols; col++)
             {
-                byte[] subImage = ExtractSubImage(atlas, col * width, row * height, width, height);
+                int r = row;
+                if (isLinux)
+                {
+                    // Adjust the row index for Linux
+                    r = (rows - 1) - row;
+                }
+
+                byte[] subImage = ExtractSubImage(atlas, col * width, r * height, width, height);
                 textures.Add(subImage);
             }
         }

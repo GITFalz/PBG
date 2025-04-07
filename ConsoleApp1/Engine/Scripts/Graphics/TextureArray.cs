@@ -13,53 +13,35 @@ public class TextureArray
         List<byte[]> textureData = TextureData.SplitTextureAtlas(Path.Combine(Game.texturePath, atlasPath), cellWidth, cellHeight);
         
         int layers = textureData.Count;
+
+        Console.WriteLine($"Texture array: {Path.Combine(Game.texturePath, atlasPath)} | Width: {cellWidth} | Height: {cellHeight} | Layers: {layers}");
         
         ID = GL.GenTexture();
 
-        Shader.Error("Generating texture: ");
-
         GL.ActiveTexture(TextureUnit.Texture0); 
-
-        Shader.Error("Binding texture0: ");
-
         GL.BindTexture(TextureTarget.Texture2DArray, ID);
-
-        Shader.Error("Binding texture: ");
         
         GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
         GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
         GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
         GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
 
-        Shader.Error("Setting parameters: ");
-
         GL.TexStorage3D(TextureTarget3d.Texture2DArray, 1, SizedInternalFormat.Rgba8, cellWidth, cellHeight, layers);
-
-        Shader.Error("Setting storage: ");
 
         for (int i = 0; i < layers; i++)
         {
             GL.TextureSubImage3D(ID, 0, 0, 0, i, cellWidth, cellHeight, 1, PixelFormat.Rgba, PixelType.UnsignedByte, textureData[i]);
-
-            Shader.Error("Setting subimage: ");
         }
         
         Unbind();
-
-        Shader.Error("Unbinding texture: ");
 
         TextureArrays.Add(this);
     }
 
     public void Bind()
     {
-        GL.ActiveTexture(TextureUnit.Texture0);
-
-        Shader.Error("Binding texture0: ");
-        
+        GL.ActiveTexture(TextureUnit.Texture0);        
         GL.BindTexture(TextureTarget.Texture2DArray, ID);
-
-        Shader.Error("Binding texture: ");
     }
     public void Unbind() { GL.BindTexture(TextureTarget.Texture2DArray, 0); }
     public static void Delete() 
