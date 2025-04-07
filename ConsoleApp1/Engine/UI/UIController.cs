@@ -324,14 +324,28 @@ public class UIController
         ///GL.Disable(EnableCap.DepthTest);
         //GL.DepthMask(false);
         GL.Enable(EnableCap.Blend);
+
+        Shader.Error("Before depth: ");
+
         GL.Disable(EnableCap.CullFace);
+
+        Shader.Error("Before cull: ");
+
         GL.FrontFace(FrontFaceDirection.Ccw);
+
+        Shader.Error("Before front: ");
+        
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
         Matrix4 model = Matrix4.Identity;
 
-        _uiShader.Bind();
+        Shader.Error("Before binding: ");
+
         _uItexture.Bind();
+
+        //Shader.Error("Binding error: ");
+
+        _uiShader.Bind();
 
         int modelLoc = GL.GetUniformLocation(_uiShader.ID, "model");
         int projectionLoc = GL.GetUniformLocation(_uiShader.ID, "projection");
@@ -340,6 +354,8 @@ public class UIController
         GL.UniformMatrix4(projectionLoc, true, ref OrthographicProjection);
 
         uIMesh.Render();
+
+        //Shader.Error("Render: ");
         
         _uiShader.Unbind();
         _uItexture.Unbind();

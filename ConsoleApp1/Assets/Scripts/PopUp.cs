@@ -129,11 +129,15 @@ public class PopUp
 
     public void RenderMessage()
     {
+        Shader.Error("Pop up message: ");
+
         MessageUI.Render();      
     }
 
     public void RenderConfirmation()
     {
+        Shader.Error("Pop up confirmation: ");
+        
         ConfirmationUI.Render();
     }
 
