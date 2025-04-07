@@ -333,6 +333,7 @@ public class TextureEditor : BaseEditor
 
         Shader.Error("after depth mask: ");
 
+        Console.WriteLine("Render TextureEditor");
         TextureUI.Render();
 
         if (RenderBrushCircle && !MaskCanvas)

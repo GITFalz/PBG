@@ -100,7 +100,10 @@ public class AnimationEditor : BaseEditor
 
     public override void Render(GeneralModelingEditor editor)
     {
+        Shader.Error("before animation render: ");
         editor.RenderAnimation();
+        Shader.Error("after animation render: ");
+        Console.WriteLine("after animation render: ");
         Timeline.Render();
     }
     

@@ -131,6 +131,7 @@ public class PopUp
     {
         Shader.Error("Pop up message: ");
 
+        Console.WriteLine("RenderMessage");
         MessageUI.Render();      
     }
 
@@ -138,6 +139,7 @@ public class PopUp
     {
         Shader.Error("Pop up confirmation: ");
         
+        Console.WriteLine("RenderConfirmation");
         ConfirmationUI.Render();
     }
 
