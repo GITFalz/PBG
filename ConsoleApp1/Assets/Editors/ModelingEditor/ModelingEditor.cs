@@ -19,7 +19,6 @@ public class ModelingEditor : BaseEditor
     public Func<bool>[] Deletion = [ () => false, () => false, () => false ];
 
     public List<Vertex> SelectedVertices = new();
-    public List<Vector3> SelectedVerticesPosition = new();
     public List<Edge> SelectedEdges = new();
     public List<Triangle> SelectedTriangles = new();
     public Dictionary<Vertex, Vector2> Vertices = new Dictionary<Vertex, Vector2>();
@@ -44,7 +43,7 @@ public class ModelingEditor : BaseEditor
     public bool CanGenerateBuffers = true;
 
 
-    public Vertex? TestVertex = null;
+    public ModelCopy randomCopy = new();
 
     
     public ModelCopy Copy = new();
@@ -150,199 +149,51 @@ public class ModelingEditor : BaseEditor
             if (Input.IsKeyPressed(Keys.Q)) Handle_VertexSpliting();
             
             // Mapping
-            if (Input.IsKeyPressed(Keys.M)) 
+            if (Input.IsKeyPressed(Keys.M)) Handle_Mapping();
+
+            if (Input.IsKeyPressed(Keys.T))
             {
-                StashMesh();
+                Vector3 min = (float.MaxValue, float.MaxValue, float.MaxValue);
+                Vector3  max = (float.MinValue, float.MinValue, float.MinValue);
 
-                CanStash = false;
-                CanGenerateBuffers = false;
-
-                Handle_SelectAllVertices();
-                List<Triangle> triangles = GetSelectedFullTriangles().ToList();
-                List<BoundingBoxRegion> boundingBoxes = [];
-
-                Vector3 offset = (0, 0, 0);
-
-                // Basic flattening and packing
-                while (triangles.Count > 0)
+                foreach (var vert in Mesh.VertexList)
                 {
-                    // Get a region of triangles from a mesh to flatten out
-                    SelectedTriangles = triangles[0].GetTriangleRegion([]).ToList();
-                    SelectedVertices = GetVertices(SelectedTriangles).ToList();
-                    triangles.RemoveAll(t => SelectedTriangles.Contains(t));
-
-                    // Remove region from the original mesh and flatten the region
-                    Handle_SeperateSelection();
-                    MoveSelectedVertices(offset);
-                    Handle_Flattening();
-
-                    // if any vertices are present:
-                    // 1. Flip the region if the normal of the first triangle is facing down
-                    // 2. Get the smallest possible bounding box of the selected region and rotate it if needed before moving it next to the last one
-                    if (SelectedVertices.Count != 0)
-                    {
-                        // Flip the region if the normal of the first triangle is facing down
-                        List<Triangle> tris = GetSelectedFullTriangles().ToList();
-                        if (tris.Count > 0)
-                        {
-                            Triangle first = tris[0];
-                            first.UpdateNormal();
-
-                            if (Vector3.Dot(first.Normal, (0, 1, 0)) < 0)
-                            {
-                                Vector3 center = SelectedVertices[0];
-                                for (int i = 1; i < SelectedVertices.Count; i++)
-                                {
-                                    center += SelectedVertices[i];
-                                }
-                                center /= SelectedVertices.Count;
-
-                                foreach (var vert in SelectedVertices)
-                                {
-                                    vert.SetPosition(Mathf.RotatePoint(vert, center, (1, 0, 0), 180f));
-                                }
-                            }
-                        }
-
-                        // Get the smallest possible bounding box of the selected region and rotate it if needed before moving it next to the last one
-                        Mathf.GetSmallestBoundingBox(SelectedVertices, out Vector3 min, out Vector3 max);
-                        Vector3 size = max - min;
-                        Vector3 vOffset = (offset.X - min.X, 0, -min.Z);
-                        BoundingBoxRegion region = new BoundingBoxRegion(min + vOffset, max + vOffset, [.. SelectedVertices]);
-                        boundingBoxes.Add(region);
-
-                        foreach (var vert in SelectedVertices)
-                        {
-                            vert.MovePosition(vOffset);
-                        }
-
-                        offset.X += size.X + 1;
-                    }
+                    min = Mathf.Min(min, vert);
+                    max = Mathf.Max(max, vert);
                 }
 
-                // Better packing algorithm
+                Vector3 bSize = max - min;
+                float largestSide = Mathf.Max(bSize.X, bSize.Z);
 
-                // Calculate the approximate volume of the packed regions
-                float approximateVolume = 0;
-                foreach (var region in boundingBoxes)
+                // Set the uvs to the new positions / largestSide
+
+                // To apply the uvs we need to:
+                // 1. Store the uvs in a list, delete all the triangles we have now, and paste the model we copied at the start of the function
+                // 2. Set the uvs in the pasted triangles
+                // This is possible because the order of the triangles hasn't changed inside the mesh so the setting of the uvs will be correct
+
+                List<(Vector2, Vector2, Vector2)> triangleUvs = [];
+
+                foreach (var triangle in Mesh.TriangleList)
                 {
-                    Vector2 size = (region.Max.X - region.Min.X + 2, region.Max.Z - region.Min.Z + 2); // +2 to avoid overlapping
-                    float volume = size.X * size.Y;
-                    approximateVolume += volume;
+                    Vector2 uvA = (triangle.A.X / largestSide, triangle.A.Z / largestSide);
+                    Vector2 uvB = (triangle.B.X / largestSide, triangle.B.Z / largestSide);
+                    Vector2 uvC = (triangle.C.X / largestSide, triangle.C.Z / largestSide);
+
+                    triangleUvs.Add((uvA, uvB, uvC));
                 }
 
-                double sideLength = Math.Sqrt(approximateVolume) + 2; // +2 to avoid overlapping
+                Mesh.Unload();
 
-                // Packing algorithm
-                bool packed = false;
-                while (!packed)
+                Mesh.AddCopy(randomCopy);
+
+                for (int i = 0; i < Mesh.TriangleList.Count; i++)
                 {
-                    bool needsPacking = false;
-
-                    // Get the last region and remove it from the list so we can test it against the others
-                    BoundingBoxRegion last = boundingBoxes[^1];
-                    boundingBoxes.RemoveAt(boundingBoxes.Count - 1);
-                    Vector3 lastSize = last.Size;
-
-                    Vector3 bestMin = Vector3.Zero;
-                    int bestIndex = 0;
-                    bool foundAtLeastOne = false;
-
-                    for (int i = 0; i < boundingBoxes.Count; i++)
-                    {
-                        Vector3 min = boundingBoxes[i].Min;
-                        Vector3 max = boundingBoxes[i].Max;
-
-                        if (min.X >= sideLength) // If the region is too far to the right, skip it
-                        {
-                            needsPacking = true;
-                            continue;
-                        }
-
-                        Vector3 testMinLeft = (min.X, 0, max.Z + 2); // Tesing the region above the current one on the left side
-                        Vector3 testMinRight = (max.X - lastSize.X, 0, max.Z + 2); // Tesing the region above the current one on the right side
-
-                        bool collidingLeft = false;
-                        for (int j = 0; j < boundingBoxes.Count; j++)
-                        {
-                            if (i == j)
-                                continue;
-                            
-                            last.SetMin(testMinLeft);
-                            var bB = boundingBoxes[j];
-
-                            if (last & bB)
-                            {
-                                collidingLeft = true;
-                                break;
-                            }
-                        }
-
-                        if (!collidingLeft)
-                        {
-                            bestIndex = i;
-
-                            if (!foundAtLeastOne || testMinLeft.Z < bestMin.Z) // Only set the best index if it is the first one or if it is smaller than the current best
-                            {
-                                bestMin = testMinLeft;
-                                foundAtLeastOne = true;
-                            }
-                            continue;
-                        }
-
-                        if (max.X < sideLength) // Only test the right side if the region is not too far to the right
-                        {
-                            bool collidingRight = false;
-                            for (int j = 0; j < boundingBoxes.Count; j++)
-                            {
-                                if (i == j)
-                                    continue;
-                                
-                                last.SetMin(testMinRight);
-                                var bB = boundingBoxes[j];
-
-                                if (last & bB)
-                                {
-                                    collidingRight = true;
-                                    break;
-                                }
-                            }
-
-                            if (!collidingRight)
-                            {
-                                bestIndex = i;
-                                if (!foundAtLeastOne || testMinRight.Z < bestMin.Z)
-                                {
-                                    bestMin = testMinRight;
-                                    foundAtLeastOne = true;
-                                }
-                                continue;
-                            }
-                        }
-                    }
-
-                    last.SetMin(bestMin);
-                    boundingBoxes.Insert(bestIndex, last);
-
-                    if (!needsPacking) 
-                    {
-                        packed = true;
-                        break;
-                    }
+                    Triangle triangle = Mesh.TriangleList[i];
+                    triangle.UvA = triangleUvs[i].Item1;
+                    triangle.UvB = triangleUvs[i].Item2;
+                    triangle.UvC = triangleUvs[i].Item3;
                 }
-
-                // Move the regions to their new positions
-                foreach (var region in boundingBoxes)
-                {
-                    Vector3 o = region.Min - region.OriginalMin;
-                    foreach (var vert in region.Vertices)
-                    {
-                        vert.MovePosition(o);
-                    }
-                }
-
-                CanStash = true;
-                CanGenerateBuffers = true;
 
                 Mesh.CheckUselessVertices();
 
@@ -371,32 +222,6 @@ public class ModelingEditor : BaseEditor
                 Mesh.GenerateBuffers();
 
                 UpdateVertexPosition();
-                GenerateVertexColor();
-            }
-
-            if (Input.IsKeyPressed(Keys.T))
-            {
-                if (SelectedVertices.Count == 0)
-                    return;
-
-                TestVertex = SelectedVertices[0];
-            }
-
-            if (Input.IsKeyPressed(Keys.X))
-            {
-                if (TestVertex == null)
-                    return;
-
-                SelectedVertices.Clear();
-
-                foreach (var vert in Mesh.VertexList)
-                {
-                    if (vert.Name == TestVertex.Name)
-                    {
-                        SelectedVertices.Add(vert);
-                    }
-                }
-
                 GenerateVertexColor();
             }
         }
@@ -546,6 +371,7 @@ public class ModelingEditor : BaseEditor
         GetLastMesh();
         
         Mesh.Init();
+        Mesh.RecalculateNormals();
         Mesh.GenerateBuffers();
 
         UpdateVertexPosition();
@@ -554,44 +380,7 @@ public class ModelingEditor : BaseEditor
 
     public void Handle_Copy()
     {
-        Copy.Clear();
-        Copy.selectedVertices = [.. SelectedVertices];
-        Copy.selectedEdges = [.. GetSelectedFullEdges()];
-        Copy.selectedTriangles = [.. GetSelectedFullTriangles()];
-
-        foreach (var triangle in Copy.selectedTriangles)
-        {
-            Copy.Add(triangle.A);
-            Copy.Add(triangle.B);
-            Copy.Add(triangle.C);
-
-            Copy.Add(triangle.AB);
-            Copy.Add(triangle.BC);
-            Copy.Add(triangle.CA);
-        }
-
-        foreach (var vert in Copy.selectedVertices)
-        {
-            Copy.newSelectedVertices.Add(vert.Copy());
-        }
-
-        foreach (var edge in Copy.selectedEdges)
-        {
-            Copy.newSelectedEdges.Add(new(Copy.GetNewVertex(edge.A), Copy.GetNewVertex(edge.B)));
-        }
-
-        foreach (var triangle in Copy.selectedTriangles)
-        {
-            Copy.newSelectedTriangles.Add(
-            new(
-                Copy.GetNewVertex(triangle.A), 
-                Copy.GetNewVertex(triangle.B), 
-                Copy.GetNewVertex(triangle.C), 
-                Copy.GetNewEdge(triangle.AB), 
-                Copy.GetNewEdge(triangle.BC), 
-                Copy.GetNewEdge(triangle.CA)
-            ));  
-        }
+        ModelCopy.CopyInto(Copy, SelectedVertices);
     }
 
     // Paste
@@ -614,34 +403,14 @@ public class ModelingEditor : BaseEditor
         GenerateVertexColor();
     }
 
-    public void Handle_Flattening()
+    public static void Paste(ModelCopy copy, ModelMesh mesh)
     {
-        Handle_Flattening(GetSelectedFullTriangles().ToList());
+        mesh.AddCopy(copy.Copy());
     }
 
-    public void Handle_Flattening(List<Triangle> triangles)
+    public void Handle_Flattening()
     {
-        if (triangles.Count == 0)
-            return;
-
-        Triangle first = triangles[0];
-
-        Vector3 rotationAxis = Vector3.Cross(first.Normal, (0, 1, 0));
-
-        if (rotationAxis.Length != 0)
-        {
-            float angle = MathHelper.RadiansToDegrees(Vector3.CalculateAngle(first.Normal, (0, 1, 0)));
-            Vector3 center = first.Center();
-            Vector3 rotatedNormal = Mathf.RotatePoint(first.Normal, Vector3.Zero, rotationAxis, angle);
-
-            if (Vector3.Dot(rotatedNormal, (0, 1, 0)) < 0)
-                angle += 180f;
-            
-            foreach (var vert in GetVertices(triangles))
-                vert.SetPosition(Mathf.RotatePoint(vert, center, rotationAxis, angle));
-        }
-
-        first.FlattenRegion(triangles);
+        Model.Handle_Flattening(Model.GetFullSelectedTriangles(SelectedVertices));
 
         if (!CanGenerateBuffers)
             return;
@@ -653,6 +422,8 @@ public class ModelingEditor : BaseEditor
         UpdateVertexPosition();
         GenerateVertexColor();
     }
+
+    
 
     // Selection
     public void HandleVertexSelection()
@@ -781,7 +552,7 @@ public class ModelingEditor : BaseEditor
         if (SelectedVertices.Count == 0)
             return false;
 
-        HashSet<Edge> edges = GetSelectedFullEdges();
+        List<Edge> edges = Model.GetFullSelectedEdges(SelectedVertices);
         foreach (var edge in edges)
         {
             Mesh.RemoveEdge(edge);
@@ -795,7 +566,7 @@ public class ModelingEditor : BaseEditor
 
     public bool HandleTriangleDeletion()
     {
-        HashSet<Triangle> triangles = GetSelectedFullTriangles();
+        List<Triangle> triangles = Model.GetFullSelectedTriangles(SelectedVertices);
 
         if (triangles.Count > 0)
         {
@@ -808,6 +579,23 @@ public class ModelingEditor : BaseEditor
             return true;
         }
         return false;
+    }   
+
+    public static bool TriangleDeletion(ModelMesh mesh, List<Vertex> selectedVertices)
+    {
+        List<Triangle> triangles = Model.GetFullSelectedTriangles(selectedVertices);
+
+        if (triangles.Count > 0)
+        {
+            foreach (var triangle in triangles)
+            {
+                mesh.RemoveTriangle(triangle);
+            }
+            selectedVertices.Clear();
+
+            return true;
+        }
+        return false;
     }
 
 
@@ -816,7 +604,7 @@ public class ModelingEditor : BaseEditor
     {
         StashMesh();
 
-        HashSet<Triangle> triangles = GetSelectedFullTriangles();
+        List<Triangle> triangles = Model.GetFullSelectedTriangles(SelectedVertices);
         ModelMesh modelMesh = Mesh;
 
         if (triangles.Count > 0)
@@ -837,15 +625,268 @@ public class ModelingEditor : BaseEditor
         }
     }
 
-    public void MoveSelectedVertices(Vector3 move)
+    public void Handle_Mapping()
     {
+        StashMesh();
+
+        Handle_SelectAllVertices();
+
+        CanStash = false;
+        CanGenerateBuffers = false;
+
+        List<Triangle> triangles = Model.GetFullSelectedTriangles(SelectedVertices);
+        Dictionary<string, Triangle> trianglesDict = [];
+        List<BoundingBoxRegion> boundingBoxes = [];
+
+        for (int i = 0; i < triangles.Count; i++) { triangles[i].ID = i.ToString(); trianglesDict.Add(i.ToString(), triangles[i]); }
+
+        ModelMesh tempMesh = new();
+
+        Vector3 offset = (0, 0, 0);
+
+        Vector3 min = Vector3.Zero;
+        Vector3 max = Vector3.Zero;
+
+        ModelCopy copy = new ModelCopy(SelectedVertices);
+
+        // Basic flattening and packing
+        while (triangles.Count > 0)
+        {
+            // Get a region of triangles from a mesh to flatten out
+            SelectedTriangles = triangles[0].GetTriangleRegion([]).ToList();
+            SelectedVertices = Model.GetVertices(SelectedTriangles);
+            triangles.RemoveAll(t => SelectedTriangles.Contains(t));
+
+            // Remove region from the original mesh and flatten the region
+            Handle_SeperateSelection();
+            MoveSelectedVertices(offset);
+            Handle_Flattening();
+
+
+            // if any vertices are present:
+            // 1. Flip the region if the normal of the first triangle is facing down
+            // 2. Get the smallest possible bounding box of the selected region and rotate it if needed before moving it next to the last one
+            if (SelectedVertices.Count != 0)
+            {
+                // Flip the region if the normal of the first triangle is facing down
+                List<Triangle> tris = Model.GetFullSelectedTriangles(SelectedVertices);
+                if (tris.Count > 0)
+                {
+                    Triangle first = tris[0];
+                    first.UpdateNormal();
+
+                    if (Vector3.Dot(first.Normal, (0, 1, 0)) < 0)
+                    {
+                        Vector3 center = SelectedVertices[0];
+                        for (int i = 1; i < SelectedVertices.Count; i++)
+                        {
+                            center += SelectedVertices[i];
+                        }
+                        center /= SelectedVertices.Count;
+
+                        foreach (var vert in SelectedVertices)
+                        {
+                            vert.SetPosition(Mathf.RotatePoint(vert, center, (1, 0, 0), 180f));
+                        }
+                    }
+                }
+
+                // Get the smallest possible bounding box of the selected region and rotate it if needed before moving it next to the last one
+                Mathf.GetSmallestBoundingBox(SelectedVertices, out min, out max);
+                Vector3 size = max - min;
+                Vector3 vOffset = (offset.X - min.X, 0, -min.Z);
+                BoundingBoxRegion region = new BoundingBoxRegion(min + vOffset, max + vOffset, [.. SelectedVertices]);
+                boundingBoxes.Add(region);
+
+                foreach (var vert in SelectedVertices)
+                {
+                    vert.MovePosition(vOffset);
+                }
+
+                offset.X += size.X + 1;
+            }
+        }
+
+        Handle_SelectAllVertices();
+        foreach (var tris in Model.GetFullSelectedTriangles(SelectedVertices))
+            trianglesDict[tris.ID] = tris;
+
+        // Better packing algorithm
+
+        // Calculate the approximate volume of the packed regions
+        float approximateVolume = 0;
+        foreach (var region in boundingBoxes)
+        {
+            Vector2 size = (region.Max.X - region.Min.X + 2, region.Max.Z - region.Min.Z + 2); // +2 to avoid overlapping
+            float volume = size.X * size.Y;
+            approximateVolume += volume;
+        }
+
+        double sideLength = Math.Sqrt(approximateVolume) + 2; // +2 to avoid overlapping
+
+        // Packing algorithm
+        bool packed = false;
+        while (!packed)
+        {
+            bool needsPacking = false;
+
+            // Get the last region and remove it from the list so we can test it against the others
+            BoundingBoxRegion last = boundingBoxes[^1];
+            boundingBoxes.RemoveAt(boundingBoxes.Count - 1);
+            Vector3 lastSize = last.Size;
+
+            Vector3 bestMin = Vector3.Zero;
+            int bestIndex = 0;
+            bool foundAtLeastOne = false;
+
+            for (int i = 0; i < boundingBoxes.Count; i++)
+            {
+                min = boundingBoxes[i].Min;
+                max = boundingBoxes[i].Max;
+
+                if (min.X >= sideLength) // If the region is too far to the right, skip it
+                {
+                    needsPacking = true;
+                    continue;
+                }
+
+                Vector3 testMinLeft = (min.X, 0, max.Z + 2); // Tesing the region above the current one on the left side
+                Vector3 testMinRight = (max.X - lastSize.X, 0, max.Z + 2); // Tesing the region above the current one on the right side
+
+                bool collidingLeft = false;
+                for (int j = 0; j < boundingBoxes.Count; j++)
+                {
+                    if (i == j)
+                        continue;
+                    
+                    last.SetMin(testMinLeft);
+                    var bB = boundingBoxes[j];
+
+                    if (last & bB)
+                    {
+                        collidingLeft = true;
+                        break;
+                    }
+                }
+
+                if (!collidingLeft)
+                {
+                    bestIndex = i;
+
+                    if (!foundAtLeastOne || testMinLeft.Z < bestMin.Z) // Only set the best index if it is the first one or if it is smaller than the current best
+                    {
+                        bestMin = testMinLeft;
+                        foundAtLeastOne = true;
+                    }
+                    continue;
+                }
+
+                if (max.X < sideLength) // Only test the right side if the region is not too far to the right
+                {
+                    bool collidingRight = false;
+                    for (int j = 0; j < boundingBoxes.Count; j++)
+                    {
+                        if (i == j)
+                            continue;
+                        
+                        last.SetMin(testMinRight);
+                        var bB = boundingBoxes[j];
+
+                        if (last & bB)
+                        {
+                            collidingRight = true;
+                            break;
+                        }
+                    }
+
+                    if (!collidingRight)
+                    {
+                        bestIndex = i;
+                        if (!foundAtLeastOne || testMinRight.Z < bestMin.Z)
+                        {
+                            bestMin = testMinRight;
+                            foundAtLeastOne = true;
+                        }
+                        continue;
+                    }
+                }
+            }
+
+            last.SetMin(bestMin);
+            boundingBoxes.Insert(bestIndex, last);
+
+            if (!needsPacking) 
+            {
+                packed = true;
+                break;
+            }
+        }
+
+        // Move the regions to their new positions
+        foreach (var region in boundingBoxes)
+        {
+            Vector3 o = region.Min - region.OriginalMin;
+            foreach (var vert in region.Vertices)
+            {
+                vert.MovePosition(o);
+            }
+        }
+
+        // Get the current bounding box
+        min = (float.MaxValue, float.MaxValue, float.MaxValue);
+        max = (float.MinValue, float.MinValue, float.MinValue);
+
+        Handle_SelectAllVertices();
+
         foreach (var vert in SelectedVertices)
         {
-            if (ModelSettings.GridAligned && ModelSettings.Snapping)
-                vert.SnapPosition(move, ModelSettings.SnappingFactor);
-            else
-                vert.MovePosition(move);
+            min = Mathf.Min(min, vert);
+            max = Mathf.Max(max, vert);
         }
+
+        // Move the mesh to 0,0,0
+        foreach (var vert in SelectedVertices)
+        {
+            vert.MovePosition(-min);
+        }
+
+        min = Vector3.Zero;
+        max -= min;
+
+        Vector3 bSize = max - min;
+        float largestSide = Mathf.Max(bSize.X, bSize.Z);
+
+        Mesh.Unload();
+        Mesh.AddCopy(copy.Copy());
+
+        Handle_SelectAllVertices();
+        triangles = Model.GetFullSelectedTriangles(SelectedVertices);
+
+        foreach (var triangle in triangles)
+        {
+            Triangle oldTriangle = trianglesDict[triangle.ID];
+
+            triangle.UvA = (oldTriangle.A.X / largestSide, oldTriangle.A.Z / largestSide);
+            triangle.UvB = (oldTriangle.B.X / largestSide, oldTriangle.B.Z / largestSide);
+            triangle.UvC = (oldTriangle.C.X / largestSide, oldTriangle.C.Z / largestSide);
+        }
+
+        CanStash = true;
+        CanGenerateBuffers = true;
+
+        Mesh.CheckUselessVertices();
+
+        Mesh.RecalculateNormals();
+        Mesh.Init();
+        Mesh.GenerateBuffers();
+
+        UpdateVertexPosition();
+        GenerateVertexColor();
+    }
+
+    public void MoveSelectedVertices(Vector3 move)
+    {
+        Model.MoveSelectedVertices(move, SelectedVertices);
     }
 
 
@@ -910,7 +951,7 @@ public class ModelingEditor : BaseEditor
     {
         StashMesh();
         rotation = 0;
-        selectedCenter = GetSelectedCenter();
+        selectedCenter = Model.GetSelectedCenter(SelectedVertices);
     }
 
     public void Handle_RotateSelectedVertices()
@@ -955,7 +996,7 @@ public class ModelingEditor : BaseEditor
     {
         StashMesh();
         scale = 1;
-        selectedCenter = GetSelectedCenter();
+        selectedCenter = Model.GetSelectedCenter(SelectedVertices);
     }
 
     public void Handle_ScalingSelectedVertices()
@@ -1112,13 +1153,20 @@ public class ModelingEditor : BaseEditor
         Handle_Paste(false);
     }
 
+    public static void SeperateSelection(ModelCopy copy, List<Vertex> vertices, ModelMesh mesh)
+    {
+        ModelCopy.CopyInto(copy, vertices);
+        TriangleDeletion(mesh, vertices);
+        Paste(copy, mesh);
+    }
+
     public void SplitVertex(Vertex vertex)
     {
         List<Triangle> triangles = [.. vertex.ParentTriangles];
         foreach (var tris in triangles)
         {
             bool replace = false;
-            Vertex replacement = new Vertex(vertex + ((tris.Center() - vertex).Normalized() * 0.1f));
+            Vertex replacement = new Vertex(vertex + ((tris.GetCenter() - vertex).Normalized() * 0.1f));
 
             if (tris.AB.Has(vertex) && tris.AB.ParentTriangles.Count > 1)
             {
@@ -1208,7 +1256,7 @@ public class ModelingEditor : BaseEditor
     public void Handle_FlipSelection()
     {
         StashMesh();
-        Vector3 center = GetSelectedCenter();
+        Vector3 center = Model.GetSelectedCenter(SelectedVertices);
 
         foreach (var vert in SelectedVertices)
         {
@@ -1232,7 +1280,6 @@ public class ModelingEditor : BaseEditor
 
     public void Handle_SelectAllVertices()
     {
-        Console.WriteLine("Select all");
         SelectedVertices.Clear();
                 
         foreach (var vert in Mesh.VertexList)
@@ -1241,8 +1288,6 @@ public class ModelingEditor : BaseEditor
         }
                 
         GenerateVertexColor();
-
-        Console.WriteLine(GetSelectedFullTriangles().Count);
     }
 
     // Stashing
@@ -1300,124 +1345,6 @@ public class ModelingEditor : BaseEditor
         Mesh.LoadModel(name, Path.Combine(Game.undoModelPath, Editor.currentModelName));
     }
 
-    // Helper
-    public HashSet<Edge> GetSelectedFullEdges()
-    {
-        HashSet<Edge> edges = [];
-                
-        foreach (var vert in SelectedVertices)
-        {
-            foreach (var edge in vert.ParentEdges)
-            {
-                if (SelectedVertices.Contains(edge.Not(vert)))
-                    edges.Add(edge);
-            }
-        }
-
-        return edges;
-    }
-
-    public HashSet<Triangle> GetSelectedFullTriangles()
-    {
-        HashSet<Triangle> triangles = [];
-                
-        foreach (var triangle in GetSelectedTriangles())
-        {
-            if (IsTriangleFullySelected(triangle))
-                triangles.Add(triangle);
-        }
-        
-        return triangles;
-    }
-
-    public HashSet<Triangle> GetSelectedTriangles()
-    {
-        HashSet<Triangle> triangles = [];
-                
-        foreach (var vert in SelectedVertices)
-        {
-            foreach (var triangle in vert.ParentTriangles)
-            {
-                triangles.Add(triangle);
-            }
-        }
-        
-        return triangles;
-    }
-    
-    public bool IsTriangleFullySelected(Triangle triangle)
-    {
-        return SelectedVertices.Contains(triangle.A) &&
-               SelectedVertices.Contains(triangle.B) &&
-               SelectedVertices.Contains(triangle.C);
-    }
-
-    public List<Vertex> GetVertices(List<Triangle> triangles)
-    {
-        List<Vertex> vertices = [];
-
-        foreach (var triangle in triangles)
-        {
-            if (!vertices.Contains(triangle.A))
-                vertices.Add(triangle.A);
-
-            if (!vertices.Contains(triangle.B))
-                vertices.Add(triangle.B);
-
-            if (!vertices.Contains(triangle.C))
-                vertices.Add(triangle.C);
-        }
-
-        return vertices;
-    }
-
-    public List<Edge> GetEdges(List<Triangle> triangles)
-    {
-        List<Edge> edges = [];
-
-        foreach (var triangle in triangles)
-        {
-            if (!edges.Contains(triangle.AB))
-                edges.Add(triangle.AB);
-
-            if (!edges.Contains(triangle.BC))
-                edges.Add(triangle.BC);
-
-            if (!edges.Contains(triangle.CA))
-                edges.Add(triangle.CA);
-        }
-
-        return edges;
-    }
-
-    public Vector3 GetSelectedCenter()
-    {
-        Vector3 center = Vector3.Zero;
-        if (SelectedVertices.Count == 0)
-            return center;
-
-        SelectedVerticesPosition.Clear();
-        SelectedVerticesPosition.AddRange(SelectedVertices.Select(v => v.Position));
-        foreach (var vert in SelectedVertices)
-        {
-            center += vert;
-        }
-        return center / SelectedVertices.Count;
-    }
-
-    public Vector3 GetAverageNormal(List<Triangle> triangles)
-    {
-        Vector3 normal = (0, 1, 0);
-        if (triangles.Count == 0)
-            return normal;
-
-        foreach (var triangle in triangles)
-        {
-            normal += triangle.Normal;
-        }
-        return normal / triangles.Count;
-    }
-
     // Data
     public readonly List<Vector3> AxisIgnore = new()
     {
@@ -1469,74 +1396,4 @@ public enum RenderType
     Vertex = 0,
     Edge = 1,
     Face = 2,
-}
-
-public class ModelCopy
-{
-    public List<Vertex> selectedVertices = [];
-    public List<Edge> selectedEdges = [];
-    public List<Triangle> selectedTriangles = [];
-
-    public List<Vertex> newSelectedVertices = [];
-    public List<Edge> newSelectedEdges = [];
-    public List<Triangle> newSelectedTriangles = [];
-
-    public void Clear()
-    {
-        selectedVertices.Clear();
-        selectedEdges.Clear();
-        selectedTriangles.Clear();
-
-        newSelectedVertices.Clear();
-        newSelectedEdges.Clear();
-        newSelectedTriangles.Clear();
-    }
-
-    public void Add(Vertex vert) { if (!selectedVertices.Contains(vert)) selectedVertices.Add(vert); }
-    public void Add(Edge edge) { if (!selectedEdges.Contains(edge)) selectedEdges.Add(edge); }
-    public void Add(Triangle triangle) { if (!selectedTriangles.Contains(triangle)) selectedTriangles.Add(triangle); }
-
-    // Vertex
-    public int GetOldIndex(Vertex vert) { return selectedVertices.IndexOf(vert); }
-    public Vertex GetOldVertex(int index) { return selectedVertices[index]; }
-    public int GetNewIndex(Vertex vert) { return newSelectedVertices.IndexOf(vert); }
-    public Vertex GetNewVertex(int index) { return newSelectedVertices[index]; }
-    public Vertex GetNewVertex(Vertex oldVertex) { return newSelectedVertices[GetOldIndex(oldVertex)]; }
-
-    // Edge
-    public int GetOldIndex(Edge edge) { return selectedEdges.IndexOf(edge); }
-    public Edge GetOldEdge(int index) { return selectedEdges[index]; }
-    public int GetNewIndex(Edge edge) { return newSelectedEdges.IndexOf(edge); }
-    public Edge GetNewEdge(int index) { return newSelectedEdges[index]; }
-    public Edge GetNewEdge(Edge oldEdge) { return newSelectedEdges[GetOldIndex(oldEdge)]; }
-
-    public ModelCopy Copy()
-    {
-        ModelCopy copy = new();
-
-        foreach (var vert in newSelectedVertices)
-        {
-            copy.newSelectedVertices.Add(vert.Copy());
-        }
-
-        foreach (var edge in newSelectedEdges)
-        {
-            copy.newSelectedEdges.Add(new(copy.GetNewVertex(GetNewIndex(edge.A)), copy.GetNewVertex(GetNewIndex(edge.B))));
-        }
-
-        foreach (var triangle in newSelectedTriangles)
-        {
-            copy.newSelectedTriangles.Add(
-            new(
-                copy.GetNewVertex(GetNewIndex(triangle.A)), 
-                copy.GetNewVertex(GetNewIndex(triangle.B)), 
-                copy.GetNewVertex(GetNewIndex(triangle.C)), 
-                copy.GetNewEdge(GetNewIndex(triangle.AB)), 
-                copy.GetNewEdge(GetNewIndex(triangle.BC)), 
-                copy.GetNewEdge(GetNewIndex(triangle.CA))
-            ));  
-        }
-
-        return copy;
-    }
 }

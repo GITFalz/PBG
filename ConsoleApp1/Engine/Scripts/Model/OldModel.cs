@@ -318,6 +318,7 @@ public class ModelRigging : ModelBase
 public class ModelModeling : ModelBase
 {
     private ShaderProgram _shaderProgram = new ShaderProgram("Model/Model.vert", "Model/Model.frag");
+    private Texture _texture = new Texture("dirt_block.png");
 
     public override void Init(OldModel model)
     {
@@ -362,8 +363,12 @@ public class ModelModeling : ModelBase
             GL.UniformMatrix4(viewLocation, true, ref view);
             GL.UniformMatrix4(projectionLocation, true, ref projection);
             GL.Uniform1(colorAlphaLocation, ModelSettings.MeshAlpha);
+
+            _texture.Bind();
             
             model.modelMesh.Render();
+
+            _texture.Unbind();
         }
 
         _shaderProgram.Unbind();

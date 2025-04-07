@@ -62,6 +62,7 @@ public class ModelMesh : Meshes
         }
 
         _transformedVerts.Clear();
+        Uvs.Clear();
 
         if (TriangleList.Count == 0)
             return;
@@ -69,6 +70,7 @@ public class ModelMesh : Meshes
         foreach (var t in TriangleList)
         {
             _transformedVerts.AddRange(t.GetVerticesPosition());
+            Uvs.AddRange(t.GetUvs());
         }
     }
 
@@ -375,17 +377,6 @@ public class ModelMesh : Meshes
         }
 
         _normalVbo.Update(Normals);
-    }
-
-    public void RecalculateUvs()
-    {
-        Uvs.Clear();
-        foreach (var triangle in TriangleList)
-        {
-            Uvs.AddRange(triangle.UvA, triangle.UvB, triangle.UvC);
-        }
-
-        _uvVbo.Update(Uvs);
     }
 
     public void GenerateIndices()

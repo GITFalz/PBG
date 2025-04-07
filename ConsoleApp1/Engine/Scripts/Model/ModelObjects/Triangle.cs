@@ -2,6 +2,7 @@ using OpenTK.Mathematics;
 
 public class Triangle
 {
+    public string ID = "ID";
     public static Triangle Empty = new Triangle(new Vertex(Vector3.Zero), new Vertex(Vector3.Zero), new Vertex(Vector3.Zero));
 
     public Vertex A;
@@ -17,6 +18,7 @@ public class Triangle
     public Edge CA;
     
     public Vector3 Normal;
+    public Vector3 Center = Vector3.Zero;
 
     public bool Inverted = false;
 
@@ -98,6 +100,16 @@ public class Triangle
 
         oldEdge.ParentTriangles.Remove(this);
         newEdge.ParentTriangles.Add(this);
+    }
+
+    public void SetUv(Vertex vertex, Vector2 uv)
+    {
+        if (A == vertex)
+            UvA = uv;
+        else if (B == vertex)
+            UvB = uv;
+        else if (C == vertex)
+            UvC = uv;
     }
 
     public bool GetEdgeWithout(Vertex vertex, out Edge? edge)
@@ -208,7 +220,13 @@ public class Triangle
         return [A, B, C];
     }
 
-    public Vector3 Center()
+    public Vector3 CalculateCenter()
+    {
+        Center = new Vector3(A + B + C) / 3f;
+        return Center;
+    }
+
+    public Vector3 GetCenter()
     {
         return new Vector3(A + B + C) / 3f;
     }
@@ -216,6 +234,13 @@ public class Triangle
     public Vector2[] GetUvs()
     {
         return [UvA, UvB, UvC];
+    }
+
+    public Triangle Copy(Vertex a, Vertex b, Vertex c, Vector2 uvA, Vector2 uvB, Vector2 uvC, Edge ab, Edge bc, Edge ca)
+    {
+        Triangle triangle = new Triangle(a, b, c, uvA, uvB, uvC, ab, bc, ca);
+        triangle.ID = ID;
+        return triangle;
     }
 
     public void InvertIfInverted()
@@ -313,7 +338,7 @@ public class Triangle
                 {
                     rotationAxis.Normalize();
                     float angle = MathHelper.RadiansToDegrees(Vector3.CalculateAngle(triangle.Normal, (0, 1, 0)));
-                    Vector3 center = triangle.Center();
+                    Vector3 center = triangle.GetCenter();
                     Vector3 rotatedNormal = Mathf.RotatePoint(triangle.Normal, Vector3.Zero, rotationAxis, angle);
 
                     if (Vector3.Dot(rotatedNormal, (0, 1, 0)) < 0)
