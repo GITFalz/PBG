@@ -321,7 +321,7 @@ public class UIController
         if (!render)
             return;
 
-        ///GL.Disable(EnableCap.DepthTest);
+        //GL.Disable(EnableCap.DepthTest);
         //GL.DepthMask(false);
         GL.Enable(EnableCap.Blend);
         GL.Disable(EnableCap.CullFace);
@@ -330,17 +330,21 @@ public class UIController
 
         Matrix4 model = Matrix4.Identity;
 
-        _uiShader.Bind();
         _uItexture.Bind();
+        _uiShader.Bind();
 
         int modelLoc = GL.GetUniformLocation(_uiShader.ID, "model");
         int projectionLoc = GL.GetUniformLocation(_uiShader.ID, "projection");
+        int cycleLoc = GL.GetUniformLocation(_uiShader.ID, "cycle");
 
         GL.UniformMatrix4(modelLoc, true, ref model);
         GL.UniformMatrix4(projectionLoc, true, ref OrthographicProjection);
+        GL.Uniform1(cycleLoc, 6);
+        if (Input.IsKeyPressed(Keys.H))
+            Console.WriteLine((int)GameTime.TotalTime * 5);
 
         uIMesh.Render();
-        
+
         _uiShader.Unbind();
         _uItexture.Unbind();
 

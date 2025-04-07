@@ -332,6 +332,8 @@ public class ModelModeling : ModelBase
 
     public override void Render(OldModel model)
     {
+        return; 
+        
         var camera = ModelSettings.Camera;
         if (camera == null)
             return;

@@ -326,6 +326,7 @@ public class TextureEditor : BaseEditor
     public override void Render(GeneralModelingEditor editor)
     {
         GL.Enable(EnableCap.DepthTest);
+
         GL.DepthMask(true);
 
         TextureUI.Render();

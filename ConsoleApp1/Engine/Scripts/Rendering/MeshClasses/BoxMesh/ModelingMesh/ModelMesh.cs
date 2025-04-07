@@ -616,7 +616,7 @@ public class ModelMesh : Meshes
         for (int i = 1; i <= vertexCount; i++)
         {
             string[] values = lines[i].Split(' ');
-            Vertex vertex = new Vertex(new Vector3(float.Parse(values[1]), float.Parse(values[2]), float.Parse(values[3])));
+            Vertex vertex = new Vertex(new Vector3(Float.Parse(values[1]), Float.Parse(values[2]), Float.Parse(values[3])));
             vertex.Name = "Vertex " + i;
             vertex.Index = int.Parse(values[4]);
             VertexList.Add(vertex);
@@ -632,7 +632,7 @@ public class ModelMesh : Meshes
         for (int i = vertexCount + edgeCount + 3; i <= vertexCount + edgeCount + uvCount + 2; i++)
         {
             string[] values = lines[i].Split(' ');
-            Uvs.Add(new Vector2(float.Parse(values[1]), float.Parse(values[2])));
+            Uvs.Add(new Vector2(Float.Parse(values[1]), Float.Parse(values[2])));
         }
 
         int index = 0;
@@ -641,7 +641,7 @@ public class ModelMesh : Meshes
             string[] values = lines[i].Split(' ');
             
             Vertex a, b, c;
-
+        
             try
             {
                 a = VertexList[int.Parse(values[1])];

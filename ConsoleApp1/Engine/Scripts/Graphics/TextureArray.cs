@@ -13,9 +13,12 @@ public class TextureArray
         List<byte[]> textureData = TextureData.SplitTextureAtlas(Path.Combine(Game.texturePath, atlasPath), cellWidth, cellHeight);
         
         int layers = textureData.Count;
+
+        Console.WriteLine($"Texture array: {Path.Combine(Game.texturePath, atlasPath)} | Width: {cellWidth} | Height: {cellHeight} | Layers: {layers}");
         
         ID = GL.GenTexture();
-        GL.ActiveTexture(TextureUnit.Texture0);
+
+        GL.ActiveTexture(TextureUnit.Texture0); 
         GL.BindTexture(TextureTarget.Texture2DArray, ID);
         
         GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
@@ -32,12 +35,13 @@ public class TextureArray
         }
         
         Unbind();
+
         TextureArrays.Add(this);
     }
 
     public void Bind()
     {
-        GL.ActiveTexture(TextureUnit.Texture0);
+        GL.ActiveTexture(TextureUnit.Texture0);        
         GL.BindTexture(TextureTarget.Texture2DArray, ID);
     }
     public void Unbind() { GL.BindTexture(TextureTarget.Texture2DArray, 0); }
