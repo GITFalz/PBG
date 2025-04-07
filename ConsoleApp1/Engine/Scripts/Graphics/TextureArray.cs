@@ -23,6 +23,7 @@ public class TextureArray
         GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
         GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
 
+        GL.BindTexture(TextureTarget.Texture2DArray, ID);
         GL.TexStorage3D(TextureTarget3d.Texture2DArray, 1, SizedInternalFormat.Rgba8, cellWidth, cellHeight, layers);
 
         for (int i = 0; i < layers; i++)

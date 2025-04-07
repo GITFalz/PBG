@@ -393,8 +393,8 @@ public class ModelMesh : Meshes
         if (vertices.Count < 2)
             return;
 
-        HashSet<Edge> edgesToRemove = new HashSet<Edge>();
-        HashSet<Triangle> trianglesToRemove = new HashSet<Triangle>();
+        HashSet<Edge> edgesToRemove = [];
+        HashSet<Triangle> trianglesToRemove = [];
 
         for (int i = 1; i < vertices.Count; i++)
         {
