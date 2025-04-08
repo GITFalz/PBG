@@ -117,16 +117,13 @@ public class PlayerStateMachine : ScriptingNode
     public override void Update()
     {      
         Camera camera = Game.camera;
-        if (!Game.MoveTest || camera.GetCameraMode() != CameraMode.Follow)
-            return;
 
         Vector2 input = Input.GetMovementInput();
         
         if (input != Vector2.Zero)
         {
             yaw = -camera.Yaw + _inputAngle[input];
-            if (camera.GetCameraMode() == CameraMode.Follow)
-                Info.SetPositionText(_oldPosition, Transform.Position - (0f, 0.875f, 0f));
+            Info.SetPositionText(_oldPosition, Transform.Position - (0f, 0.875f, 0f));
         }
         
         forward = Mathf.YAngleToDirection(-yaw);
