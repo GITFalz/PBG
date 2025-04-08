@@ -13,6 +13,7 @@ public class Chunk
 
     public Vector3i position = (0, 0, 0);
     public BlockStorage blockStorage = BlockStorage.Empty;
+    public int[] FullBlockMap = new int[32 * 32]; // every full block in the chunk represented by a single bit
     public BoundingBox boundingBox = new(new System.Numerics.Vector3(0, 0, 0), new System.Numerics.Vector3(0, 0, 0));
 
     public List<Vector3> Wireframe = [];
@@ -50,6 +51,7 @@ public class Chunk
 
     private VAO _chunkVao = new VAO();
     public SSBO <Vector2i>VertexSSBO = new(new List<Vector2i>());
+    public SSBO<int> BlockMapSSBO = new(new int[1024]);
     private List<Vector2i> _gridAlignedData = [];
     public List<Vector2i> GridAlignedFaces = [];
 
@@ -185,6 +187,7 @@ public class Chunk
 
         _chunkVao = new VAO();
         VertexSSBO = new(_gridAlignedData);
+        BlockMapSSBO.Update(FullBlockMap, 1);
     }
 
     public void CreateChunkWireframe()
@@ -200,9 +203,11 @@ public class Chunk
     {
         _chunkVao.Bind();
         VertexSSBO.Bind(0);
+        BlockMapSSBO.Bind(1);
 
         GL.DrawArrays(PrimitiveType.Triangles, 0, _gridAlignedData.Count * 6);
         
+        BlockMapSSBO.Unbind();
         VertexSSBO.Unbind();
         _chunkVao.Unbind();
     }

@@ -199,6 +199,7 @@ public static class ChunkGenerator
     public static void GenerateMesh(Chunk chunkData)
     {
         byte[] _checks = new byte[WIDTH * HEIGHT * DEPTH];
+        int[] blockMap = new int[WIDTH * DEPTH];
         int index = 0;
         
         for (int y = 0; y < 32; y++)
@@ -207,10 +208,15 @@ public static class ChunkGenerator
             {
                 for (int x = 0; x < 32; x++)
                 {
+                    int blockMapIndex = x + (z << 5);
                     Block block = chunkData[index];
                     
                     if (block.IsSolid())
                     {
+                        int blockPillar = blockMap[blockMapIndex];
+                        blockPillar |= 1 << y;
+                        blockMap[blockMapIndex] = blockPillar;
+
                         int[] ids;
                         int blockId = block.blockData & 15;
                         try
@@ -301,6 +307,8 @@ public static class ChunkGenerator
                 }
             }
         }
+
+        chunkData.FullBlockMap = blockMap;
     }
 
     public static void GenerateBox(ref Chunk chunkData, Vector3i chunkPosition, Vector3i origin, Vector3i size)

@@ -106,11 +106,11 @@ public class WorldManager : ScriptingNode
         int modelLocationA = GL.GetUniformLocation(pullingShader.ID, "model");
         int viewLocationA = GL.GetUniformLocation(pullingShader.ID, "view");
         int projectionLocationA = GL.GetUniformLocation(pullingShader.ID, "projection");
-        int camPosLocationA = GL.GetUniformLocation(pullingShader.ID, "camPos");
+        //int camPosLocationA = GL.GetUniformLocation(pullingShader.ID, "camPos");
         
         GL.UniformMatrix4(viewLocationA, true, ref view);
         GL.UniformMatrix4(projectionLocationA, true, ref projection);
-        GL.Uniform3(camPosLocationA, camera.Position); 
+        //GL.Uniform3(camPosLocationA, camera.Position); 
 
         foreach (var (_, chunk) in ChunkManager.ActiveChunks)
         {   
@@ -121,6 +121,7 @@ public class WorldManager : ScriptingNode
             Info.VertexCount += chunk.VertexCount;
             model = Matrix4.CreateTranslation(chunk.GetWorldPosition());
             GL.UniformMatrix4(modelLocationA, true, ref model);
+
             chunk.Render.Invoke();
         }
 

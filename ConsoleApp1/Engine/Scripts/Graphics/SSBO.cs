@@ -52,9 +52,14 @@ public class SSBO<T> : SSBOBase where T : struct
 
     public void Update(List<T> newData, int bindingPoint)
     {
+        Update(newData.ToArray(), bindingPoint);
+    }
+
+    public void Update(T[] newData, int bindingPoint)
+    {
         Bind(bindingPoint);
-        DataCount = newData.Count;
-        GL.BufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, DataCount * dataSize, newData.ToArray());
+        DataCount = newData.Length;
+        GL.BufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, DataCount * dataSize, newData);
         Unbind();
     }
 
