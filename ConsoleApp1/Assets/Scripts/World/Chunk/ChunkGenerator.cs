@@ -172,6 +172,7 @@ public static class ChunkGenerator
                     if (block.IsSolid())
                     { 
                         block.ResetOcclusion();
+                        
                         for (int i = 0; i < 6; i++)
                         {
                             if (!VoxelData.InBounds(x, y, z, i, width))
@@ -182,9 +183,13 @@ public static class ChunkGenerator
                                     block.SetOcclusion(i);
                                 }
                             }
-                            else if (chunkData[index + VoxelData.IndexOffsetLod[lod, i]].IsSolid())
+                            else
                             {
-                                block.SetOcclusion(i);
+                                Vector3i offset = position + VoxelData.SideNormal[i];
+                                int newIndex = offset.X + (offset.Z << 5) + (offset.Y << 10);
+                                
+                                if (chunkData[newIndex].IsSolid())
+                                    block.SetOcclusion(i);      
                             }
                         }
                     }
@@ -196,6 +201,8 @@ public static class ChunkGenerator
             }
         }
     }
+
+    public static int[] invert = [5, 3, 4, 1, 2, 0];
     
     public static void GenerateMesh(Chunk chunkData)
     {
@@ -300,11 +307,6 @@ public static class ChunkGenerator
                                 chunkData.HasBlocks = true;
 
                                 chunkData.AddFace(position, (byte)(width - 1), (byte)(height - 1), id, (byte)side);
-
-                                if (Input.IsKeyDown(Keys.H))
-                                {
-                                    Console.WriteLine($"Block: {position} Data: {block.blockData} Side: {side} Width: {width} Height: {height}");
-                                }
                             }
                         }
                     }

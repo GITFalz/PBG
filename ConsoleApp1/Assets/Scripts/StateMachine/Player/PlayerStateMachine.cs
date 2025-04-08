@@ -16,6 +16,8 @@ public class PlayerStateMachine : ScriptingNode
     
     public Vector3 forward = (0, 0, -1);
     private Vector3 _oldPosition = (0, 0, 0);
+    
+    public static Vector3 ModifiedBlockPosition = (0, 0, 0);
 
     private ShaderProgram _hitShader = new ShaderProgram("Info/Hit.vert", "Info/Hit.frag");
     private VAO _hitVao = new VAO();
@@ -141,13 +143,23 @@ public class PlayerStateMachine : ScriptingNode
 
             if (Input.IsMousePressed(MouseButton.Left)) 
             {
-                WorldManager.SetBlock(blockPos, Block.Air, out Chunk chunkData);
+                if (!WorldManager.SetBlock(blockPos, Block.Air, out Chunk chunkData))
+                {
+                    Console.WriteLine($"Failed to set block at {blockPos}");
+                }
+
+                ModifiedBlockPosition = blockPos;
+                if (WorldManager.GetBlock(blockPos, out var b) != -1)
+                {
+                    Console.WriteLine($"Block: {b} : {b.ToBits()}");
+                }
                 BlockSwitch = true;
             }     
 
             if (Input.IsMousePressed(MouseButton.Right) && !BlockCollision.IsColliding(physicsBody.GetCollider(), blockPos + n, 1)) 
             {
                 WorldManager.SetBlock(blockPos + n, new Block(true, 1), out Chunk chunkData);
+                ModifiedBlockPosition = blockPos + n;
                 BlockSwitch = true;
             } 
         }

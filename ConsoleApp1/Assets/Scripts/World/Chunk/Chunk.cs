@@ -181,7 +181,7 @@ public class Chunk
     public void CreateChunkSolid()
     {   
         _gridAlignedData.Clear();
-        _gridAlignedData = [.. GridAlignedFaces];
+        _gridAlignedData = GridAlignedFaces.ToList();
         VertexCount = _gridAlignedData.Count * 6;
         GridAlignedFaces.Clear();
 

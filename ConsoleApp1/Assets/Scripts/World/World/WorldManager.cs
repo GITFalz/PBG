@@ -494,7 +494,7 @@ public class WorldManager : ScriptingNode
             ChunkGenerator.PopulateChunk(ref chunkData);
             chunkData.Stage = ChunkStage.Populated;
             ChunkManager.GenerateMeshQueue.Enqueue(chunkData);
-            chunkData.SaveChunk();
+            //chunkData.SaveChunk();
             chunkData.Save = false;
         });
     }

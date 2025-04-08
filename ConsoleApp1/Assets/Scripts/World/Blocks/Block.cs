@@ -53,7 +53,7 @@ public struct Block
 
     public void ResetOcclusion()
     {
-        blockData &= ~0x3F00;
+        blockData &= ~0x3F0000;
     }
 
     public bool Occluded(int side)
@@ -100,6 +100,11 @@ public struct Block
     public bool IsInvalid(Block block, int side)
     {
         return !IsSolid() || Occluded(side) || !Equal(block);
+    }
+
+    public string ToBits()
+    {
+        return Convert.ToString(blockData, 2).PadLeft(32, '0');
     }
 
     public override string ToString()
