@@ -1,5 +1,6 @@
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public static class ChunkGenerator
 {
@@ -299,6 +300,11 @@ public static class ChunkGenerator
                                 chunkData.HasBlocks = true;
 
                                 chunkData.AddFace(position, (byte)(width - 1), (byte)(height - 1), id, (byte)side);
+
+                                if (Input.IsKeyDown(Keys.H))
+                                {
+                                    Console.WriteLine($"Block: {position} Data: {block.blockData} Side: {side} Width: {width} Height: {height}");
+                                }
                             }
                         }
                     }

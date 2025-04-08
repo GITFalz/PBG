@@ -121,7 +121,6 @@ public class WorldManager : ScriptingNode
             Info.VertexCount += chunk.VertexCount;
             model = Matrix4.CreateTranslation(chunk.GetWorldPosition());
             GL.UniformMatrix4(modelLocationA, true, ref model);
-
             chunk.Render.Invoke();
         }
 
@@ -424,7 +423,7 @@ public class WorldManager : ScriptingNode
         while (ChunkManager.RegenerateMeshQueue.TryDequeue(out var chunkData))
         {
             Vector3i position = chunkData.GetWorldPosition();
-            if (!ChunkManager.ActiveChunks.ContainsKey(position) || ChunkManager.IgnoreList.Contains(position)) 
+            if (!ChunkManager.ActiveChunks.ContainsKey(position))// || ChunkManager.IgnoreList.Contains(position)) 
                 return;
 
             ThreadPool.QueueAction(() => GenerateMeshChunk(chunkData), TaskPriority.Urgent);
@@ -504,7 +503,7 @@ public class WorldManager : ScriptingNode
     {
         await Task.Run(() =>
         {
-            if (!chunkData.Loaded) ChunkGenerator.GenerateOcclusion(chunkData);
+            ChunkGenerator.GenerateOcclusion(chunkData);
             ChunkGenerator.GenerateMesh(chunkData);
             chunkData.Stage = ChunkStage.Rendered;
             ChunkManager.CreateQueue.Enqueue(chunkData);
