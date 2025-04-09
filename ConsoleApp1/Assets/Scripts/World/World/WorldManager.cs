@@ -16,6 +16,7 @@ public class WorldManager : ScriptingNode
     public ShaderProgram DepthPrePassShader = new ShaderProgram("World/Pulling.vert");
     public ShaderProgram pullingShader = new ShaderProgram("World/Pulling.vert", "World/Pulling.frag");
 
+    public FBO DepthPrepassFBO;
     public Matrix4 viewMatrix;
     public Matrix4 projectionMatrix;
 
@@ -57,7 +58,7 @@ public class WorldManager : ScriptingNode
     public WorldManager()
     {
         _render = _renderType == RenderType.Solid ? RenderSolid : RenderWireframe;
-
+        DepthPrepassFBO = new FBO(Game.Width, Game.Height);
         /*
         // 1000 blocks
         for (int i = 0; i < 1000; i++)
@@ -130,6 +131,8 @@ public class WorldManager : ScriptingNode
         GL.Enable(EnableCap.DepthTest);
         GL.DepthFunc(DepthFunction.Less);
         GL.Enable(EnableCap.CullFace);
+
+        DepthPrepassFBO.Bind();
 
         DepthPrePassShader.Bind();
 
