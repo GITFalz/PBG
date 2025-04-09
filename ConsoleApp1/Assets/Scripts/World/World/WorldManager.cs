@@ -127,12 +127,16 @@ public class WorldManager : ScriptingNode
         int renderCount = 0;
         Info.VertexCount = 0;
 
+        // Render depthPrepass
         GL.ColorMask(false, false, false, false);
         GL.Enable(EnableCap.DepthTest);
         GL.DepthFunc(DepthFunction.Less);
         GL.Enable(EnableCap.CullFace);
 
         DepthPrepassFBO.Bind();
+
+        GL.ClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+        GL.Clear(ClearBufferMask.DepthBufferBit | ClearBufferMask.ColorBufferBit);
 
         DepthPrePassShader.Bind();
 
@@ -158,6 +162,11 @@ public class WorldManager : ScriptingNode
 
         DepthPrePassShader.Unbind();
 
+        DepthPrepassFBO.Unbind();
+
+
+
+        // Render terrain
         GL.ColorMask(true, true, true, true);
         GL.Disable(EnableCap.DepthTest);
 
@@ -165,20 +174,30 @@ public class WorldManager : ScriptingNode
         GL.Enable(EnableCap.CullFace);
 
         pullingShader.Bind();
-        _textures.Bind();
 
         Matrix4 model = Matrix4.Identity;
         view = camera.viewMatrix;
         projection = camera.projectionMatrix;
+        Matrix4 lightView = GetViewMatrix();
+        Matrix4 lightProjection = GetProjectionMatrix();
 
         int modelLocationA = GL.GetUniformLocation(pullingShader.ID, "model");
         int viewLocationA = GL.GetUniformLocation(pullingShader.ID, "view");
         int projectionLocationA = GL.GetUniformLocation(pullingShader.ID, "projection");
         //int camPosLocationA = GL.GetUniformLocation(pullingShader.ID, "camPos");
+        int lighViewLocationA = GL.GetUniformLocation(pullingShader.ID, "lightView");
+        int lightProjectionLocationA = GL.GetUniformLocation(pullingShader.ID, "lightProjection");
         
         GL.UniformMatrix4(viewLocationA, true, ref view);
         GL.UniformMatrix4(projectionLocationA, true, ref projection);
         //GL.Uniform3(camPosLocationA, camera.Position); 
+        GL.UniformMatrix4(lighViewLocationA, true, ref lightView);
+        GL.UniformMatrix4(lightProjectionLocationA, true, ref lightProjection);
+        GL.Uniform1(GL.GetUniformLocation(pullingShader.ID, "textureArray"), 0);
+        GL.Uniform1(GL.GetUniformLocation(pullingShader.ID, "shadowMap"), 1); 
+
+        _textures.Bind();
+        DepthPrepassFBO.BindDepthTexture(TextureUnit.Texture1);
 
         foreach (var (_, chunk) in ChunkManager.ActiveChunks)
         {   
@@ -202,6 +221,7 @@ public class WorldManager : ScriptingNode
         
         pullingShader.Unbind();
         _textures.Unbind();
+        DepthPrepassFBO.UnbindTexture(TextureUnit.Texture1);
 
         ChunkManager.RenderChunks();
 
