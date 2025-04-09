@@ -16,10 +16,43 @@ public class WorldManager : ScriptingNode
     public ShaderProgram DepthPrePassShader = new ShaderProgram("World/Pulling.vert");
     public ShaderProgram pullingShader = new ShaderProgram("World/Pulling.vert", "World/Pulling.frag");
 
-    public ArrayIDBO IndirectDrawingChunkBuffer = new(new List<DrawArraysIndirectCommand>());
+    public Matrix4 viewMatrix;
+    public Matrix4 projectionMatrix;
 
     private Vector3i _currentPlayerChunk = Vector3i.Zero;
     private Vector3i _lastPlayerPosition = (int.MaxValue, int.MaxValue, int.MaxValue);
+
+
+    public Matrix4 GetViewMatrix()
+    {
+        //viewMatrix = Matrix4.LookAt(Position, Position + front, up);
+        viewMatrix = Matrix4.LookAt((10, 100, 10), (0, 90, 0), (0, 1, 0));
+        return viewMatrix;
+    }
+    
+    public Matrix4 GetProjectionMatrix()
+    {
+        float zoom = 10;
+        Matrix4.CreateOrthographic(
+            Game.camera.SCREEN_WIDTH / zoom,
+            Game.camera.SCREEN_HEIGHT / zoom, 
+            -200f, 
+            200f,
+            out projectionMatrix
+        );
+        return projectionMatrix;
+
+        /*
+        projectionMatrix = Matrix4.CreatePerspectiveFieldOfView(
+            OpenTK.Mathematics.MathHelper.DegreesToRadians(FOV),
+            SCREEN_WIDTH / SCREEN_HEIGHT, 
+            0.1f, 
+            1000f
+        );
+        return projectionMatrix;
+        */
+    }
+
     
     public WorldManager()
     {
@@ -93,6 +126,38 @@ public class WorldManager : ScriptingNode
         int renderCount = 0;
         Info.VertexCount = 0;
 
+        GL.ColorMask(false, false, false, false);
+        GL.Enable(EnableCap.DepthTest);
+        GL.DepthFunc(DepthFunction.Less);
+        GL.Enable(EnableCap.CullFace);
+
+        DepthPrePassShader.Bind();
+
+        Matrix4 view = GetViewMatrix();
+        Matrix4 projection = GetProjectionMatrix();
+
+        int modelLocation = GL.GetUniformLocation(DepthPrePassShader.ID, "model");
+        int viewLocation = GL.GetUniformLocation(DepthPrePassShader.ID, "view");
+        int projectionLocation = GL.GetUniformLocation(DepthPrePassShader.ID, "projection");
+
+        GL.UniformMatrix4(viewLocation, true, ref view);
+        GL.UniformMatrix4(projectionLocation, true, ref projection);
+
+        foreach (var (_, chunk) in ChunkManager.ActiveChunks)
+        {   
+            if (chunk.IsDisabled)
+                continue;
+
+            Matrix4 m = Matrix4.CreateTranslation(chunk.GetWorldPosition());
+            GL.UniformMatrix4(modelLocation, true, ref m);
+            chunk.Render.Invoke();
+        }
+
+        DepthPrePassShader.Unbind();
+
+        GL.ColorMask(true, true, true, true);
+        GL.Disable(EnableCap.DepthTest);
+
         GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.CullFace);
 
@@ -100,8 +165,8 @@ public class WorldManager : ScriptingNode
         _textures.Bind();
 
         Matrix4 model = Matrix4.Identity;
-        Matrix4 view = camera.viewMatrix;
-        Matrix4 projection = camera.projectionMatrix;
+        view = camera.viewMatrix;
+        projection = camera.projectionMatrix;
 
         int modelLocationA = GL.GetUniformLocation(pullingShader.ID, "model");
         int viewLocationA = GL.GetUniformLocation(pullingShader.ID, "view");
@@ -158,7 +223,7 @@ public class WorldManager : ScriptingNode
         
         foreach (var (_, chunk) in ChunkManager.ActiveChunks)
         {
-            chunk.IsDisabled = !chunk.HasBlocks || !camera.FrustumIntersects(chunk.boundingBox);// || chunk.IsIndependent(); // testing
+            chunk.IsDisabled = !chunk.HasBlocks;// || !camera.FrustumIntersects(chunk.boundingBox);// || chunk.IsIndependent(); // testing
         }
     }
 

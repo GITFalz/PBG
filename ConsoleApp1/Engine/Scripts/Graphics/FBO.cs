@@ -62,6 +62,12 @@ public class FBO
         GL.BindTexture(TextureTarget.Texture2D, colorTextureID);
     }
 
+    public void BindDepthTexture(TextureUnit unit)
+    {
+        GL.ActiveTexture(unit);
+        GL.BindTexture(TextureTarget.Texture2D, depthTextureID);
+    }
+
     public void Unbind()
     {
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
