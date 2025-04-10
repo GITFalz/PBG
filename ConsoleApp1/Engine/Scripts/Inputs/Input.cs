@@ -61,6 +61,11 @@ public static class Input
     {
         return _previousKeyboardState.IsKeyDown(key);
     }
+
+    public static bool IsKeyAndControlPressed(Keys key)
+    {
+        return IsKeyDown(Keys.LeftControl) && IsKeyPressed(key);
+    }
     
     public static bool AreKeysPressed(params Keys[] keys)
     {

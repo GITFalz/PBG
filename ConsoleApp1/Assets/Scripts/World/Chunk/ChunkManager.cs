@@ -8,7 +8,7 @@ public static class ChunkManager
     /// All the chunks in the world
     /// </summary>
     public static ConcurrentDictionary<Vector3i, Chunk> ActiveChunks = [];
-    public static ConcurrentQueue<Vector3i> GenerateChunkQueue = [];
+    public static ConcurrentQueue<Chunk> GenerateChunkQueue = [];
     public static ConcurrentQueue<Chunk> PopulateChunkQueue = [];
     public static ConcurrentQueue<Chunk> GenerateMeshQueue = [];
     public static ConcurrentQueue<Chunk> RegenerateMeshQueue = [];
@@ -42,17 +42,90 @@ public static class ChunkManager
         if (!ActiveChunks.TryAdd(chunk.GetWorldPosition(), chunk))
             return false;
 
-        foreach (var pos in chunk.GetSideChunkPositions())
+        ChunkNeighbourCheck(chunk);
+        return true;
+    }
+
+    public static bool RemoveChunk(Vector3i position, out Chunk chunk)
+    {
+        chunk = Chunk.Empty;
+        if (ActiveChunks.TryRemove(position, out var c))
         {
-            if (ActiveChunks.TryGetValue(pos, out var sideChunk))
+            chunk = c;
+            return true;
+        }
+        return false;
+    }
+
+    public static void ReloadChunks()
+    {
+        RegenerateMeshQueue.Clear();
+
+        foreach (var chunk in ActiveChunks.Values)
+        {
+            if (chunk.Stage != ChunkStage.Rendered)
+                continue;
+
+            chunk.Reload();
+            RegenerateMeshQueue.Enqueue(chunk);
+        }
+    }
+
+    public static void DisplayChunkBorders()
+    {
+        Info.ClearBlocks();
+        foreach (var chunk in ActiveChunks.Values)
+        {
+            Vector3 position = chunk.GetWorldPosition();
+            InfoBlockData blockData = new InfoBlockData(
+                position,
+                (32, 32, 32),
+                (0, 1, 0, 0.1f)
+            );
+            Info.AddBlock(blockData);
+        }
+        Info.UpdateBlocks();
+    }
+
+    public static void DisplayChunkBordersNotAllNeighbours()
+    {
+        Info.ClearBlocks();
+        foreach (var chunk in ActiveChunks.Values)
+        {
+            if (chunk.HasAllNeighbourChunks())
+                continue;
+
+            Vector3 position = chunk.GetWorldPosition();
+            InfoBlockData blockData = new InfoBlockData(
+                position,
+                (32, 32, 32),
+                (0, 1, 0, 0.1f)
+            );
+            Info.AddBlock(blockData);
+        }
+        Info.UpdateBlocks();
+    }
+
+    public static void ChunkNeighbourChecks()
+    {
+        foreach (var chunk in ActiveChunks.Values)
+        {
+            ChunkNeighbourCheck(chunk);
+        }
+    }
+
+    public static void ChunkNeighbourCheck(Chunk chunk)
+    {
+        lock (_chunkLock)
+        {
+            foreach (var pos in chunk.GetSideChunkPositions())
             {
-                lock (_chunkLock)
+                if (ActiveChunks.TryGetValue(pos, out var sideChunk))
                 {
                     chunk.AddChunk(sideChunk);
                 }
             }
         }
-        return true;
     }
 
     public static void Update()

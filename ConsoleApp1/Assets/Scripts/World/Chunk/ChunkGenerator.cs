@@ -23,7 +23,7 @@ public static class ChunkGenerator
         new Vector2(1, 0.8f)
     ];
     
-    public static void GenerateChunk(ref Chunk chunkData, Vector3i position)
+    public static int GenerateChunk(ref Chunk chunkData, Vector3i position)
     {
         for (var x = 0; x < WIDTH; x++)
         {
@@ -44,13 +44,18 @@ public static class ChunkGenerator
 
                 for (int y = 0; y < terrainHeight; y++)
                 {
+                    if (chunkData.Stage == ChunkStage.Empty)
+                        return -1;
+
                     chunkData.blockStorage.SetBlock(x, y, z, new Block(true, 2));
                 }
             }
         }
+
+        return 1;
     }
 
-    public static void PopulateChunk(ref Chunk chunkData)
+    public static int PopulateChunk(ref Chunk chunkData)
     {
         if (_blockPriority)
         {
@@ -67,6 +72,9 @@ public static class ChunkGenerator
             {
                 for (int x = 0; x < WIDTH; x++)
                 {
+                    if (chunkData.Stage == ChunkStage.Empty)
+                        return -1;
+
                     Vector3i position = (x, y, z);
 
                     if (chunkData[index].IsSolid())
@@ -108,9 +116,11 @@ public static class ChunkGenerator
                 }
             }
         }
+
+        return 1;
     }
 
-    public static void GenerateFlatChunk(ref Chunk chunkData, Vector3i position)
+    public static int GenerateFlatChunk(ref Chunk chunkData, Vector3i position)
     {
         for (var x = 0; x < WIDTH; x++)
         {
@@ -122,10 +132,16 @@ public static class ChunkGenerator
                 for (int y = 0; y < terrainHeight; y++)
                 {
                     Block block = GetBlockAtHeight(height, y + position.Y);
+
+                    if (chunkData.Stage == ChunkStage.Empty)
+                        return -1;
+
                     chunkData.blockStorage.SetBlock(x, y, z, block);
                 }
             }
         }
+
+        return 1;
     }
 
     public static float GetSplineVector(float noise)
@@ -157,7 +173,7 @@ public static class ChunkGenerator
         return NoiseLib.Noise(4, ((float)position.X + 0.001f) / 100, ((float)position.Z + 0.001f) / 100);
     }
 
-    public static void GenerateOcclusion(Chunk chunkData, int width = WIDTH, int lod = 0)
+    public static int GenerateOcclusion(Chunk chunkData, int width = WIDTH, int lod = 0)
     {
         int index = 0;
         for (int y = 0; y < width; y++)
@@ -166,6 +182,9 @@ public static class ChunkGenerator
             {
                 for (int x = 0; x < width; x++)
                 {
+                    if (chunkData.Stage == ChunkStage.Empty)
+                        return -1;
+
                     Vector3i position = (x, y, z);
                     Block block = chunkData[index];
 
@@ -200,11 +219,13 @@ public static class ChunkGenerator
                 }
             }
         }
+
+        return 1;
     }
 
     public static int[] invert = [5, 3, 4, 1, 2, 0];
     
-    public static void GenerateMesh(Chunk chunkData)
+    public static int GenerateMesh(Chunk chunkData)
     {
         byte[] _checks = new byte[WIDTH * HEIGHT * DEPTH];
         int[] blockMap = new int[WIDTH * DEPTH];
@@ -216,6 +237,9 @@ public static class ChunkGenerator
             {
                 for (int x = 0; x < 32; x++)
                 {
+                    if (chunkData.Stage == ChunkStage.Empty)
+                        return -1;
+
                     int blockMapIndex = x + (z << 5);
                     Block block = chunkData[index];
                     
@@ -233,7 +257,7 @@ public static class ChunkGenerator
                         }
                         catch (Exception)
                         {
-                            return;
+                            return -1;
                         }
                         
                         for (int side = 0; side < 6; side++)
@@ -317,6 +341,7 @@ public static class ChunkGenerator
         }
 
         chunkData.FullBlockMap = blockMap;
+        return 1;
     }
 
     public static void GenerateBox(ref Chunk chunkData, Vector3i chunkPosition, Vector3i origin, Vector3i size)

@@ -165,29 +165,37 @@ public class Chunk
         }
     }
 
-    public void Clear()
+    public void Delete()
     {
+        Stage = ChunkStage.Empty;
         RemoveChunkFromAll();
         GridAlignedFaces.Clear();
         Wireframe.Clear();
-    }
-
-    public void Delete()
-    {
         blockStorage.Clear();
     }
 
     
     public void CreateChunkSolid()
     {   
-        _gridAlignedData.Clear();
-        _gridAlignedData = GridAlignedFaces.ToList();
-        VertexCount = _gridAlignedData.Count * 6;
-        GridAlignedFaces.Clear();
+        lock(this)
+        {
+            _gridAlignedData.Clear();
+            _gridAlignedData = new List<Vector2i>(GridAlignedFaces);
+            VertexCount = _gridAlignedData.Count * 6;
+            GridAlignedFaces.Clear();
 
-        _chunkVao = new VAO();
-        VertexSSBO = new(_gridAlignedData);
-        BlockMapSSBO.Update(FullBlockMap, 1);
+            _chunkVao = new VAO();
+            VertexSSBO = new(_gridAlignedData);
+            BlockMapSSBO.Update(FullBlockMap, 1);
+        }
+    }
+
+    public void Reload()
+    {
+        _gridAlignedData.Clear();
+        GridAlignedFaces.Clear();
+        VertexCount = 0;
+        Stage = ChunkStage.Populated;
     }
 
     public void CreateChunkWireframe()
@@ -331,6 +339,19 @@ public class Chunk
                     chunks.Add(chunk);
             }
             return chunks;
+        }
+    }
+
+    public bool HasAllNeighbourChunks()
+    {
+        lock (this)
+        {
+            foreach (var chunk in NeighbourCunks)
+            {
+                if (chunk == null)
+                    return false;
+            }
+            return true;
         }
     }
 

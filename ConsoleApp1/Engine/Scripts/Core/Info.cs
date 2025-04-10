@@ -37,6 +37,8 @@ public class Info
     private static ArrayIDBO indirectBuffer = new([]);
     private static List<DrawArraysIndirectCommand> _indirectCommands = [];
 
+    private static object lockObj = new object();
+
 
     public Info()
     {
@@ -101,7 +103,10 @@ public class Info
 
     public static void AddBlock(InfoBlockData block)
     {
-        _blocks.Add(block);
+        lock (lockObj)
+        {
+            _blocks.Add(block);
+        }
     }
 
     public static void AddBlock(params InfoBlockData[] block)
@@ -113,25 +118,28 @@ public class Info
 
     public static void UpdateBlocks()
     {
-        _updateBlocks = () => 
+        lock (lockObj)
         {
-            _blockData = [.. _blocks];
-            GenerateBlocks();
-            List<DrawArraysIndirectCommand> commands = new List<DrawArraysIndirectCommand>();
-            for (int i = 0; i < _blockData.Count; i++)
+            _updateBlocks = () => 
             {
-                DrawArraysIndirectCommand command = new DrawArraysIndirectCommand
+                _blockData = [.. _blocks];
+                GenerateBlocks();
+                List<DrawArraysIndirectCommand> commands = new List<DrawArraysIndirectCommand>();
+                for (int i = 0; i < _blockData.Count; i++)
                 {
-                    count = 36,
-                    instanceCount = 1,
-                    first = i * 36,
-                    baseInstance = 0
-                };
-                commands.Add(command);
-            }
-            indirectBuffer = new ArrayIDBO(commands);
-            _updateBlocks = () => { };
-        };
+                    DrawArraysIndirectCommand command = new DrawArraysIndirectCommand
+                    {
+                        count = 36,
+                        instanceCount = 1,
+                        first = i * 36,
+                        baseInstance = 0
+                    };
+                    commands.Add(command);
+                }
+                indirectBuffer = new ArrayIDBO(commands);
+                _updateBlocks = () => { };
+            };
+        } 
     }
 
     public static void RenderBlocks()

@@ -1,5 +1,7 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using OpenTK.Windowing.GraphicsLibraryFramework;
+using Veldrid;
 
 public class WorldManager : ScriptingNode
 {
@@ -22,6 +24,10 @@ public class WorldManager : ScriptingNode
 
     private Vector3i _currentPlayerChunk = Vector3i.Zero;
     private Vector3i _lastPlayerPosition = (int.MaxValue, int.MaxValue, int.MaxValue);
+
+    private bool _ambientOcclusion = false;
+    private bool _realtimeShadow = false;
+    private double timeTest = 0;
 
 
     public Matrix4 GetViewMatrix()
@@ -98,6 +104,37 @@ public class WorldManager : ScriptingNode
     
     public override void Update()
     {
+        if (Input.IsKeyPressed(Keys.U))
+            ThreadBlocker.Unblock();
+
+        if (Input.IsKeyAndControlPressed(Keys.R))
+            ChunkManager.ReloadChunks();
+        
+        if (Input.IsKeyAndControlPressed(Keys.I))
+        {
+            Vector3i chunkPosition = VoxelData.BlockToChunkPosition(Game.camera.GetCameraMode() == CameraMode.Follow ? PlayerData.Position : Game.camera.Position);
+
+            if (ChunkManager.ActiveChunks.TryGetValue(chunkPosition, out var chunk1))
+            {
+                Info.AddBlock(new InfoBlockData(
+                    chunkPosition + (4, 4, 4),
+                    (24, 24, 24),
+                    chunk1.Stage == ChunkStage.Rendered ? (0, 1, 0, 0.3f) : (chunk1.Stage == ChunkStage.Populated ? (0, 0, 1, 0.3f) : (1, 0, 0, 0.3f))
+                ));
+
+                foreach (var c in chunk1.GetNeighbourChunks())
+                {
+                    Info.AddBlock(new InfoBlockData(
+                    c.GetWorldPosition() + (8, 8, 8),
+                    (16, 16, 16),
+                    c.Stage == ChunkStage.Rendered ? (0, 1, 0, 0.3f) : (c.Stage == ChunkStage.Populated ? (0, 0, 1, 0.3f) : (1, 0, 0, 0.3f))
+                    ));
+
+                }
+                Info.UpdateBlocks();
+            }
+        }
+
         CheckRenderDistance();
         GenerateChunks();
         RegenerateChunks();
@@ -115,6 +152,11 @@ public class WorldManager : ScriptingNode
         CheckFrustum();
     }
 
+    public void Reload()
+    {
+
+    }
+
     public override void Render()
     {
         _render.Invoke();
@@ -123,52 +165,58 @@ public class WorldManager : ScriptingNode
     public void RenderSolid()
     {    
         Camera camera = Game.camera;
-
+        
         int renderCount = 0;
         Info.VertexCount = 0;
 
-        // Render depthPrepass
-        GL.ColorMask(false, false, false, false);
-        GL.Enable(EnableCap.DepthTest);
-        GL.DepthFunc(DepthFunction.Less);
-        GL.Enable(EnableCap.CullFace);
+        Matrix4 lightView = Matrix4.Identity;
+        Matrix4 lightProjection = Matrix4.Identity;
 
-        DepthPrepassFBO.Bind();
+        if (_realtimeShadow)
+        {
+            lightView = GetViewMatrix();
+            lightProjection = GetProjectionMatrix();
 
-        GL.ClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-        GL.Clear(ClearBufferMask.DepthBufferBit | ClearBufferMask.ColorBufferBit);
+            // Render depthPrepass
+            GL.ColorMask(false, false, false, false);
+            GL.Enable(EnableCap.DepthTest);
+            GL.DepthFunc(DepthFunction.Less);
+            GL.Enable(EnableCap.CullFace);
 
-        DepthPrePassShader.Bind();
+            DepthPrepassFBO.Bind();
 
-        Matrix4 view = GetViewMatrix();
-        Matrix4 projection = GetProjectionMatrix();
+            GL.ClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+            GL.Clear(ClearBufferMask.DepthBufferBit | ClearBufferMask.ColorBufferBit);
 
-        int modelLocation = GL.GetUniformLocation(DepthPrePassShader.ID, "model");
-        int viewLocation = GL.GetUniformLocation(DepthPrePassShader.ID, "view");
-        int projectionLocation = GL.GetUniformLocation(DepthPrePassShader.ID, "projection");
+            DepthPrePassShader.Bind();
 
-        GL.UniformMatrix4(viewLocation, true, ref view);
-        GL.UniformMatrix4(projectionLocation, true, ref projection);
+            Matrix4 v = GetViewMatrix();
+            Matrix4 p = GetProjectionMatrix();
 
-        foreach (var (_, chunk) in ChunkManager.ActiveChunks)
-        {   
-            if (chunk.IsDisabled)
-                continue;
+            int modelLocation = GL.GetUniformLocation(DepthPrePassShader.ID, "model");
+            int viewLocation = GL.GetUniformLocation(DepthPrePassShader.ID, "view");
+            int projectionLocation = GL.GetUniformLocation(DepthPrePassShader.ID, "projection");
 
-            Matrix4 m = Matrix4.CreateTranslation(chunk.GetWorldPosition());
-            GL.UniformMatrix4(modelLocation, true, ref m);
-            chunk.Render.Invoke();
+            GL.UniformMatrix4(viewLocation, true, ref v);
+            GL.UniformMatrix4(projectionLocation, true, ref p);
+
+            foreach (var (_, chunk) in ChunkManager.ActiveChunks)
+            {   
+                if (chunk.IsDisabled)
+                    continue;
+
+                Matrix4 m = Matrix4.CreateTranslation(chunk.GetWorldPosition());
+                GL.UniformMatrix4(modelLocation, true, ref m);
+                chunk.Render.Invoke();
+            }
+
+            DepthPrePassShader.Unbind();
+
+            DepthPrepassFBO.Unbind();
+
+            // Render terrain
+            GL.ColorMask(true, true, true, true);
         }
-
-        DepthPrePassShader.Unbind();
-
-        DepthPrepassFBO.Unbind();
-
-
-
-        // Render terrain
-        GL.ColorMask(true, true, true, true);
-        GL.Disable(EnableCap.DepthTest);
 
         GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.CullFace);
@@ -176,21 +224,23 @@ public class WorldManager : ScriptingNode
         pullingShader.Bind();
 
         Matrix4 model = Matrix4.Identity;
-        view = camera.viewMatrix;
-        projection = camera.projectionMatrix;
-        Matrix4 lightView = GetViewMatrix();
-        Matrix4 lightProjection = GetProjectionMatrix();
+        Matrix4 view = camera.viewMatrix;
+        Matrix4 projection = camera.projectionMatrix;
 
         int modelLocationA = GL.GetUniformLocation(pullingShader.ID, "model");
         int viewLocationA = GL.GetUniformLocation(pullingShader.ID, "view");
         int projectionLocationA = GL.GetUniformLocation(pullingShader.ID, "projection");
         //int camPosLocationA = GL.GetUniformLocation(pullingShader.ID, "camPos");
+        int doAmbientOcclusionLocationA = GL.GetUniformLocation(pullingShader.ID, "doAmbientOcclusion");
+        int doShadowLocationA = GL.GetUniformLocation(pullingShader.ID, "doShadow");
         int lighViewLocationA = GL.GetUniformLocation(pullingShader.ID, "lightView");
         int lightProjectionLocationA = GL.GetUniformLocation(pullingShader.ID, "lightProjection");
         
         GL.UniformMatrix4(viewLocationA, true, ref view);
         GL.UniformMatrix4(projectionLocationA, true, ref projection);
         //GL.Uniform3(camPosLocationA, camera.Position); 
+        GL.Uniform1(doAmbientOcclusionLocationA, _ambientOcclusion ? 1 : 0);
+        GL.Uniform1(doShadowLocationA, _realtimeShadow ? 1 : 0);
         GL.UniformMatrix4(lighViewLocationA, true, ref lightView);
         GL.UniformMatrix4(lightProjectionLocationA, true, ref lightProjection);
         GL.Uniform1(GL.GetUniformLocation(pullingShader.ID, "textureArray"), 0);
@@ -239,14 +289,13 @@ public class WorldManager : ScriptingNode
     public void CheckFrustum()
     {
         Camera camera = Game.camera;
-        if (!camera.IsMoving())
-            return;
+
 
         camera.CalculateFrustumPlanes();
         
         foreach (var (_, chunk) in ChunkManager.ActiveChunks)
         {
-            chunk.IsDisabled = !chunk.HasBlocks;// || !camera.FrustumIntersects(chunk.boundingBox);// || chunk.IsIndependent(); // testing
+            chunk.IsDisabled = !chunk.HasBlocks || !camera.FrustumIntersects(chunk.boundingBox) || chunk.Stage != ChunkStage.Rendered;// || chunk.IsIndependent(); // testing
         }
     }
 
@@ -399,25 +448,30 @@ public class WorldManager : ScriptingNode
         {
             chunksToRemove.Add(chunk.Key);
         }
+
+        List<Vector3i> chunksToAdd = new List<Vector3i>();
         
         foreach (var chunk in chunks)
         {
             chunksToRemove.Remove(chunk);
-            
-            if (!ChunkManager.ActiveChunks.ContainsKey(chunk) && !ChunkManager.GenerateChunkQueue.Contains(chunk) && ChunkManager.CreateQueue.All(c => c.GetWorldPosition() != chunk))
+            chunksToAdd.Add(chunk);
+        }
+
+        foreach (var chunk in chunksToRemove)
+        {
+            if (ChunkManager.RemoveChunk(chunk, out var oldChunk))
             {
-                ChunkManager.GenerateChunkQueue.Enqueue(chunk);
+                oldChunk.Delete();
             }
         }
 
-        ChunkManager.IgnoreList.Clear();
-
-        foreach (var chunk in chunksToRemove)
-        {    
-            ChunkManager.IgnoreList.Add(chunk);
-            if (ChunkManager.ActiveChunks.TryRemove(chunk, out var data))
+        foreach (var chunk in chunksToAdd)
+        {
+            Chunk newChunk = new Chunk(_renderType, VoxelData.ChunkToRelativePosition(chunk));
+            if (ChunkManager.TryAddActiveChunk(newChunk))
             {
-                data.Clear();
+                newChunk.Stage = ChunkStage.Instance;
+                ChunkManager.GenerateChunkQueue.Enqueue(newChunk);
             }
         }
 
@@ -490,19 +544,11 @@ public class WorldManager : ScriptingNode
 
     private void GenerateChunks()
     {
-        while (ChunkManager.GenerateChunkQueue.TryDequeue(out var position))
+        while (ChunkManager.GenerateChunkQueue.TryDequeue(out var chunk))
         {
-            if (ChunkManager.ActiveChunks.ContainsKey(position) || ChunkManager.IgnoreList.Contains(position)) 
-                return;
-
-            Chunk chunkData = new Chunk(_renderType, VoxelData.ChunkToRelativePosition(position));
-            bool loaded = ChunkLoader.IsChunkStored(chunkData);
-            chunkData.Save = !loaded;
-            if (ChunkManager.TryAddActiveChunk(chunkData))
-            {
-                chunkData.Stage = ChunkStage.Instance;
-                ThreadPool.QueueAction(() => GenerateChunk(chunkData, loaded), TaskPriority.Low);
-            }
+            bool loaded = ChunkLoader.IsChunkStored(chunk);
+            chunk.Save = !loaded;
+            ThreadPool.QueueAction(() => GenerateChunk(chunk, loaded), TaskPriority.Low);
         }
     }
 
@@ -535,7 +581,7 @@ public class WorldManager : ScriptingNode
         while (ChunkManager.GenerateMeshQueue.TryDequeue(out var chunkData))
         {
             Vector3i position = chunkData.GetWorldPosition();
-            if (!ChunkManager.ActiveChunks.ContainsKey(position) || ChunkManager.IgnoreList.Contains(position)) 
+            if (!ChunkManager.ActiveChunks.ContainsKey(position)) 
                 return;
 
             ThreadPool.QueueAction(() => GenerateMeshChunk(chunkData), TaskPriority.High);
@@ -548,8 +594,10 @@ public class WorldManager : ScriptingNode
         {
             if (!loaded)
             {
-                ChunkGenerator.GenerateChunk(ref chunkData, chunkData.GetWorldPosition());
+                if (ChunkGenerator.GenerateChunk(ref chunkData, chunkData.GetWorldPosition()) == -1)
+                    return;
                 chunkData.Stage = ChunkStage.Generated;
+
                 if (chunkData.AllNeighbourChunkStageSuperiorOrEqual(ChunkStage.Generated))
                 {
                     ChunkManager.PopulateChunkQueue.Enqueue(chunkData);
@@ -558,6 +606,7 @@ public class WorldManager : ScriptingNode
 
                 foreach (var chunk in chunkData.GetNeighbourChunks())
                 {
+                    //Info.ClearBlocks();
                     if (chunk.Stage == ChunkStage.Generated && chunk.AllNeighbourChunkStageSuperiorOrEqual(ChunkStage.Generated))
                     {
                         ChunkManager.PopulateChunkQueue.Enqueue(chunk);
@@ -579,7 +628,8 @@ public class WorldManager : ScriptingNode
     {
         await Task.Run(() =>
         {
-            ChunkGenerator.PopulateChunk(ref chunkData);
+            if (ChunkGenerator.PopulateChunk(ref chunkData) == -1)
+                return;
             chunkData.Stage = ChunkStage.Populated;
             ChunkManager.GenerateMeshQueue.Enqueue(chunkData);
             //chunkData.SaveChunk();
@@ -591,9 +641,13 @@ public class WorldManager : ScriptingNode
     {
         await Task.Run(() =>
         {
-            ChunkGenerator.GenerateOcclusion(chunkData);
-            ChunkGenerator.GenerateMesh(chunkData);
+            if (ChunkGenerator.GenerateOcclusion(chunkData) == -1)
+                return;
+            if (ChunkGenerator.GenerateMesh(chunkData) == -1)
+                return;
+
             chunkData.Stage = ChunkStage.Rendered;
+            Console.WriteLine($"Chunk {chunkData.GetWorldPosition()} generated");
             ChunkManager.CreateQueue.Enqueue(chunkData);
         });
     }
@@ -631,5 +685,24 @@ public class WorldManager : ScriptingNode
         {
             chunk.Delete();
         }
+    }
+}
+
+public static class ThreadBlocker
+{
+    public static bool isBlocked = false;
+
+    public static void Block()
+    {
+        isBlocked = true;
+        while (isBlocked)
+        {
+            Thread.Sleep(1);
+        }
+    }
+
+    public static void Unblock()
+    {
+        isBlocked = false;
     }
 }

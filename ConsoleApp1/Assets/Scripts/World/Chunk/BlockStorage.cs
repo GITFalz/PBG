@@ -40,13 +40,16 @@ public class BlockStorage
 
     public void SetBlock(int blockIndex, int arrayIndex, Block block)
     {
-        if (Blocks[arrayIndex] == null)
+        lock (this)
         {
-            Blocks[arrayIndex] = new Block[4096];
-            Array.Fill(Blocks[arrayIndex], new Block(false, 0));
+            if (Blocks[arrayIndex] == null)
+            {
+                Blocks[arrayIndex] = new Block[4096];
+                Array.Fill(Blocks[arrayIndex], new Block(false, 0));
+            }
+            
+            Blocks[arrayIndex][blockIndex] = block;
         }
-        
-        Blocks[arrayIndex][blockIndex] = block;
     }
     
     public Block GetBlock(int x, int y, int z, out int blockIndex, out int arrayIndex)
@@ -132,6 +135,6 @@ public class BlockStorage
     
     public void Clear()
     {
-        Blocks = [];
+        Blocks = [ null, null, null, null, null, null, null, null ];
     }
 }

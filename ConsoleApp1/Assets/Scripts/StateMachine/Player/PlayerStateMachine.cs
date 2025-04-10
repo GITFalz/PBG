@@ -118,6 +118,9 @@ public class PlayerStateMachine : ScriptingNode
     {      
         Camera camera = Game.camera;
 
+        if (camera.GetCameraMode() != CameraMode.Follow)
+            return;
+
         Vector2 input = Input.GetMovementInput();
         
         if (input != Vector2.Zero)
@@ -169,7 +172,7 @@ public class PlayerStateMachine : ScriptingNode
     
     public override void FixedUpdate()
     {
-        if (!Game.MoveTest)
+        if (Game.camera.GetCameraMode() != CameraMode.Follow || !Game.MoveTest)
             return;
         
         _currentState.FixedUpdate(this);
