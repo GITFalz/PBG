@@ -652,7 +652,7 @@ public class WorldManager : ScriptingNode
         });
     }
     
-    public static bool IsBlockChecks(Vector3i[] positions)
+    public static bool IsBlockChcks(Vector3i[] positions)
     {
         Block block;
 
