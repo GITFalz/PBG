@@ -85,7 +85,10 @@ public class Chunk
         int vertex = posX | (posY << 5) | (posZ << 10) | (width << 15) | (height << 20) | (side << 25);
         int blockData = blockIndex;
 
-        GridAlignedFaces.Add(new Vector2i(vertex, blockData));
+        lock (this)
+        {
+            GridAlignedFaces.Add(new Vector2i(vertex, blockData));
+        }
     }
 
     public void AddFace(Vector3 position, byte width, byte height, int blockIndex, byte side)

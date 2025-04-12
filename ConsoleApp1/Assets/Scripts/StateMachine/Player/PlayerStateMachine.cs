@@ -6,13 +6,13 @@ public class PlayerStateMachine : ScriptingNode
 {
     public static PlayerStateMachine Instance;
     public CameraMode cameraMode = CameraMode.Follow;
-    public const float WALK_SPEED = 7;
-    public const float RUN_SPEED = 14;
-    public const float DASH_SPEED = 24;
-    public const float SPRINT_SPEED = 22;
-    public const float FALL_SPEED = 1;
+    public const float WALK_SPEED = 80;
+    public const float RUN_SPEED = 120;
+    public const float DASH_SPEED = 180;
+    public const float SPRINT_SPEED = 160;
+    public const float FALL_SPEED = 15;
     public const float GRAPPLE_SPEED = 30;
-    public const float JUMP_SPEED = 14;
+    public const float JUMP_SPEED = 900;
     
     public Vector3 forward = (0, 0, -1);
     private Vector3 _oldPosition = (0, 0, 0);
@@ -121,11 +121,18 @@ public class PlayerStateMachine : ScriptingNode
         if (camera.GetCameraMode() == CameraMode.Free)
             return;
 
+        if (Input.IsKeyDown(Keys.J))
+            physicsBody.Acceleration = (0.001f, 0, 0);
+
         Vector2 input = Input.GetMovementInput();
-        
+
         if (input != Vector2.Zero)
         {
             yaw = -camera.Yaw + _inputAngle[input];
+        }
+        
+        if (physicsBody.Velocity != Vector3.Zero)
+        {
             Info.SetPositionText(_oldPosition, Transform.Position - (0f, 0.875f, 0f));
         }
         
@@ -277,7 +284,6 @@ public class PlayerStateMachine : ScriptingNode
         Vector3 direction = camera.FrontYto0() * input.Y - camera.RightYto0() * input.X;
         Vector3 horizontalVelocity = physicsBody.GetHorizontalVelocity();
         MovePlayer(playerMovementSpeed, direction);
-        physicsBody.Velocity -= horizontalVelocity;
     }
     
     public void MovePlayer(PlayerMovementSpeed playerMovementSpeed, Vector3 direction)

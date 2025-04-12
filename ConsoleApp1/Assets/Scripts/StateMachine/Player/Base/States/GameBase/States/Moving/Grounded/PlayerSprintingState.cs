@@ -11,7 +11,7 @@ public class PlayerSprintingState : PlayerGameBaseState
     {
         Console.WriteLine("Entering sprinting state");
 
-        playerGameState.PlayerStateMachine.physicsBody.Drag = 10f;
+        //playerGameState.PlayerStateMachine.physicsBody.Drag = 10f;
         playerGameState.NextMovingState = playerGameState.SprintingState;
         playerGameState.MovementSpeed = PlayerMovementSpeed.Run;
         
@@ -65,6 +65,6 @@ public class PlayerSprintingState : PlayerGameBaseState
     public override void Exit(PlayerGameState playerGameState)
     {
         Camera.SetFOV(45);
-        playerGameState.PlayerStateMachine.physicsBody.Drag = 0.3f;
+        //playerGameState.PlayerStateMachine.physicsBody.Drag = 0.3f;
     }
 }

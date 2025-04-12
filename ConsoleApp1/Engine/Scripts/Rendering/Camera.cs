@@ -364,8 +364,15 @@ public class Camera
         CameraDistance = Math.Clamp(CameraDistance, 3, 10);
         oldScroll = scroll;
 
+        float distance = CameraDistance;
+
+        if (VoxelData.Raycast(PlayerData.Position, -front, CameraDistance, out Hit hit))
+        {
+            distance = hit.Distance - 0.01f; // Adjust the distance to avoid clipping
+        }
+
         _currentCenter = Mathf.Lerp(_currentCenter, Center, _centerLerpSpeed * GameTime.DeltaTime);
-        _targetPosition = _currentCenter - front * CameraDistance;
+        _targetPosition = _currentCenter - front * distance;
         Position = _positionSmooth ? Vector3.Lerp(Position, _targetPosition, POSITION_SMOOTH_FACTOR * GameTime.DeltaTime) : _targetPosition;
     }
     

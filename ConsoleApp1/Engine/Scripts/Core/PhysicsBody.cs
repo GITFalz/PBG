@@ -3,12 +3,13 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PhysicsBody : ScriptingNode
 {
-    private float gravity = 30f;
+    private float gravity = 50;
     private float maxFallSpeed = 150f;
     
     public Vector3 Acceleration = Vector3.Zero;
     public Vector3 Velocity = Vector3.Zero;     
-    public float Drag = 0.1f;
+    public float Drag = 0.2f;
+    public float DecelerationFactor = 1;
     public float Mass = 1f;
 
     public Collider collider;
@@ -48,12 +49,12 @@ public class PhysicsBody : ScriptingNode
 
     public void AddForce(Vector3 force)
     {
-        Velocity += force / Mass;
+        Acceleration += force / Mass;
     }
 
     public void AddForce(Vector3 direction, float maxSpeed)
     {
-        Velocity += direction.Normalized() * maxSpeed / Mass;
+        Acceleration += direction.Normalized() * maxSpeed / Mass;
     }
 
     public override void Update()
@@ -65,18 +66,20 @@ public class PhysicsBody : ScriptingNode
     {
         previousPosition = physicsPosition;
 
+        Gravity();
+
         Velocity += Acceleration * GameTime.FixedTime;
         Velocity *= 1f - Drag * GameTime.FixedTime;
-        Acceleration *= 1f - (Drag * 100) * GameTime.FixedTime;
 
-        Gravity();
+        float decelerationFactor = IsGrounded ? 10f : DecelerationFactor;
+        Acceleration = -decelerationFactor * Velocity;
 
         CollisionCheck();
     }
     
     public void ApplyGravity()
     {
-        Velocity.Y = Math.Max(Velocity.Y - gravity * GameTime.FixedTime, -maxFallSpeed);
+        Acceleration.Y -= gravity;
     }
     
     public float GetSpeed()

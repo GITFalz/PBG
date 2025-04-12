@@ -22,7 +22,7 @@ public class WorldManager : ScriptingNode
     private Vector3i _currentPlayerChunk = Vector3i.Zero;
     private Vector3i _lastPlayerPosition = (int.MaxValue, int.MaxValue, int.MaxValue);
 
-    public static bool DoAmbientOcclusion = false;
+    public static bool DoAmbientOcclusion = true;
     public static bool DoRealtimeShadows = false;
 
     public Matrix4 GetViewMatrix()

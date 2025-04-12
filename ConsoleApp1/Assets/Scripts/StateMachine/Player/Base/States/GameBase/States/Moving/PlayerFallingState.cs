@@ -45,7 +45,7 @@ public class PlayerFallingState : PlayerGameBaseState
     public override void FixedUpdate(PlayerGameState playerGameState)
     {
         if (input != Vector2.Zero)
-            playerGameState.PlayerStateMachine.MovePlayer(playerGameState.MovementSpeed);
+            playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Fall);
     }
 
     public override void Exit(PlayerGameState playerGameState)
