@@ -36,12 +36,12 @@ public class AnimationMesh
         GenerateIndices();
         GenerateBasicBoneMatrices();
         
-        _vertVbo = new(Vertices);
-        _uvVbo = new(Uvs);
-        _textureVbo = new(TextureIndices);
-        _normalVbo = new(Normals);
-        _boneVbo = new(BoneIndices);
-        _boneSSBO = new(BoneMatrices);
+        _vertVbo.Renew(Vertices);
+        _uvVbo.Renew(Uvs);
+        _textureVbo.Renew(TextureIndices);
+        _normalVbo.Renew(Normals);
+        _boneVbo.Renew(BoneIndices);
+        _boneSSBO.Renew(BoneMatrices);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
         _vao.LinkToVAO(1, 2, _uvVbo);
@@ -49,7 +49,7 @@ public class AnimationMesh
         _vao.LinkToVAO(3, 3, _normalVbo);
         _vao.LinkToVAO(4, 4, _boneVbo);
         
-        _ibo = new IBO(Indices);
+        _ibo.Renew(Indices);
     }
 
     public void GenerateIndices()

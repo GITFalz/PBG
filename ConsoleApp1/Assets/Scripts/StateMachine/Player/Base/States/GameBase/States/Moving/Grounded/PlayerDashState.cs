@@ -11,7 +11,7 @@ public class PlayerDashState : PlayerGameBaseState
     {
         Console.WriteLine("Entering dash state");
         
-        Camera = Game.camera;
+        Camera = Game.Camera;
         
         timer = 0;
 

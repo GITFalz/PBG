@@ -8,6 +8,9 @@ public abstract class UIElement
     public UIController? UIController = null;
     public UIElement? ParentElement = null;
     public string Name = "";
+
+    // Rendering Settings
+    public bool Visible = true;
     public Vector3 Origin = (0, 0, 0);
     public Vector3 Pivot = (0, 0, 0);
     public Vector2 Scale = (100, 100);
@@ -16,7 +19,7 @@ public abstract class UIElement
     public Vector4 totalOffset = (0, 0, 0, 0);
     public float Rotation = 0f;
     public bool Rotated = false;
-    public bool test = false;
+    public bool CanTest = true;
     public int ElementIndex = 0;
     public float Depth = 0;
 
@@ -49,6 +52,8 @@ public abstract class UIElement
         Rotation = rotation;
     }
 
+    public virtual void SetVisibility(bool visible) { Visible = visible; }
+
     public virtual void SetParent(UIElement parent) { ParentElement = parent; }
     public virtual void SetOrigin(Vector3 origin) { Origin = origin; }
     public virtual void SetPivot(Vector3 pivot) { Pivot = pivot; }
@@ -67,8 +72,9 @@ public abstract class UIElement
     public virtual void UpdateTexture() {}
     public virtual bool Test(Vector2 offset = default)
     { 
-        //if (!test)
-            //return false;
+        if (!CanTest || !Visible) 
+            return false;
+
         TestButtons(IsMouseOver(offset));  
         return true;
     }

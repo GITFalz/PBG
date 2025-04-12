@@ -10,7 +10,7 @@ public class PlayerGrapplingSwingOutState : PlayerGameBaseState
     {
         Console.WriteLine("Entering grappling swing out state");
         
-        Camera = Game.camera;
+        Camera = Game.Camera;
         
         OldAnimationManager.Instance.SetAnimation("Player", "grappleSwingOut");
         OldAnimationManager.Instance.QueueAnimation("Player", "grappleSwingEnd");

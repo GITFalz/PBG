@@ -4,14 +4,33 @@ public class BlockStorage
 {
     public static BlockStorage Empty = new();
 
-    public Block[]?[] Blocks = [];
-    public Vector3i[] SubPositions = [];
+    public Block[]?[] Blocks;
+    public Vector3i[] SubPositions;
 
-    public BlockStorage() { }
+    public BlockStorage() 
+    { 
+        Blocks = []; 
+        SubPositions = []; 
+    }
 
     public BlockStorage(Vector3i position)
     {
         Blocks = [ null, null, null, null, null, null, null, null ];
+        SubPositions =
+        [
+            position,
+            position + new Vector3i(16, 0, 0),
+            position + new Vector3i(0, 0, 16),
+            position + new Vector3i(16, 0, 16),
+            position + new Vector3i(0, 16, 0),
+            position + new Vector3i(16, 16, 0),
+            position + new Vector3i(0, 16, 16),
+            position + new Vector3i(16, 16, 16),
+        ];
+    }
+
+    public void SetPosition(Vector3i position)
+    {
         SubPositions =
         [
             position,

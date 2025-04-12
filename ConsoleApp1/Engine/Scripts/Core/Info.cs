@@ -67,7 +67,7 @@ public class Info
 
     public static void Resize()
     {
-        _infoController.OnResize();
+        _infoController.Resize();
     }
 
     public static void Update()
@@ -92,8 +92,8 @@ public class Info
 
     public static void GenerateBlocks()
     {
-        _blockVao = new VAO();
-        _blockSSBO = new(_blockData);
+        _blockVao.Renew();
+        _blockSSBO.Renew(_blockData.ToArray());
     }
 
     public static void ClearBlocks()
@@ -153,8 +153,8 @@ public class Info
         _blockShader.Bind();
 
         Matrix4 model = Matrix4.Identity;
-        Matrix4 view = Game.camera.viewMatrix;
-        Matrix4 projection = Game.camera.projectionMatrix;
+        Matrix4 view = Game.Camera.ViewMatrix;
+        Matrix4 projection = Game.Camera.ProjectionMatrix;
 
         int modelLocationA = GL.GetUniformLocation(_blockShader.ID, "model");
         int viewLocationA = GL.GetUniformLocation(_blockShader.ID, "view");

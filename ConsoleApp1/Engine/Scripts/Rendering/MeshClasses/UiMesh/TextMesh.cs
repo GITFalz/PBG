@@ -1,52 +1,92 @@
+using System.Drawing;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
 public class TextMesh
 {
-    public List<Vector3> Vertices = [];
-    public List<Vector2> Uvs = [];
-    public List<uint> Indices = [];
-    public List<int> TransformationIndex = [];
-    public List<Matrix4> TransformationMatrices = [];  
-    public List<Vector2i> TextUvs = [];
     public List<int> chars = [];
-    
-    private VAO _vao = new VAO();
-    private IBO _ibo = new IBO([]);
-    private VBO<Vector3> _vertVbo = new VBO<Vector3>(new List<Vector3>());
-    private VBO<Vector2> _uvVbo = new VBO<Vector2>(new List<Vector2>());
-    private VBO<Vector2i> _textUvVbo = new VBO<Vector2i>(new List<Vector2i>());
-    private VBO<int> _transformationVbo = new VBO<int>(new List<int>());
-    private SSBO<Matrix4> _transformationSsbo = new(new List<Matrix4>{});
-    public TBO<int> _textTbo = new TBO<int>(new List<int>());
-    public int ElementCount = 0;
+    public List<Matrix4> TransformationMatrices = [];  
+    public List<Vector2> Sizes = [];
+    public List<Vector4i> Data = [];
 
-    public void SetCharacters(UIText uIText, int offset)
+    private VAO _vao = new VAO();
+    private SSBO<Matrix4> _transformationSsbo = new(new List<Matrix4>());
+    private SSBO<Vector2> _sizeSsbo = new(new List<Vector2>());
+    private SSBO<Vector4i> _dataSsbo = new(new List<Vector4i>());
+    private TBO<int> _textTbo = new([]);
+
+    private List<UIText> _textElements = new List<UIText>();
+
+    public int ElementCount = 0;
+    public int VisibleElementCount = 0;
+
+    public void SetCharacters(List<int> characters, int offset)
     {
-        for (int i = 0; i < uIText.Chars.Count; i++)
+        for (int i = 0; i < characters.Count; i++)
         {
             int index = offset + i;
             if (index >= chars.Count)
-                chars.Add(uIText.Chars[i]);
+                chars.Add(characters[i]);
             else
-                chars[index] = uIText.Chars[i];
+                chars[index] = characters[i];
         }
     }
 
-    public void AddTextElement(UIText element, ref int uiIndex)
+    public void SetVisibility(bool visible, int index)
+    {
+        if (index >= Data.Count)
+            return;
+
+        VisibleElementCount += visible ? 1 : -1;
+        UpdateData();
+    }
+
+    public void AddTextElement(UIText element, ref int uiIndex, int offset)
     {
         uiIndex = ElementCount;
-        var textQuad = element.textQuad;
 
-        Vertices.AddRange(textQuad.Vertices);
-        Uvs.AddRange(textQuad.Uvs);
-        TextUvs.AddRange(textQuad.TextSize);
+        Sizes.Add((element.newScale.X, element.newScale.Y));
+        Data.Add((element.MaxCharCount, offset, ElementCount, 0));
+        _textElements.Add(element);
 
-        TransformationIndex.AddRange([ElementCount, ElementCount, ElementCount, ElementCount]);
         TransformationMatrices.Add(element.Transformation);
 
         ElementCount++;
+        VisibleElementCount++;
     }
+
+    public void RemoveTextElement(UIText element)
+    {
+        var index = element.ElementIndex;
+
+        Sizes.RemoveAt(index);
+        Data.RemoveAt(index);
+        _textElements.RemoveAt(index);
+        TransformationMatrices.RemoveAt(index);
+
+        ElementCount--;
+        VisibleElementCount--;
+    }
+
+    public void UpdateData()
+    {
+        int offsetIndex = 0;
+
+        // Assuming the Data list is the same size as _visibility
+        for (int i = 0; i < _textElements.Count; i++)
+        {
+            if (_textElements[i].Visible)
+            {
+                Vector4i data = Data[offsetIndex];
+                data.Z = i;
+                Data[offsetIndex] = data;
+                offsetIndex++;
+            }
+        }
+
+        // Update the Data list
+        _dataSsbo.Update(Data, 2);
+    }   
 
     public void UpdateElementTransformation(UIText element)
     {
@@ -55,41 +95,34 @@ public class TextMesh
 
     public void GenerateBuffers()
     {
-        GenerateIndices();
-
-        _vertVbo = new(Vertices);
-        _uvVbo = new(Uvs);
-        _textUvVbo = new(TextUvs);
-        _transformationVbo = new(TransformationIndex);
         _transformationSsbo = new(TransformationMatrices);
+        _sizeSsbo = new(Sizes);
+        _dataSsbo = new(Data);
         _textTbo = new(chars);
-        
-        _vao.LinkToVAO(0, 3, _vertVbo);
-        _vao.LinkToVAO(1, 2, _uvVbo);
-        _vao.LinkToVAO(2, 2, _textUvVbo);
-        _vao.LinkToVAO(3, 1, _transformationVbo);
-        
-        _ibo = new IBO(Indices);
     }
 
     public void Render()
     {
         _vao.Bind();
-        _ibo.Bind();
         _transformationSsbo.Bind(0);
+        _sizeSsbo.Bind(1);
+        _dataSsbo.Bind(2);
         _textTbo.Bind(TextureUnit.Texture1);
 
-        GL.DrawElements(PrimitiveType.Triangles, Indices.Count, DrawElementsType.UnsignedInt, 0);
-
-        _vao.Unbind();
-        _ibo.Unbind();
+        GL.DrawArrays(PrimitiveType.Triangles, 0, VisibleElementCount * 6);
+        
         _transformationSsbo.Unbind();
+        _sizeSsbo.Unbind();
+        _dataSsbo.Unbind();
         _textTbo.Unbind();
+        _vao.Unbind();
     }
 
     public void UpdateMatrices()
     {
         _transformationSsbo.Update(TransformationMatrices, 0);
+        _sizeSsbo.Update(Sizes, 1);
+        _dataSsbo.Update(Data, 2);
     }
 
     public void UpdateText()
@@ -99,24 +132,11 @@ public class TextMesh
 
     public void Clear()
     {
-        Vertices.Clear();
-        Uvs.Clear();
-        TextUvs.Clear();
-        chars.Clear();
-        Indices.Clear();
-        TransformationIndex.Clear();
         TransformationMatrices.Clear();
+        Sizes.Clear();
+        Data.Clear();
+        chars.Clear();
         ElementCount = 0;
-    }
-
-    public void GenerateIndices()
-    {
-        Indices.Clear();
-
-        for (uint i = 0; i < ElementCount; i++)
-        {
-            uint index = i * 4;
-            Indices.AddRange([index, index + 1, index + 2, index + 2, index + 3, index]);
-        }
+        VisibleElementCount = 0;
     }
 }

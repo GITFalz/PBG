@@ -37,8 +37,8 @@ public class Camera
     public Vector2 pos;
     public Vector2 lastPos;
     
-    public Matrix4 viewMatrix;
-    public Matrix4 projectionMatrix;
+    public Matrix4 ViewMatrix;
+    public Matrix4 ProjectionMatrix;
     
     
     private Vector2 _smoothMouseDelta = Vector2.Zero;
@@ -84,19 +84,19 @@ public class Camera
 
     public Matrix4 GetViewMatrix()
     {
-        viewMatrix = Matrix4.LookAt(Position, Position + front, up);
-        return viewMatrix;
+        ViewMatrix = Matrix4.LookAt(Position, Position + front, up);
+        return ViewMatrix;
     }
     
     public Matrix4 GetProjectionMatrix()
     {
-        projectionMatrix = Matrix4.CreatePerspectiveFieldOfView(
+        ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView(
             OpenTK.Mathematics.MathHelper.DegreesToRadians(FOV),
             SCREEN_WIDTH / SCREEN_HEIGHT, 
             0.1f, 
             1000f
         );
-        return projectionMatrix;
+        return ProjectionMatrix;
     }
 
     public Matrix4 GetRotationMatrix()

@@ -12,8 +12,8 @@ public class LodChunk : LodTreeBase
     public LodChunk()
     {
         AddFace(position, 16, 16, 0, 2, 0);
-        _vao = new VAO();
-        _vertexSSBO = new(_vertices);
+        _vao.Renew();
+        _vertexSSBO.Renew(_vertices);
     }
 
     public void AddFace(byte posX, byte posY, byte posZ, byte width, byte height, int blockIndex, byte side, byte mutliplier)

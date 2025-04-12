@@ -1,12 +1,36 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 
-public class ShaderProgram
+public class ShaderProgram : BufferBase
 {
-    public static List<ShaderProgram> ShaderPrograms = new List<ShaderProgram>();
-
     public int ID;
 
-    public ShaderProgram(string vertexShaderFilePath)
+    private static int _bufferCount = 0;
+
+    public ShaderProgram(string vertexShaderFilePath) : base()
+    {
+        CreateShader(vertexShaderFilePath);
+        _bufferCount++;
+    }
+    
+    public ShaderProgram(string vertexShaderFilePath, string fragmentShaderFilePath) : base()
+    {
+        CreateShader(vertexShaderFilePath, fragmentShaderFilePath);
+        _bufferCount++;
+    }
+
+    public ShaderProgram(string vertexShaderFilePath, string geometryShaderFilePath, string fragmentShaderFilePath) : base()
+    {
+        CreateShader(vertexShaderFilePath, geometryShaderFilePath, fragmentShaderFilePath);
+        _bufferCount++;
+    }
+
+    public void Renew(string vertexShaderFilePath) => CreateShader(vertexShaderFilePath);
+    public void Renew(string vertexShaderFilePath, string fragmentShaderFilePath) => CreateShader(vertexShaderFilePath, fragmentShaderFilePath);
+    public void Renew(string vertexShaderFilePath, string geometryShaderFilePath, string fragmentShaderFilePath) => CreateShader(vertexShaderFilePath, geometryShaderFilePath, fragmentShaderFilePath);
+    public void Bind() => GL.UseProgram(ID);
+    public void Unbind() => GL.UseProgram(0);
+
+    private void CreateShader(string vertexShaderFilePath)
     {
         ID = GL.CreateProgram();
         
@@ -19,11 +43,9 @@ public class ShaderProgram
         GL.LinkProgram(ID);
         
         GL.DeleteShader(vertexShader);
-
-        ShaderPrograms.Add(this);
     }
-    
-    public ShaderProgram(string vertexShaderFilePath, string fragmentShaderFilePath)
+
+    private void CreateShader(string vertexShaderFilePath, string fragmentShaderFilePath)
     {
         ID = GL.CreateProgram();
         
@@ -42,11 +64,9 @@ public class ShaderProgram
         
         GL.DeleteShader(vertexShader);
         GL.DeleteShader(fragmentShader);
-
-        ShaderPrograms.Add(this);
     }
 
-    public ShaderProgram(string vertexShaderFilePath, string geometryShaderFilePath, string fragmentShaderFilePath)
+    private void CreateShader(string vertexShaderFilePath, string geometryShaderFilePath, string fragmentShaderFilePath)
     {
         ID = GL.CreateProgram();
         
@@ -71,19 +91,23 @@ public class ShaderProgram
         GL.DeleteShader(vertexShader);
         GL.DeleteShader(geometryShader);
         GL.DeleteShader(fragmentShader);
-
-        ShaderPrograms.Add(this);
     }
-    
-    public void Bind() { GL.UseProgram(ID); }
-    public void Unbind() { GL.UseProgram(0); }
-    public static void Delete() 
-    { 
-        foreach (var shaderProgram in ShaderPrograms) 
-        { 
-            GL.DeleteProgram(shaderProgram.ID); 
-        }
-        ShaderPrograms.Clear();
+
+
+    public override void DeleteBuffer()
+    {
+        GL.DeleteProgram(ID);
+        _bufferCount--;
+    }
+
+    public override int GetBufferCount()
+    {
+        return _bufferCount;
+    }
+
+    public override string GetTypeName()
+    {
+        return "ShaderProgram";
     }
 }
 

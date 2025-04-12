@@ -7,18 +7,15 @@ public class Chunk
     public static Chunk Empty = new();
 
     public ChunkStage Stage = ChunkStage.Empty;
-    private ChunkStage _lastStage = ChunkStage.Empty;
     public ChunkStatus Status = ChunkStatus.Empty;
     private ChunkStatus _lastStatus = ChunkStatus.Empty;
 
     public Vector3i position = (0, 0, 0);
-    public BlockStorage blockStorage = BlockStorage.Empty;
+    public BlockStorage blockStorage;
     public int[] FullBlockMap = new int[32 * 32]; // every full block in the chunk represented by a single bit
     public BoundingBox boundingBox = new(new System.Numerics.Vector3(0, 0, 0), new System.Numerics.Vector3(0, 0, 0));
 
     public List<Vector3> Wireframe = [];
-
-    private double _inactiveTimer = 0;
 
     public Chunk?[] NeighbourCunks = 
     [
@@ -55,19 +52,9 @@ public class Chunk
     private List<Vector2i> _gridAlignedData = [];
     public List<Vector2i> GridAlignedFaces = [];
 
-    public Chunk() { }
-
-    public void AddFace(byte posX, byte posY, byte posZ, byte width, byte height, int blockIndex, byte side)
-    {
-        int vertex = posX | (posY << 5) | (posZ << 10) | (width << 15) | (height << 20) | (side << 25);
-        int blockData = blockIndex;
-
-        GridAlignedFaces.Add(new Vector2i(vertex, blockData));
-    }
-
-    public void AddFace(Vector3 position, byte width, byte height, int blockIndex, byte side)
-    {
-        AddFace((byte)position.X, (byte)position.Y, (byte)position.Z, width, height, blockIndex, side);
+    public Chunk()
+    { 
+        blockStorage = BlockStorage.Empty; 
     }
 
     public Chunk(RenderType renderType, Vector3i position)
@@ -83,6 +70,27 @@ public class Chunk
 
         Render = renderType == RenderType.Solid ? RenderChunk : RenderWireframe;
         CreateChunk = renderType == RenderType.Solid ? CreateChunkSolid : CreateChunkWireframe;
+    }
+
+    public void SetPosition(Vector3i position)
+    {
+        this.position = position;
+        blockStorage.SetPosition(position * 32);
+        boundingBox.Min = Mathf.Num(position * 32);
+        boundingBox.Max = boundingBox.Min + new System.Numerics.Vector3(ChunkGenerator.WIDTH, ChunkGenerator.HEIGHT, ChunkGenerator.DEPTH);
+    }
+
+    public void AddFace(byte posX, byte posY, byte posZ, byte width, byte height, int blockIndex, byte side)
+    {
+        int vertex = posX | (posY << 5) | (posZ << 10) | (width << 15) | (height << 20) | (side << 25);
+        int blockData = blockIndex;
+
+        GridAlignedFaces.Add(new Vector2i(vertex, blockData));
+    }
+
+    public void AddFace(Vector3 position, byte width, byte height, int blockIndex, byte side)
+    {
+        AddFace((byte)position.X, (byte)position.Y, (byte)position.Z, width, height, blockIndex, side);
     }
 
     public Block this[int index]
@@ -107,7 +115,7 @@ public class Chunk
         }
         else if (type == RenderType.Wireframe)
         {
-            _edgeVbo = new(Wireframe);
+            _edgeVbo.Renew(Wireframe.ToArray());
             _edgeVao.LinkToVAO(0, 3, _edgeVbo);
 
             Render = RenderWireframe;
@@ -135,43 +143,28 @@ public class Chunk
         return Matrix4.CreateTranslation(GetWorldPosition());
     }
 
-    public void Update()
+    public void Clear()
     {
-        if (Vector3.Distance(PlayerData.Position, GetCenterPosition()) <= 64)
-        {
-            if (!IsActive())
-            {
-                Status = ChunkStatus.Active;
-                _inactiveTimer = 0;
-            }
-        }
-
-        _lastStatus = Status;
-
-        if (Status == ChunkStatus.Inactive)
-        {
-            _inactiveTimer += GameTime.DeltaTime;
-        }
-    }
-
-    public void ActivityCheck()
-    {
-        if (Vector3.Distance(PlayerData.Position, GetCenterPosition()) > 64)
-        {
-            if (_inactiveTimer >= ChunkManager.ChunkInactiveTime)
-                Status = ChunkStatus.Independent;
-            else
-                Status = ChunkStatus.Inactive;
-        }
+        blockStorage.Clear();
+        GridAlignedFaces.Clear();
+        _gridAlignedData.Clear();
+        Wireframe.Clear();
+        RemoveChunkFromAll();
+        VertexCount = 0;
+        Stage = ChunkStage.Empty;
+        Status = ChunkStatus.Empty;
+        Loaded = false;
+        Save = true;
     }
 
     public void Delete()
     {
-        Stage = ChunkStage.Empty;
-        RemoveChunkFromAll();
-        GridAlignedFaces.Clear();
-        Wireframe.Clear();
-        blockStorage.Clear();
+        Clear();
+        _edgeVao.DeleteBuffer();
+        _edgeVbo.DeleteBuffer();
+        _chunkVao.DeleteBuffer();
+        VertexSSBO.DeleteBuffer();
+        BlockMapSSBO.DeleteBuffer();
     }
 
     
@@ -180,12 +173,12 @@ public class Chunk
         lock(this)
         {
             _gridAlignedData.Clear();
-            _gridAlignedData = new List<Vector2i>(GridAlignedFaces);
+            _gridAlignedData = [.. GridAlignedFaces];
             VertexCount = _gridAlignedData.Count * 6;
             GridAlignedFaces.Clear();
 
-            _chunkVao = new VAO();
-            VertexSSBO = new(_gridAlignedData);
+            _chunkVao.Renew();
+            VertexSSBO.Renew(_gridAlignedData.ToArray());
             BlockMapSSBO.Update(FullBlockMap, 1);
         }
     }
@@ -200,8 +193,8 @@ public class Chunk
 
     public void CreateChunkWireframe()
     {
-        _edgeVao = new VAO();
-        _edgeVbo = new(Wireframe);
+        _edgeVao.Renew();
+        _edgeVbo.Renew(Wireframe.ToArray());
         
         _edgeVao.LinkToVAO(0, 3, _edgeVbo);
     }

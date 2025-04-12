@@ -4,7 +4,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class UIController
 {
-    private static List<UIController> _uiControllers = new List<UIController>();
+    public static List<UIController> Controllers = [];
 
     public UIMesh uIMesh = new();
     public TextMesh textMesh = new();
@@ -29,11 +29,18 @@ public class UIController
     public bool render = true;
     public static int TextOffset = 0;
 
-    private Action _updateText = () => { };
-    public Action UpdateText = () => { };
+    public UIController()
+    {
+        Controllers.Add(this);
+    }
 
-
-    public UIController() { _uiControllers.Add(this); }
+    public void AddElements(params UIElement[] elements)
+    {
+        foreach (var element in elements)
+        {
+            AddElement(element);
+        }
+    }
 
     public void AddElement(UIElement element, MeshType type = MeshType.UnMasked, bool test = false)
     {
@@ -64,8 +71,6 @@ public class UIController
 
         element.UIController = this;
         Elements.Add(element);
-
-        ResetUpdateText();
     }
 
     private static readonly Dictionary<MeshType, Func<UIController, UIMesh>> uiMeshType = new Dictionary<MeshType, Func<UIController, UIMesh>>()
@@ -79,21 +84,6 @@ public class UIController
         { MeshType.UnMasked, controller => controller.textMesh },
         { MeshType.Masked, controller => controller.maskedTextMesh }
     };
-
-    private void ResetUpdateText()
-    {
-        UpdateText = () =>
-        {
-            _updateText = () =>
-            {
-                textMesh.UpdateText();
-                maskedTextMesh.UpdateText();
-                _updateText = () => { };
-                ResetUpdateText();
-            };
-            UpdateText = () => { };
-        };
-    }
 
     public void RemoveElement(UIElement element)
     {
@@ -111,7 +101,7 @@ public class UIController
         return null;
     }
 
-    private void Test()
+    public void Test()
     {
         foreach (var element in Elements)
         {
@@ -226,6 +216,7 @@ public class UIController
         if (key == Keys.Backspace)
         {
             activeInputField.RemoveCharacter();
+            activeInputField.OnTextChange?.Invoke();
             return;
         }
         
@@ -292,12 +283,6 @@ public class UIController
         maskedTextMesh.UpdateMatrices();
     }
 
-    public void UpdateTextures()
-    {
-        uIMesh.UpdateTexture();
-        maskeduIMesh.UpdateTexture();
-    }
-
     public List<string> ToLines()
     {
         List<string> lines = new List<string>();
@@ -305,30 +290,28 @@ public class UIController
         return lines;
     }
 
+    public static void ClearAll()
+    {
+        foreach (var controller in Controllers)
+        {
+            controller.Clear();
+        }
+        Controllers.Clear();
+    }
+
     public void Clear()
     {
         uIMesh.Clear();
         textMesh.Clear();
-
-        maskMesh.Clear();
-        maskeduIMesh.Clear();
-        maskedTextMesh.Clear();
-        
-        Elements.Clear();
-        AbsoluteElements.Clear();
-        Buttons.Clear();
-        InputFields.Clear();
-    }
-
-    public static void ClearAll()
-    {
-        foreach (var controller in _uiControllers)
+        foreach (var element in Elements)
         {
-            controller.Clear();
+            if (element is UIInputField inputField && InputFields.Contains(inputField))
+                InputFields.Remove(inputField);
         }
+        Elements.Clear();
     }
 
-    public void OnResize()
+    public void Resize()
     {
         foreach (var element in AbsoluteElements)
         {
@@ -342,13 +325,11 @@ public class UIController
         }
 
         UpdateMatrices();
-        uIMesh.UpdateVertices();
     }
 
-    public void Update(bool test = false)
+    public void Update()
     {
-        if (test) Test();
-        _updateText();
+        Test();
     }
 
     public void Render()
@@ -356,8 +337,8 @@ public class UIController
         if (!render)
             return;
 
-        GL.Disable(EnableCap.DepthTest);
-        GL.DepthMask(false);
+        //GL.Disable(EnableCap.DepthTest);
+        //GL.DepthMask(false);
         GL.Enable(EnableCap.Blend);
         GL.Disable(EnableCap.CullFace);
         GL.FrontFace(FrontFaceDirection.Ccw);
@@ -365,17 +346,14 @@ public class UIController
 
         Matrix4 model = Matrix4.Identity;
 
-        _uiShader.Bind();
         _uItexture.Bind();
+        _uiShader.Bind();
 
-        int modelLoc = GL.GetUniformLocation(_uiShader.ID, "model");
-        int projectionLoc = GL.GetUniformLocation(_uiShader.ID, "projection");
-
-        GL.UniformMatrix4(modelLoc, true, ref model);
-        GL.UniformMatrix4(projectionLoc, true, ref OrthographicProjection);
+        GL.UniformMatrix4(UIData.modelLoc, true, ref model);
+        GL.UniformMatrix4(UIData.projectionLoc, true, ref OrthographicProjection);
 
         uIMesh.Render();
-        
+
         _uiShader.Unbind();
         _uItexture.Unbind();
 
@@ -383,14 +361,10 @@ public class UIController
 
         _textShader.Bind();
         _textTexture.Bind();
-
-        int textModelLoc = GL.GetUniformLocation(_textShader.ID, "model");
-        int textProjectionLoc = GL.GetUniformLocation(_textShader.ID, "projection");
-        int charsLoc = GL.GetUniformLocation(_textShader.ID, "charBuffer");
         
-        GL.UniformMatrix4(textModelLoc, true, ref model);
-        GL.UniformMatrix4(textProjectionLoc, true, ref OrthographicProjection);
-        GL.Uniform1(charsLoc, 1);
+        GL.UniformMatrix4(UIData.textModelLoc, true, ref model);
+        GL.UniformMatrix4(UIData.textProjectionLoc, true, ref OrthographicProjection);
+        GL.Uniform1(UIData.charsLoc, 1);
         
         textMesh.Render();
         
@@ -408,11 +382,8 @@ public class UIController
 
         model = Matrix4.Identity;
         
-        modelLoc = GL.GetUniformLocation(_uiShader.ID, "model");
-        projectionLoc = GL.GetUniformLocation(_uiShader.ID, "projection");
-
-        GL.UniformMatrix4(modelLoc, true, ref model);
-        GL.UniformMatrix4(projectionLoc, true, ref OrthographicProjection);
+        GL.UniformMatrix4(UIData.maskModelLoc, true, ref model);
+        GL.UniformMatrix4(UIData.maskProjectionLoc, true, ref OrthographicProjection);
 
         maskMesh.Render();
         
@@ -428,14 +399,10 @@ public class UIController
         _textTexture.Bind();
 
         model = Matrix4.Identity;
-
-        textModelLoc = GL.GetUniformLocation(_textShader.ID, "model");
-        textProjectionLoc = GL.GetUniformLocation(_textShader.ID, "projection");
-        charsLoc = GL.GetUniformLocation(_textShader.ID, "charBuffer");
         
-        GL.UniformMatrix4(textModelLoc, true, ref model);
-        GL.UniformMatrix4(textProjectionLoc, true, ref OrthographicProjection);
-        GL.Uniform1(charsLoc, 1);
+        GL.UniformMatrix4(UIData.maskTextModelLoc, true, ref model);
+        GL.UniformMatrix4(UIData.maskTextProjectionLoc, true, ref OrthographicProjection);
+        GL.Uniform1(UIData.maskCharsLoc, 1);
         
         maskedTextMesh.Render();
         

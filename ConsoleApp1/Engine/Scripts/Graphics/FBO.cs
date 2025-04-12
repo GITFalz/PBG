@@ -2,17 +2,74 @@ using OpenTK.Graphics.OpenGL4;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
-public class FBO
+public class FBO : BufferBase
 {
-    public static List<FBO> FBOs = new List<FBO>();
-
     public int ID;
     public int colorTextureID = -1;
     public int depthTextureID = -1;
+
+    private static int _bufferCount = 0;
     
     public FramebufferErrorCode FramebufferErrorCode;
 
-    public FBO(int width, int height, FBOType type = FBOType.ColorDepth)
+    public FBO(int width, int height, FBOType type = FBOType.ColorDepth) : base()
+    {
+        Create(width, height, type);
+        _bufferCount++;
+    }
+
+    public void Renew(int width, int height, FBOType type = FBOType.ColorDepth) => Create(width, height, type);
+    public void Bind() => GL.BindFramebuffer(FramebufferTarget.Framebuffer, ID);
+    public void Unbind() => GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+
+    public void BindTexture()
+    {
+        GL.ActiveTexture(TextureUnit.Texture0);
+        GL.BindTexture(TextureTarget.Texture2D, colorTextureID);
+    }
+
+    public void BindDepthTexture(TextureUnit unit)
+    {
+        GL.ActiveTexture(unit);
+        GL.BindTexture(TextureTarget.Texture2D, depthTextureID);
+    }
+
+    public void UnbindTexture(TextureUnit unit)
+    {
+        GL.ActiveTexture(unit);
+        GL.BindTexture(TextureTarget.Texture2D, 0);
+    }
+
+    public void SaveFramebufferToPNG(int width, int height, string filePath)
+    {
+        byte[] pixels = new byte[width * height * 4]; 
+
+        GL.ReadPixels(0, 0, width, height, PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
+
+        using (var image = new Image<Rgba32>(width, height))
+        {
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    int pixelIndex = (y * width + x) * 4;
+                    byte r = pixels[pixelIndex + 0];
+                    byte g = pixels[pixelIndex + 1];
+                    byte b = pixels[pixelIndex + 2];
+                    byte a = pixels[pixelIndex + 3];
+
+                    image[x, height - y - 1] = new Rgba32(r, g, b, a); 
+                }
+            }
+
+            filePath = Path.Combine(Game.texturePath, filePath);
+            image.Save(filePath);
+
+            Console.WriteLine($"Framebuffer saved to {filePath}");
+        }
+    }
+
+    private void Create(int width, int height, FBOType type = FBOType.ColorDepth)
     {
         if (type == FBOType.ColorDepth || type == FBOType.Color)
         {
@@ -56,83 +113,25 @@ public class FBO
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-
-        FBOs.Add(this);
     }
 
-    public void Bind()
-    {
-        GL.BindFramebuffer(FramebufferTarget.Framebuffer, ID);
-    }
 
-    public void BindTexture()
-    {
-        GL.ActiveTexture(TextureUnit.Texture0);
-        GL.BindTexture(TextureTarget.Texture2D, colorTextureID);
-    }
-
-    public void BindDepthTexture(TextureUnit unit)
-    {
-        GL.ActiveTexture(unit);
-        GL.BindTexture(TextureTarget.Texture2D, depthTextureID);
-    }
-
-    public void Unbind()
-    {
-        GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-    }
-
-    public void UnbindTexture(TextureUnit unit)
-    {
-        GL.ActiveTexture(unit);
-        GL.BindTexture(TextureTarget.Texture2D, 0);
-    }
-
-    public void SaveFramebufferToPNG(int width, int height, string filePath)
-    {
-        byte[] pixels = new byte[width * height * 4]; 
-
-        GL.ReadPixels(0, 0, width, height, PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
-
-        using (var image = new Image<Rgba32>(width, height))
-        {
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    int pixelIndex = (y * width + x) * 4;
-                    byte r = pixels[pixelIndex + 0];
-                    byte g = pixels[pixelIndex + 1];
-                    byte b = pixels[pixelIndex + 2];
-                    byte a = pixels[pixelIndex + 3];
-
-                    image[x, height - y - 1] = new Rgba32(r, g, b, a); 
-                }
-            }
-
-            filePath = Path.Combine(Game.texturePath, filePath);
-            image.Save(filePath);
-
-            Console.WriteLine($"Framebuffer saved to {filePath}");
-        }
-    }
-
-    public void Delete()
+    public override void DeleteBuffer()
     {
         GL.DeleteFramebuffer(ID);
         GL.DeleteTexture(colorTextureID);
         GL.DeleteTexture(depthTextureID);
+        _bufferCount--;
     }
 
-    public static void DeleteAll()
+    public override int GetBufferCount()
     {
-        foreach (var fbo in FBOs)
-        {
-            GL.DeleteFramebuffer(fbo.ID);
-            GL.DeleteTexture(fbo.colorTextureID);
-            GL.DeleteTexture(fbo.depthTextureID);
-        }
-        FBOs.Clear();
+        return _bufferCount;
+    }
+
+    public override string GetTypeName()
+    {
+        return "FBO";
     }
 }
 

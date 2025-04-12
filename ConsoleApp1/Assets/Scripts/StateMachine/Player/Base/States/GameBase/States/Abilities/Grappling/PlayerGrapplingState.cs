@@ -12,7 +12,7 @@ public class PlayerGrapplingState : PlayerGameBaseState
     {
         Console.WriteLine("Entering grappling state");
         
-        Camera = Game.camera;
+        Camera = Game.Camera;
         
         Camera.SetFOV(70);
         

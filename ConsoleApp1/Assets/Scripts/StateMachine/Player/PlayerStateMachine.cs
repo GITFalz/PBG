@@ -68,9 +68,9 @@ public class PlayerStateMachine : ScriptingNode
     {
         new OldAnimationManager();
         
-        _lastCameraPitch = Game.camera.Pitch;
-        _lastCameraYaw = Game.camera.Yaw;
-        _lastCameraPosition = Game.camera.Position;
+        _lastCameraPitch = Game.Camera.Pitch;
+        _lastCameraYaw = Game.Camera.Yaw;
+        _lastCameraPosition = Game.Camera.Position;
         
         physicsBody = Transform.GetComponent<PhysicsBody>();
         
@@ -101,7 +101,7 @@ public class PlayerStateMachine : ScriptingNode
 
     public override void Awake()
     {
-        Camera camera = Game.camera;
+        Camera camera = Game.Camera;
 
         camera.SetCameraMode(CameraMode.Follow);
         
@@ -116,9 +116,9 @@ public class PlayerStateMachine : ScriptingNode
 
     public override void Update()
     {      
-        Camera camera = Game.camera;
+        Camera camera = Game.Camera;
 
-        if (camera.GetCameraMode() != CameraMode.Follow)
+        if (camera.GetCameraMode() == CameraMode.Free)
             return;
 
         Vector2 input = Input.GetMovementInput();
@@ -172,7 +172,7 @@ public class PlayerStateMachine : ScriptingNode
     
     public override void FixedUpdate()
     {
-        if (Game.camera.GetCameraMode() != CameraMode.Follow || !Game.MoveTest)
+        if (Game.Camera.GetCameraMode() == CameraMode.Free || !Game.MoveTest)
             return;
         
         _currentState.FixedUpdate(this);
@@ -180,7 +180,7 @@ public class PlayerStateMachine : ScriptingNode
 
     public override void Render()
     {
-        Camera camera = Game.camera;
+        Camera camera = Game.Camera;
 
         _shaderProgram.Bind();
         
@@ -208,8 +208,8 @@ public class PlayerStateMachine : ScriptingNode
         _hitShader.Bind();
 
         Matrix4 model = Matrix4.Identity;
-        Matrix4 view = Game.camera.viewMatrix;
-        Matrix4 projection = Game.camera.projectionMatrix;
+        Matrix4 view = Game.Camera.ViewMatrix;
+        Matrix4 projection = Game.Camera.ProjectionMatrix;
 
         int modelLocationA = GL.GetUniformLocation(_hitShader.ID, "model");
         int viewLocationA = GL.GetUniformLocation(_hitShader.ID, "view");
@@ -239,7 +239,7 @@ public class PlayerStateMachine : ScriptingNode
 
     public override void Exit()
     {
-        Camera camera = Game.camera;
+        Camera camera = Game.Camera;
 
         Console.WriteLine("Exiting Player State Machine");
         
@@ -272,7 +272,7 @@ public class PlayerStateMachine : ScriptingNode
     
     public void MovePlayer(PlayerMovementSpeed playerMovementSpeed, Vector2 input)
     {
-        Camera camera = Game.camera;
+        Camera camera = Game.Camera;
         
         Vector3 direction = camera.FrontYto0() * input.Y - camera.RightYto0() * input.X;
         Vector3 horizontalVelocity = physicsBody.GetHorizontalVelocity();
@@ -288,7 +288,7 @@ public class PlayerStateMachine : ScriptingNode
 
     public void ToggleView()
     {
-        Game.camera.SetCameraMode(cameraMode == CameraMode.Centered ? CameraMode.Follow : CameraMode.Centered);
+        Game.Camera.SetCameraMode(cameraMode == CameraMode.Centered ? CameraMode.Follow : CameraMode.Centered);
     }
 
     public bool IsHuggingWall()

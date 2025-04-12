@@ -16,11 +16,7 @@ public static class ChunkGenerator
     public static Vector2[] spline = 
     [
         new Vector2(-1, 0),
-        new Vector2(-0.4f, 0.05f),
-        new Vector2(-0.3f, 0.2f),
-        new Vector2(0f, 0.3f),
-        new Vector2(0.2f, 0.7f),
-        new Vector2(1, 0.8f)
+        new Vector2(1, 1f)
     ];
     
     public static int GenerateChunk(ref Chunk chunkData, Vector3i position)
@@ -29,16 +25,13 @@ public static class ChunkGenerator
         {
             for (var z = 0; z < DEPTH; z++)
             {
-                float specNoise = GetSpecNoise(new Vector3(x, 0, z) + position);
+                float specNoise = GetSpecNoise(new Vector3(x, 0, z) + position, 200);
                 
                 float splineVector = GetSplineVector(specNoise);
                 
-                float noise = NoiseLib.Noise(4, 
-                    ((float)x + position.X + 0.001f) / 20f,
-                    ((float)z + position.Z + 0.001f) / 20f
-                    );
-                
-                int height = Mathf.FloorToInt(Mathf.Lerp(20, 100, (float)(noise * 0.05 + splineVector)));
+                //float noise = NoiseLib.Noise(4, ((float)x + position.X + 0.001f) / 20f, ((float)z + position.Z + 0.001f) / 20f);
+                //int height = Mathf.FloorToInt(Mathf.Lerp(20, 100, (float)(noise * 0.05 + splineVector)));
+                int height = Mathf.FloorToInt(Mathf.Lerp(20, 100, splineVector));
 
                 int terrainHeight = Mathf.Min(Mathf.Max((height - position.Y), 0), 32);
 
@@ -168,9 +161,9 @@ public static class ChunkGenerator
         return spline[^1].Y;
     }
 
-    private static float GetSpecNoise(Vector3 position)
+    private static float GetSpecNoise(Vector3 position, float size = 100)
     {
-        return NoiseLib.Noise(4, ((float)position.X + 0.001f) / 100, ((float)position.Z + 0.001f) / 100);
+        return NoiseLib.Noise(4, ((float)position.X + 0.001f) / size, ((float)position.Z + 0.001f) / size);
     }
 
     public static int GenerateOcclusion(Chunk chunkData, int width = WIDTH, int lod = 0)

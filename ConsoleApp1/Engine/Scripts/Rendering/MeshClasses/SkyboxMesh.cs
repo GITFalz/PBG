@@ -101,15 +101,15 @@ public class SkyboxMesh
     
     public void GenerateBuffers()
     {
-        _vertVbo = new(_transformedVerts);
-        _uvVbo = new(Uvs);
-        _textureVbo = new(TextureIndices);
+        _vertVbo.Renew(_transformedVerts);
+        _uvVbo.Renew(Uvs);
+        _textureVbo.Renew(TextureIndices);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
         _vao.LinkToVAO(1, 2, _uvVbo);
         _vao.LinkToVAO(2, 1, _textureVbo);
         
-        _ibo = new IBO(Indices);
+        _ibo.Renew(Indices);
     }
 
     public void Render()

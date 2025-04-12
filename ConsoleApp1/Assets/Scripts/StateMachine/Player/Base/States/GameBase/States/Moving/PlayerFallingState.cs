@@ -14,7 +14,7 @@ public class PlayerFallingState : PlayerGameBaseState
 
         timer = 0;
         
-        Camera = Game.camera;
+        Camera = Game.Camera;
     }
 
     public override void Update(PlayerGameState playerGameState)

@@ -19,6 +19,16 @@ public class UIText : UIElement
         this.textMesh = textMesh;
     }
 
+    public override void SetVisibility(bool visible)
+    {   
+        // return if the visibility is the same as the current one
+        if (textMesh == null || Visible == visible)
+            return;
+
+        base.SetVisibility(visible);
+        textMesh.SetVisibility(visible, ElementIndex);
+    }
+
     public override void SetTextMesh(TextMesh textMesh)
     {
         this.textMesh = textMesh;
@@ -65,7 +75,7 @@ public class UIText : UIElement
 
     public void UpdateText()
     {
-        UIController?.UpdateText();
+        textMesh?.UpdateText();
     }
 
     public override void Generate()
@@ -81,8 +91,7 @@ public class UIText : UIElement
         {
             Chars.Add(TextShaderHelper.GetChar(character));
         }
-        
-        textMesh?.SetCharacters(this, TextOffset);
+        textMesh?.SetCharacters(Chars, TextOffset);
         return this;
     }
 
@@ -90,29 +99,7 @@ public class UIText : UIElement
     {
         TextOffset = offset;
 
-        textQuad = new TextQuad();
-
-        Vector3 position1 = Mathf.RotateAround((0,          0,          0), Pivot, _rotationAxis, Rotation);
-        Vector3 position2 = Mathf.RotateAround((0,          newScale.Y, 0), Pivot, _rotationAxis, Rotation);
-        Vector3 position3 = Mathf.RotateAround((newScale.X, newScale.Y, 0), Pivot, _rotationAxis, Rotation);
-        Vector3 position4 = Mathf.RotateAround((newScale.X, 0,          0), Pivot, _rotationAxis, Rotation);
-        
-        textQuad.Vertices.Add(position1);
-        textQuad.Vertices.Add(position2);
-        textQuad.Vertices.Add(position3);
-        textQuad.Vertices.Add(position4);
-        
-        textQuad.Uvs.Add(new Vector2(0, 0));
-        textQuad.Uvs.Add(new Vector2(0, 1));
-        textQuad.Uvs.Add(new Vector2(1, 1));
-        textQuad.Uvs.Add(new Vector2(1, 0));
-        
-        textQuad.TextSize.Add((MaxCharCount, offset));
-        textQuad.TextSize.Add((MaxCharCount, offset));
-        textQuad.TextSize.Add((MaxCharCount, offset));
-        textQuad.TextSize.Add((MaxCharCount, offset));
-
-        textMesh?.AddTextElement(this, ref ElementIndex);
+        textMesh?.AddTextElement(this, ref ElementIndex, offset);
 
         offset += MaxCharCount;
     }

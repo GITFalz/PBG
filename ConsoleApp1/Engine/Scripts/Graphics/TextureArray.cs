@@ -2,13 +2,28 @@
 using OpenTK.Graphics.OpenGL4;
 using StbImageSharp;
 
-public class TextureArray
+public class TextureArray : BufferBase
 {
-    public static List<TextureArray> TextureArrays = new List<TextureArray>();
-
     public int ID;
 
-    public TextureArray(string atlasPath, int cellWidth, int cellHeight)
+    private static int _bufferCount = 0;
+
+    public TextureArray(string atlasPath, int cellWidth, int cellHeight) : base()
+    {
+        Create(atlasPath, cellWidth, cellHeight);
+        _bufferCount++;
+    }
+
+    public void Renew(string atlasPath, int cellWidth, int cellHeight) => Create(atlasPath, cellWidth, cellHeight);
+
+    public void Bind()
+    {
+        GL.ActiveTexture(TextureUnit.Texture0);
+        GL.BindTexture(TextureTarget.Texture2DArray, ID);
+    }
+    public void Unbind() => GL.BindTexture(TextureTarget.Texture2DArray, 0); 
+
+    private void Create(string atlasPath, int cellWidth, int cellHeight)
     {
         List<byte[]> textureData = TextureData.SplitTextureAtlas(Path.Combine(Game.texturePath, atlasPath), cellWidth, cellHeight);
         
@@ -31,21 +46,21 @@ public class TextureArray
         }
         
         Unbind();
-        TextureArrays.Add(this);
     }
 
-    public void Bind()
+    public override void DeleteBuffer()
     {
-        GL.ActiveTexture(TextureUnit.Texture0);
-        GL.BindTexture(TextureTarget.Texture2DArray, ID);
+        GL.DeleteTexture(ID);
+        _bufferCount--;
     }
-    public void Unbind() { GL.BindTexture(TextureTarget.Texture2DArray, 0); }
-    public static void Delete() 
+
+    public override int GetBufferCount()
     {
-        foreach (var textureArray in TextureArrays)
-        {
-            GL.DeleteTexture(textureArray.ID);
-        }
-        TextureArrays.Clear();
+        return _bufferCount;
+    }
+
+    public override string GetTypeName()
+    {
+        return "TextureArray";
     }
 }

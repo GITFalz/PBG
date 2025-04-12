@@ -34,7 +34,7 @@ public static class Timer
 
     public static void Resize()
     {
-        _uiTimes.OnResize();
+        _uiTimes.Resize();
     }
 
     public static void Update()

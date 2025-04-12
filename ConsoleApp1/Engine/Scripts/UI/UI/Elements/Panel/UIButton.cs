@@ -7,7 +7,7 @@ public class UIButton : UIPanel
     public UIButton(string name, AnchorType anchorType, PositionType positionType, Vector3 color, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, Vector2 slice, UIMesh? uIMesh, UIState state) : base(name, anchorType, positionType, color, pivot, scale, offset, rotation, textureIndex, slice, uIMesh)
     {
         State = state;
-        test = true;
+        CanTest = true;
     }
 
     public override void SetUIMesh(UIMesh uIMesh)

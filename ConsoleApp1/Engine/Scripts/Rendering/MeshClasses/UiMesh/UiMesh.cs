@@ -3,62 +3,76 @@ using OpenTK.Mathematics;
 
 public class UIMesh
 {
-    public List<Vector3> Vertices = [];
-    public List<Vector2> Uvs = [];
-    public List<uint> Indices = [];
-    public List<int> TextureIndices = [];
-    public List<Vector2> UiSizes = [];
-    public List<int> TransformationIndex = [];
-    public List<Vector2> Slices = [];
-    public List<Vector3> Colors = [];
-    public List<Matrix4> TransformationMatrices = [];  
+    public List<Matrix4> TransformationMatrices = []; 
+
+    // New SSBO variables
+    private List<Vector4> _ssboFloatData = new List<Vector4>(); // 2 vector4 per vertex, 2 floats for size, 2 floats for slice and 3 floats for color, leaves float unused
+    private List<Vector4i> _ssboIntData = new List<Vector4i>();
+
+    
     private VAO _vao = new VAO();
-    private IBO _ibo = new IBO([]);
-    private VBO<Vector3> _vertVbo = new(new List<Vector3>());
-    private VBO<Vector2> _uvVbo = new(new List<Vector2>());
-    private VBO<int> _textureVbo = new(new List<int>());
-    public VBO<Vector2> _uiSizeVbo = new(new List<Vector2>());
-    private VBO<int> _transformationVbo = new(new List<int>());
-    private VBO<Vector2> _sliceVbo = new(new List<Vector2>());
-    private VBO<Vector3> _colorVbo = new(new List<Vector3>());
-    private SSBO<Matrix4> _transformationSsbo = new(new List<Matrix4>{});
+    private SSBO<Matrix4> _transformationSsbo = new(new List<Matrix4>());
+    private SSBO<Vector4> _floatDataSsbo = new(new List<Vector4>());
+    private SSBO<Vector4i> _intDataSsbo = new(new List<Vector4i>());
     public int ElementCount = 0;
+    public int VisibleElementCount = 0;
+
+    public List<UIPanel> Elements = new List<UIPanel>();
+
+    public void SetVisibility(bool visible, int index)
+    {
+        if (index >= _ssboIntData.Count)
+            return;
+
+        VisibleElementCount += visible ? 1 : -1;
+        UpdateData();
+    }
 
     public void AddElement(UIPanel element, ref int uiIndex)
     {
         uiIndex = ElementCount;
-        var panel = element.panel;
 
-        Vertices.AddRange(panel.Vertices);
-        Uvs.AddRange(panel.Uvs);
-        TextureIndices.AddRange(panel.TextUvs);
-        UiSizes.AddRange(panel.UiSizes);
-
-        TransformationIndex.AddRange([ElementCount, ElementCount, ElementCount, ElementCount]);
-        Slices.AddRange([element.Slice, element.Slice, element.Slice, element.Slice]);
-        Colors.AddRange([element.Color, element.Color, element.Color, element.Color]);
+        Vector4 sizeSlice = (element.newScale.X, element.newScale.Y, element.Slice.X, element.Slice.Y);
+        Vector4 color = (element.Color.X, element.Color.Y, element.Color.Z, 1f);
+        _ssboFloatData.AddRange(sizeSlice, color);
+        _ssboIntData.Add((element.TextureIndex, ElementCount, 0, 0));
         TransformationMatrices.Add(element.Transformation);
 
         ElementCount++;
+        VisibleElementCount++;
     }
 
     public void RemoveElement(UIPanel element)
     {
         var index = element.ElementIndex;
-        int start = index * 4;
 
-        Vertices.RemoveRange(start, 4);
-        Uvs.RemoveRange(start, 4);
-        TextureIndices.RemoveRange(start, 4);
-        UiSizes.RemoveRange(start, 4);
-
-        TransformationIndex.RemoveRange(index, 4);
-        Slices.RemoveRange(index, 4);
-        Colors.RemoveRange(index, 4);
+        _ssboFloatData.RemoveRange(index*2, 2);
+        _ssboIntData.RemoveAt(index);
         TransformationMatrices.RemoveAt(index);
 
         ElementCount--;
+        VisibleElementCount--;
     }
+
+    public void UpdateData()
+    {
+        int offsetIndex = 0;
+
+        // Assuming the Data list is the same size as _visibility
+        for (int i = 0; i < Elements.Count; i++)
+        {
+            if (Elements[i].Visible)
+            {
+                Vector4i data = _ssboIntData[offsetIndex];
+                data.Y = i;
+                _ssboIntData[offsetIndex] = data;
+                offsetIndex++;
+            }
+        }
+
+        // Update the Data list
+        _intDataSsbo.Update(_ssboIntData, 2);
+    }   
 
     public void UpdateElementTransformation(UIElement element)
     {
@@ -67,98 +81,54 @@ public class UIMesh
 
     public void UpdateElementScale(UIPanel element)
     {
-        Panel panel = UIPanel.GetUIQuad(element);
-        int index = element.ElementIndex * 4;
-
-        for (int i = 0; i < 4; i++)
-        {
-            UiSizes[index + i] = (element.newScale.X, element.newScale.Y);
-            Vertices[index + i] = panel.Vertices[i];
-        }
+        Vector4 sizeSlice = (element.newScale.X, element.newScale.Y, element.Slice.X, element.Slice.Y);
+        _ssboFloatData[element.ElementIndex * 2] = sizeSlice;
+        _floatDataSsbo.Update(_ssboFloatData, 1);
     }
 
     public void UpdateElementTexture(UIPanel element)
     {
-        int index = element.ElementIndex * 4;
-        for (int i = 0; i < 4; i++)
-        {
-            TextureIndices[index + i] = element.TextureIndex;
-        }
+        Vector4i data = _ssboIntData[element.ElementIndex];
+        data.X = element.TextureIndex;
+        _ssboIntData[element.ElementIndex] = data;
+        _intDataSsbo.Update(_ssboIntData, 2);
     }
 
     public void GenerateBuffers()
     {
-        GenerateIndices();
-
-        _vertVbo = new(Vertices);
-        _uvVbo = new(Uvs);
-        _textureVbo = new(TextureIndices);
-        _uiSizeVbo = new(UiSizes);
-        _transformationVbo = new(TransformationIndex);
-        _sliceVbo = new(Slices);
-        _colorVbo = new(Colors);
         _transformationSsbo = new(TransformationMatrices);
-        
-        _vao.LinkToVAO(0, 3, _vertVbo);
-        _vao.LinkToVAO(1, 2, _uvVbo);
-        _vao.LinkToVAO(2, 1, _textureVbo);
-        _vao.LinkToVAO(3, 2, _uiSizeVbo);
-        _vao.LinkToVAO(4, 1, _transformationVbo);
-        _vao.LinkToVAO(5, 2, _sliceVbo);
-        _vao.LinkToVAO(6, 3, _colorVbo);
-        
-        _ibo = new IBO(Indices);
+        _floatDataSsbo = new(_ssboFloatData);
+        _intDataSsbo = new(_ssboIntData);
     }
 
     public void Render()
     {
         _vao.Bind();
-        _ibo.Bind();
         _transformationSsbo.Bind(0);
+        _floatDataSsbo.Bind(1);
+        _intDataSsbo.Bind(2);
 
-        GL.DrawElements(PrimitiveType.Triangles, Indices.Count, DrawElementsType.UnsignedInt, 0);
+        GL.DrawArrays(PrimitiveType.Triangles, 0, VisibleElementCount * 6);
 
-        _vao.Unbind();
-        _ibo.Unbind();
         _transformationSsbo.Unbind();
+        _floatDataSsbo.Unbind();
+        _intDataSsbo.Unbind();
+        _vao.Unbind();
     }
 
     public void UpdateMatrices()
     {
         _transformationSsbo.Update(TransformationMatrices, 0);
-    }
-
-    public void UpdateVertices()
-    {
-        _vertVbo.Update(Vertices);
-        _uiSizeVbo.Update(UiSizes);
-    }
-
-    public void UpdateTexture()
-    {
-        _textureVbo.Update(TextureIndices);
+        _floatDataSsbo.Update(_ssboFloatData, 1);
+        _intDataSsbo.Update(_ssboIntData, 2);
     }
 
     public void Clear()
     {
-        Vertices.Clear();
-        Uvs.Clear();
-        Indices.Clear();
-        TextureIndices.Clear();
-        UiSizes.Clear();
-        TransformationIndex.Clear();
         TransformationMatrices.Clear();
+        _ssboFloatData.Clear();
+        _ssboIntData.Clear();
         ElementCount = 0;
-    }
-
-    public void GenerateIndices()
-    {
-        Indices.Clear();
-
-        for (uint i = 0; i < ElementCount; i++)
-        {
-            uint index = i * 4;
-            Indices.AddRange([index, index + 1, index + 2, index + 2, index + 3, index]);
-        }
+        VisibleElementCount = 0;
     }
 }

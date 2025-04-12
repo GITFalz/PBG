@@ -16,7 +16,7 @@ public class UIScrollView : UICollection
         SubElements.SetScale(scale);
 
         MaskPanel = new UIImage($"{name}MaskPanel", anchorType, PositionType.Relative, (1, 1, 1), (0, 0, 0), scale, (0, 0, 0, 0), 0, -1, (0, 0), maskMesh);
-        MaskPanel.test = true;
+        MaskPanel.CanTest = true;
         MaskPanel.OnHover = new SerializableEvent(() => 
         {
             float scrollDelta = Input.GetMouseScrollDelta().Y;
@@ -34,6 +34,16 @@ public class UIScrollView : UICollection
 
         MaskPanel.ParentElement = this;
         SubElements.ParentElement = this;
+    }
+
+    public override void SetVisibility(bool visible)
+    {
+        if (Visible == visible)
+            return;
+
+        base.SetVisibility(visible);
+        MaskPanel.SetVisibility(visible);
+        SubElements.SetVisibility(visible);
     }
 
     public UIScrollView SetScrollSpeed(float speed)

@@ -11,7 +11,7 @@ public class PlayerJumpingState : PlayerGameBaseState
         Console.WriteLine("Entering jumping state");
         
         playerGameState.PlayerStateMachine.physicsBody.Drag = 2;
-        Camera = Game.camera;
+        Camera = Game.Camera;
         
         playerGameState.PlayerStateMachine.physicsBody.AddForce(new Vector3(0, PlayerStateMachine.JUMP_SPEED, 0));
         

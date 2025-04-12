@@ -15,7 +15,7 @@ public class PlayerWalkingState : PlayerGameBaseState
         playerGameState.MovementSpeed = PlayerMovementSpeed.Walk;
         
         OldAnimationManager.Instance.LoopAnimation("Player", "walking");
-        Game.camera.SetFOV(45);
+        Game.Camera.SetFOV(45);
     }
 
     public override void Update(PlayerGameState playerGameState)

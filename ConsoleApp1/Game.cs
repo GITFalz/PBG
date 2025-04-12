@@ -31,8 +31,8 @@ public class Game : GameWindow
 
 
     public static Vector3 BackgroundColor = new Vector3(0.4f, 0.6f, 0.98f);
-    public static Camera camera { get; private set; }
-    public static Action UpdateCamera = () => { camera?.Update(); };
+    public static Camera Camera { get; private set; }
+    public static Action UpdateCamera = () => { Camera?.Update(); };
     
     public ConcurrentDictionary<string, Scene> Scenes = new ConcurrentDictionary<string, Scene>();
 
@@ -74,7 +74,7 @@ public class Game : GameWindow
 
         CenterWindow(new Vector2i(width, height));
 
-        camera = new Camera(width, height, new Vector3(0, 0, 0));
+        Camera = new Camera(width, height, new Vector3(0, 0, 0));
 
         _ = new Info();
         
@@ -122,8 +122,8 @@ public class Game : GameWindow
 
     private void OnResize()
     {
-        camera.SCREEN_WIDTH = Width;
-        camera.SCREEN_HEIGHT = Height;
+        Camera.SCREEN_WIDTH = Width;
+        Camera.SCREEN_HEIGHT = Height;
 
         _popUp.Resize();
         Info.Resize();
@@ -225,9 +225,9 @@ public class Game : GameWindow
                 SetCursorState(CursorState.Grabbed);
                 UpdateCamera = () =>
                 {
-                    camera.SetMoveFirst();
-                    camera.Update();
-                    UpdateCamera = () => { camera.Update(); };
+                    Camera.SetMoveFirst();
+                    Camera.Update();
+                    UpdateCamera = () => { Camera.Update(); };
                 };
             }
             else
@@ -239,7 +239,7 @@ public class Game : GameWindow
         }
         else if (e.Key == Keys.P)
         {
-            camera.SetCameraMode(camera.GetCameraMode() == CameraMode.Follow ? CameraMode.Free : CameraMode.Follow);
+            Camera.SetCameraMode(Camera.GetCameraMode() == CameraMode.Follow ? CameraMode.Free : CameraMode.Follow);
         }
         else if (e.Key == Keys.L)
         {
@@ -275,17 +275,8 @@ public class Game : GameWindow
     
     protected override void OnUnload()
     {
-        ComputeShader.Delete();
-        FBO.DeleteAll();
-        IBO.Delete();
+        BufferBase.Delete();
         IDBOBase.Delete();
-        ShaderProgram.Delete();
-        SSBOBase.Delete();
-        TBOBase.Delete();
-        Texture.Delete();
-        TextureArray.Delete();
-        VAO.Delete();
-        VBOBase.Delete(); 
 
         GC.Collect();
         GC.WaitForPendingFinalizers();

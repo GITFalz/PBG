@@ -5,18 +5,15 @@ using Veldrid;
 
 public class WorldManager : ScriptingNode
 {
-    public static ShaderProgram _shaderProgram = new ShaderProgram("World/World.vert", "World/World.frag");
     public static ShaderProgram _wireframeShader = new ShaderProgram("World/Wireframe.vert", "World/Wireframe.frag");
-    public static TextureArray _textures = new TextureArray("Test_TextureAtlas.png", 32, 32);  
 
     private static RenderType _renderType = RenderType.Solid;
     private Action _render = () => { };
 
     private int _oldRenderedChunks = 0;
 
-    public Chunk chunkData = new Chunk(RenderType.Solid, new Vector3i(0, 0, 0));
     public ShaderProgram DepthPrePassShader = new ShaderProgram("World/Pulling.vert");
-    public ShaderProgram pullingShader = new ShaderProgram("World/Pulling.vert", "World/Pulling.frag");
+    public WorldShader WorldShader = new WorldShader();
 
     public FBO DepthPrepassFBO;
     public Matrix4 viewMatrix;
@@ -25,10 +22,8 @@ public class WorldManager : ScriptingNode
     private Vector3i _currentPlayerChunk = Vector3i.Zero;
     private Vector3i _lastPlayerPosition = (int.MaxValue, int.MaxValue, int.MaxValue);
 
-    private bool _ambientOcclusion = false;
-    private bool _realtimeShadow = false;
-    private double timeTest = 0;
-
+    public static bool DoAmbientOcclusion = false;
+    public static bool DoRealtimeShadows = false;
 
     public Matrix4 GetViewMatrix()
     {
@@ -41,8 +36,8 @@ public class WorldManager : ScriptingNode
     {
         float zoom = 10;
         Matrix4.CreateOrthographic(
-            Game.camera.SCREEN_WIDTH / zoom,
-            Game.camera.SCREEN_HEIGHT / zoom, 
+            Game.Camera.SCREEN_WIDTH / zoom,
+            Game.Camera.SCREEN_HEIGHT / zoom, 
             -200f, 
             200f,
             out projectionMatrix
@@ -105,14 +100,17 @@ public class WorldManager : ScriptingNode
     public override void Update()
     {
         if (Input.IsKeyPressed(Keys.U))
-            ThreadBlocker.Unblock();
+            ChunkManager.Clear();
 
         if (Input.IsKeyAndControlPressed(Keys.R))
             ChunkManager.ReloadChunks();
+
+        if (Input.IsKeyAndControlPressed(Keys.B))
+            BufferBase.PrintBufferCount();
         
         if (Input.IsKeyAndControlPressed(Keys.I))
         {
-            Vector3i chunkPosition = VoxelData.BlockToChunkPosition(Game.camera.GetCameraMode() == CameraMode.Follow ? PlayerData.Position : Game.camera.Position);
+            Vector3i chunkPosition = VoxelData.BlockToChunkPosition(Game.Camera.GetCameraMode() == CameraMode.Follow ? PlayerData.Position : Game.Camera.Position);
 
             if (ChunkManager.ActiveChunks.TryGetValue(chunkPosition, out var chunk1))
             {
@@ -164,7 +162,7 @@ public class WorldManager : ScriptingNode
 
     public void RenderSolid()
     {    
-        Camera camera = Game.camera;
+        Camera camera = Game.Camera;
         
         int renderCount = 0;
         Info.VertexCount = 0;
@@ -172,16 +170,18 @@ public class WorldManager : ScriptingNode
         Matrix4 lightView = Matrix4.Identity;
         Matrix4 lightProjection = Matrix4.Identity;
 
-        if (_realtimeShadow)
+        GL.Disable(EnableCap.StencilTest);
+        GL.Enable(EnableCap.DepthTest);
+        GL.DepthFunc(DepthFunction.Less);
+        GL.Enable(EnableCap.CullFace);
+
+        if (DoRealtimeShadows)
         {
             lightView = GetViewMatrix();
             lightProjection = GetProjectionMatrix();
 
             // Render depthPrepass
             GL.ColorMask(false, false, false, false);
-            GL.Enable(EnableCap.DepthTest);
-            GL.DepthFunc(DepthFunction.Less);
-            GL.Enable(EnableCap.CullFace);
 
             DepthPrepassFBO.Bind();
 
@@ -218,36 +218,12 @@ public class WorldManager : ScriptingNode
             GL.ColorMask(true, true, true, true);
         }
 
-        GL.Enable(EnableCap.DepthTest);
-        GL.Enable(EnableCap.CullFace);
+        Matrix4 model = Matrix4.Identity; 
+        WorldShader.Bind();
 
-        pullingShader.Bind();
+        WorldShader.UniformGeneral();
 
-        Matrix4 model = Matrix4.Identity;
-        Matrix4 view = camera.viewMatrix;
-        Matrix4 projection = camera.projectionMatrix;
-
-        int modelLocationA = GL.GetUniformLocation(pullingShader.ID, "model");
-        int viewLocationA = GL.GetUniformLocation(pullingShader.ID, "view");
-        int projectionLocationA = GL.GetUniformLocation(pullingShader.ID, "projection");
-        //int camPosLocationA = GL.GetUniformLocation(pullingShader.ID, "camPos");
-        int doAmbientOcclusionLocationA = GL.GetUniformLocation(pullingShader.ID, "doAmbientOcclusion");
-        int doShadowLocationA = GL.GetUniformLocation(pullingShader.ID, "doShadow");
-        int lighViewLocationA = GL.GetUniformLocation(pullingShader.ID, "lightView");
-        int lightProjectionLocationA = GL.GetUniformLocation(pullingShader.ID, "lightProjection");
-        
-        GL.UniformMatrix4(viewLocationA, true, ref view);
-        GL.UniformMatrix4(projectionLocationA, true, ref projection);
-        //GL.Uniform3(camPosLocationA, camera.Position); 
-        GL.Uniform1(doAmbientOcclusionLocationA, _ambientOcclusion ? 1 : 0);
-        GL.Uniform1(doShadowLocationA, _realtimeShadow ? 1 : 0);
-        GL.UniformMatrix4(lighViewLocationA, true, ref lightView);
-        GL.UniformMatrix4(lightProjectionLocationA, true, ref lightProjection);
-        GL.Uniform1(GL.GetUniformLocation(pullingShader.ID, "textureArray"), 0);
-        GL.Uniform1(GL.GetUniformLocation(pullingShader.ID, "shadowMap"), 1); 
-
-        _textures.Bind();
-        DepthPrepassFBO.BindDepthTexture(TextureUnit.Texture1);
+        //DepthPrepassFBO.BindDepthTexture(TextureUnit.Texture1);
 
         foreach (var (_, chunk) in ChunkManager.ActiveChunks)
         {   
@@ -257,23 +233,20 @@ public class WorldManager : ScriptingNode
             renderCount++;
             Info.VertexCount += chunk.VertexCount;
             model = Matrix4.CreateTranslation(chunk.GetWorldPosition());
-            GL.UniformMatrix4(modelLocationA, true, ref model);
+            WorldShader.UniformModel(ref model);
             chunk.Render.Invoke();
         }
 
         Shader.Error("After Render End0");
 
         model = Matrix4.Identity;
-        GL.UniformMatrix4(modelLocationA, true, ref model);
-        //LodBase.Render();
+        WorldShader.UniformModel(ref model);
 
         Shader.Error("After Render End1");
         
-        pullingShader.Unbind();
-        _textures.Unbind();
-        DepthPrepassFBO.UnbindTexture(TextureUnit.Texture1);
+        WorldShader.Unbind();
 
-        ChunkManager.RenderChunks();
+        //DepthPrepassFBO.UnbindTexture(TextureUnit.Texture1);
 
         Shader.Error("After Render End2");
 
@@ -288,7 +261,7 @@ public class WorldManager : ScriptingNode
 
     public void CheckFrustum()
     {
-        Camera camera = Game.camera;
+        Camera camera = Game.Camera;
 
 
         camera.CalculateFrustumPlanes();
@@ -301,7 +274,7 @@ public class WorldManager : ScriptingNode
 
     public void RenderWireframe()
     {
-        Camera camera = Game.camera;
+        Camera camera = Game.Camera;
         
         int renderCount = 0;
         Info.VertexCount = 0;
@@ -313,8 +286,8 @@ public class WorldManager : ScriptingNode
 
         DepthPrePassShader.Bind();
 
-        Matrix4 view = camera.viewMatrix;
-        Matrix4 projection = camera.projectionMatrix;
+        Matrix4 view = camera.ViewMatrix;
+        Matrix4 projection = camera.ProjectionMatrix;
 
         int modelLocation = GL.GetUniformLocation(DepthPrePassShader.ID, "model");
         int viewLocation = GL.GetUniformLocation(DepthPrePassShader.ID, "view");
@@ -340,8 +313,8 @@ public class WorldManager : ScriptingNode
         
         _wireframeShader.Bind();
         
-        view = camera.viewMatrix;
-        projection = camera.projectionMatrix;
+        view = camera.ViewMatrix;
+        projection = camera.ProjectionMatrix;
 
         modelLocation = GL.GetUniformLocation(_wireframeShader.ID, "model");
         viewLocation = GL.GetUniformLocation(_wireframeShader.ID, "view");
@@ -439,6 +412,7 @@ public class WorldManager : ScriptingNode
 
         Console.WriteLine($"Render Distance: {_currentPlayerChunk}");
 
+        // Chunks in world position
         var chunks = SetChunks();
         int render = World.renderDistance;
         
@@ -459,16 +433,12 @@ public class WorldManager : ScriptingNode
 
         foreach (var chunk in chunksToRemove)
         {
-            if (ChunkManager.RemoveChunk(chunk, out var oldChunk))
-            {
-                oldChunk.Delete();
-            }
+            ChunkManager.RemoveChunk(chunk, out var oldChunk);
         }
 
         foreach (var chunk in chunksToAdd)
         {
-            Chunk newChunk = new Chunk(_renderType, VoxelData.ChunkToRelativePosition(chunk));
-            if (ChunkManager.TryAddActiveChunk(newChunk))
+            if (ChunkManager.TryAddActiveChunk(chunk, out var newChunk))
             {
                 newChunk.Stage = ChunkStage.Instance;
                 ChunkManager.GenerateChunkQueue.Enqueue(newChunk);

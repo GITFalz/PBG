@@ -15,7 +15,7 @@ public class PlayerSprintingState : PlayerGameBaseState
         playerGameState.NextMovingState = playerGameState.SprintingState;
         playerGameState.MovementSpeed = PlayerMovementSpeed.Run;
         
-        Camera = Game.camera;
+        Camera = Game.Camera;
         Camera.SetFOV(55);
     }
 

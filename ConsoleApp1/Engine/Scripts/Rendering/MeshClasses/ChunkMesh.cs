@@ -47,17 +47,17 @@ public class ChunkMesh
 
     public void GenerateBuffers()
     {
-        _vertVbo = new(Vertices);
-        _uvVbo = new(Uvs);
-        _textureVbo = new(TextureIndices);
-        _normalVbo = new(Normals);
+        _vertVbo.Renew(Vertices);
+        _uvVbo.Renew(Uvs);
+        _textureVbo.Renew(TextureIndices);
+        _normalVbo.Renew(Normals);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
         _vao.LinkToVAO(1, 2, _uvVbo);
         _vao.LinkToVAO(2, 1, _textureVbo);
         _vao.LinkToVAO(3, 3, _normalVbo);
         
-        _ibo = new IBO(Indices);
+        _ibo.Renew(Indices);
     }
 
     public void RenderMesh()
