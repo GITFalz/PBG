@@ -1,19 +1,87 @@
 using OpenTK.Mathematics;
 
-public class BlockStorage
+public abstract class BlockStorage
 {
-    public static BlockStorage Empty = new();
+    public abstract Block this[int index] { get; set; }
+
+    public abstract void SetBlock(Vector3i position, Block block);
+    public abstract void SetBlock(int x, int y, int z, Block block);
+
+    public abstract Block GetBlock(Vector3i position);
+    public abstract Block GetBlock(int x, int y, int z);
+
+    public abstract void Clear();
+}
+
+public class FullBlockStorage : BlockStorage
+{
+    public static FullBlockStorage Empty = new();
+
+    public Block[]? Blocks = null;
+
+    public override Block this[int index]
+    {
+        get
+        {
+            return Blocks == null ? Block.Air : Blocks[index];
+        }
+        set
+        {
+            if (Blocks == null)
+            {   
+                if (value.IsAir())
+                    return;
+                    
+                Blocks = new Block[32768];
+                Array.Fill(Blocks, Block.Air);
+            }   
+
+            Blocks[index] = value;
+        }
+    }
+
+    public override void SetBlock(Vector3i position, Block block)
+    {
+        SetBlock(position.X, position.Y, position.Z, block);
+    }
+
+    public override void SetBlock(int x, int y, int z, Block block)
+    {
+        int index = (x & 31) + (z & 31) * 32 + (y & 31) * 1024;
+        this[index] = block;
+    }
+
+    public override Block GetBlock(Vector3i position)
+    {
+        return GetBlock(position.X, position.Y, position.Z);
+    }
+
+    public override Block GetBlock(int x, int y, int z)
+    {
+        int index = (x & 31) + (z & 31) * 32 + (y & 31) * 1024;
+        return this[index];
+    }
+
+    public override void Clear()
+    {
+        Blocks = null;
+    }
+}
+
+public class CornerBlockStorage : BlockStorage
+{
+    public static CornerBlockStorage Empty = new();
 
     public Block[]?[] Blocks;
     public Vector3i[] SubPositions;
 
-    public BlockStorage() 
+    public CornerBlockStorage() 
     { 
         Blocks = []; 
         SubPositions = []; 
     }
 
-    public BlockStorage(Vector3i position)
+    public CornerBlockStorage(Vector3i position)
     {
         Blocks = [ null, null, null, null, null, null, null, null ];
         SubPositions =
@@ -44,12 +112,12 @@ public class BlockStorage
         ];
     }
 
-    public void SetBlock(Vector3i position, Block block)
+    public override void SetBlock(Vector3i position, Block block)
     {
         SetBlock(position.X, position.Y, position.Z, block);
     }
     
-    public void SetBlock(int x, int y, int z, Block block)
+    public override void SetBlock(int x, int y, int z, Block block)
     {
         int blockIndex = (x & 15) + (z & 15) * 16 + (y & 15) * 256;
         int arrayIndex = (x >> 4) + (z >> 4) * 2 + (y >> 4) * 4;
@@ -84,7 +152,7 @@ public class BlockStorage
         return blocks[blockIndex];
     }
 
-    public Block GetBlock(int x, int y, int z)
+    public override Block GetBlock(int x, int y, int z)
     {
         return GetBlock(x, y, z, out _, out _);
     }
@@ -94,7 +162,7 @@ public class BlockStorage
         return GetBlock(position.X, position.Y, position.Z, out blockIndex, out arrayIndex);
     }
     
-    public Block GetBlock(Vector3i position)
+    public override Block GetBlock(Vector3i position)
     {
         return GetBlock(position.X, position.Y, position.Z);
     }
@@ -119,7 +187,7 @@ public class BlockStorage
         return blocks;
     }
 
-    public Block this[int index]
+    public override Block this[int index]
     {
         get
         {
@@ -152,7 +220,7 @@ public class BlockStorage
         }
     }
     
-    public void Clear()
+    public override void Clear()
     {
         Blocks = [ null, null, null, null, null, null, null, null ];
     }

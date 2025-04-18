@@ -6,9 +6,12 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
 public class WorldShader
-{
+{   
+    public static int Collums = 2;
+    public static int Rows = 2;
+
     public static ShaderProgram PullingShader = new ShaderProgram("World/Pulling.vert", "World/Pulling.frag");
-    public static TextureArray Textures = new TextureArray("Test_TextureAtlas.png", 32, 32);  
+    public static TextureArray Textures = new TextureArray("Test_TextureAtlas.png", Collums, Rows, TextureArrayLoadType.AtlasSizeFlipped);  
 
     private int _modelLocation = -1;
     private int _viewLocation = -1;

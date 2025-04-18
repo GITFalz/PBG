@@ -21,12 +21,20 @@ public static class Shader
         return shaderSource;
     }
 
-    public static void Error(string message = "Error: ")
+    public static bool Error(string message = "Error: ")
     {
         ErrorCode error = GL.GetError();
         if (error != ErrorCode.NoError)
         {
             Console.WriteLine(message + error);
+            return true;
         }
+        return false;
+    }
+
+    public static void ErrorAndClose(string message = "Error: ")
+    {
+        if (Error(message))
+            Game.CloseGame();
     }
 }

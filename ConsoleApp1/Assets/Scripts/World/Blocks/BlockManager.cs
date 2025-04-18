@@ -34,12 +34,12 @@ public static class BlockManager
         return Blocks.TryAdd(index, new CWorldBlock(index));
     }
 
-    public static bool SetUv(int index, int uv, int value)
+    public static bool SetIndices(int index, int uv, int value)
     {
         if (uv >= 6 || !Blocks.TryGetValue(index, out var block))
             return false;
         
-        block.SetUv(uv, value);
+        block.SetIndices(uv, value);
         return true;
     }
 
@@ -101,12 +101,12 @@ public class CWorldBlock
         BlockChecker = blockChecker;
     }
 
-    public void SetUv(int index, int value)
+    public void SetIndices(int index, int value)
     {
         blockUVs.textureIndices[index] = value;
     }
 
-    public int[] GetUVs()
+    public int[] GetIndices()
     {
         return blockUVs.textureIndices;
     }

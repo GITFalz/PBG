@@ -1,27 +1,41 @@
-﻿using OpenTK.Mathematics;
+﻿using System.Runtime.InteropServices;
+using OpenTK.Mathematics;
 using StbImageSharp;
 
 namespace ConsoleApp1.Engine.Scripts.Core.Data;
 
 public static class TextureData
 {
-    public static List<byte[]> SplitTextureAtlas(string path, int width, int height)
+    public static List<byte[]> SplitTextureAtlasCellSize(string path, int width, int height, bool flipped = false)
     {
         ImageResult atlas = ImageResult.FromStream(File.OpenRead(path), ColorComponents.RedGreenBlueAlpha);
         
-        int atlasWidth = atlas.Width;
-        int atlasHeight = atlas.Height;
+        int cols = atlas.Width / width;
+        int rows = atlas.Height / height;
         
-        int cols = atlasWidth / width;
-        int rows = atlasHeight / height;
+        return SplitTextureAtlas(cols, rows, width, height, atlas, flipped);
+    }
+
+    public static List<byte[]> SplitTextureAtlasAtlasSize(string path, int cols, int rows, out int newWidth, out int newHeight, bool flipped = false)
+    {
+        ImageResult atlas = ImageResult.FromStream(File.OpenRead(path), ColorComponents.RedGreenBlueAlpha);
         
+        newWidth = atlas.Width / cols;
+        newHeight = atlas.Height / rows;
+        
+        return SplitTextureAtlas(cols, rows, newWidth, newHeight, atlas, flipped);
+    }
+
+    public static List<byte[]> SplitTextureAtlas(int cols, int rows, int width, int height, ImageResult atlas, bool flipped = false)
+    {
         List<byte[]> textures = [];
 
         for (int row = 0; row < rows; row++)
         {
             for (int col = 0; col < cols; col++)
             {
-                byte[] subImage = ExtractSubImage(atlas, col * width, (rows - row - 1) * height, width, height);
+                int effectiveRow = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? (flipped ? row : (rows - row - 1)) : (flipped ? (rows - row - 1) : row);
+                byte[] subImage = ExtractSubImage(atlas, col * width, effectiveRow * height, width, height);
                 textures.Add(subImage);
             }
         }

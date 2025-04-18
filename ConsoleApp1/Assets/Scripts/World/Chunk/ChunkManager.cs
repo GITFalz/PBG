@@ -111,6 +111,12 @@ public static class ChunkManager
             }
         }
     }
+
+    public static void Unload()
+    {
+        ChunkPool.Clear();
+        Clear();
+    }
     
     public static void Clear()
     {

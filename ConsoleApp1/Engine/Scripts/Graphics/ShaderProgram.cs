@@ -6,22 +6,32 @@ public class ShaderProgram : BufferBase
 
     private static int _bufferCount = 0;
 
+    private Action _recompileAction = () => { };
+
     public ShaderProgram(string vertexShaderFilePath) : base()
     {
         CreateShader(vertexShaderFilePath);
         _bufferCount++;
+        _recompileAction = () => Renew(vertexShaderFilePath);
     }
     
     public ShaderProgram(string vertexShaderFilePath, string fragmentShaderFilePath) : base()
     {
         CreateShader(vertexShaderFilePath, fragmentShaderFilePath);
         _bufferCount++;
+        _recompileAction = () => Renew(vertexShaderFilePath, fragmentShaderFilePath);
     }
 
     public ShaderProgram(string vertexShaderFilePath, string geometryShaderFilePath, string fragmentShaderFilePath) : base()
     {
         CreateShader(vertexShaderFilePath, geometryShaderFilePath, fragmentShaderFilePath);
         _bufferCount++;
+        _recompileAction = () => Renew(vertexShaderFilePath, geometryShaderFilePath, fragmentShaderFilePath);
+    }
+
+    public void Recompile()
+    {
+        _recompileAction.Invoke();
     }
 
     public void Renew(string vertexShaderFilePath) => CreateShader(vertexShaderFilePath);
@@ -108,6 +118,11 @@ public class ShaderProgram : BufferBase
     public override string GetTypeName()
     {
         return "ShaderProgram";
+    }
+
+    public int GetLocation(string name)
+    {
+        return GL.GetUniformLocation(ID, name);
     }
 }
 

@@ -61,32 +61,17 @@ public static class ChunkLoader
         int offset = 8194 + index * 32768 * 4; // Header size + chunk index * block count * 4 bytes
         fileStream.Seek(offset, SeekOrigin.Begin);
 
-        for (int i = 0; i < 8; i++)
+        for (int y = 0; y < 16; y++)
         {
-            Block[] blocks = new Block[4096];
-            int blockCount = 0;
-            for (int j = 0; j < 4096; j++)
+            for (int z = 0; z < 16; z++)
             {
-                int data = reader.ReadInt32();
-                if (data == 0)
+                for (int x = 0; x < 16; x++)
                 {
-                    blocks[j] = new Block(false, 0);
-                    continue;
+                    int data = reader.ReadInt32();
+                    Block block = data == 0 ? new Block(false, 0) : new Block(true, data);
+                    chunkData.blockStorage.SetBlock(x, y, z, block);
                 }
-
-                blocks[j] = new Block(true, data);
-                blockCount++;
             }
-
-            if (blockCount == 0)
-            {
-                chunkData.blockStorage.Blocks[i] = null;
-            }
-            else
-            {
-                chunkData.blockStorage.Blocks[i] = blocks;
-            }
-                
         }
     
         return true;

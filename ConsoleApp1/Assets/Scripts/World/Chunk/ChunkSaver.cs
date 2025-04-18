@@ -55,17 +55,15 @@ public static class ChunkSaver
                 int offset = 8194 + index * 32768 * 4; // Header size + chunk index * block count * 4 bytes
                 fileStream.Seek(offset, SeekOrigin.Begin);
 
-                foreach (var storage in chunk.blockStorage.Blocks)
+                for (int y = 0; y < 16; y++)
                 {
-                    if (storage == null)
+                    for (int z = 0; z < 16; z++)
                     {
-                        for (int i = 0; i < 4096; i++)
-                            writer.Write(0);
-                    }
-                    else
-                    {
-                        foreach (var block in storage)
+                        for (int x = 0; x < 16; x++)
+                        {
+                            Block block = chunk.blockStorage.GetBlock(x, y, z);
                             writer.Write(block.blockData);
+                        }
                     }
                 }
             }

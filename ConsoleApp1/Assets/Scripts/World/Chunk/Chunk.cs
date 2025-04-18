@@ -54,14 +54,14 @@ public class Chunk
 
     public Chunk()
     { 
-        blockStorage = BlockStorage.Empty; 
+        blockStorage = CornerBlockStorage.Empty; 
     }
 
     public Chunk(RenderType renderType, Vector3i position)
     {
         this.position = position;
 
-        blockStorage = new BlockStorage(position * 32);
+        blockStorage = new FullBlockStorage();
         
         System.Numerics.Vector3 min = Mathf.Num(position * 32);
         System.Numerics.Vector3 max = min + new System.Numerics.Vector3(ChunkGenerator.WIDTH, ChunkGenerator.HEIGHT, ChunkGenerator.DEPTH);
@@ -75,7 +75,6 @@ public class Chunk
     public void SetPosition(Vector3i position)
     {
         this.position = position;
-        blockStorage.SetPosition(position * 32);
         boundingBox.Min = Mathf.Num(position * 32);
         boundingBox.Max = boundingBox.Min + new System.Numerics.Vector3(ChunkGenerator.WIDTH, ChunkGenerator.HEIGHT, ChunkGenerator.DEPTH);
     }

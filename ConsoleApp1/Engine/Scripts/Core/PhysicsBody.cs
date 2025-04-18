@@ -30,6 +30,12 @@ public class PhysicsBody : ScriptingNode
         EnableGravity();
     }
 
+    public override void Exit()
+    {
+        Acceleration = Vector3.Zero;
+        Velocity = Vector3.Zero;
+    }
+
     public void DisableGravity()
     {
         Gravity = () => { };
@@ -59,11 +65,17 @@ public class PhysicsBody : ScriptingNode
 
     public override void Update()
     {
+        if (!PlayerData.CanMove)
+            return;
+
         Transform.Position = Vector3.Lerp(Transform.Position, physicsPosition, GameTime.DeltaTime * interpolationSpeed);
     }
     
     public override void FixedUpdate()
     {
+        if (!PlayerData.CanMove)
+            return;
+
         previousPosition = physicsPosition;
 
         Gravity();

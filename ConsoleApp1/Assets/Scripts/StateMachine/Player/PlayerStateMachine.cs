@@ -60,7 +60,6 @@ public class PlayerStateMachine : ScriptingNode
 
     public PlayerStateMachine()
     {
-        // To be changed (make PLAYER state machine static???)
         Instance = this;
     }
     
@@ -101,6 +100,9 @@ public class PlayerStateMachine : ScriptingNode
 
     public override void Awake()
     {
+        Transform.Position = new Vector3(0, 200, 0);
+        physicsBody.SetPosition(Transform.Position);
+
         Camera camera = Game.Camera;
 
         camera.SetCameraMode(CameraMode.Follow);
@@ -118,7 +120,7 @@ public class PlayerStateMachine : ScriptingNode
     {      
         Camera camera = Game.Camera;
 
-        if (camera.GetCameraMode() == CameraMode.Free)
+        if (!PlayerData.CanMove || camera.GetCameraMode() == CameraMode.Free)
             return;
 
         if (Input.IsKeyDown(Keys.J))
@@ -179,7 +181,7 @@ public class PlayerStateMachine : ScriptingNode
     
     public override void FixedUpdate()
     {
-        if (Game.Camera.GetCameraMode() == CameraMode.Free || !Game.MoveTest)
+        if (!PlayerData.CanMove || Game.Camera.GetCameraMode() == CameraMode.Free || !Game.MoveTest)
             return;
         
         _currentState.FixedUpdate(this);

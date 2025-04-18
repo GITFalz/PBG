@@ -1,5 +1,6 @@
 ﻿using ConsoleApp1.Engine.Scripts.Core.Data;
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 using StbImageSharp;
 
 public class TextureArray : BufferBase
@@ -7,9 +8,11 @@ public class TextureArray : BufferBase
     public int ID;
 
     private static int _bufferCount = 0;
+    private TextureArrayLoadType _textureArrayLoadType = TextureArrayLoadType.CellSize;
 
-    public TextureArray(string atlasPath, int cellWidth, int cellHeight) : base()
+    public TextureArray(string atlasPath, int cellWidth, int cellHeight, TextureArrayLoadType textureArrayLoadType = TextureArrayLoadType.CellSize) : base()
     {
+        _textureArrayLoadType = textureArrayLoadType;
         Create(atlasPath, cellWidth, cellHeight);
         _bufferCount++;
     }
@@ -25,7 +28,20 @@ public class TextureArray : BufferBase
 
     private void Create(string atlasPath, int cellWidth, int cellHeight)
     {
-        List<byte[]> textureData = TextureData.SplitTextureAtlas(Path.Combine(Game.texturePath, atlasPath), cellWidth, cellHeight);
+        List<byte[]> textureData;
+
+        if (_textureArrayLoadType == TextureArrayLoadType.CellSize || _textureArrayLoadType == TextureArrayLoadType.CellSizeFlipped)
+        {
+            bool flipped = _textureArrayLoadType == TextureArrayLoadType.CellSizeFlipped;
+            textureData = TextureData.SplitTextureAtlasCellSize(Path.Combine(Game.texturePath, atlasPath), cellWidth, cellHeight, flipped);
+        }      
+        else
+        {
+            bool flipped = _textureArrayLoadType == TextureArrayLoadType.AtlasSizeFlipped;
+            textureData = TextureData.SplitTextureAtlasAtlasSize(Path.Combine(Game.texturePath, atlasPath), cellWidth, cellHeight, out int newWidth, out int newHeight, flipped);
+            cellWidth = newWidth;
+            cellHeight = newHeight;
+        }
         
         int layers = textureData.Count;
         
@@ -63,4 +79,12 @@ public class TextureArray : BufferBase
     {
         return "TextureArray";
     }
+}
+
+public enum TextureArrayLoadType
+{
+    CellSize,
+    CellSizeFlipped,
+    AtlasSize,
+    AtlasSizeFlipped
 }

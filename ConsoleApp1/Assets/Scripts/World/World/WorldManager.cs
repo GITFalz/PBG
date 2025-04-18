@@ -81,10 +81,8 @@ public class WorldManager : ScriptingNode
     public override void Awake()
     {
         Console.WriteLine("World Manager");
-        
+        _lastPlayerPosition = (int.MaxValue, int.MaxValue, int.MaxValue);
         ChunkManager.Clear();
-        
-        SetChunks();
     }
 
     public void SetRenderType(RenderType type)
@@ -404,7 +402,7 @@ public class WorldManager : ScriptingNode
 
     public void CheckRenderDistance()
     {
-        _currentPlayerChunk = VoxelData.BlockToChunkPosition(Mathf.FloorToInt(PlayerData.Position));
+        _currentPlayerChunk = VoxelData.BlockToChunkPosition(Mathf.FloorToInt((0, 0, 0)));
         _currentPlayerChunk.Y = 0;
 
         if (_currentPlayerChunk == _lastPlayerPosition) 
@@ -448,23 +446,31 @@ public class WorldManager : ScriptingNode
         _lastPlayerPosition = _currentPlayerChunk;
     }
 
-    public static int GetBlock(Vector3i blockPosition, out Block block)
-    {
-        return GetBlock(blockPosition, out block, out _, out _);
-    }
-
-    public static int GetBlock(Vector3i blockPosition, out Block block, out int blockIndex, out int arrayIndex)
+    public static int GetBlock(Vector3i blockPosition, out Block block, out ChunkStage stage)
     {
         block = Block.Air;
-        blockIndex = -1;
-        arrayIndex = -1;
+        stage = ChunkStage.Empty;
 
         Vector3i chunkPosition = VoxelData.BlockToChunkPosition(blockPosition);
 
         if (!ChunkManager.ActiveChunks.TryGetValue(chunkPosition, out var chunk)) 
             return -1;
         
-        block = chunk.blockStorage.GetBlock(VoxelData.BlockToRelativePosition(blockPosition), out blockIndex, out arrayIndex);
+        block = chunk.blockStorage.GetBlock(VoxelData.BlockToRelativePosition(blockPosition));
+        stage = chunk.Stage;
+        return block.IsAir() ? 1 : 0;
+    }
+
+    public static int GetBlock(Vector3i blockPosition, out Block block)
+    {
+        block = Block.Air;
+
+        Vector3i chunkPosition = VoxelData.BlockToChunkPosition(blockPosition);
+
+        if (!ChunkManager.ActiveChunks.TryGetValue(chunkPosition, out var chunk)) 
+            return -1;
+        
+        block = chunk.blockStorage.GetBlock(VoxelData.BlockToRelativePosition(blockPosition));
         return block.IsAir() ? 1 : 0;
     }
 
@@ -651,10 +657,7 @@ public class WorldManager : ScriptingNode
     
     public void Delete()
     {
-        foreach (var (_, chunk) in ChunkManager.ActiveChunks)
-        {
-            chunk.Delete();
-        }
+        ChunkManager.Unload();
     }
 }
 

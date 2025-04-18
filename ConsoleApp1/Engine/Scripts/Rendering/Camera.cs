@@ -5,6 +5,8 @@ using Plane = System.Numerics.Plane;
 
 public class Camera
 {
+    public static Camera Empty = new();
+
     public float SPEED { get; private set; } = 50f;
     public float SCREEN_WIDTH { get; set; }
     public float SCREEN_HEIGHT { get; set; }
@@ -53,7 +55,7 @@ public class Camera
     
     private Dictionary<CameraMode, Action> _cameraModes;
     
-    public Action FirstMove;
+    public Action FirstMove = () => { };
 
     
 
@@ -64,6 +66,14 @@ public class Camera
     public Plane TopPlane => frustumPlanes[3];
     public Plane NearPlane => frustumPlanes[4];
     public Plane FarPlane => frustumPlanes[5];
+
+    public Camera()
+    {
+        SCREEN_WIDTH = 1280;
+        SCREEN_HEIGHT = 720;
+        
+        _cameraModes = [];
+    }
 
     public Camera(float width, float height, Vector3 position)
     {
@@ -342,7 +352,6 @@ public class Camera
 
         Vector2 currentMouseDelta = new Vector2(pos.X - lastPos.X, pos.Y - lastPos.Y);
         _smoothMouseDelta = _smooth ? Vector2.Lerp(_smoothMouseDelta, currentMouseDelta, SMOOTH_FACTOR * GameTime.DeltaTime) : currentMouseDelta;
-        lastPos = new Vector2(pos.X, pos.Y);
 
         float deltaX = _smoothMouseDelta.X;
         float deltaY = _smoothMouseDelta.Y;
@@ -354,6 +363,8 @@ public class Camera
         Pitch -= deltaY;
 
         Pitch = Math.Clamp(Pitch, -89.0f, 89.0f);
+
+        lastPos = new Vector2(pos.X, pos.Y);
     }
 
     private void CameraZoom()

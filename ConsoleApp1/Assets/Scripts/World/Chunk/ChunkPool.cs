@@ -47,4 +47,15 @@ public static class ChunkPool
         FreeChunks.Add(chunk);
         chunk.Clear();
     }
+
+    public static void Clear()
+    {
+        foreach (var chunk in Chunks)
+        {
+            chunk.Delete();
+        }
+        
+        Chunks.Clear();
+        FreeChunks.Clear();
+    }
 }

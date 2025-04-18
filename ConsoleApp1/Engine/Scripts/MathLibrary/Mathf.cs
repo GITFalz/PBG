@@ -240,4 +240,36 @@ public static class Mathf
         Vector2 closestPoint = pointA + (lineDirection * t);
         return (point - closestPoint).LengthSquared <= distance * distance;
     }
+
+
+    // Noise manipulation functions
+    public static float PLerp(float min, float max, float value)
+    {
+        float midpoint = (min + max) / 2;
+        if (value < min || value > max)
+            return 0;
+
+        float distanceFromMidpoint = Mathf.Abs(value - midpoint);
+        float totalDistance = (max - min) / 2;
+        
+        float proximityValue = 1 - (distanceFromMidpoint / totalDistance);
+
+        return proximityValue;
+    }
+
+    public static float SLerp(float min, float max, float value)
+    {
+        if (value <= min) return 0f;
+        if (value >= max) return 1f;
+        return (value - min) / (max - min);
+    }
+
+    public static float NoiseLerp(float noiseA, float noiseB, float minB, float maxA, float t)
+    {
+        if (maxA - minB == 0)
+            return noiseA;
+        
+        float nt = (Clamp(t, minB, maxA) - minB) / (maxA - minB);
+        return Lerp(noiseA, noiseB, nt);
+    }
 }

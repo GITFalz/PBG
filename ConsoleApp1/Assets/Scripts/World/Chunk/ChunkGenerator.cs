@@ -216,7 +216,10 @@ public static class ChunkGenerator
         return 1;
     }
 
-    public static int[] invert = [5, 3, 4, 1, 2, 0];
+    public static void GenerateLOD(Chunk chunkData)
+    {
+        
+    }
     
     public static int GenerateMesh(Chunk chunkData)
     {
@@ -246,7 +249,7 @@ public static class ChunkGenerator
                         int blockId = block.blockData & 15;
                         try
                         {
-                            ids = BlockManager.GetBlock(blockId).GetUVs();
+                            ids = BlockManager.GetBlock(blockId).GetIndices();
                         }
                         catch (Exception)
                         {

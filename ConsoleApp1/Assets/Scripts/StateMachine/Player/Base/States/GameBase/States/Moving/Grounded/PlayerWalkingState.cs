@@ -22,7 +22,7 @@ public class PlayerWalkingState : PlayerGameBaseState
     {
         input = Input.GetMovementInput();
         
-        if (Input.IsKeyPressed(Keys.LeftControl))
+        if (Input.IsKeyDown(Keys.LeftControl))
         {
             playerGameState.SwitchState(playerGameState.RunningState);
             return;

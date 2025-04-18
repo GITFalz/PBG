@@ -10,7 +10,7 @@ using Vector3 = OpenTK.Mathematics.Vector3;
 
 public class Game : GameWindow
 {
-    public static Game Instance;
+    public static Game? Instance = null;
     
     public static int Width;
     public static int Height;
@@ -31,7 +31,7 @@ public class Game : GameWindow
 
 
     public static Vector3 BackgroundColor = new Vector3(0.4f, 0.6f, 0.98f);
-    public static Camera Camera { get; private set; }
+    public static Camera Camera = Camera.Empty;
     public static Action UpdateCamera = () => { Camera?.Update(); };
     
     public ConcurrentDictionary<string, Scene> Scenes = new ConcurrentDictionary<string, Scene>();
@@ -39,7 +39,7 @@ public class Game : GameWindow
     private Stopwatch stopwatch;
 
 
-    public static bool MoveTest = false;
+    public static bool MoveTest = true;
     
     
     private bool isRunning = true;
@@ -47,6 +47,7 @@ public class Game : GameWindow
 
 
     private static Scene _worldScene = new Scene("World");
+    private static Scene _worldNoiseEditorScene = new Scene("WorldNoiseEditor");
     
     
     public static Scene? CurrentScene;
@@ -55,13 +56,7 @@ public class Game : GameWindow
     private PopUp _popUp;
 
     // Initializations
-    private Action Resize = () => { };
-
-    public static Action<Keys> InputActions = (e) => { };
-
-
-    private bool physicsStep = false;
-    
+    private Action _resize = () => { };
     
     public Game(int width, int height) : base(GameWindowSettings.Default, new NativeWindowSettings
         {
@@ -71,10 +66,9 @@ public class Game : GameWindow
         })
     {
         Instance = this;
+        Camera = new Camera(width, height, new Vector3(0, 0, 0));
 
         CenterWindow(new Vector2i(width, height));
-
-        Camera = new Camera(width, height, new Vector3(0, 0, 0));
 
         _ = new Info();
         
@@ -84,7 +78,7 @@ public class Game : GameWindow
         CenterX = width / 2;
         CenterY = height / 2;
 
-        Resize = () => { Resize = OnResize; };
+        _resize = () => { _resize = OnResize; };
 
         /* // Example of using the DataMerger class to merge two SSBOs
         ComputeShader MergeShader = new ComputeShader("DataTransfer/MergeSSBO.compute");
@@ -115,7 +109,7 @@ public class Game : GameWindow
 
         UIController.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, Width, Height, 0, -2, 2);
 
-        Resize.Invoke();
+        _resize.Invoke();
         
         base.OnResize(e);
     }
@@ -184,6 +178,11 @@ public class Game : GameWindow
         BlockManager.Add(grass);
         BlockManager.Add(dirt);
         BlockManager.Add(stone);
+
+        // Menu
+        TransformNode menuNode = new TransformNode();
+        MenuManager menuManager = new MenuManager();
+        menuNode.AddChild(menuManager);
         
         // World
         TransformNode worldGenerationNode = new TransformNode();
@@ -192,10 +191,16 @@ public class Game : GameWindow
         TransformNode playerNode = new TransformNode();
         playerNode.AddChild(new PlayerStateMachine(), new PhysicsBody());
 
-        _worldScene.AddNode(worldGenerationNode, playerNode);
+        // World noise
+        NoiseEditor noiseEditor = new NoiseEditor();
+        TransformNode noiseEditorNode = new TransformNode();
+        noiseEditorNode.AddChild(noiseEditor);
 
-        AddScenes(_worldScene);
-        LoadScene("World");
+        _worldScene.AddNode(worldGenerationNode, playerNode, menuNode);
+        _worldNoiseEditorScene.AddNode(menuNode, noiseEditorNode);
+
+        AddScenes(_worldScene, _worldNoiseEditorScene);
+        LoadScene("WorldNoiseEditor");
 
         _popUp = new PopUp();
 
@@ -216,23 +221,20 @@ public class Game : GameWindow
         base.OnKeyDown(e);
         Input.PressedKeys.Add(e.Key);
 
+        UIController.InputField(e.Key);
+        return;
+
         if (e.Key == Keys.Escape)
         {
             MoveTest = !MoveTest;
 
             if (MoveTest)
             {
-                SetCursorState(CursorState.Grabbed);
-                UpdateCamera = () =>
-                {
-                    Camera.SetMoveFirst();
-                    Camera.Update();
-                    UpdateCamera = () => { Camera.Update(); };
-                };
+                Camera.lastPos = Input.GetMousePosition();
+                UpdateCamera = Camera.Update;
             }
             else
             {
-                SetCursorState(CursorState.Normal);
                 UpdateCamera = () => { };
             }
             
@@ -240,10 +242,6 @@ public class Game : GameWindow
         else if (e.Key == Keys.P)
         {
             Camera.SetCameraMode(Camera.GetCameraMode() == CameraMode.Follow ? CameraMode.Free : CameraMode.Follow);
-        }
-        else if (e.Key == Keys.L)
-        {
-            physicsStep = true;
         }
         else if (e.Key == Keys.F5)
         {
@@ -271,6 +269,11 @@ public class Game : GameWindow
     {
         base.OnMouseUp(e);
         Input.PressedButtons.Remove(e.Button);
+    }
+
+    public static void CloseGame()
+    {
+        Instance?.Close();
     }
     
     protected override void OnUnload()
@@ -358,7 +361,7 @@ public class Game : GameWindow
     
     public static void LoadScene(string sceneName)
     {
-        if (Instance.Scenes.TryGetValue(sceneName, out Scene? scene))
+        if (Instance != null && Instance.Scenes.TryGetValue(sceneName, out Scene? scene) && CurrentScene != scene)
         {
             CurrentScene?.OnExit();
             CurrentScene = scene;
