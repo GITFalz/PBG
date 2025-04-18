@@ -1,0 +1,63 @@
+public class DisplayConnectorNode : ConnectorNode
+{
+    public string Name => DisplayNodePrefab.Name;
+    public UIDisplayNodePrefab DisplayNodePrefab;
+
+    public InputGateConnector InputGateConnector;
+
+    public DisplayConnectorNode(UIDisplayNodePrefab displayNodePrefab)
+    {
+        DisplayNodePrefab = displayNodePrefab;
+        InputGateConnector = new InputGateConnector(DisplayNodePrefab.InputButton, this);
+        DisplayNodePrefab.InputButton.SetOnClick(() => InputConnectionTest(InputGateConnector));
+    }
+
+    public override string GetLine()
+    {
+        string line = $"    display = ";
+        if (InputGateConnector.IsConnected && InputGateConnector.OutputGateConnector != null)
+        {
+            line += $"{InputGateConnector.OutputGateConnector.Node.VariableName};";
+        }
+        else
+        {
+            line += "0.0;";
+        }
+        return line;
+    }
+
+    public bool GetConnectedNode(out ConnectorNode node)
+    {
+        if (InputGateConnector.IsConnected && InputGateConnector.OutputGateConnector != null)
+        {
+            node = InputGateConnector.OutputGateConnector.Node;
+            return true;
+        }
+        else
+        {
+            node = Empty;
+            return false;
+        }
+    }
+
+    public override List<ConnectorNode> GetConnectedNodes()
+    {
+        List<ConnectorNode> connectedNodes = [];
+        if (InputGateConnector.IsConnected && InputGateConnector.OutputGateConnector != null)
+            connectedNodes.Add(InputGateConnector.OutputGateConnector.Node);
+        return connectedNodes;
+    }
+
+    public override List<ConnectorNode> GetInputNodes() 
+    { 
+        List<ConnectorNode> inputNodes = [];
+        if (InputGateConnector.IsConnected && InputGateConnector.OutputGateConnector != null)
+            inputNodes.Add(InputGateConnector.OutputGateConnector.Node);
+        return inputNodes; 
+    }
+
+    public override List<ConnectorNode> GetOutputNodes() 
+    { 
+        return [];
+    }
+}
