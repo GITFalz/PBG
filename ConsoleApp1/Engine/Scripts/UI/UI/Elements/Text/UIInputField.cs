@@ -6,13 +6,25 @@ public class UIInputField : UIText
     public SerializableEvent? OnTextChange = null;
     public UIButton Button;
 
-    public UIInputField(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, Vector2 slice, TextMesh? text) : base(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex, slice, text)
+    public UIInputField(
+        string name, 
+        UIController controller,
+        AnchorType anchorType, 
+        PositionType positionType, 
+        Vector3 pivot, 
+        Vector2 scale, 
+        Vector4 offset, 
+        float rotation, 
+        int textureIndex, 
+        Vector2 slice, 
+        TextMesh text) : 
+        base(name, controller, anchorType, positionType, pivot, scale, offset, rotation, text)
     {
-        Button = new UIButton(name + "Button", anchorType, positionType, (0, 0, 0), pivot, scale, offset, rotation, textureIndex, slice, null, UIState.InvisibleInteractable);
-        Button.OnClick = new SerializableEvent(() => UIController.AssignInputField(name));
+        Button = new UIButton(name + "Button", controller, anchorType, positionType, (0, 0, 0), pivot, scale, offset, rotation, textureIndex, slice, null, UIState.InvisibleInteractable);
+        Button.SetOnClick(() => UIController.AssignInputField(this));
     }
 
-    public override void SetParent(UIElement parent)
+    public override void SetParent(UIElement? parent)
     {
         base.SetParent(parent);
         Button.SetParent(parent);
@@ -33,6 +45,12 @@ public class UIInputField : UIText
     {
         base.SetPositionType(positionType);
         Button.SetPositionType(positionType);
+    }
+
+    public UIInputField SetOnTextChange(Action onTextChange)
+    {
+        OnTextChange = new SerializableEvent(onTextChange);
+        return this;
     }
 
     public UIInputField SetOnTextChange(SerializableEvent onTextChange)
@@ -68,10 +86,10 @@ public class UIInputField : UIText
 
     public void AddCharacter(char character)
     {
-        Console.WriteLine("Text: " + Text + " Character: " + character);
+        //Console.WriteLine("Text: " + Text + " Character: " + character);
         if (!TextShaderHelper.CharExists(character)) return;
         string formatedText = Format(Text + character);
-        Console.WriteLine("Formated Text: " + formatedText);
+        //Console.WriteLine("Formated Text: " + formatedText);
         SetText(formatedText).GenerateChars().UpdateText();
     }
     

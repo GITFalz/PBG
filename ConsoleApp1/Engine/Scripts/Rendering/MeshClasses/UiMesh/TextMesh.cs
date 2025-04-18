@@ -20,6 +20,8 @@ public class TextMesh
     public int ElementCount = 0;
     public int VisibleElementCount = 0;
 
+    private bool _updateVisibility = true;
+
     public void SetCharacters(List<int> characters, int offset)
     {
         for (int i = 0; i < characters.Count; i++)
@@ -32,13 +34,9 @@ public class TextMesh
         }
     }
 
-    public void SetVisibility(bool visible, int index)
+    public void SetVisibility()
     {
-        if (index >= Data.Count)
-            return;
-
-        VisibleElementCount += visible ? 1 : -1;
-        UpdateData();
+        _updateVisibility = true;
     }
 
     public void AddTextElement(UIText element, ref int uiIndex, int offset)
@@ -71,6 +69,7 @@ public class TextMesh
     public void UpdateData()
     {
         int offsetIndex = 0;
+        VisibleElementCount = 0;
 
         // Assuming the Data list is the same size as _visibility
         for (int i = 0; i < _textElements.Count; i++)
@@ -81,12 +80,21 @@ public class TextMesh
                 data.Z = i;
                 Data[offsetIndex] = data;
                 offsetIndex++;
+                VisibleElementCount++;
             }
         }
-
-        // Update the Data list
-        _dataSsbo.Update(Data, 2);
     }   
+
+    public void UpdateVisibility()
+    {
+        if (!_updateVisibility) 
+            return;
+
+        UpdateData();
+
+        _updateVisibility = false;
+        _dataSsbo.Update(Data, 2);
+    }
 
     public void UpdateElementTransformation(UIText element)
     {

@@ -5,13 +5,14 @@ public abstract class UIElement
 {
     public static Vector3 _rotationAxis = new Vector3(0, 0, 1);
 
-    public UIController? UIController = null;
+    public UIController UIController;
     public UIElement? ParentElement = null;
     public string Name = "";
 
     // Rendering Settings
     public bool Visible = true;
     public Vector3 Origin = (0, 0, 0);
+    public Vector3 Center = (0, 0, 0);
     public Vector3 Pivot = (0, 0, 0);
     public Vector2 Scale = (100, 100);
     public Vector2 newScale = (100, 100);
@@ -20,6 +21,7 @@ public abstract class UIElement
     public float Rotation = 0f;
     public bool Rotated = false;
     public bool CanTest = true;
+    public bool CanUpdate = false;
     public int ElementIndex = 0;
     public float Depth = 0;
 
@@ -31,17 +33,19 @@ public abstract class UIElement
     public float Height = 0;
 
     public Matrix4 Transformation = Matrix4.Identity;
-    public Panel panel = new();
 
-    public SerializableEvent? OnHover = null;
-    public SerializableEvent? OnClick = null;
-    public SerializableEvent? OnHold = null;
-    public SerializableEvent? OnRelease = null;
+    public SerializableEvent? OnHover { get; private set; } = null;
+    public SerializableEvent? OnClick { get; private set; } = null;
+    public SerializableEvent? OnHold { get; private set; } = null;
+    public SerializableEvent? OnRelease { get; private set; } = null;
+    public SerializableEvent? OnHoverOut { get; private set; } = null;
     private bool _clicked = false;
 
-    public UIElement(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation)
+    public UIElement() { CanTest = false; }
+    public UIElement(string name, UIController controller, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation)
     {
         Name = name;
+        UIController = controller;
         AnchorType = anchorType;
         PositionType = positionType;
         Pivot = pivot;
@@ -50,11 +54,12 @@ public abstract class UIElement
         Offset = offset;
         totalOffset = offset;
         Rotation = rotation;
+        CanTest = false;
     }
 
-    public virtual void SetVisibility(bool visible) { Visible = visible; }
+    public virtual void SetVisibility(bool visible) { Visible = visible; UIController.UpdateVisibility = true; }
 
-    public virtual void SetParent(UIElement parent) { ParentElement = parent; }
+    public virtual void SetParent(UIElement? parent) { ParentElement = parent; }
     public virtual void SetOrigin(Vector3 origin) { Origin = origin; }
     public virtual void SetPivot(Vector3 pivot) { Pivot = pivot; }
     public virtual void SetScale(Vector2 scale) { Scale = scale; newScale = scale; }
@@ -64,12 +69,74 @@ public abstract class UIElement
 
 
     public virtual void Generate() {}
+    public virtual void Clear() { ParentElement = null; OnClick = null; OnHover = null; OnHold = null; OnRelease = null; _clicked = false; CanTest = false; CanUpdate = false; }
     public virtual void SetUIMesh(UIMesh uIMesh) {}
     public virtual void SetTextMesh(TextMesh textMesh) {}
     public virtual List<string> ToLines(int gap) { return []; }
-    public virtual void UpdateTransformation() {}
-    public virtual void UpdateScale() {}
-    public virtual void UpdateTexture() {}
+
+    protected virtual void Internal_UpdateTransformation() {}
+    public void UpdateTransformation() 
+    {
+        if (CanUpdate)
+            Internal_UpdateTransformation();
+    }
+
+    protected virtual void Internal_UpdateScale() {}
+    public void UpdateScale() 
+    {
+        if (CanUpdate)
+            Internal_UpdateScale();
+    }
+
+    protected virtual void Internal_UpdateTexture() {}
+    public void UpdateTexture() 
+    {
+        if (CanUpdate)
+            Internal_UpdateTexture();
+    }
+
+    public virtual void RemoveElement(UIElement element) {}
+
+
+    public abstract float GetYScale();
+    public abstract float GetXScale();
+
+
+    public void RemoveFromParent()
+    {
+        if (ParentElement == null)
+            return;
+
+        ParentElement.RemoveElement(this);
+        ParentElement = null;
+    }
+
+    public void SetOnClick(Action action)
+    {
+        OnClick = new SerializableEvent(action); 
+        CanTest = true ;
+    } 
+    public void SetOnHover(Action action)
+    {
+        OnHover = new SerializableEvent(action); 
+        CanTest = true;
+    }
+    public void SetOnHold(Action action)
+    {
+        OnHold = new SerializableEvent(action); 
+        CanTest = true;
+    }
+    public void SetOnRelease(Action action)
+    {
+        OnRelease = new SerializableEvent(action); 
+        CanTest = true;
+    }
+    public void SetOnHoverOut(Action action)
+    {
+        OnHoverOut = new SerializableEvent(action); 
+        CanTest = true;
+    }
+
     public virtual bool Test(Vector2 offset = default)
     { 
         if (!CanTest || !Visible) 
@@ -103,10 +170,16 @@ public abstract class UIElement
             OnHold?.Invoke();
         }
             
-        if (Input.IsMouseReleased(MouseButton.Left) && _clicked)
+        if (Input.IsMouseReleased(MouseButton.Left))
         {
-            OnRelease?.Invoke();
-            _clicked = false;
+            if (_clicked)
+            {
+                OnRelease?.Invoke();
+                _clicked = false;
+            }
+
+            if (mouseOver)
+                OnHoverOut?.Invoke();
         }
     }
 
@@ -147,7 +220,7 @@ public abstract class UIElement
             Height = ParentElement.newScale.Y;
 
             totalOffset = Offset + ParentElement.totalOffset;
-            Origin = GetTransformedOrigin() + new Vector3(0, 0, 0.01f) + (new Vector3(0f, 0f, 0.01f) * Depth) + ParentElement.Origin;
+            Origin = GetTransformedOrigin() + new Vector3(0, 0, 0.01f) + (new Vector3(0f, 0f, 0.01f) * (Depth + ParentElement.Depth)) + ParentElement.Origin;
         }
         else
         {
@@ -160,6 +233,7 @@ public abstract class UIElement
 
         Transformation = Matrix4.CreateTranslation(Origin);
         if ((int)AnchorType >= 9) newScale = _dimensions[(int)AnchorType - 9](Width, Height, Scale, Offset);
+        Center = Origin + new Vector3(newScale.X / 2, newScale.Y / 2, 0);
     }
 
     public static string GetMethodString(SerializableEvent? e)
@@ -251,14 +325,6 @@ public abstract class UIElement
                $"Rotation: {Rotation},\n" +
                $"State: {State}";
     }
-}
-
-public class Panel
-{
-    public List<Vector3> Vertices = new();
-    public List<Vector2> Uvs = new();
-    public List<int> TextUvs = new();
-    public List<Vector2> UiSizes = new();
 }
 
 public enum AnchorType

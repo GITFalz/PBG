@@ -2,7 +2,16 @@ using OpenTK.Mathematics;
 
 public class UIDepthCollection : UICollection
 {
-    public UIDepthCollection(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation) : base(name, anchorType, positionType, pivot, scale, offset, rotation)
+    public UIDepthCollection(
+        string name, 
+        UIController controller, 
+        AnchorType anchorType, 
+        PositionType positionType, 
+        Vector3 pivot, 
+        Vector2 scale, 
+        Vector4 offset, 
+        float rotation) : 
+        base(name, controller, anchorType, positionType, pivot, scale, offset, rotation)
     {
     }
 
@@ -12,7 +21,7 @@ public class UIDepthCollection : UICollection
         base.Align();
     }
 
-    protected override void Init()
+    public override void Init()
     {
         for (int i = 0; i < Elements.Count; i++)
         {

@@ -14,7 +14,16 @@ public class UICollection : UIElement
         1. if it were to be used as a child element in another collection.
         2. to position the child correctly based on it's anchor type.
     */
-    public UICollection(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation) : base(name, anchorType, positionType, pivot, scale, offset, rotation)
+    public UICollection(
+        string name, 
+        UIController controller,
+        AnchorType anchorType, 
+        PositionType positionType, 
+        Vector3 pivot, 
+        Vector2 scale, 
+        Vector4 offset, 
+        float rotation) : 
+        base(name, controller, anchorType, positionType, pivot, scale, offset, rotation)
     {
         ResetInit();
     }
@@ -27,21 +36,42 @@ public class UICollection : UIElement
         return this;
     }
 
-    public virtual UICollection AddElement(params UIElement[] element)
+    public virtual UICollection AddElements(params UIElement[] element)
     {
         foreach (UIElement e in element)
             AddElement(e);
         return this;
     }
 
+    public virtual UICollection AddElements(params UIElement[][] element)
+    {
+        foreach (UIElement[] e in element)
+            AddElements(e);
+        return this;
+    }
+
+    public UICollection RemoveElements(params UIElement[] elements)
+    {
+        foreach (UIElement element in elements)
+            RemoveElement(element);
+        return this;
+    }
+
+    public override void RemoveElement(UIElement element)
+    {
+        if (Elements.Remove(element))
+            element.SetParent(null);
+    }
+
     public override void SetVisibility(bool visible)
     {
-        if (Visible == visible)
-            return;
-            
-        base.SetVisibility(visible);
+        Console.WriteLine($"SetVisibility: {Name} {visible}");
+        
         foreach (UIElement element in Elements)
             element.SetVisibility(visible);
+
+        if (Visible != visible)
+            base.SetVisibility(visible);
     }
 
     public override void Align()
@@ -53,29 +83,48 @@ public class UICollection : UIElement
         }
     }
 
-    public override void UpdateTransformation()
+    public override void Clear()
+    {
+        base.Clear();
+        foreach (UIElement element in Elements)
+            element.Clear();
+        Elements.Clear();
+        OnAlign = null;
+    }
+
+    protected override void Internal_UpdateTransformation()
     {
         foreach (UIElement element in Elements)
             element.UpdateTransformation();
     }
 
-    public static float GetTotalScale(List<UIElement> elements, int axis)
+    protected override void Internal_UpdateScale()
     {
-        float totalScale = 0;
-        foreach (UIElement element in elements)
-            totalScale += element.Scale[axis];
-        return totalScale;
+        foreach (UIElement element in Elements)
+            element.UpdateScale();
     }
-
 
     public void ResetInit()
     {
         OnAlign = Init;
     }
 
-    protected virtual void Init() {}
+    public virtual void Init() {}
     public virtual void SetSpacing(float spacing) {}
     public virtual void SetBorder(Vector4 border) {}
+
+    public override float GetYScale()
+    {
+        return GetElementScaleY();
+    }
+
+    public override float GetXScale()
+    {
+        return GetElementScaleX();
+    }
+
+    public virtual float GetElementScaleY() { return newScale.Y; }
+    public virtual float GetElementScaleX() { return newScale.X; }
 }
 
 public enum CollectionType

@@ -9,12 +9,23 @@ public class UIText : UIElement
     public char[] Characters = [];
     public int CharCount = 0;
     public List<int> Chars = [];
-    public TextMesh? textMesh;
+    public TextMesh textMesh;
     public TextQuad textQuad = new TextQuad();
     public TextType TextType = TextType.Alphabetic;
     public int TextOffset = 0;
 
-    public UIText(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, Vector2 slice, TextMesh? textMesh) : base(name, anchorType, positionType, pivot, scale, offset, rotation)
+    public UIText
+    (
+        string name, 
+        UIController controller, 
+        AnchorType anchorType, 
+        PositionType positionType, 
+        Vector3 pivot, 
+        Vector2 scale, 
+        Vector4 offset, 
+        float rotation, 
+        TextMesh textMesh) : 
+        base(name, controller, anchorType, positionType, pivot, scale, offset, rotation)
     {
         this.textMesh = textMesh;
     }
@@ -26,7 +37,7 @@ public class UIText : UIElement
             return;
 
         base.SetVisibility(visible);
-        textMesh.SetVisibility(visible, ElementIndex);
+        textMesh.SetVisibility();
     }
 
     public override void SetTextMesh(TextMesh textMesh)
@@ -65,17 +76,21 @@ public class UIText : UIElement
         return this;
     }
 
-    public override void UpdateTransformation()
+    protected override void Internal_UpdateTransformation()
     {
-        if (textMesh == null)
+        if (!CanUpdate)
             return;
+            
         textMesh.UpdateElementTransformation(this);
         textMesh.UpdateMatrices();
     }
 
     public void UpdateText()
     {
-        textMesh?.UpdateText();
+        if (!CanUpdate)
+            return;
+
+        textMesh.UpdateText();
     }
 
     public override void Generate()
@@ -145,6 +160,17 @@ public class UIText : UIElement
         lines.Add(gapString + "}");
         
         return lines;
+    }
+
+
+    public override float GetYScale()
+    {
+        return newScale.Y;
+    }
+
+    public override float GetXScale()
+    {
+        return newScale.X;
     }
 }
 
