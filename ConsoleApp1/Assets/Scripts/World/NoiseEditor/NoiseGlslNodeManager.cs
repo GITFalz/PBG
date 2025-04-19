@@ -39,8 +39,6 @@ public static class NoiseGlslNodeManager
 
     public static void Compile(List<ConnectorNode> nodes)
     {
-        Console.WriteLine("Compiling NoiseGlslNodeManager...");
-        
         List<string> lines = File.ReadAllLines(NoiseFragmentPath).ToList();
         int index = 0;
         int lineIndex = _lineInsert;

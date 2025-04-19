@@ -272,4 +272,7 @@ public static class Mathf
         float nt = (Clamp(t, minB, maxA) - minB) / (maxA - minB);
         return Lerp(noiseA, noiseB, nt);
     }
+
+
+    public static string ConvertGLSL(Vector2 vector) => $"vec2({vector.X}, {vector.Y})";
 }

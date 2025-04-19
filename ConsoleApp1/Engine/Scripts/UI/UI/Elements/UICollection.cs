@@ -36,6 +36,13 @@ public class UICollection : UIElement
         return this;
     }
 
+    public virtual UICollection AddElements(params UIPrefab[] element)
+    {
+        foreach (UIPrefab e in element)
+            AddElements(e.GetMainElements());
+        return this;
+    }
+
     public virtual UICollection AddElements(params UIElement[] element)
     {
         foreach (UIElement e in element)
@@ -65,8 +72,6 @@ public class UICollection : UIElement
 
     public override void SetVisibility(bool visible)
     {
-        Console.WriteLine($"SetVisibility: {Name} {visible}");
-        
         foreach (UIElement element in Elements)
             element.SetVisibility(visible);
 

@@ -162,4 +162,10 @@ public struct UIStruct
     public Vector4 Color;
     public Vector4i TextureIndex;
     public Matrix4 Transformation;
+    
+
+    public override string ToString()
+    {
+        return $"SizeSlice: {SizeSlice},\n Color: {Color},\n TextureIndex: {TextureIndex},\n Transformation:\n{Transformation}";
+    }
 }

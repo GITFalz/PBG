@@ -117,6 +117,11 @@ public static class Input
     {
         return new Vector2(_previousMouseState.X, _previousMouseState.Y);
     }
+
+    public static Vector3 GetMousePosition3()
+    {
+        return new Vector3(_previousMouseState.X, _previousMouseState.Y, 0f);
+    }
     
     public static Vector2 GetMouseDelta()
     {

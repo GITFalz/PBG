@@ -131,12 +131,12 @@ public class PopUp
 
     public void RenderMessage()
     {
-        MessageUI.Render();      
+        MessageUI.RenderDepthTest();      
     }
 
     public void RenderConfirmation()
     {
-        ConfirmationUI.Render();
+        ConfirmationUI.RenderDepthTest();
     }
 
 

@@ -11,6 +11,7 @@ public class UITextButton : UIPrefab
 
     public UITextButton(
         string name, 
+        UIController controller, 
         AnchorType anchorType, 
         PositionType positionType, 
         Vector3? color,
@@ -19,8 +20,8 @@ public class UITextButton : UIPrefab
         Vector4? offset, 
         float? rotation, 
         int? textureIndex, 
-        Vector2? slice, 
-        UIController controller
+        Vector2? slice,
+        UIState state = UIState.Interactable
     ){
         _controller = controller;
         
@@ -30,7 +31,7 @@ public class UITextButton : UIPrefab
         Collection = new UICollection($"{name}Collection", controller, anchorType, positionType, pivot ?? (0, 0, 0), scale ?? (100, 100), offset ?? (0, 0, 0, 0), rotation ?? 0);
         TextCollection = new UICollection($"{name}TextCollection", controller, AnchorType.MiddleCenter, PositionType.Relative, (0, 0, 0), scale ?? (100, 100), (0, 0, 0, 0), 0);
         Text = new UIText($"{name}Text", controller, AnchorType.MiddleCenter, PositionType.Relative, (0, 0, 0), (0, 0), (0, 0, 0, 0), 0, textMesh);
-        Button = new UIButton($"{name}Button", controller, AnchorType.MiddleCenter, PositionType.Relative, color ?? (0.6f, 0.6f, 0.6f), (0, 0, 0), scale ?? (100, 100), (0, 0, 0, 0), 0, textureIndex ?? 0, slice ?? (10, 0.05f), uiMesh, UIState.Static);
+        Button = new UIButton($"{name}Button", controller, AnchorType.MiddleCenter, PositionType.Relative, color ?? (0.6f, 0.6f, 0.6f), (0, 0, 0), scale ?? (100, 100), (0, 0, 0, 0), 0, textureIndex ?? 0, slice ?? (10, 0.05f), uiMesh, state);
 
         TextCollection.AddElement(Text);
         Collection.AddElements(Button, TextCollection);
@@ -60,6 +61,11 @@ public class UITextButton : UIPrefab
     public UIText SetMaxCharCount(int maxCharCount)
     {
         return Text.SetMaxCharCount(maxCharCount);
+    }
+
+    public UIText SetTextCharCount(string text, float fontSize)
+    {
+        return Text.SetTextCharCount(text, fontSize);
     }
 
     public UIText SetText(string text, float fontSize)

@@ -1,23 +1,23 @@
-public abstract class SingleInputOperations
+public abstract class MinMaxInputOperations
 {
     public abstract float GetValue(float min, float max, float value);
     public abstract string GetFunction(float min, float max, string valueName);
 
-    public static SingleInputOperations GetOperation(SingleInputOperationType type)
+    public static MinMaxInputOperations GetOperation(MinMaxInputOperationType type)
     {
         return type switch
         {
-            SingleInputOperationType.Clamp => new SingleInputClampValueOperation(),
-            SingleInputOperationType.Ignore => new SingleInputIgnoreValueOperation(),
-            SingleInputOperationType.Lerp => new SingleInputLerpValueOperation(),
-            SingleInputOperationType.Slide => new SingleInputSlideValueOperation(),
-            SingleInputOperationType.Smooth => new SingleInputSmoothValueOperation(),
+            MinMaxInputOperationType.Clamp => new SingleInputClampValueOperation(),
+            MinMaxInputOperationType.Ignore => new SingleInputIgnoreValueOperation(),
+            MinMaxInputOperationType.Lerp => new SingleInputLerpValueOperation(),
+            MinMaxInputOperationType.Slide => new SingleInputSlideValueOperation(),
+            MinMaxInputOperationType.Smooth => new SingleInputSmoothValueOperation(),
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
     }
 }
 
-public class SingleInputClampValueOperation : SingleInputOperations
+public class SingleInputClampValueOperation : MinMaxInputOperations
 {
     public override float GetValue(float min, float max, float value)
     {
@@ -30,7 +30,7 @@ public class SingleInputClampValueOperation : SingleInputOperations
     }
 }
 
-public class SingleInputIgnoreValueOperation : SingleInputOperations
+public class SingleInputIgnoreValueOperation : MinMaxInputOperations
 {
     public override float GetValue(float min, float max, float value)
     {
@@ -43,7 +43,7 @@ public class SingleInputIgnoreValueOperation : SingleInputOperations
     }
 }
 
-public class SingleInputLerpValueOperation : SingleInputOperations
+public class SingleInputLerpValueOperation : MinMaxInputOperations
 {
     public override float GetValue(float min, float max, float value)
     {
@@ -56,7 +56,7 @@ public class SingleInputLerpValueOperation : SingleInputOperations
     }
 }
 
-public class SingleInputSlideValueOperation : SingleInputOperations
+public class SingleInputSlideValueOperation : MinMaxInputOperations
 {
     public override float GetValue(float min, float max, float value)
     {
@@ -69,7 +69,7 @@ public class SingleInputSlideValueOperation : SingleInputOperations
     }
 }
 
-public class SingleInputSmoothValueOperation : SingleInputOperations
+public class SingleInputSmoothValueOperation : MinMaxInputOperations
 {
     public override float GetValue(float min, float max, float value)
     {
@@ -82,11 +82,11 @@ public class SingleInputSmoothValueOperation : SingleInputOperations
     }
 }
 
-public enum SingleInputOperationType
+public enum MinMaxInputOperationType
 {
-    Clamp,
-    Ignore,
-    Lerp,
-    Slide,
-    Smooth
+    Clamp = 0,
+    Ignore = 1,
+    Lerp = 2,
+    Slide = 3,
+    Smooth = 4
 }

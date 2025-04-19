@@ -149,7 +149,7 @@ public abstract class UIElement
     public bool IsMouseOver(Vector2 offset = default)
     {
         Vector2 pos = Input.GetMousePosition();
-        return MouseOver(pos, Origin.Xy + offset, Scale);
+        return MouseOver(pos, Origin.Xy, offset, Scale);
     }
 
     private void TestButtons(bool mouseOver)
@@ -183,7 +183,7 @@ public abstract class UIElement
         }
     }
 
-    private bool MouseOver(Vector2 pos, Vector2 origin, Vector2 scale)
+    private bool MouseOver(Vector2 pos, Vector2 origin, Vector2 offset, Vector2 scale)
     {
         if (Rotated)
         {
@@ -196,7 +196,10 @@ public abstract class UIElement
         }
         else
         {
-            return pos.X >= origin.X && pos.X <= origin.X + scale.X && pos.Y >= origin.Y && pos.Y <= origin.Y + scale.Y;
+            Vector2 point1 = Vector3.TransformPosition((origin.X, origin.Y, 0), UIController.ModelMatrix).Xy + offset;
+            Vector2 point2 = Vector3.TransformPosition((origin.X + scale.X, origin.Y + scale.Y, 0), UIController.ModelMatrix).Xy + offset;
+
+            return pos.X >= point1.X && pos.X <= point2.X && pos.Y >= point1.Y && pos.Y <= point2.Y;
         }
     }
 

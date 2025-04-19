@@ -39,7 +39,7 @@ public class Info
 
     private static object lockObj = new object();
 
-    public static bool RenderInfo = false;
+    public static bool RenderInfo = true;
 
 
     public Info()
@@ -94,7 +94,7 @@ public class Info
 
         UpdateVertexCount();
         RenderBlocks();
-        _infoController.Render();
+        _infoController.RenderDepthTest();
     }
 
     public static void GenerateBlocks()

@@ -4,7 +4,6 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 public class UIInputField : UIText
 {
     public SerializableEvent? OnTextChange = null;
-    public UIButton Button;
 
     public UIInputField(
         string name, 
@@ -20,42 +19,39 @@ public class UIInputField : UIText
         TextMesh text) : 
         base(name, controller, anchorType, positionType, pivot, scale, offset, rotation, text)
     {
-        Button = new UIButton(name + "Button", controller, anchorType, positionType, (0, 0, 0), pivot, scale, offset, rotation, textureIndex, slice, null, UIState.InvisibleInteractable);
-        Button.SetOnClick(() => UIController.AssignInputField(this));
+        SetOnClick(() => UIController.AssignInputField(this));
     }
 
     public override void SetParent(UIElement? parent)
     {
         base.SetParent(parent);
-        Button.SetParent(parent);
     }
     public override void SetOffset(Vector4 offset)
     {
         base.SetOffset(offset);
-        Button.SetOffset(offset);
     }
 
     public override void SetAnchorType(AnchorType anchorType)
     {
         base.SetAnchorType(anchorType);
-        Button.SetAnchorType(anchorType);
     }
 
     public override void SetPositionType(PositionType positionType)
     {
         base.SetPositionType(positionType);
-        Button.SetPositionType(positionType);
     }
 
     public UIInputField SetOnTextChange(Action onTextChange)
     {
         OnTextChange = new SerializableEvent(onTextChange);
+        CanTest = true;
         return this;
     }
 
     public UIInputField SetOnTextChange(SerializableEvent onTextChange)
     {
         OnTextChange = onTextChange;
+        CanTest = true;
         return this;
     }
 
@@ -63,16 +59,12 @@ public class UIInputField : UIText
     public override UIText SetText(string text)
     {
         UIText uiText = base.SetText(text);
-        Button.Scale = Scale;
-        Button.newScale = newScale;
-        
         return uiText;
     }
 
     public override void Align()
     {
         base.Align();
-        Button.Align();
     }
 
     public override bool Test(Vector2 offset = default)
@@ -154,7 +146,6 @@ public class UIInputField : UIText
         lines.Add(gapString + "    FontSize: " + FontSize);
         lines.Add(gapString + "    MaxCharCount: " + MaxCharCount);
         lines.Add(gapString + "    TextType: " + (int)TextType);
-        lines.AddRange(Button.ToLines(gap + 1));
         lines.Add(gapString + "}");
         
         return lines;

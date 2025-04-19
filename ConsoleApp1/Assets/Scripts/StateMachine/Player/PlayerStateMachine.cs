@@ -120,6 +120,11 @@ public class PlayerStateMachine : ScriptingNode
     {      
         Camera camera = Game.Camera;
 
+        if (Input.IsKeyPressed(Keys.F5))
+        {
+            ToggleView();
+        }
+
         if (!PlayerData.CanMove || camera.GetCameraMode() == CameraMode.Free)
             return;
 
@@ -296,7 +301,7 @@ public class PlayerStateMachine : ScriptingNode
 
     public void ToggleView()
     {
-        Game.Camera.SetCameraMode(cameraMode == CameraMode.Centered ? CameraMode.Follow : CameraMode.Centered);
+        Game.Camera.SetCameraMode(Game.Camera.GetCameraMode() == CameraMode.Centered ? CameraMode.Follow : CameraMode.Centered);
     }
 
     public bool IsHuggingWall()

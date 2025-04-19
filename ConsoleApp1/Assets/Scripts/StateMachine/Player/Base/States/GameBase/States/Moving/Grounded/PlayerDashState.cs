@@ -12,7 +12,6 @@ public class PlayerDashState : PlayerGameBaseState
         Console.WriteLine("Entering dash state");
         
         Camera = Game.Camera;
-        
         timer = 0;
 
         Vector3 forward = playerGameState.PlayerStateMachine.forward;
@@ -20,7 +19,7 @@ public class PlayerDashState : PlayerGameBaseState
         //playerGameState.PlayerStateMachine.physicsBody.Drag = 10f;
         playerGameState.MovementSpeed = PlayerMovementSpeed.Run;
 
-        Camera.SetFOV(60);
+        Camera.SetFOV(60); // 1STANNIVERSARY, EVERFLOWING, WITHYOU
     }
 
     public override void Update(PlayerGameState playerGameState)

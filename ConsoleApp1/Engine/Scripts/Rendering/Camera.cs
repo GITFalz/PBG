@@ -273,6 +273,9 @@ public class Camera
 
     private void FreeCamera()
     {
+        if (MenuManager.IsOpen)
+            return;
+
         FOV = Mathf.Lerp(FOV, targetFOV, FOV_SMOTH_FACTOR * GameTime.DeltaTime);
         
         float speed = SPEED * GameTime.DeltaTime;
@@ -305,11 +308,17 @@ public class Camera
 
     private void FixedCamera()
     {
+        if (MenuManager.IsOpen)
+            return;
+
         CameraZoom();
     }
 
     private void FollowCamera()
     {
+        if (MenuManager.IsOpen)
+            return;
+
         RotateCamera();
         UpdateVectors();
         CameraZoom();
@@ -317,6 +326,9 @@ public class Camera
 
     private void CenteredCamera()
     {
+        if (MenuManager.IsOpen)
+            return;
+            
         Position = Center;
         RotateCamera();
         UpdateVectors();

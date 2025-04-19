@@ -1,6 +1,6 @@
 using OpenTK.Mathematics;
 
-public class UISingleInputNodePrefab : UINoiseNodePrefab
+public class UIDoubleInputNodePrefab : UINoiseNodePrefab
 {
     public UICollection Collection;
     public UIButton MoveButton;
@@ -8,15 +8,16 @@ public class UISingleInputNodePrefab : UINoiseNodePrefab
     public UIImage Background;
 
     public UICollection ElementCollection;
-    public UIButton InputButton;
+    public UIButton InputButton1;
+    public UIButton InputButton2;
     public UIButton OutputButton;
     public UIText NameField;
 
-    public UIText MinTextField;
-    public UIText MaxTextField;
+    public UIInputField Value1InputField;
+    public UIInputField Value2InputField;
 
-    public UIInputField MinInputField;
-    public UIInputField MaxInputField;
+    public UIText Value1TextField;
+    public UIText Value2TextField;
 
     private PositionType _positionType = PositionType.Absolute;
     private Vector3 _buttonColor = (0.6f, 0.6f, 0.6f);
@@ -26,7 +27,7 @@ public class UISingleInputNodePrefab : UINoiseNodePrefab
     private Vector4 _offset = (100, 100, 0, 0);
     private float _rotation = 0;
     private UIController _controller;
-    public SingleInputOperationType Type = SingleInputOperationType.Clamp;
+    public DoubleInputOperationType Type = DoubleInputOperationType.Add;
 
     public float Depth {
         get => Collection.Depth;
@@ -35,14 +36,14 @@ public class UISingleInputNodePrefab : UINoiseNodePrefab
 
     private Vector2 _oldMouseButtonPosition = new Vector2(0, 0);
 
-    public UISingleInputNodePrefab(
+    public UIDoubleInputNodePrefab(
         string name, 
         UIController controller,
         Vector4 offset,
-        SingleInputOperationType type
+        DoubleInputOperationType type
     ){
         Name = "display";
-        _scale = (300, 120);
+        _scale = (300, 150);
         _controller = controller;
         _offset = offset;
         Type = type;
@@ -56,27 +57,28 @@ public class UISingleInputNodePrefab : UINoiseNodePrefab
         NameField = new UIText($"{name}{displayName}", controller, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (_scale.X - 14, 20), (6, 6, 0, 0), 0, textMesh);
         NameField.SetMaxCharCount(displayName.Length).SetText(displayName, 0.5f);
         
-        InputButton = new UIButton($"{name}InputButton", controller, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (20, 20), (0, 22, 0, 0), 0, 11, (10f, 0.05f), uiMesh, UIState.Interactable);
+        InputButton1 = new UIButton($"{name}InputButton1", controller, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (20, 20), (0, 22, 0, 0), 0, 11, (10f, 0.05f), uiMesh, UIState.Interactable);
+        InputButton2 = new UIButton($"{name}InputButton2", controller, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (20, 20), (0, 52, 0, 0), 0, 11, (10f, 0.05f), uiMesh, UIState.Interactable);
         OutputButton = new UIButton($"{name}OutputButton", controller, AnchorType.TopRight, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (20, 20), (0, 22, 0, 0), 0, 11, (10f, 0.05f), uiMesh, UIState.Interactable);
 
-        MinInputField = new UIInputField($"{name}MinInputField", controller, AnchorType.BottomRight, PositionType.Relative, (0, 0, 0), (20, 20), (-8, -36, 0, 0), 0, 11, (10f, 0.05f), textMesh);
-        MinInputField.SetMaxCharCount(10).SetTextType(TextType.Decimal).SetText("0.0", 0.5f);
+        Value1InputField = new UIInputField($"{name}Value1InputField", controller, AnchorType.BottomRight, PositionType.Relative, (0, 0, 0), (20, 20), (-8, -36, 0, 0), 0, 11, (10f, 0.05f), textMesh);
+        Value1InputField.SetMaxCharCount(10).SetText("1.0", 0.5f).SetTextType(TextType.Decimal);
 
-        MaxInputField = new UIInputField($"{name}MaxInputField", controller, AnchorType.BottomRight, PositionType.Relative, (0, 0, 0), (20, 20), (-8, -6, 0, 0), 0, 11, (10f, 0.05f), textMesh);
-        MaxInputField.SetMaxCharCount(10).SetTextType(TextType.Decimal).SetText("1.0", 0.5f);
+        Value2InputField = new UIInputField($"{name}Value2InputField", controller, AnchorType.BottomRight, PositionType.Relative, (0, 0, 0), (20, 20), (-8, -6, 0, 0), 0, 11, (10f, 0.05f), textMesh);
+        Value2InputField.SetMaxCharCount(10).SetText("1.0", 0.5f).SetTextType(TextType.Decimal);
 
-        MinTextField = new UIText($"{name}MinTextField", controller, AnchorType.BottomLeft, PositionType.Relative, (0, 0, 0), (20, 20), (6, -36, 0, 0), 0, textMesh);
-        MinTextField.SetMaxCharCount(3).SetText("Min", 0.5f).SetTextType(TextType.Alphabetic);
+        Value1TextField = new UIText($"{name}Value1TextField", controller, AnchorType.BottomLeft, PositionType.Relative, (0, 0, 0), (20, 20), (6, -36, 0, 0), 0, textMesh);
+        Value1TextField.SetTextCharCount("Value 1", 0.5f).SetTextType(TextType.Alphanumeric);
 
-        MaxTextField = new UIText($"{name}MaxTextField", controller, AnchorType.BottomLeft, PositionType.Relative, (0, 0, 0), (20, 20), (6, -6, 0, 0), 0, textMesh);
-        MaxTextField.SetMaxCharCount(3).SetText("Max", 0.5f).SetTextType(TextType.Alphabetic);
+        Value2TextField = new UIText($"{name}OffsetYTextField", controller, AnchorType.BottomLeft, PositionType.Relative, (0, 0, 0), (20, 20), (6, -6, 0, 0), 0, textMesh);
+        Value2TextField.SetTextCharCount("Value 2", 0.5f).SetTextType(TextType.Alphanumeric);
 
-        UIImage minBackground = new UIImage($"{name}MinBackground", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), MinInputField.newScale + (16, 16), (0, -28, 0, 0), 0, 11, (10f, 0.05f), uiMesh);
-        UIImage maxBackground = new UIImage($"{name}MaxBackground", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), MaxInputField.newScale + (16, 16), (0, 2, 0, 0), 0, 11, (10f, 0.05f), uiMesh);
+        UIImage value1Background = new UIImage($"{name}value1Background", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), Value1InputField.newScale + (16, 16), (0, -28, 0, 0), 0, 11, (10f, 0.05f), uiMesh);
+        UIImage value2Background = new UIImage($"{name}value2Background", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), Value2InputField.newScale + (16, 16), (0, 2, 0, 0), 0, 11, (10f, 0.05f), uiMesh);
 
-        ElementCollection.AddElements(NameField, InputButton, OutputButton, MinTextField, MinInputField, minBackground, MaxTextField, MaxInputField, maxBackground);
+        ElementCollection.AddElements(NameField, InputButton1, InputButton2, OutputButton, Value1TextField, Value1InputField, value1Background, Value2TextField, Value2InputField, value2Background);
 
-        Collection = new UICollection($"{name}Collection", controller, AnchorType.TopLeft, _positionType, _pivot, _scale, _offset, _rotation);
+        Collection = new UICollection($"{name}Collection", controller, AnchorType.TopLeft, _positionType, _pivot, _scale + (0, 14), _offset, _rotation);
         MoveButton = new UIButton($"{name}MoveButton", controller, AnchorType.TopLeft, PositionType.Relative, _buttonColor, (0, 0, 0), (_scale.X, 14), (0, 0, 0, 0), 0, 10, (5f, 0.025f), uiMesh, UIState.Interactable);
         Background = new UIImage($"{name}Background", controller, AnchorType.TopLeft, PositionType.Relative, _backgroundColor, (0, 0, 0), _scale, (0, 14, 0, 0), 0, 10, (10f, 0.05f), uiMesh);
 
@@ -107,12 +109,18 @@ public class UISingleInputNodePrefab : UINoiseNodePrefab
         Collection.Clear();
     }
 
+    
+    public override void Destroy()
+    {
+        _controller.RemoveElements(GetMainElements());
+    }
+
     private void SetOldMousePosition() => _oldMouseButtonPosition = Input.GetMousePosition();
 
     private void MoveNode()
     {
         Vector2 mousePosition = Input.GetMousePosition();
-        Vector2 delta = mousePosition - _oldMouseButtonPosition;
+        Vector2 delta = (mousePosition - _oldMouseButtonPosition) * (1 / Collection.UIController.Scale);
 
         Collection.SetOffset(Collection.Offset + new Vector4(delta.X, delta.Y, 0, 0));
         Collection.Align();

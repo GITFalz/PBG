@@ -83,7 +83,7 @@ public class UIRectangleDisplayPrefab : UIPrefab
     private void MoveNode()
     {
         Vector2 mousePosition = Input.GetMousePosition();
-        Vector2 delta = mousePosition - _oldMouseButtonPosition;
+        Vector2 delta = (mousePosition - _oldMouseButtonPosition) * (1 / Collection.UIController.Scale);
 
         Position = new Vector2(Position.X + delta.X, Position.Y + delta.Y);
 

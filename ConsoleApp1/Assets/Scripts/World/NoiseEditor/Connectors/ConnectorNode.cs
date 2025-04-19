@@ -1,3 +1,5 @@
+using OpenTK.Mathematics;
+
 public abstract class ConnectorNode
 {
     public static ConnectorNode Empty = new EmptyConnectorNode();
@@ -10,6 +12,26 @@ public abstract class ConnectorNode
     public abstract List<ConnectorNode> GetConnectedNodes(); 
     public abstract List<ConnectorNode> GetInputNodes();
     public abstract List<ConnectorNode> GetOutputNodes();
+    public abstract List<InputGateConnector> GetInputGateConnectors();
+    public abstract List<OutputGateConnector> GetOutputGateConnectors();
+    public abstract UINoiseNodePrefab[] GetNodePrefabs();
+    public abstract UIController GetUIController();
+    public abstract string ToStringList();
+
+    public void SetSlideValue(ref float value, UIInputField inputField, float speed)
+    {
+        float delta = Input.GetMouseDelta().X * speed * GameTime.DeltaTime;
+        value += delta;
+        inputField.SetText(value.ToString("0.00")).GenerateChars().UpdateText();
+
+        Compile();
+    }
+
+    public void SetValue(ref float value, UIInputField inputField, float replacement)
+    {
+        value = inputField.ParseFloat(replacement);
+        Compile();
+    }
 
     public static void Compile()
     {
@@ -63,7 +85,7 @@ public abstract class ConnectorNode
             return;
         }
         else
-        {
+        {   
             if (SelectedGateConnector == null)
             {
                 SelectedGateConnector = input;
@@ -71,7 +93,7 @@ public abstract class ConnectorNode
             }
 
             if (SelectedGateConnector is InputGateConnector)
-            {
+            {   
                 SelectedGateConnector = null;
                 NoiseNodeManager.GenerateLines();
                 return;
@@ -84,7 +106,7 @@ public abstract class ConnectorNode
                     SelectedGateConnector = null;
                     return;
                 }
-                
+
                 Connect(input, output);
                 SelectedGateConnector = null;
                 NoiseNodeManager.GenerateLines();
@@ -101,6 +123,19 @@ public abstract class ConnectorNode
 
         input.Connect(output);
         output.Connect(input);
+    }
+
+    public static void Disconnect(ConnectorNode node)
+    {
+        foreach (var input in node.GetInputGateConnectors())
+        {
+            Disconnect(input);
+        }
+
+        foreach (var output in node.GetOutputGateConnectors())
+        {
+            Disconnect(output);
+        }
     }
 
     public static void Disconnect(InputGateConnector input, OutputGateConnector output)
@@ -124,5 +159,35 @@ public abstract class ConnectorNode
     public static bool Connected(InputGateConnector input, OutputGateConnector output)
     {
         return input.IsConnected && output.IsConnected && input.OutputGateConnector == output && output.InputGateConnector == input;
+    }
+
+    public static string NoSpace(float value)
+    {
+        return NoSpace(value.ToString());
+    }
+
+    public static string NoSpace(int value)
+    {
+        return NoSpace(value.ToString());
+    }
+
+    public static string NoSpace(Vector4 value) 
+    {
+        return NoSpace(value.ToString());
+    }
+
+    public static string NoSpace(Vector3 value)
+    {
+        return NoSpace(value.ToString());
+    }
+
+    public static string NoSpace(Vector2 value)
+    {
+        return NoSpace(value.ToString());
+    }
+
+    public static string NoSpace(string str)
+    {
+        return str.Replace(" ", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty); // Remove all spaces and new lines
     }
 }

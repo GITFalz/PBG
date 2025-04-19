@@ -58,7 +58,7 @@ public static class Timer
 
     public static void Render()
     {
-        _uiTimes.Render();
+        _uiTimes.RenderDepthTest();
     }
 
     public static void Stop()

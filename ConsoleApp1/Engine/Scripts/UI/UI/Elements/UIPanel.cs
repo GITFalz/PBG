@@ -31,8 +31,6 @@ public abstract class UIPanel : UIElement
 
     public override void SetVisibility(bool visible)
     {
-        Console.WriteLine($"SetVisibility: {Name} {visible}");
-
         if (uIMesh == null || Visible == visible)
             return;
 

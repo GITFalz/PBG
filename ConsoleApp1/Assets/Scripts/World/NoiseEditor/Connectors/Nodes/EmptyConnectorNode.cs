@@ -20,4 +20,29 @@ public class EmptyConnectorNode : ConnectorNode
     {
         throw new NotImplementedException();
     }
+
+    public override UINoiseNodePrefab[] GetNodePrefabs()
+    {
+        throw new NotImplementedException();
+    }
+
+    public override UIController GetUIController()
+    {
+        throw new NotImplementedException();
+    }
+
+    public override List<InputGateConnector> GetInputGateConnectors()
+    {
+        throw new NotImplementedException();
+    }
+
+    public override List<OutputGateConnector> GetOutputGateConnectors()
+    {
+        throw new NotImplementedException();
+    }
+
+    public override string ToStringList()
+    {
+        throw new NotImplementedException();
+    }
 }

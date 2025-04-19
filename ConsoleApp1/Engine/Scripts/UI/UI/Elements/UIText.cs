@@ -32,7 +32,6 @@ public class UIText : UIElement
 
     public override void SetVisibility(bool visible)
     {   
-        // return if the visibility is the same as the current one
         if (textMesh == null || Visible == visible)
             return;
 
@@ -62,6 +61,12 @@ public class UIText : UIElement
         MaxCharCount = maxCharCount;
         return this;
     }
+
+    public UIText SetTextCharCount(string text, float fontSize)
+    {
+        MaxCharCount = text.Length;
+        return SetText(text, fontSize);
+    }
     
     public virtual UIText SetText(string text)
     {
@@ -74,6 +79,30 @@ public class UIText : UIElement
         newScale = Scale;
 
         return this;
+    }
+
+    public float ParseFloat(float replacement = 0f)
+    {
+        float value;
+        string text = Text;
+        if (text.Length == 0 || text.EndsWith(".") || text.EndsWith(","))
+            text += "0";
+        if (float.TryParse(text, out float scaleValue))
+            value = scaleValue;
+        else
+            value = replacement;
+        return value;
+    }
+
+    public int ParseInt(int replacement = 0)
+    {
+        int value;
+        string text = Text;
+        if (int.TryParse(text, out int scaleValue))
+            value = scaleValue;
+        else
+            value = replacement;
+        return value;
     }
 
     protected override void Internal_UpdateTransformation()

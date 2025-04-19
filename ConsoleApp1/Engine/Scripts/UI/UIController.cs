@@ -5,6 +5,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 public class UIController
 {
     public static List<UIController> Controllers = [];
+    public static UIController Empty = new();
 
     public UIMesh UiMesh = new();
     public TextMesh textMesh = new();
@@ -35,12 +36,42 @@ public class UIController
     public List<UIElement> ElementsToAdd = [];  
     public List<UIElement> ElementsToRemove = [];
 
-    public Vector3 Position = (0, 0, 0);
+    public Matrix4 ModelMatrix = Matrix4.Identity;
+
+    public Vector3 Position { get; private set; } = (0, 0, 0);
+    public float Scale { get; private set; } = 1f;
+
+    public Vector3 _localPosition = (0, 0, 0);
 
     public UIController()
     {
         Controllers.Add(this);
     }
+
+    public void SetPosition(Vector3 position)
+    {
+        Position = position;
+        ModelMatrix = Matrix4.CreateScale(new Vector3(Scale, Scale, 1f)) * Matrix4.CreateTranslation(Position);
+        _localPosition = Vector3.TransformPosition((0, 0, 0), ModelMatrix);
+    }
+
+    public void SetScale(float scale)
+    {
+        Vector3 mousePosition = Input.GetMousePosition3();
+
+        Vector3 offset = mousePosition - Position;
+        Vector3 position = offset / Scale;
+
+        Vector3 mPosition = position * scale;
+        Vector3 mOffset = mPosition - mousePosition;
+        Vector3 newPosition = mOffset * -1;
+        Position = newPosition;
+
+        Scale = scale;
+        ModelMatrix = Matrix4.CreateScale(new Vector3(Scale, Scale, 1f)) * Matrix4.CreateTranslation(Position);
+        _localPosition = Vector3.TransformPosition((0, 0, 0), ModelMatrix);
+    }
+    
 
     // Adds the element to the list of elements to be added, but does not add it to the UIController yet.
     // This is useful for adding elements in a single pass, rather than immediately adding them.
@@ -92,8 +123,6 @@ public class UIController
         {
             if (text is UIInputField inputField)
             {
-                Elements.Add(inputField.Button);
-                Buttons.Add(inputField.Button);
                 InputFields.Add(inputField);
             }
         }
@@ -144,8 +173,6 @@ public class UIController
         {
             if (text is UIInputField inputField)
             {
-                Elements.Remove(inputField.Button);
-                Buttons.Remove(inputField.Button);
                 InputFields.Remove(inputField);
             }
         }
@@ -177,16 +204,16 @@ public class UIController
 
     public void Test()
     {
-        Vector2 offset = new Vector2(Position.X, Position.Y);
-        Test(offset);
+        Test(Vector2.Zero);
     }
 
     public void Test(Vector2 offset)
     {
+        Vector2 newOffset = offset;
         GenerateBuffers();
         foreach (var element in Elements)
         {
-            element.Test(offset);
+            element.Test(newOffset);
         }
     }
 
@@ -338,6 +365,22 @@ public class UIController
         }
     }
 
+    public void PrintMemory()
+    {
+        string memory = "UIController: " + Elements.Count + " elements\n";
+        memory += "Buttons: " + Buttons.Count + "\n";
+        memory += "InputFields: " + InputFields.Count + "\n";
+        memory += "AbsoluteElements: " + AbsoluteElements.Count + "\n";
+        memory += "ElementsToAdd: " + ElementsToAdd.Count + "\n";
+        memory += "ElementsToRemove: " + ElementsToRemove.Count + "\n";
+        memory += "UiMesh: " + UiMesh.ElementCount + "\n";
+        memory += "TextMesh: " + textMesh.ElementCount + "\n";
+        memory += "MaskMesh: " + maskMesh.ElementCount + "\n";
+        memory += "MaskedUiMesh: " + maskeduIMesh.ElementCount + "\n";
+        memory += "MaskedTextMesh: " + maskedTextMesh.ElementCount + "\n";
+        Console.WriteLine(memory);
+    }
+
     public void Buffers()
     {
         UiMesh.GenerateBuffers();
@@ -443,24 +486,49 @@ public class UIController
         Test();
     }
 
-    public void Render()
+    public void RenderDepthTest()
     {
-        Render(OrthographicProjection);
+        RenderDepthTest(OrthographicProjection);
     }
 
-    public void Render(Matrix4 orthographicsProjectionMatrix)
+    public void RenderDepthTest(Matrix4 orthographicsProjectionMatrix)
+    {
+        GL.Enable(EnableCap.DepthTest);
+        GL.DepthMask(true);
+
+        Render(orthographicsProjectionMatrix);
+
+        GL.DepthFunc(DepthFunction.Lequal);
+        GL.DepthMask(true);
+    }
+
+    public void RenderNoDepthTest()
+    {
+        RenderNoDepthTest(OrthographicProjection);
+    }
+
+    public void RenderNoDepthTest(Matrix4 orthographicsProjectionMatrix)
+    {
+        GL.Disable(EnableCap.DepthTest);
+        GL.DepthMask(false);
+
+        Render(orthographicsProjectionMatrix);
+
+        GL.DepthFunc(DepthFunction.Lequal);
+        GL.DepthMask(true);
+    }
+
+    private void Render(Matrix4 orthographicsProjectionMatrix)
     {
         if (!render)
             return;
 
-        //GL.Disable(EnableCap.DepthTest);
-        //GL.DepthMask(false);
         GL.Enable(EnableCap.Blend);
-        GL.Disable(EnableCap.CullFace);
+        GL.Enable(EnableCap.CullFace);
         GL.FrontFace(FrontFaceDirection.Ccw);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
-        Matrix4 model = Matrix4.CreateTranslation(Position);
+        Matrix4 model = ModelMatrix;
 
         if (UiMesh.ElementCount > 0)
         {

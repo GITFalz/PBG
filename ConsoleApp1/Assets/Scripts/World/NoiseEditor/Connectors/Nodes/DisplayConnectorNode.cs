@@ -60,4 +60,32 @@ public class DisplayConnectorNode : ConnectorNode
     { 
         return [];
     }
+
+    public override List<InputGateConnector> GetInputGateConnectors()
+    {
+        return [InputGateConnector];
+    }
+
+    public override List<OutputGateConnector> GetOutputGateConnectors()
+    {
+        return [];
+    }
+
+    public override UINoiseNodePrefab[] GetNodePrefabs()
+    {
+        return [DisplayNodePrefab];
+    }
+
+    public override UIController GetUIController()
+    {
+        return DisplayNodePrefab.Collection.UIController;
+    }
+
+    public override string ToStringList()
+    {
+        return 
+            $"NodeType: Display " +
+            $"Inputs: {NoSpace(InputGateConnector.Name)} " +
+            $"Prefab: {NoSpace(Name)} {NoSpace(DisplayNodePrefab.Collection.Offset)}";
+    }
 }

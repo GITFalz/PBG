@@ -3,6 +3,8 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class MenuManager : ScriptingNode
 {
+    public static bool IsOpen { get; private set; } = false;
+
     public UIController MainMenuController;
 
     private Action _mainMenuAction = () => {};
@@ -32,9 +34,9 @@ public class MenuManager : ScriptingNode
 
         UICollection mainMenuButtonCollection = new UICollection("mainMenuButtonCollection", MainMenuController, AnchorType.MiddleCenter, PositionType.Relative, (0, 0, 0), (600, 800), (0, 0, 0, 0), 0);
 
-        UITextButton exitGameButton = new UITextButton("ExitGame", AnchorType.BottomCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f), null, (200, 50), (0, -20, 0, 0), 0, 0, (10, 0.05f), MainMenuController);
-        UITextButton WorldSwitchButton = new UITextButton("World", AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), null, (200, 50), (20, 20, 0, 0), 0, 0, (10, 0.05f), MainMenuController);
-        UITextButton WorldNoiseEditorSwitchButton = new UITextButton("WorldNoiseEditor", AnchorType.TopRight, PositionType.Relative, (0.6f, 0.6f, 0.6f), null, (200, 50), (-20, 20, 0, 0), 0, 0, (10, 0.05f), MainMenuController);
+        UITextButton exitGameButton = new UITextButton("ExitGame", MainMenuController, AnchorType.BottomCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f), null, (200, 50), (0, -20, 0, 0), 0, 0, (10, 0.05f));
+        UITextButton WorldSwitchButton = new UITextButton("World", MainMenuController, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), null, (200, 50), (20, 20, 0, 0), 0, 0, (10, 0.05f));
+        UITextButton WorldNoiseEditorSwitchButton = new UITextButton("WorldNoiseEditor", MainMenuController, AnchorType.TopRight, PositionType.Relative, (0.6f, 0.6f, 0.6f), null, (200, 50), (-20, 20, 0, 0), 0, 0, (10, 0.05f));
 
         exitGameButton.SetMaxCharCount(9).SetText("Exit Game", 0.7f).GenerateChars();
         exitGameButton.SetOnClick(QuitGame);
@@ -90,6 +92,7 @@ public class MenuManager : ScriptingNode
         _renderAction = RenderMainMenu;
 
         PlayerData.CanMove = false;
+        IsOpen = true;
     }
 
     public void CloseMainMenu()
@@ -102,6 +105,7 @@ public class MenuManager : ScriptingNode
         _renderAction = () => { };
 
         PlayerData.CanMove = true;
+        IsOpen = false;
     }
 
     public void UpdateMainMenu()
@@ -111,7 +115,7 @@ public class MenuManager : ScriptingNode
 
     public void RenderMainMenu()
     {
-        MainMenuController.Render();
+        MainMenuController.RenderNoDepthTest();
     }
     #endregion
 

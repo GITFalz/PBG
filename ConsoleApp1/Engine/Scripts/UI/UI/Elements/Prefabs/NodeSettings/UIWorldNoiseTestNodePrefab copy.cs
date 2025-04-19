@@ -112,7 +112,7 @@ public class UIWorldNoiseTestNodePrefab : UIPrefab
     private void MoveNode()
     {
         Vector2 mousePosition = Input.GetMousePosition();
-        Vector2 delta = mousePosition - _oldMouseButtonPosition;
+        Vector2 delta = (mousePosition - _oldMouseButtonPosition) * (1 / Collection.UIController.Scale);
 
         Collection.SetOffset(Collection.Offset + new Vector4(delta.X, delta.Y, 0, 0));
         Collection.Align();

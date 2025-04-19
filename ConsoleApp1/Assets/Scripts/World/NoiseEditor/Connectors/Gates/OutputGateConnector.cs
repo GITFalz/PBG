@@ -9,7 +9,7 @@ public class OutputGateConnector : GateConnector
     public Vector3 Position => _button?.Center ?? Vector3.Zero;
     public int Index = -1;
 
-    private UIButton _button;
+    public UIButton _button;
 
     private OutputGateConnector() { _button = UIButton.Empty; }
     public OutputGateConnector(UIButton button, ConnectorNode node)
@@ -31,5 +31,10 @@ public class OutputGateConnector : GateConnector
     {
         IsConnected = false;
         InputGateConnector = null;
+    }
+
+    public string GetConnectedName()
+    {
+        return (InputGateConnector != null && InputGateConnector.Node != null) ? InputGateConnector.Name : "None";
     }
 }

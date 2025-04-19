@@ -1,5 +1,6 @@
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class NoiseEditor : ScriptingNode
@@ -19,6 +20,8 @@ public class NoiseEditor : ScriptingNode
     public static Matrix4 NodePanelProjectionMatrix = Matrix4.CreateOrthographicOffCenter(7, NodePanelWidth - 7, NodePanelHeight - 7, 7, -2, 2);
     public static Matrix4 SelectionProjectionMatrix = Matrix4.CreateOrthographicOffCenter(0, Game.Width, Game.Height, 0, -3, 0);
 
+    public static ConnectorNode? SelectedNode = null;
+
     public UIController DisplayController;
     public UIController MainWindowController;
     public UIController SidePanelController;
@@ -36,6 +39,10 @@ public class NoiseEditor : ScriptingNode
 
     private Vector2 _oldMouseButtonPosition = new Vector2(0, 0);
 
+    private Vector2 NodePosition = new Vector2(0, 0);
+
+    private bool _isScalingNoise = false;
+
     public NoiseEditor()
     {
         InternalNodeWindowPosition = new Vector2i(0, Game.Height - NodePanelHeight);
@@ -46,6 +53,8 @@ public class NoiseEditor : ScriptingNode
         NodeController = new();
         SelectionController = new();
 
+        NoiseNodeManager.NodeController = NodeController;
+
         // *--- DisplayController ---*
         UIMesh displayUiMesh = DisplayController.UiMesh;
         TextMesh displayTextMesh = DisplayController.textMesh;
@@ -55,7 +64,17 @@ public class NoiseEditor : ScriptingNode
             Depth = 10f
         };
         _displayPrefab.Collection.CanTest = true;
-        _displayPrefab.Collection.SetOnHold(MoveNoise);
+        _displayPrefab.Background.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        _displayPrefab.Background.SetOnHold(MoveNoise);
+        _displayPrefab.Background.SetOnHover(() => {
+            float scrollDelta = Input.GetMouseScrollDelta().Y;
+            if (scrollDelta != 0)
+            {
+                NoiseSize -= scrollDelta * GameTime.DeltaTime * 100 * NoiseSize;
+                _isScalingNoise = true;
+            }
+        });
+        _displayPrefab.Background.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
 
         DisplayController.AddElements(_displayPrefab.GetMainElements());
 
@@ -67,7 +86,10 @@ public class NoiseEditor : ScriptingNode
         {
             Depth = 0f
         };
-        _mainWindowBackground = new("MainWindowBackground", MainWindowController, AnchorType.MiddleCenter, PositionType.Relative, (0.5f, 0.5f, 0.5f), (1, 1, 1), (NodePanelWidth, NodePanelHeight), (0, 0, 0, 0), 5f, 0, (10, 0.05f), windowUiMesh);
+        _mainWindowBackground = new("MainWindowBackground", MainWindowController, AnchorType.MiddleCenter, PositionType.Relative, (0.4f, 0.4f, 0.4f), (1, 1, 1), (NodePanelWidth, NodePanelHeight), (0, 0, 0, 0), 0, 11, (10, 0.05f), windowUiMesh);
+
+        _mainWindowBackground.SetOnHover(ScaleSelectionWindow);
+        _mainWindowBackground.SetOnHold(MoveNodeWindow);
 
         _mainWindowCollection.AddElements(_mainWindowBackground);
 
@@ -90,21 +112,15 @@ public class NoiseEditor : ScriptingNode
             Depth = 1f
         };
 
-        UISingleInputNodePrefab singleInputNodePrefab = new("SingleInputNodePrefab", NodeController, (300, 100, 0, 0), SingleInputOperationType.Smooth)
-        {
-            Depth = 1f
-        };
-
         UIDisplayNodePrefab displayNodePrefab = new("DisplayNodePrefab", NodeController, (800, 100, 0, 0))
         {
             Depth = 1f
         };
 
         NoiseNodeManager.AddNode(sampleNodePrefab);
-        NoiseNodeManager.AddNode(singleInputNodePrefab);
         NoiseNodeManager.AddNode(displayNodePrefab);
 
-        NodeController.AddElements(sampleNodePrefab, singleInputNodePrefab, displayNodePrefab);
+        NodeController.AddElements(sampleNodePrefab, displayNodePrefab);
 
         // *--- SelectionController ---*
         UIMesh selectionUiMesh = SelectionController.UiMesh;
@@ -118,21 +134,46 @@ public class NoiseEditor : ScriptingNode
         SelectionCollection = new("SelectionCollection", SelectionController, AnchorType.TopLeft, PositionType.Absolute, (0.5f, 0.5f, 0.5f), (300, 300), (0, 0, 0, 0), 0f);
         UIVerticalCollection selectionVerticalCollection = new("SelectionVerticalCollection", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), (0, 0, 0, 0), 0f, 0);
 
-        UIButton addSampleButton = new("AddSampleButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f), selectionUiMesh, UIState.Interactable);
-        UIButton addSingleInputButton = new("AddSingleInputButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f), selectionUiMesh, UIState.Interactable);
+        UITextButton addSampleButton = new("AddSampleButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addSampleButton.SetTextCharCount("Add Sample", 0.5f);
+        UITextButton addMinMaxInputButton = new("AddSingleInputButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addMinMaxInputButton.SetTextCharCount("Add Min Max Input", 0.5f);
+        UITextButton addDoubleInputButton = new("AddDoubleInputButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addDoubleInputButton.SetTextCharCount("Add Double Input", 0.5f);
 
         // -- Embedded Collection --
         EmbeddedCollection = new("EmbeddedCollection", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (300, 0, 0, 0), 0);
         
-        // - AddSingleInputTypeCollection -
-        UIVerticalCollection addSingleInputTypeCollection = new("AddSingleInputTypeCollection", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), (0, 0, 0, 0), 0, 0);
+        // - AddMinMaxInputTypeCollection -
+        UIVerticalCollection addMinMaxInputTypeCollection = new("AddMinMaxInputTypeCollection", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), (0, 0, 0, 0), 0, 0);
 
-        UIButton addClampButton = new("AddClampButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f), selectionUiMesh, UIState.Interactable);
-        UIButton addIgnoreButton = new("AddIgnoreButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f), selectionUiMesh, UIState.Interactable);
-        UIButton addLerpButton = new("AddLerpButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f), selectionUiMesh, UIState.Interactable);
-        UIButton addSlideButton = new("AddSlideButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f), selectionUiMesh, UIState.Interactable);
-        UIButton addSmoothButton = new("AddSmoothButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f), selectionUiMesh, UIState.Interactable);
+        UITextButton addClampButton = new("AddClampButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addClampButton.SetTextCharCount("Clamp", 0.5f);
+        UITextButton addIgnoreButton = new("AddIgnoreButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addIgnoreButton.SetTextCharCount("Ignore", 0.5f);
+        UITextButton addLerpButton = new("AddLerpButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addLerpButton.SetTextCharCount("Lerp", 0.5f);
+        UITextButton addSlideButton = new("AddSlideButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addSlideButton.SetTextCharCount("Slide", 0.5f);
+        UITextButton addSmoothButton = new("AddSmoothButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f)); 
+        addSmoothButton.SetTextCharCount("Smooth", 0.5f);
 
+        // - AddDoubleInputTypeCollection -
+        UIVerticalCollection addDoubleInputTypeCollection = new("AddDoubleInputTypeCollection", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), (0, 0, 0, 0), 0, 0);
+
+        UITextButton addAddButton = new("AddAddButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addAddButton.SetTextCharCount("Add", 0.5f);
+        UITextButton addSubButton = new("AddSubButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addSubButton.SetTextCharCount("Subtract", 0.5f); 
+        UITextButton addMulButton = new("AddMulButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addMulButton.SetTextCharCount("Multiply", 0.5f);
+        UITextButton addDivButton = new("AddDivButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addDivButton.SetTextCharCount("Divide", 0.5f);
+        UITextButton addMinButton = new("AddMinButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addMinButton.SetTextCharCount("Min", 0.5f);
+        UITextButton addMaxButton = new("AddMaxButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addMaxButton.SetTextCharCount("Max", 0.5f);
+        
 
         addSampleButton.SetOnClick(() =>
         {
@@ -147,48 +188,92 @@ public class NoiseEditor : ScriptingNode
             SelectionCollection.SetVisibility(false);
         });
 
-        addSingleInputButton.SetOnClick(() =>
+        addMinMaxInputButton.SetOnClick(() =>
         {
-            Console.WriteLine("AddSingleInputButton Clicked");
             EmbeddedCollection.SetVisibility(false);
-            addSingleInputTypeCollection.SetVisibility(!addSingleInputTypeCollection.Visible);
+            addMinMaxInputTypeCollection.SetVisibility(!addMinMaxInputTypeCollection.Visible);
+        });
+
+        addDoubleInputButton.SetOnClick(() =>
+        {
+            EmbeddedCollection.SetVisibility(false);
+            addDoubleInputTypeCollection.SetVisibility(!addDoubleInputTypeCollection.Visible);
         });
 
 
         addClampButton.SetOnClick(() =>
         {
-            AddSingleInputType(SingleInputOperationType.Clamp);
+            AddMinMaxInputType(MinMaxInputOperationType.Clamp);
             SelectionCollection.SetVisibility(false);
         });
 
         addIgnoreButton.SetOnClick(() =>
         {
-            AddSingleInputType(SingleInputOperationType.Ignore);
+            AddMinMaxInputType(MinMaxInputOperationType.Ignore);
             SelectionCollection.SetVisibility(false);
         });
 
         addLerpButton.SetOnClick(() =>
         {
-            AddSingleInputType(SingleInputOperationType.Lerp);
+            AddMinMaxInputType(MinMaxInputOperationType.Lerp);
             SelectionCollection.SetVisibility(false);
         });
 
         addSlideButton.SetOnClick(() =>
         {
-            AddSingleInputType(SingleInputOperationType.Slide);
+            AddMinMaxInputType(MinMaxInputOperationType.Slide);
             SelectionCollection.SetVisibility(false);
         });
 
         addSmoothButton.SetOnClick(() =>
         {
-            AddSingleInputType(SingleInputOperationType.Smooth);
+            AddMinMaxInputType(MinMaxInputOperationType.Smooth);
             SelectionCollection.SetVisibility(false);
         });
 
-        addSingleInputTypeCollection.AddElements(addClampButton, addIgnoreButton, addLerpButton, addSlideButton, addSmoothButton);
 
-        EmbeddedCollection.AddElements(addSingleInputTypeCollection);
-        selectionVerticalCollection.AddElements(addSampleButton, addSingleInputButton);
+        addAddButton.SetOnClick(() =>
+        {
+            AddDoubleInputType(DoubleInputOperationType.Add);
+            SelectionCollection.SetVisibility(false);
+        });
+
+        addSubButton.SetOnClick(() =>
+        {
+            AddDoubleInputType(DoubleInputOperationType.Subtract);
+            SelectionCollection.SetVisibility(false);
+        });
+
+        addMulButton.SetOnClick(() =>
+        {
+            AddDoubleInputType(DoubleInputOperationType.Multiply);
+            SelectionCollection.SetVisibility(false);
+        });
+
+        addDivButton.SetOnClick(() =>
+        {
+            AddDoubleInputType(DoubleInputOperationType.Divide);
+            SelectionCollection.SetVisibility(false);
+        });
+
+        addMaxButton.SetOnClick(() =>
+        {
+            AddDoubleInputType(DoubleInputOperationType.Max);
+            SelectionCollection.SetVisibility(false);
+        });
+
+        addMinButton.SetOnClick(() =>
+        {
+            AddDoubleInputType(DoubleInputOperationType.Min);
+            SelectionCollection.SetVisibility(false);
+        });
+
+
+        addMinMaxInputTypeCollection.AddElements(addClampButton, addIgnoreButton, addLerpButton, addSlideButton, addSmoothButton);
+        addDoubleInputTypeCollection.AddElements(addAddButton, addSubButton, addMulButton, addDivButton, addMinButton, addMaxButton);
+
+        EmbeddedCollection.AddElements(addMinMaxInputTypeCollection, addDoubleInputTypeCollection);
+        selectionVerticalCollection.AddElements(addSampleButton, addMinMaxInputButton, addDoubleInputButton);
 
         SelectionCollection.AddElements(selectionVerticalCollection, EmbeddedCollection);
 
@@ -196,16 +281,52 @@ public class NoiseEditor : ScriptingNode
         SelectionCollection.SetVisibility(false);
     }
 
-    public void AddSingleInputType(SingleInputOperationType type)
+    public void MoveNodeWindow()
     {
-        Vector2 mousePosition = Input.GetMousePosition();
-        UISingleInputNodePrefab singleInputNodePrefab = new("SingleInputNodePrefab", NodeController, (mousePosition.X, mousePosition.Y, 0, 0), type)
+        Vector2 mouseDelta = Input.GetMouseDelta();
+        if (mouseDelta != Vector2.Zero && Input.IsKeyDown(Keys.LeftControl))
+        {
+            Vector3 newMouseDelta = new Vector3(mouseDelta.X, mouseDelta.Y, 0f);
+            Vector3 newPosition = NodeController.Position + newMouseDelta;
+            NodeController.SetPosition(newPosition);
+
+            NoiseNodeManager.UpdateLines();
+        }
+    }
+
+    public void ScaleSelectionWindow()
+    {
+        float delta = Input.GetMouseScrollDelta().Y;
+        if (_isScalingNoise || delta == 0 || !Input.IsKeyDown(Keys.LeftControl)) 
+            return; 
+
+        float scale = Mathf.Clamp(0.2f, 10f, NodeController.Scale + delta * GameTime.DeltaTime * NodeController.Scale * 100f);
+        NodeController.SetScale(scale);
+
+        NoiseNodeManager.UpdateLines();
+    }
+
+    public void AddMinMaxInputType(MinMaxInputOperationType type)
+    {
+        UIMinMaxInputNodePrefab singleInputNodePrefab = new("SingleInputNodePrefab", NodeController, (NodePosition.X, NodePosition.Y, 0, 0), type)
         {
             Depth = 1f
         };
 
         NoiseNodeManager.AddNode(singleInputNodePrefab);
         NodeController.AddElements(singleInputNodePrefab);
+        SelectionCollection.SetVisibility(false);
+    }
+
+    public void AddDoubleInputType(DoubleInputOperationType type)
+    {
+        UIDoubleInputNodePrefab doubleInputNodePrefab = new("DoubleInputNodePrefab", NodeController, (NodePosition.X, NodePosition.Y, 0, 0), type)
+        {
+            Depth = 1f
+        };
+
+        NoiseNodeManager.AddNode(doubleInputNodePrefab);
+        NodeController.AddElements(doubleInputNodePrefab);
         SelectionCollection.SetVisibility(false);
     }
 
@@ -233,45 +354,78 @@ public class NoiseEditor : ScriptingNode
 
     public override void Update()
     {
-        float scrollDelta = Input.GetMouseScrollDelta().Y;
-        if (scrollDelta != 0)
-            NoiseSize -= scrollDelta * GameTime.DeltaTime * 100 * NoiseSize;
+        // Save
+        if (Input.IsKeyAndControlPressed(Keys.S))
+        {
+            NoiseNodeManager.SaveNodes();
+        }
+        
+        // Load
+        if (Input.IsKeyAndControlPressed(Keys.L))
+        {
+            NoiseNodeManager.LoadNodes();
+        }
 
         if (Input.IsMousePressed(MouseButton.Right))
         {
             SelectionCollection.SetVisibility(!SelectionCollection.Visible);
             EmbeddedCollection.SetVisibility(false);
                 
-            Vector2 mousePosition = Input.GetMousePosition();
-            SelectionController.Position = new Vector3(mousePosition.X, mousePosition.Y, 1);
+            NodePosition = Input.GetMousePosition();
+            SelectionController.SetPosition(new Vector3(NodePosition.X, NodePosition.Y, 0f));
         }
 
-        DisplayController.Test();
-        MainWindowController.Test();
-        SidePanelController.Test();
         NodeController.Test(NodeWindowPosition);
+        DisplayController.Test();
+        SidePanelController.Test();
         SelectionController.Test();
 
+        MainWindowController.Test();
+
+        if (SelectedNode != null)
+        {
+            if (Input.IsKeyPressed(Keys.Delete))
+            {
+                NoiseNodeManager.RemoveNode(SelectedNode, true);
+                SelectedNode = null;
+            }
+        }
+
+        if (Input.IsKeyAndControlPressed(Keys.B))
+        {
+            Console.WriteLine("Display controller:");
+            DisplayController.PrintMemory();
+            Console.WriteLine("Main window controller:");
+            MainWindowController.PrintMemory(); 
+            Console.WriteLine("Side panel controller:");
+            SidePanelController.PrintMemory();
+            Console.WriteLine("Node controller:");
+            NodeController.PrintMemory();
+            Console.WriteLine("Selection controller:");
+            SelectionController.PrintMemory();
+        }
+
         DisplayPosition = _displayPrefab.Position;
+        _isScalingNoise = false;
     }
 
     public override void Render()
     {
-        NoiseGlslNodeManager.Render(DisplayProjectionMatrix, DisplayPosition, _displayPrefab.Scale, NoiseSize, Offset);
-
-        DisplayController.Render();
-        //MainWindowController.Render();
-        //SidePanelController.Render();
-        if (SelectionCollection.Visible)
-            SelectionController.Render();
-
-        NoiseNodeManager.RenderLine();
+        MainWindowController.RenderNoDepthTest();
 
         GL.Viewport(InternalNodeWindowPosition.X + 7, InternalNodeWindowPosition.Y + 7, NodePanelWidth - 14, NodePanelHeight - 14);
 
-        NodeController.Render(NodePanelProjectionMatrix);
+        NodeController.RenderNoDepthTest(NodePanelProjectionMatrix);
+        NoiseNodeManager.RenderLine(NodePanelProjectionMatrix);
 
         GL.Viewport(0, 0, Game.Width, Game.Height);
+        
+        SidePanelController.RenderNoDepthTest();
+        DisplayController.RenderDepthTest();
+        NoiseGlslNodeManager.Render(DisplayProjectionMatrix, DisplayPosition, _displayPrefab.Scale, NoiseSize, Offset);
+
+        if (SelectionCollection.Visible)
+            SelectionController.RenderNoDepthTest();
     }
 
     public override void Exit()

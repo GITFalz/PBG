@@ -21,6 +21,10 @@ public class Game : GameWindow
     // User paths
     public static string mainPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Engines", "PBG");
     public static string chunkPath = Path.Combine(mainPath, "Chunks");
+    public static string nodePath = Path.Combine(mainPath, "Nodes");
+    public static string worldNoiseNodePath = Path.Combine(nodePath, "WorldNoiseNodes");
+    public static string worldNoiseNodeNodeEditorPath = Path.Combine(worldNoiseNodePath, "WorldNoiseNodeEditorNodes");    // path for the files that hold the data for the nodes in the world noise editor
+    public static string worldNoiseNodeCWorldPath = Path.Combine(worldNoiseNodePath, "WorldNoiseNodeCWorlds");            // path for the files that hold the data for the cworld nodes used in world generation
     public static string assetPath = Path.Combine(mainPath, "Saves");
     public static string shaderPath = Path.Combine(mainPath, "Shaders");
     public static string uiPath = Path.Combine(assetPath, "UI");
@@ -142,6 +146,22 @@ public class Game : GameWindow
 
         if (!Directory.Exists(chunkPath))
             Directory.CreateDirectory(chunkPath);
+
+        if (!Directory.Exists(nodePath))
+            Directory.CreateDirectory(nodePath);
+        if (!Directory.Exists(worldNoiseNodePath))
+            Directory.CreateDirectory(worldNoiseNodePath);
+        if (!Directory.Exists(worldNoiseNodeNodeEditorPath))
+            Directory.CreateDirectory(worldNoiseNodeNodeEditorPath);
+        if (!Directory.Exists(worldNoiseNodeCWorldPath))
+            Directory.CreateDirectory(worldNoiseNodeCWorldPath);
+
+        if (!Directory.Exists(shaderPath))
+            Directory.CreateDirectory(shaderPath);
+            
+        if (!Directory.Exists(texturePath))
+            Directory.CreateDirectory(texturePath);
+
         if (!Directory.Exists(modelPath))
             Directory.CreateDirectory(modelPath);
         if (!Directory.Exists(undoModelPath))
@@ -197,7 +217,7 @@ public class Game : GameWindow
         noiseEditorNode.AddChild(noiseEditor);
 
         _worldScene.AddNode(worldGenerationNode, playerNode, menuNode);
-        _worldNoiseEditorScene.AddNode(menuNode, noiseEditorNode);
+        _worldNoiseEditorScene.AddNode(noiseEditorNode, menuNode);
 
         AddScenes(_worldScene, _worldNoiseEditorScene);
         LoadScene("WorldNoiseEditor");

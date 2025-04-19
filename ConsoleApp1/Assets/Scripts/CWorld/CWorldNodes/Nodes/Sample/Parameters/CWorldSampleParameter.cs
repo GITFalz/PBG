@@ -3,13 +3,13 @@ public class CWorldSampleParameter
     public float Min = 0;
     public float Max = 1;
 
-    public SingleInputOperations Operation;
+    public MinMaxInputOperations Operation;
 
-    public CWorldSampleParameter(float min, float max, SingleInputOperationType type)
+    public CWorldSampleParameter(float min, float max, MinMaxInputOperationType type)
     {
         Min = min;
         Max = max;
-        Operation = SingleInputOperations.GetOperation(type);
+        Operation = MinMaxInputOperations.GetOperation(type);
     }
 
     public float GetValue(float value)

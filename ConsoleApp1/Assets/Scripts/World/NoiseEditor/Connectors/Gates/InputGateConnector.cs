@@ -31,4 +31,9 @@ public class InputGateConnector : GateConnector
         IsConnected = false;
         OutputGateConnector = null;
     }
+
+    public string GetConnectedName()
+    {
+        return (OutputGateConnector != null && OutputGateConnector.Node != null) ? OutputGateConnector.Name : "None";
+    }
 }
