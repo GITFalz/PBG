@@ -24,6 +24,12 @@ public class Texture : BufferBase
         GL.BindTexture(TextureTarget.Texture2D, ID);
     }
 
+    public void Bind(TextureUnit textureUnit)
+    {
+        GL.ActiveTexture(textureUnit);
+        GL.BindTexture(TextureTarget.Texture2D, ID);
+    }
+
     public static void Bind(int id)
     {
         GL.ActiveTexture(TextureUnit.Texture0);

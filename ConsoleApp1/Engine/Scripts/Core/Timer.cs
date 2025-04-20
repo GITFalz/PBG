@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using OpenTK.Mathematics;
 
 public static class Timer
 {
@@ -6,7 +7,6 @@ public static class Timer
     private static UIVerticalCollection _timesCollection = new("Times", _uiTimes, AnchorType.TopRight, PositionType.Absolute, (0, 0, 0), (100, 1000), (-5, 5, 5, 5), (0, 0, 0, 0), 5, 0);
     private static List<(UIText, UIText)> _timesPool = new List<(UIText, UIText)>();
     private static List<(string, double)> _times = new List<(string, double)>();
-    private static TextMesh _textMesh = _uiTimes.TextMesh;
     private static int _timerIndex = 0;
     private static Stopwatch _stopwatch = new();
 
@@ -51,7 +51,6 @@ public static class Timer
             }
 
             _time = _stopwatch.Elapsed.TotalSeconds;
-            _textMesh.UpdateText();
         }
         Reset();
     }
@@ -81,8 +80,8 @@ public static class Timer
         {
             _uiTimes.Clear();
 
-            UIText textName = new($"Name {index}", _uiTimes, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (0, 0, 0, 0), 0, _textMesh);
-            UIText textTime = new($"Time {index}", _uiTimes, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (0, 0, 0, 0), 0, _textMesh);
+            UIText textName = new($"Name {index}", _uiTimes, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (0, 0, 0, 0), 0);
+            UIText textTime = new($"Time {index}", _uiTimes, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (0, 0, 0, 0), 0);
 
             textName.SetMaxCharCount(15).SetText("Name", 0.5f).GenerateChars();
             textTime.SetMaxCharCount(15).SetText("0.000000000", 0.5f).GenerateChars();

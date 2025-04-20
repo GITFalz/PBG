@@ -24,6 +24,13 @@ public class TextureArray : BufferBase
         GL.ActiveTexture(TextureUnit.Texture0);
         GL.BindTexture(TextureTarget.Texture2DArray, ID);
     }
+
+    public void Bind(TextureUnit textureUnit)
+    {
+        GL.ActiveTexture(textureUnit);
+        GL.BindTexture(TextureTarget.Texture2DArray, ID);
+    }
+
     public void Unbind() => GL.BindTexture(TextureTarget.Texture2DArray, 0); 
 
     private void Create(string atlasPath, int cellWidth, int cellHeight)

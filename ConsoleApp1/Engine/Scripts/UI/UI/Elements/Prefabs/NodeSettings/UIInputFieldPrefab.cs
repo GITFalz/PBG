@@ -5,7 +5,7 @@ public class UIInputFieldPrefab : UIPrefab
     public UIImage Background;
     public UIInputField InputField;
 
-    public Vector3 BackgroundColor;
+    public Vector4 BackgroundColor;
     public int CharCount;
     public int BackgroundIndex;
     public TextType TextType;
@@ -14,7 +14,7 @@ public class UIInputFieldPrefab : UIPrefab
         string name, 
         UIController controller, 
         Vector4 offset,
-        Vector3 backgroundColor,
+        Vector4 backgroundColor,
         int backgroundIndex,
         int charCount,
         string text,
@@ -29,12 +29,9 @@ public class UIInputFieldPrefab : UIPrefab
         BackgroundIndex = backgroundIndex;
         TextType = textType;
 
-        UIMesh uiMesh = Controller.UiMesh;
-        TextMesh textMesh = Controller.TextMesh;
-
         Collection = new UICollection(name, controller, AnchorType.TopLeft, PositionType.Relative, Vector3.Zero, Vector2.Zero, offset, 0f);
-        Background = new UIImage(name + "_Background", controller, AnchorType.TopLeft, PositionType.Relative, backgroundColor, Vector3.Zero, Vector2.Zero, offset, 0f, backgroundIndex, (10, 0.05f), uiMesh);
-        InputField = new UIInputField(name + "_InputField", controller, AnchorType.TopLeft, PositionType.Relative, Vector3.Zero, Vector2.Zero, offset + (8, 8, 0, 0), 0f, backgroundIndex, (10, 0.05f), textMesh);
+        Background = new UIImage(name + "_Background", controller, AnchorType.TopLeft, PositionType.Relative, backgroundColor, Vector3.Zero, Vector2.Zero, offset, 0f, backgroundIndex, (10, 0.05f));
+        InputField = new UIInputField(name + "_InputField", controller, AnchorType.TopLeft, PositionType.Relative, Vector4.One, Vector3.Zero, Vector2.Zero, offset + (8, 8, 0, 0), 0f, backgroundIndex, (10, 0.05f));
         InputField.SetMaxCharCount(CharCount).SetText(text, 0.5f).SetTextType(TextType);
 
         Vector2 scale = InputField.newScale;

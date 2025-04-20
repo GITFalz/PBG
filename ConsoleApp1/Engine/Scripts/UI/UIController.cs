@@ -7,12 +7,7 @@ public class UIController
     public static List<UIController> Controllers = [];
     public static UIController Empty = new();
 
-    public UIMesh UiMesh = new();
-    public TextMesh TextMesh = new();
-
-    public UIMesh maskMesh = new();
-    public UIMesh maskeduIMesh = new();
-    public TextMesh maskedTextMesh = new();
+    public newUIMesh newUIMesh = new();
     
     public static ShaderProgram _uiShader = UIData.UiShader;
     public static TextureArray _uItexture = UIData.UiTexture;
@@ -382,45 +377,33 @@ public class UIController
         memory += "AbsoluteElements: " + AbsoluteElements.Count + "\n";
         memory += "ElementsToAdd: " + ElementsToAdd.Count + "\n";
         memory += "ElementsToRemove: " + ElementsToRemove.Count + "\n";
-        memory += "UiMesh: " + UiMesh.ElementCount + "\n";
-        memory += "TextMesh: " + TextMesh.ElementCount + "\n";
-        memory += "MaskMesh: " + maskMesh.ElementCount + "\n";
-        memory += "MaskedUiMesh: " + maskeduIMesh.ElementCount + "\n";
-        memory += "MaskedTextMesh: " + maskedTextMesh.ElementCount + "\n";
+        memory += "newUIMesh: " + newUIMesh.ElementCount + "\n";
         Console.WriteLine(memory);
     }
 
     public void Buffers()
     {
-        UiMesh.GenerateBuffers();
-        TextMesh.GenerateBuffers();
-        maskMesh.GenerateBuffers();
-        maskeduIMesh.GenerateBuffers(); 
-        maskedTextMesh.GenerateBuffers();
+        newUIMesh.GenerateBuffers();
     }
 
     public void GenerateBuffers()
     {
         if (RegenerateBuffers)
         {
-            foreach (var element in ElementsToAdd)
-            {
-                Internal_AddElement(element);
-            }
-
             foreach (var element in ElementsToRemove)
             {
                 Internal_RemoveElement(element);
             }
 
+            foreach (var element in ElementsToAdd)
+            {
+                Internal_AddElement(element);
+            }
+
             ElementsToAdd.Clear();
             ElementsToRemove.Clear();
 
-            UiMesh.Clear();
-            TextMesh.Clear();
-            maskMesh.Clear();
-            maskeduIMesh.Clear();
-            maskedTextMesh.Clear();
+            newUIMesh.Clear();
 
             Generate();
             Buffers();
@@ -430,20 +413,10 @@ public class UIController
             
         if (UpdateVisibility)
         {
-            UiMesh.UpdateVisibility();
-            TextMesh.UpdateVisibility();
-            maskMesh.UpdateVisibility();
-            maskeduIMesh.UpdateVisibility();
-            maskedTextMesh.UpdateVisibility();
+            newUIMesh.UpdateVisibility();
 
             UpdateVisibility = false;
         }
-    }
-
-    public void UpdateMatrices()
-    { 
-        TextMesh.UpdateMatrices();
-        maskedTextMesh.UpdateMatrices();
     }
 
     public List<string> ToLines()
@@ -464,13 +437,13 @@ public class UIController
 
     public void Clear()
     {
-        UiMesh.Clear();
-        TextMesh.Clear();
+        newUIMesh.Clear();
+
         foreach (var element in Elements)
         {
-            if (element is UIInputField inputField && InputFields.Contains(inputField))
-                InputFields.Remove(inputField);
+            RemoveElement(element);
         }
+
         Elements.Clear();
     }
 
@@ -486,8 +459,6 @@ public class UIController
             element.UpdateScale();
             element.UpdateTransformation();
         }
-
-        UpdateMatrices();
     }
 
     public void Update()
@@ -539,76 +510,24 @@ public class UIController
 
         Matrix4 model = ModelMatrix;
 
-        if (UiMesh.ElementCount > 0)
+        if (newUIMesh.ElementCount > 0)
         {
-            _uItexture.Bind();
+            _textTexture.Bind(TextureUnit.Texture0);
+            _uItexture.Bind(TextureUnit.Texture2);
             _uiShader.Bind();
 
             GL.UniformMatrix4(UIData.modelLoc, true, ref model);
             GL.UniformMatrix4(UIData.projectionLoc, true, ref orthographicsProjectionMatrix);
+            GL.Uniform1(UIData.textTextureLoc, 0);
+            GL.Uniform1(UIData.charsLoc, 1);
+            GL.Uniform1(UIData.textureArrayLoc, 2);
 
-            UiMesh.Render();
+            newUIMesh.Render();
         
             Shader.Error("Ui render error: ");
 
             _uiShader.Unbind();
             _uItexture.Unbind();
-        }
-
-        if (TextMesh.ElementCount > 0)
-        {
-            _textShader.Bind();
-            _textTexture.Bind();
-            
-            GL.UniformMatrix4(UIData.textModelLoc, true, ref model);
-            GL.UniformMatrix4(UIData.textProjectionLoc, true, ref orthographicsProjectionMatrix);
-            GL.Uniform1(UIData.charsLoc, 1);
-            
-            TextMesh.Render();
-            
-            _textShader.Unbind();
-            _textTexture.Unbind();
-        }
-        
-        if (maskMesh.ElementCount > 0)
-        {
-            GL.Enable(EnableCap.StencilTest);
-            GL.Clear(ClearBufferMask.StencilBufferBit);
-            GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
-            GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace); 
-
-            _uiShader.Bind();
-            _uItexture.Bind();
-
-            GL.UniformMatrix4(UIData.maskModelLoc, true, ref model);
-            GL.UniformMatrix4(UIData.maskProjectionLoc, true, ref orthographicsProjectionMatrix);
-
-            maskMesh.Render();
-            
-            GL.StencilFunc(StencilFunction.Equal, 1, 0xFF);
-            GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
-
-            if (maskeduIMesh.ElementCount > 0)
-            {
-                maskeduIMesh.Render();
-            }
-
-            _uiShader.Unbind();
-            _uItexture.Unbind();
-
-            _textShader.Bind();
-            _textTexture.Bind();
-            
-            GL.UniformMatrix4(UIData.maskTextModelLoc, true, ref model);
-            GL.UniformMatrix4(UIData.maskTextProjectionLoc, true, ref orthographicsProjectionMatrix);
-            GL.Uniform1(UIData.maskCharsLoc, 1);
-            
-            if (maskedTextMesh.ElementCount > 0)
-            {
-                maskedTextMesh.Render();
-            }
-            
-            _textShader.Unbind();
             _textTexture.Unbind();
         }
 

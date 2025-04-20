@@ -10,14 +10,14 @@ public class UIInputField : UIText
         UIController controller,
         AnchorType anchorType, 
         PositionType positionType, 
+        Vector4 color,
         Vector3 pivot, 
         Vector2 scale, 
         Vector4 offset, 
         float rotation, 
         int textureIndex, 
-        Vector2 slice, 
-        TextMesh text
-    ) : base(name, controller, anchorType, positionType, pivot, scale, offset, rotation, text)
+        Vector2 slice
+    ) : base(name, controller, anchorType, positionType, color, pivot, scale, offset, rotation)
     {
         SetOnClick(() => UIController.AssignInputField(this));
     }

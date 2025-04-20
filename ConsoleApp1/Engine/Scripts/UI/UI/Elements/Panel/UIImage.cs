@@ -7,15 +7,14 @@ public class UIImage : UIPanel
         UIController controller, 
         AnchorType anchorType, 
         PositionType positionType, 
-        Vector3 color, 
+        Vector4 color, 
         Vector3 pivot, 
         Vector2 scale, 
         Vector4 offset, 
         float rotation, 
         int textureIndex, 
-        Vector2 slice, 
-        UIMesh uIMesh) : 
-        base(name, controller, anchorType, positionType, color, pivot, scale, offset, rotation, textureIndex, slice, uIMesh)
+        Vector2 slice) : 
+        base(name, controller, anchorType, positionType, color, pivot, scale, offset, rotation, textureIndex, slice)
     {
     }
 }

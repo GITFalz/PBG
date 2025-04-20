@@ -11,8 +11,8 @@ public class UIDisplayNodePrefab : UINoiseNodePrefab
     public UIText NameField;
 
     private PositionType PositionType = PositionType.Absolute;
-    private Vector3 ButtonColor = (0.6f, 0.6f, 0.6f);
-    private Vector3 BackgroundColor = (0.5f, 0.5f, 0.5f);
+    private Vector4 ButtonColor = (0.6f, 0.6f, 0.6f, 1f);
+    private Vector4 BackgroundColor = (0.5f, 0.5f, 0.5f, 1f);
     private Vector3 Pivot = (0, 0, 0);
     private Vector2 Scale = (100, 100);
     private float Rotation = 0;
@@ -28,21 +28,18 @@ public class UIDisplayNodePrefab : UINoiseNodePrefab
     {
         Scale = (300, 50);
 
-        UIMesh uiMesh = Controller.UiMesh;
-        TextMesh textMesh = Controller.TextMesh;
-
         ElementCollection = new UICollection($"{name}ElementCollection", controller, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), Scale - (6, 17), (0, 17, 0, 0), 0);
         
-        NameField = new UIText($"{name}Display", controller, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (Scale.X - 14, 20), (6, 6, 0, 0), 0, textMesh);
+        NameField = new UIText($"{name}Display", controller, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (Scale.X - 14, 20), (6, 6, 0, 0), 0);
         NameField.SetMaxCharCount(7).SetText("Display", 0.5f);
         
-        InputButton = new UIButton($"{name}InputButton", controller, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (20, 20), (0, 22, 0, 0), 0, 11, (10f, 0.05f), uiMesh, UIState.Interactable);
+        InputButton = new UIButton($"{name}InputButton", controller, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (0, 22, 0, 0), 0, 11, (10f, 0.05f), UIState.Interactable);
         
         ElementCollection.AddElements(NameField, InputButton);
 
         Collection = new UICollection($"{name}Collection", controller, AnchorType.TopLeft, PositionType, Pivot, Scale + (0, 14), Offset, Rotation);
-        MoveButton = new UIButton($"{name}MoveButton", controller, AnchorType.TopLeft, PositionType.Relative, ButtonColor, (0, 0, 0), (Scale.X, 14), (0, 0, 0, 0), 0, 10, (5f, 0.025f), uiMesh, UIState.Interactable);
-        Background = new UIImage($"{name}Background", controller, AnchorType.TopLeft, PositionType.Relative, BackgroundColor, (0, 0, 0), Scale, (0, 14, 0, 0), 0, 10, (10f, 0.05f), uiMesh);
+        MoveButton = new UIButton($"{name}MoveButton", controller, AnchorType.TopLeft, PositionType.Relative, ButtonColor, (0, 0, 0), (Scale.X, 14), (0, 0, 0, 0), 0, 10, (5f, 0.025f), UIState.Interactable);
+        Background = new UIImage($"{name}Background", controller, AnchorType.TopLeft, PositionType.Relative, BackgroundColor, (0, 0, 0), Scale, (0, 14, 0, 0), 0, 10, (10f, 0.05f));
 
         MoveButton.SetOnClick(SetOldMousePosition);
         MoveButton.SetOnHold(MoveNode);

@@ -15,8 +15,7 @@ public class UIScrollView : UICollection
         PositionType positionType, 
         CollectionType collectionType, 
         Vector2 scale, 
-        Vector4 offset, 
-        UIMesh maskMesh) : 
+        Vector4 offset) : 
         base(name, controller, anchorType, positionType, (0, 0, 0), scale, offset, 0)
     {
         CollectionType = collectionType;
@@ -28,14 +27,14 @@ public class UIScrollView : UICollection
 
         SubElements.SetScale(scale);
 
-        MaskPanel = new UIImage($"{name}MaskPanel", controller, anchorType, PositionType.Relative, (1, 1, 1), (0, 0, 0), scale, (0, 0, 0, 0), 0, -1, (0, 0), maskMesh);
-        MaskPanel.CanTest = true;
-        MaskPanel.SetOnHover(MoveScrollView);
+        //MaskPanel = new UIImage($"{name}MaskPanel", controller, anchorType, PositionType.Relative, (1, 1, 1), (0, 0, 0), scale, (0, 0, 0, 0), 0, -1, (0, 0), maskMesh);
+        //MaskPanel.CanTest = true;
+        //MaskPanel.SetOnHover(MoveScrollView);
         
-        Elements.Add(MaskPanel);
+        //Elements.Add(MaskPanel);
         Elements.Add(SubElements);
 
-        MaskPanel.ParentElement = this;
+        //MaskPanel.ParentElement = this;
         SubElements.ParentElement = this;
     }
 

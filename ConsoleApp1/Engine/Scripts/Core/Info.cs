@@ -7,16 +7,15 @@ using OpenTK.Mathematics;
 public class Info
 {
     private static UIController _infoController = new();
-    private static TextMesh _textMesh = _infoController.TextMesh;
 
-    public static UIText FpsText = new("FpsTest", _infoController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, _textMesh);
-    public static UIText GPUText = new("Gpu", _infoController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, _textMesh);
-    public static UIText XPosText = new("XPos", _infoController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, _textMesh);
-    public static UIText YPosText = new("YPos", _infoController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, _textMesh);
-    public static UIText ZPosText = new("ZPos", _infoController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, _textMesh);
-    public static UIText ChunkRenderingText = new("ChunkRendering", _infoController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, _textMesh);
-    public static UIText VertexCountText = new("VertexCount", _infoController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, _textMesh);
-    public static UIText RamUsageText = new("RamUsage", _infoController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, _textMesh);
+    public static UIText FpsText = new("FpsTest", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
+    public static UIText GPUText = new("Gpu", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
+    public static UIText XPosText = new("XPos", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
+    public static UIText YPosText = new("YPos", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
+    public static UIText ZPosText = new("ZPos", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
+    public static UIText ChunkRenderingText = new("ChunkRendering", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
+    public static UIText VertexCountText = new("VertexCount", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
+    public static UIText RamUsageText = new("RamUsage", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
 
     private static int _oldVertexCount = 0;
     public static int VertexCount = 0;
@@ -221,7 +220,7 @@ public class Info
 
         if (update)
         {
-            ZPosText.textMesh.UpdateText();
+            ZPosText.uIMesh.UpdateText();
         }
     }
 

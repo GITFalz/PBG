@@ -37,13 +37,10 @@ public class PopUp
         RenderAction = RenderMessage;
         UpdateAction = UpdateMessage;
 
-        UIMesh messageUiMesh = MessageUI.UiMesh;
-        TextMesh messageTextMesh = MessageUI.TextMesh;
-
-        MessagePanel = new("PopupPanel", MessageUI, AnchorType.MiddleCenter, PositionType.Absolute, (0.5f, 0.5f, 0.5f), (0, 0, 0), (500, 80), (0, 0, 0, 0), 0, 0, (10, 0.05f), messageUiMesh);
+        MessagePanel = new("PopupPanel", MessageUI, AnchorType.MiddleCenter, PositionType.Absolute, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (500, 80), (0, 0, 0, 0), 0, 0, (10, 0.05f));
         MessageCollection = new("MessageCollection", MessageUI, AnchorType.BottomCenter, PositionType.Absolute, (0, 0, 0), (500, 80), (0, 80, 0, 0), 0);
-        Message = new("PopupText", MessageUI, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (10, 10, 0, 0), 0, messageTextMesh);
-        MessageCloseButton = new("PopupButton", MessageUI, AnchorType.TopRight, PositionType.Relative, (0.7f, 0.7f, 0.7f), (0, 0, 0), (30, 30), (0, 0, 0, 0), 0, 89, (0, 0), messageUiMesh, UIState.Interactable);
+        Message = new("PopupText", MessageUI, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 100), (10, 10, 0, 0), 0);
+        MessageCloseButton = new("PopupButton", MessageUI, AnchorType.TopRight, PositionType.Relative, (0.7f, 0.7f, 0.7f, 1f), (0, 0, 0), (30, 30), (0, 0, 0, 0), 0, 89, (0, 0), UIState.Interactable);
 
         MessageCloseButton.SetOnClick(CloseCurrentMessage);
 
@@ -57,15 +54,12 @@ public class PopUp
         MessageUI.AddElement(MessageCollection);
 
 
-        UIMesh confirmationUiMesh = ConfirmationUI.UiMesh;
-        TextMesh confirmationTextMesh = ConfirmationUI.TextMesh;
-
-        ConfirmationPanel = new("AlertPanel", ConfirmationUI, AnchorType.MiddleCenter, PositionType.Absolute, (0.5f, 0.5f, 0.5f), (0, 0, 0), (500, 80), (0, 0, 0, 0), 0, 0, (10, 0.05f), confirmationUiMesh);
+        ConfirmationPanel = new("AlertPanel", ConfirmationUI, AnchorType.MiddleCenter, PositionType.Absolute, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (500, 80), (0, 0, 0, 0), 0, 0, (10, 0.05f));
         ConfirmationCollection = new("AlertCollection", ConfirmationUI, AnchorType.BottomCenter, PositionType.Absolute, (0, 0, 0), (500, 80), (0, 80, 0, 0), 0);
-        Confirmation = new("AlertText", ConfirmationUI, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (10, 10, 0, 0), 0, confirmationTextMesh);
-        ConfirmationAcceptButton = new("AlertButton", ConfirmationUI, AnchorType.BottomCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (480, 35), (0, -10, 0, 0), 0, 0, (10, 0.05f), confirmationUiMesh, UIState.Interactable);
-        ConfirmationDeclineButton = new("AlertButton", ConfirmationUI, AnchorType.TopRight, PositionType.Relative, (0.7f, 0.7f, 0.7f), (0, 0, 0), (30, 30), (0, 0, 0, 0), 0, 89, (0, 0), confirmationUiMesh, UIState.Interactable);
-        AcceptText = new("AcceptText", ConfirmationUI, AnchorType.BottomCenter, PositionType.Relative, (0, 0, 0), (100, 100), (0, -20, 0, 0), 0, confirmationTextMesh);
+        Confirmation = new("AlertText", ConfirmationUI, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 100), (10, 10, 0, 0), 0);
+        ConfirmationAcceptButton = new("AlertButton", ConfirmationUI, AnchorType.BottomCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (480, 35), (0, -10, 0, 0), 0, 0, (10, 0.05f), UIState.Interactable);
+        ConfirmationDeclineButton = new("AlertButton", ConfirmationUI, AnchorType.TopRight, PositionType.Relative, (0.7f, 0.7f, 0.7f, 1f), (0, 0, 0), (30, 30), (0, 0, 0, 0), 0, 89, (0, 0), UIState.Interactable);
+        AcceptText = new("AcceptText", ConfirmationUI, AnchorType.BottomCenter, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 100), (0, -20, 0, 0), 0);
 
         ConfirmationAcceptButton.SetOnClick(AcceptCurrentConfirmation);
         ConfirmationDeclineButton.SetOnClick(DeclineCurrentConfirmation);
@@ -220,8 +214,6 @@ public class PopUp
         MessageCollection.Offset.Y = 85 - position.Y;
         MessageCollection.Align();
         MessageCollection.UpdateTransformation();
-
-        MessageUI.UpdateMatrices();
     }
 
     public void MoveConfirmation()
@@ -232,8 +224,6 @@ public class PopUp
         ConfirmationCollection.Offset.Y = 85 - position.Y;
         ConfirmationCollection.Align();
         ConfirmationCollection.UpdateTransformation();
-
-        ConfirmationUI.UpdateMatrices();
     }
 
 

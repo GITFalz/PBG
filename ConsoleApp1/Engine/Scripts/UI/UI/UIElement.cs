@@ -41,7 +41,7 @@ public abstract class UIElement
     public SerializableEvent? OnHoverOut { get; private set; } = null;
     private bool _clicked = false;
 
-    public UIElement() { CanTest = false; }
+    public UIElement() {}
     public UIElement(string name, UIController controller, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation)
     {
         Name = name;
@@ -286,12 +286,13 @@ public abstract class UIElement
 
     private static readonly Func<float, float, Vector2, Vector4, Vector2>[] _dimensions =
     [
-        (w, h, s, o) => (s.X, h - o.Y - o.W), // ScaleLeft   
-        (w, h, s, o) => (s.X, h - o.Y - o.W), // ScaleCenter
-        (w, h, s, o) => (s.X, h - o.Y - o.W), // ScaleRight
-        (w, h, s, o) => (w - o.X - o.Z, s.Y), // ScaleTop
-        (w, h, s, o) => (w - o.X - o.Z, s.Y), // ScaleMiddle
-        (w, h, s, o) => (w - o.X - o.Z, s.Y), // ScaleBottom
+        (w, h, s, o) => (s.X, h - o.Y - o.W),           // ScaleLeft   
+        (w, h, s, o) => (s.X, h - o.Y - o.W),           // ScaleCenter
+        (w, h, s, o) => (s.X, h - o.Y - o.W),           // ScaleRight
+        (w, h, s, o) => (w - o.X - o.Z, s.Y),           // ScaleTop
+        (w, h, s, o) => (w - o.X - o.Z, s.Y),           // ScaleMiddle
+        (w, h, s, o) => (w - o.X - o.Z, s.Y),           // ScaleBottom
+        (w, h, s, o) => (w - o.X - o.Z, h - o.Y - o.W), // ScaleFull
     ];
 
     // w : width, h : height, s : scale, o : offset
@@ -312,6 +313,7 @@ public abstract class UIElement
         (w, h, s, o) => (o.X,                   o.Y,                   0), // ScaleTop
         (w, h, s, o) => (o.X,                   h / 2 - s.Y / 2 + o.Y, 0), // ScaleMiddle
         (w, h, s, o) => (o.X,                   h - s.Y + o.Y,         0), // ScaleBottom
+        (w, h, s, o) => (o.X,                   o.Y,                   0), // ScaleFull
     ];
 
 
@@ -346,7 +348,8 @@ public enum AnchorType
     ScaleRight = 11,
     ScaleTop = 12,
     ScaleMiddle = 13,
-    ScaleBottom = 14
+    ScaleBottom = 14,
+    ScaleFull = 15,
 }
 
 public enum PositionType

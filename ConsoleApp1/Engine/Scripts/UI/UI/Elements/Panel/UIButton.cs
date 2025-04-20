@@ -4,32 +4,27 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class UIButton : UIPanel
 {
-    public static UIButton Empty = new();
+    public static UIButton Empty = new() { uIMesh = newUIMesh.Empty };
 
-    public UIButton() : base() { CanTest = false; }
+    public UIButton() : base() { }
+
     public UIButton(
         string name,
         UIController controller,
         AnchorType anchorType, 
         PositionType positionType, 
-        Vector3 color, 
+        Vector4 color, 
         Vector3 pivot, 
         Vector2 scale, 
         Vector4 offset, 
         float rotation, 
         int textureIndex, 
         Vector2 slice, 
-        UIMesh? uIMesh, 
         UIState state) : 
-        base(name, controller, anchorType, positionType, color, pivot, scale, offset, rotation, textureIndex, slice, uIMesh)
+        base(name, controller, anchorType, positionType, color, pivot, scale, offset, rotation, textureIndex, slice)
     {
         State = state;
         CanTest = true;
-    }
-
-    public override void SetUIMesh(UIMesh uIMesh)
-    {
-        this.uIMesh = uIMesh;
     }
 
     protected override void Internal_UpdateTexture()
@@ -41,14 +36,12 @@ public class UIButton : UIPanel
     protected override void Internal_UpdateTransformation()
     {
         if (CanGenerate())
-        {
             uIMesh.UpdateElementTransformation(this);
-        } 
     }
 
-    protected override bool CanGenerate()
+    protected bool CanGenerate()
     {
-        return base.CanGenerate() && State != UIState.InvisibleInteractable;
+        return State != UIState.InvisibleInteractable;
     }
 
     public override List<string> ToLines(int gap)

@@ -10,16 +10,19 @@ public class UIData
     public static int modelLoc = -1;
     public static int projectionLoc = -1;
     public static int cycleLoc = -1;
+    public static int textTextureLoc = -1;
+    public static int charsLoc = -1;
+    public static int textureArrayLoc = -1;
 
     public static int textModelLoc = -1;
     public static int textProjectionLoc = -1;
-    public static int charsLoc = -1;
 
     public static int maskModelLoc = -1;
     public static int maskProjectionLoc = -1;
 
     public static int maskTextModelLoc = -1;
     public static int maskTextProjectionLoc = -1;
+    public static int maskTextTextureLoc = -1;
     public static int maskCharsLoc = -1;
 
     static UIData()
@@ -27,9 +30,12 @@ public class UIData
         // Normal Shader
         UiShader.Bind();
 
-        modelLoc = GL.GetUniformLocation(UiShader.ID, "model");
-        projectionLoc = GL.GetUniformLocation(UiShader.ID, "projection");
-        cycleLoc = GL.GetUniformLocation(UiShader.ID, "cycle");
+        modelLoc = UiShader.GetLocation("model");
+        projectionLoc = UiShader.GetLocation("projection");
+        cycleLoc = UiShader.GetLocation("cycle");
+        textTextureLoc = UiShader.GetLocation("texture0");
+        charsLoc = UiShader.GetLocation("charBuffer");
+        textureArrayLoc = UiShader.GetLocation("textureArray");
 
         UiShader.Unbind();
 
@@ -37,6 +43,7 @@ public class UIData
 
         textModelLoc = GL.GetUniformLocation(TextShader.ID, "model");
         textProjectionLoc = GL.GetUniformLocation(TextShader.ID, "projection");
+        textTextureLoc = GL.GetUniformLocation(TextShader.ID, "texture0");
         charsLoc = GL.GetUniformLocation(TextShader.ID, "charBuffer");
 
         TextShader.Unbind();
@@ -53,6 +60,7 @@ public class UIData
 
         maskTextModelLoc = GL.GetUniformLocation(TextShader.ID, "model");
         maskTextProjectionLoc = GL.GetUniformLocation(TextShader.ID, "projection");
+        maskTextTextureLoc = GL.GetUniformLocation(TextShader.ID, "texture0");
         maskCharsLoc = GL.GetUniformLocation(TextShader.ID, "charBuffer");
 
         TextShader.Unbind();

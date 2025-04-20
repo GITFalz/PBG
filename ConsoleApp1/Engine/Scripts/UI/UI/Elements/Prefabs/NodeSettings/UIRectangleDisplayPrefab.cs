@@ -22,12 +22,10 @@ public class UIRectangleDisplayPrefab : UIPrefab
 
         Scale = scale;
 
-        UIMesh uiMesh = Controller.UiMesh;
-
         Collection = new UICollection("RectangleDisplayPrefabCollection", controller, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), Scale, Offset, 0);
-        Background = new UIImage("RectangleDisplayPrefabBackground", controller, AnchorType.MiddleCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), Scale + (14, 14), (0, 0, 0, 0), 0, 11, (10, 0.05f), uiMesh);
-        MoveButton = new UIButton("RectangleDisplayPrefabMoveButton", controller, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (Scale.X + 14, 14), (-6, -20, 0, 0), 0, 10, (5, 0.025f), uiMesh, UIState.Interactable);
-        ScaleButton = new UIButton("RectangleDisplayPrefabScaleButton", controller, AnchorType.BottomRight, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (20, 20), (6, 6, 0, 0), 0, 10, (5, 0.025f), uiMesh, UIState.Interactable)
+        Background = new UIImage("RectangleDisplayPrefabBackground", controller, AnchorType.MiddleCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), Scale + (14, 14), (0, 0, 0, 0), 0, 11, (10, 0.05f));
+        MoveButton = new UIButton("RectangleDisplayPrefabMoveButton", controller, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (Scale.X + 14, 14), (-6, -20, 0, 0), 0, 10, (5, 0.025f), UIState.Interactable);
+        ScaleButton = new UIButton("RectangleDisplayPrefabScaleButton", controller, AnchorType.BottomRight, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (20, 20), (6, 6, 0, 0), 0, 10, (5, 0.025f), UIState.Interactable)
         {
             Depth = Depth + 10f
         };

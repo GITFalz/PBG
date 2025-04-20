@@ -1,6 +1,6 @@
 using OpenTK.Mathematics;
 
-public class UIText : UIElement
+public class UIText : UIRender
 {
     public int MaxCharCount = 20;
     public string Text = "";
@@ -9,8 +9,6 @@ public class UIText : UIElement
     public char[] Characters = [];
     public int CharCount = 0;
     public List<int> Chars = [];
-    public TextMesh textMesh;
-    public TextQuad textQuad = new TextQuad();
     public TextType TextType = TextType.Alphabetic;
     public int TextOffset = 0;
 
@@ -20,28 +18,23 @@ public class UIText : UIElement
         UIController controller, 
         AnchorType anchorType, 
         PositionType positionType, 
+        Vector4 color,
         Vector3 pivot, 
         Vector2 scale, 
         Vector4 offset, 
-        float rotation, 
-        TextMesh textMesh) : 
-        base(name, controller, anchorType, positionType, pivot, scale, offset, rotation)
+        float rotation) : 
+        base(name, controller, anchorType, positionType, color, pivot, scale, offset, rotation, 0, (scale.X, scale.Y, 0, 0))
     {
-        this.textMesh = textMesh;
+
     }
 
     public override void SetVisibility(bool visible)
     {   
-        if (textMesh == null || Visible == visible)
+        if (Visible == visible)
             return;
 
         base.SetVisibility(visible);
-        textMesh.SetVisibility();
-    }
-
-    public override void SetTextMesh(TextMesh textMesh)
-    {
-        this.textMesh = textMesh;
+        uIMesh.SetVisibility();
     }
 
     public UIText SetText(string text, float fontSize)
@@ -77,6 +70,7 @@ public class UIText : UIElement
 
         Scale = new Vector2(MaxCharCount * (20 * FontSize), 20 * FontSize);
         newScale = Scale;
+        SizeSlice = new Vector4(Scale.X, Scale.Y, 0, 0);
 
         return this;
     }
@@ -110,8 +104,7 @@ public class UIText : UIElement
         if (!CanUpdate)
             return;
             
-        textMesh.UpdateElementTransformation(this);
-        textMesh.UpdateMatrices();
+        uIMesh.UpdateElementTransformation(this);
     }
 
     public void UpdateText()
@@ -119,7 +112,7 @@ public class UIText : UIElement
         if (!CanUpdate)
             return;
 
-        textMesh.UpdateText();
+        uIMesh.UpdateText();
     }
 
     public override void Generate()
@@ -135,7 +128,7 @@ public class UIText : UIElement
         {
             Chars.Add(TextShaderHelper.GetChar(character));
         }
-        textMesh?.SetCharacters(Chars, TextOffset);
+        uIMesh?.SetCharacters(Chars, TextOffset);
         return this;
     }
 
@@ -143,7 +136,7 @@ public class UIText : UIElement
     {
         TextOffset = offset;
 
-        textMesh?.AddTextElement(this, ref ElementIndex, offset);
+        uIMesh?.AddElement(this, ref ElementIndex, offset);
 
         offset += MaxCharCount;
     }

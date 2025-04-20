@@ -52,6 +52,7 @@ public class Game : GameWindow
 
     private static Scene _worldScene = new Scene("World");
     private static Scene _worldNoiseEditorScene = new Scene("WorldNoiseEditor");
+    private static Scene _UIEditorScene = new Scene("UIEditor");
     
     
     public static Scene? CurrentScene;
@@ -216,11 +217,16 @@ public class Game : GameWindow
         TransformNode noiseEditorNode = new TransformNode();
         noiseEditorNode.AddChild(noiseEditor);
 
+        // UI
+        TransformNode uiNode = new TransformNode();
+        uiNode.AddChild(new UIEditor());
+
         _worldScene.AddNode(worldGenerationNode, playerNode, menuNode);
         _worldNoiseEditorScene.AddNode(noiseEditorNode, menuNode);
+        _UIEditorScene.AddNode(uiNode, menuNode);
 
-        AddScenes(_worldScene, _worldNoiseEditorScene);
-        LoadScene("WorldNoiseEditor");
+        AddScenes(_worldScene, _worldNoiseEditorScene, _UIEditorScene);
+        LoadScene("UIEditor");
 
         _popUp = new PopUp();
 

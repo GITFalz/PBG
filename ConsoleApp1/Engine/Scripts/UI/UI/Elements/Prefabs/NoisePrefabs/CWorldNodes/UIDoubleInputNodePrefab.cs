@@ -20,8 +20,8 @@ public class UIDoubleInputNodePrefab : UINoiseNodePrefab
     public UIText Value2TextField;
 
     private PositionType _positionType = PositionType.Absolute;
-    private Vector3 _buttonColor = (0.6f, 0.6f, 0.6f);
-    private Vector3 _backgroundColor = (0.5f, 0.5f, 0.5f);
+    private Vector4 _buttonColor = (0.6f, 0.6f, 0.6f, 1f);
+    private Vector4 _backgroundColor = (0.5f, 0.5f, 0.5f, 1f);
     private Vector3 _pivot = (0, 0, 0);
     private Vector2 _scale = (100, 100);
     private Vector4 _offset = (100, 100, 0, 0);
@@ -49,39 +49,36 @@ public class UIDoubleInputNodePrefab : UINoiseNodePrefab
         _offset = offset;
         Type = type;
 
-        UIMesh uiMesh = _controller.UiMesh;
-        TextMesh textMesh = _controller.TextMesh;
-
         ElementCollection = new UICollection($"{name}ElementCollection", controller, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), _scale - (6, 17), (0, 17, 0, 0), 0);
         
         string displayName = type.ToString();
-        NameField = new UIText($"{name}{displayName}", controller, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (_scale.X - 14, 20), (6, 6, 0, 0), 0, textMesh);
+        NameField = new UIText($"{name}{displayName}", controller, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (_scale.X - 14, 20), (6, 6, 0, 0), 0);
         NameField.SetMaxCharCount(displayName.Length).SetText(displayName, 0.5f);
         
-        InputButton1 = new UIButton($"{name}InputButton1", controller, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (20, 20), (0, 22, 0, 0), 0, 11, (10f, 0.05f), uiMesh, UIState.Interactable);
-        InputButton2 = new UIButton($"{name}InputButton2", controller, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (20, 20), (0, 52, 0, 0), 0, 11, (10f, 0.05f), uiMesh, UIState.Interactable);
-        OutputButton = new UIButton($"{name}OutputButton", controller, AnchorType.TopRight, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (20, 20), (0, 22, 0, 0), 0, 11, (10f, 0.05f), uiMesh, UIState.Interactable);
+        InputButton1 = new UIButton($"{name}InputButton1", controller, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (0, 22, 0, 0), 0, 11, (10f, 0.05f), UIState.Interactable);
+        InputButton2 = new UIButton($"{name}InputButton2", controller, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (0, 52, 0, 0), 0, 11, (10f, 0.05f), UIState.Interactable);
+        OutputButton = new UIButton($"{name}OutputButton", controller, AnchorType.TopRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (0, 22, 0, 0), 0, 11, (10f, 0.05f), UIState.Interactable);
 
-        Value1InputField = new UIInputField($"{name}Value1InputField", controller, AnchorType.BottomRight, PositionType.Relative, (0, 0, 0), (20, 20), (-8, -36, 0, 0), 0, 11, (10f, 0.05f), textMesh);
+        Value1InputField = new UIInputField($"{name}Value1InputField", controller, AnchorType.BottomRight, PositionType.Relative, Vector4.One, (0, 0, 0), (20, 20), (-8, -36, 0, 0), 0, 11, (10f, 0.05f));
         Value1InputField.SetMaxCharCount(10).SetText("1.0", 0.5f).SetTextType(TextType.Decimal);
 
-        Value2InputField = new UIInputField($"{name}Value2InputField", controller, AnchorType.BottomRight, PositionType.Relative, (0, 0, 0), (20, 20), (-8, -6, 0, 0), 0, 11, (10f, 0.05f), textMesh);
+        Value2InputField = new UIInputField($"{name}Value2InputField", controller, AnchorType.BottomRight, PositionType.Relative, Vector4.One, (0, 0, 0), (20, 20), (-8, -6, 0, 0), 0, 11, (10f, 0.05f));
         Value2InputField.SetMaxCharCount(10).SetText("1.0", 0.5f).SetTextType(TextType.Decimal);
 
-        Value1TextField = new UIText($"{name}Value1TextField", controller, AnchorType.BottomLeft, PositionType.Relative, (0, 0, 0), (20, 20), (6, -36, 0, 0), 0, textMesh);
+        Value1TextField = new UIText($"{name}Value1TextField", controller, AnchorType.BottomLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (20, 20), (6, -36, 0, 0), 0);
         Value1TextField.SetTextCharCount("Value 1", 0.5f).SetTextType(TextType.Alphanumeric);
 
-        Value2TextField = new UIText($"{name}OffsetYTextField", controller, AnchorType.BottomLeft, PositionType.Relative, (0, 0, 0), (20, 20), (6, -6, 0, 0), 0, textMesh);
+        Value2TextField = new UIText($"{name}OffsetYTextField", controller, AnchorType.BottomLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (20, 20), (6, -6, 0, 0), 0);
         Value2TextField.SetTextCharCount("Value 2", 0.5f).SetTextType(TextType.Alphanumeric);
 
-        UIImage value1Background = new UIImage($"{name}value1Background", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), Value1InputField.newScale + (16, 16), (0, -28, 0, 0), 0, 11, (10f, 0.05f), uiMesh);
-        UIImage value2Background = new UIImage($"{name}value2Background", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), Value2InputField.newScale + (16, 16), (0, 2, 0, 0), 0, 11, (10f, 0.05f), uiMesh);
+        UIImage value1Background = new UIImage($"{name}value1Background", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), Value1InputField.newScale + (16, 16), (0, -28, 0, 0), 0, 11, (10f, 0.05f));
+        UIImage value2Background = new UIImage($"{name}value2Background", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), Value2InputField.newScale + (16, 16), (0, 2, 0, 0), 0, 11, (10f, 0.05f));
 
         ElementCollection.AddElements(NameField, InputButton1, InputButton2, OutputButton, Value1TextField, Value1InputField, value1Background, Value2TextField, Value2InputField, value2Background);
 
         Collection = new UICollection($"{name}Collection", controller, AnchorType.TopLeft, _positionType, _pivot, _scale + (0, 14), _offset, _rotation);
-        MoveButton = new UIButton($"{name}MoveButton", controller, AnchorType.TopLeft, PositionType.Relative, _buttonColor, (0, 0, 0), (_scale.X, 14), (0, 0, 0, 0), 0, 10, (5f, 0.025f), uiMesh, UIState.Interactable);
-        Background = new UIImage($"{name}Background", controller, AnchorType.TopLeft, PositionType.Relative, _backgroundColor, (0, 0, 0), _scale, (0, 14, 0, 0), 0, 10, (10f, 0.05f), uiMesh);
+        MoveButton = new UIButton($"{name}MoveButton", controller, AnchorType.TopLeft, PositionType.Relative, _buttonColor, (0, 0, 0), (_scale.X, 14), (0, 0, 0, 0), 0, 10, (5f, 0.025f), UIState.Interactable);
+        Background = new UIImage($"{name}Background", controller, AnchorType.TopLeft, PositionType.Relative, _backgroundColor, (0, 0, 0), _scale, (0, 14, 0, 0), 0, 10, (10f, 0.05f));
 
         MoveButton.SetOnClick(SetOldMousePosition);
         MoveButton.SetOnHold(MoveNode);

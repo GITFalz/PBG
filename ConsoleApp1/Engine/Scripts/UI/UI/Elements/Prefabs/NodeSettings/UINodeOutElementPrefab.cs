@@ -13,13 +13,11 @@ public class UINodeOutElementPrefab : UIPrefab
     {
         _scale = scale;
 
-        UIMesh uiMesh = Controller.UiMesh;
-
         Collection = new UICollection("NodeOutElementPrefabCollection", controller, AnchorType.TopRight, PositionType.Relative, (0, 0, 0), _scale, Offset, 0);
-        Background = new UIImage("NodeOutElementPrefabBackground", controller, AnchorType.TopRight, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), _scale, (0, 0, 0, 0), 0, 10, (10, 0.05f), uiMesh);
+        Background = new UIImage("NodeOutElementPrefabBackground", controller, AnchorType.TopRight, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), _scale, (0, 0, 0, 0), 0, 10, (10, 0.05f));
         
         ElementCollection = new UICollection("NodeOutElementPrefabElementCollection", controller, AnchorType.TopRight, PositionType.Relative, (0.5f, 0.5f, 0.5f), _scale, (0, 0, 0, 0), 0);
-        OutputButton = new UIButton("NodeOutElementPrefabOutputImage", controller, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (30, 30), (-5, 0, 0, 0), 0, 11, (10, 0.05f), uiMesh, UIState.Interactable);
+        OutputButton = new UIButton("NodeOutElementPrefabOutputImage", controller, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (30, 30), (-5, 0, 0, 0), 0, 11, (10, 0.05f), UIState.Interactable);
 
         ElementCollection.AddElements(OutputButton);
 
