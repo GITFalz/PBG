@@ -2,13 +2,31 @@ using OpenTK.Mathematics;
 
 public class TransformNode : MainNode
 {
+    public static TransformNode Empty = new();
+
     public Vector3 Position = Vector3.Zero;
     public List<ScriptingNode> Children = new List<ScriptingNode>();
+
+    public List<Action> OnStart = [];
+    public List<Action> OnAwake = [];
+    public List<Action> OnResize = [];
+    public List<Action> OnUpdate = [];
+    public List<Action> OnFixedUpdate = [];
+    public List<Action> OnRender = [];
+    public List<Action> OnExit = [];
 
     public void AddChild(ScriptingNode child)
     {
         Children.Add(child);
         child.Transform = this;
+
+        if (child.GetAction("Start", out Action? action)) OnStart.Add(action);
+        if (child.GetAction("Awake", out action)) OnAwake.Add(action);
+        if (child.GetAction("Resize", out action)) OnResize.Add(action);
+        if (child.GetAction("Update", out action)) OnUpdate.Add(action);
+        if (child.GetAction("FixedUpdate", out action)) OnFixedUpdate.Add(action);
+        if (child.GetAction("Render", out action)) OnRender.Add(action);
+        if (child.GetAction("Exit", out action)) OnExit.Add(action);
     }
 
     public T GetComponent<T>() where T : ScriptingNode
@@ -29,57 +47,57 @@ public class TransformNode : MainNode
 
     public void Awake()
     {
-        foreach (ScriptingNode child in Children)
+        foreach (var action in OnAwake)
         {
-            child.Awake();
+            action.Invoke();
         }
     }
 
     public void Exit()
     {
-        foreach (ScriptingNode child in Children)
+        foreach (var action in OnExit)
         {
-            child.Exit();
+            action.Invoke();
         }
     }
 
     public void FixedUpdate()
     {
-        foreach (ScriptingNode child in Children)
+        foreach (var action in OnFixedUpdate)
         {
-            child.FixedUpdate();
+            action.Invoke();
         }
     }
 
     public void Render()
     {
-        foreach (ScriptingNode child in Children)
+        foreach (var action in OnRender)
         {
-            child.Render();
+            action.Invoke();
         }
     }
 
     public void Resize()
     {
-        foreach (ScriptingNode child in Children)
+        foreach (var action in OnResize)
         {
-            child.Resize();
+            action.Invoke();
         }
     }
 
     public void Start()
     {
-        foreach (ScriptingNode child in Children)
+        foreach (var action in OnStart)
         {
-            child.Start();
+            action.Invoke();
         }
     }
 
     public void Update()
     {
-        foreach (ScriptingNode child in Children)
+        foreach (var action in OnUpdate)
         {
-            child.Update();
+            action.Invoke();
         }
     }
 }

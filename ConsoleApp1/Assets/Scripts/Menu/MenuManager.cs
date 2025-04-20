@@ -19,18 +19,16 @@ public class MenuManager : ScriptingNode
         MainMenuController = new UIController();
     }
 
-    public override void Start()
+    void Start()
     {
         if (_started)
             return;
 
         _mainMenuAction = OpenMainMenu;
 
-        UIMesh uiMesh = MainMenuController.UiMesh;
-
         UICollection mainMenuCollection = new UICollection("mainMenuCollection", MainMenuController, AnchorType.MiddleCenter, PositionType.Absolute, (0, 0, 0), (600, 800), (0, 0, 0, 0), 0);
 
-        UIImage mainMenuBackground = new UIImage("mainMenuBackground", MainMenuController, AnchorType.MiddleCenter, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (600, 800), (0, 0, 0, 0), 0, 0, (10, 0.05f), uiMesh);
+        UIImage mainMenuBackground = new UIImage("mainMenuBackground", MainMenuController, AnchorType.MiddleCenter, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (600, 800), (0, 0, 0, 0), 0, 0, (10, 0.05f));
 
         UICollection mainMenuButtonCollection = new UICollection("mainMenuButtonCollection", MainMenuController, AnchorType.MiddleCenter, PositionType.Relative, (0, 0, 0), (600, 800), (0, 0, 0, 0), 0);
 
@@ -56,17 +54,17 @@ public class MenuManager : ScriptingNode
         _started = true;
     }
 
-    public override void Awake()
+    void Awake()
     {
 
     }
 
-    public override void Resize()
+    void Resize()
     {
         MainMenuController.Resize();
     }
 
-    public override void Update()
+    void Update()
     {
         if (Input.IsKeyPressed(Keys.Escape))
         {
@@ -76,7 +74,7 @@ public class MenuManager : ScriptingNode
         _updateAction.Invoke();
     }
 
-    public override void Render()
+    void Render()
     {
         _renderAction.Invoke();
     }

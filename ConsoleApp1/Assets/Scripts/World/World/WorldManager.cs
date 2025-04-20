@@ -78,7 +78,7 @@ public class WorldManager : ScriptingNode
         */
     }
     
-    public override void Awake()
+    void Awake()
     {
         Console.WriteLine("World Manager");
         _lastPlayerPosition = (int.MaxValue, int.MaxValue, int.MaxValue);
@@ -95,7 +95,7 @@ public class WorldManager : ScriptingNode
         _render = type == RenderType.Solid ? RenderSolid : RenderWireframe;
     }
     
-    public override void Update()
+    void Update()
     {
         if (Input.IsKeyPressed(Keys.U))
             ChunkManager.Clear();
@@ -153,7 +153,7 @@ public class WorldManager : ScriptingNode
 
     }
 
-    public override void Render()
+    void Render()
     {
         _render.Invoke();
     }
@@ -342,10 +342,9 @@ public class WorldManager : ScriptingNode
         }
     }
 
-    public override void Exit()
+    void Exit()
     {
         Delete();
-        base.Exit();
     }
 
     public HashSet<Vector3i> SetChunks()

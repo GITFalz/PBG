@@ -63,7 +63,7 @@ public class PlayerStateMachine : ScriptingNode
         Instance = this;
     }
     
-    public override void Start()
+    void Start()
     {
         new OldAnimationManager();
         
@@ -93,12 +93,12 @@ public class PlayerStateMachine : ScriptingNode
         _playerMesh.UpdateMesh();
     }
 
-    public override void Resize()
+    void Resize()
     {
         
     }
 
-    public override void Awake()
+    void Awake()
     {
         Transform.Position = new Vector3(0, 200, 0);
         physicsBody.SetPosition(Transform.Position);
@@ -112,11 +112,9 @@ public class PlayerStateMachine : ScriptingNode
         camera.Pitch = _lastCameraPitch;
         
         camera.UpdateVectors();
-        
-        base.Awake();
     }
 
-    public override void Update()
+    void Update()
     {      
         Camera camera = Game.Camera;
 
@@ -184,7 +182,7 @@ public class PlayerStateMachine : ScriptingNode
         PlayerData.Position = Transform.Position;
     }
     
-    public override void FixedUpdate()
+    void FixedUpdate()
     {
         if (!PlayerData.CanMove || Game.Camera.GetCameraMode() == CameraMode.Free || !Game.MoveTest)
             return;
@@ -192,7 +190,7 @@ public class PlayerStateMachine : ScriptingNode
         _currentState.FixedUpdate(this);
     }
 
-    public override void Render()
+    void Render()
     {
         Camera camera = Game.Camera;
 
@@ -251,7 +249,7 @@ public class PlayerStateMachine : ScriptingNode
         physicsBody.physicsPosition = position;
     }
 
-    public override void Exit()
+    void Exit()
     {
         Camera camera = Game.Camera;
 
@@ -260,8 +258,6 @@ public class PlayerStateMachine : ScriptingNode
         _lastCameraPosition = camera.Position;
         _lastCameraYaw = camera.Yaw;
         _lastCameraPitch = camera.Pitch;
-        
-        base.Exit();
     }
 
     public bool IsGrounded()

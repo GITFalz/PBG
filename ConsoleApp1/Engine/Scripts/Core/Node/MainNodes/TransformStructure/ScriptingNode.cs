@@ -1,13 +1,25 @@
-public abstract class ScriptingNode
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+
+public class ScriptingNode
 {
     public string Name = "ScriptingNode";
-    public TransformNode Transform;
+    public TransformNode Transform = TransformNode.Empty;
 
-    public virtual void Resize() {}
-    public virtual void Start() {}
-    public virtual void Awake() {}
-    public virtual void Update() {}
-    public virtual void FixedUpdate() {}
-    public virtual void Render() {}
-    public virtual void Exit() {}
+    public bool GetAction(string methodName, [NotNullWhen(true)] out Action? action)
+    {
+        if (GetMethod(methodName, out MethodInfo? methodInfo))
+        {
+            action = (Action)Delegate.CreateDelegate(typeof(Action), this, methodInfo);
+            return true;
+        }
+        action = null;
+        return false;
+    }
+
+    public bool GetMethod(string methodName, [NotNullWhen(true)] out MethodInfo? methodInfo)
+    {
+        methodInfo = GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public); 
+        return methodInfo != null;
+    }
 }

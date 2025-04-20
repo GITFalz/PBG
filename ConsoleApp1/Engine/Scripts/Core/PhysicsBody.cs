@@ -30,7 +30,7 @@ public class PhysicsBody : ScriptingNode
         EnableGravity();
     }
 
-    public override void Exit()
+    void Exit()
     {
         Acceleration = Vector3.Zero;
         Velocity = Vector3.Zero;
@@ -63,7 +63,7 @@ public class PhysicsBody : ScriptingNode
         Acceleration += direction.Normalized() * maxSpeed / Mass;
     }
 
-    public override void Update()
+    void Update()
     {
         if (!PlayerData.CanMove)
             return;
@@ -71,7 +71,7 @@ public class PhysicsBody : ScriptingNode
         Transform.Position = Vector3.Lerp(Transform.Position, physicsPosition, GameTime.DeltaTime * interpolationSpeed);
     }
     
-    public override void FixedUpdate()
+    void FixedUpdate()
     {
         if (!PlayerData.CanMove)
             return;
