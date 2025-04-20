@@ -57,7 +57,7 @@ public class NoiseEditor : ScriptingNode
 
         // *--- DisplayController ---*
         UIMesh displayUiMesh = DisplayController.UiMesh;
-        TextMesh displayTextMesh = DisplayController.textMesh;
+        TextMesh displayTextMesh = DisplayController.TextMesh;
 
         _displayPrefab = new(DisplayWindowSize, (DisplayPosition.X, DisplayPosition.Y, 0, 0), DisplayController)
         {
@@ -76,11 +76,9 @@ public class NoiseEditor : ScriptingNode
         });
         _displayPrefab.Background.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
 
-        DisplayController.AddElements(_displayPrefab.GetMainElements());
-
         // *--- MainWindowController ---*
         UIMesh windowUiMesh = MainWindowController.UiMesh;
-        TextMesh windowTextMesh = MainWindowController.textMesh;
+        TextMesh windowTextMesh = MainWindowController.TextMesh;
 
         _mainWindowCollection = new("MainWindowCollection", MainWindowController, AnchorType.TopLeft, PositionType.Absolute, (1, 1, 1), (NodePanelWidth, NodePanelHeight), (0, 0, 0, 0), 5f)
         {
@@ -97,15 +95,25 @@ public class NoiseEditor : ScriptingNode
 
         // *--- SidePanelController ---*
         UIMesh sideUiMesh = SidePanelController.UiMesh;
-        TextMesh sideTextMesh = SidePanelController.textMesh;
+        TextMesh sideTextMesh = SidePanelController.TextMesh;
 
-        UIImage sidePanelBackground = new("SidePanelBackground", SidePanelController, AnchorType.ScaleRight, PositionType.Absolute, (0.6f, 0.6f, 0.6f), (0, 0, 0), (300, Game.Height), (0, 0, 0, 0), 5f, 0, (10, 0.05f), sideUiMesh);
+        UICollection sidePanelCollection = new("SidePanelCollection", SidePanelController, AnchorType.ScaleRight, PositionType.Absolute, (0.5f, 0.5f, 0.5f), (300, Game.Height), (0, 0, 0, 0), 0f);
+        
+        UIImage sidePanelBackground = new("SidePanelBackground", SidePanelController, AnchorType.ScaleRight, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (300, Game.Height), (0, 0, 0, 0), 0, 10, (10, 0.05f), sideUiMesh);
+        UIVerticalCollection sidePanelVerticalCollection = new("SidePanelVerticalCollection", SidePanelController, AnchorType.ScaleRight, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), (10, 10, 10, 10), 5f, 0);
 
-        SidePanelController.AddElements(sidePanelBackground);
+        UIInputField nodeNameField = new("NodeNameField", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (280, 30), (0, 0, 0, 0), 0f, 10, (10f, 0.05f), sideTextMesh);
+        nodeNameField.SetTextCharCount("Noise", 0.5f).SetTextType(TextType.Alphanumeric);
+
+        sidePanelVerticalCollection.AddElements(nodeNameField);
+
+        sidePanelCollection.AddElements(sidePanelBackground, sidePanelVerticalCollection);
+
+        SidePanelController.AddElements(sidePanelCollection);
 
         // *--- NodeController ---*
         UIMesh nodeUiMesh = NodeController.UiMesh;
-        TextMesh nodeTextMesh = NodeController.textMesh;
+        TextMesh nodeTextMesh = NodeController.TextMesh;
 
         UISampleNodePrefab sampleNodePrefab = new("SampleNodePrefab", NodeController, (100, 100, 0, 0))
         {
@@ -120,11 +128,9 @@ public class NoiseEditor : ScriptingNode
         NoiseNodeManager.AddNode(sampleNodePrefab);
         NoiseNodeManager.AddNode(displayNodePrefab);
 
-        NodeController.AddElements(sampleNodePrefab, displayNodePrefab);
-
         // *--- SelectionController ---*
         UIMesh selectionUiMesh = SelectionController.UiMesh;
-        TextMesh selectionTextMesh = SelectionController.textMesh;
+        TextMesh selectionTextMesh = SelectionController.TextMesh;
 
         UIMesh maskSelectionMesh = SelectionController.maskMesh;
         UIMesh maskedSelectionMesh = SelectionController.maskeduIMesh;
@@ -184,7 +190,6 @@ public class NoiseEditor : ScriptingNode
             };
 
             NoiseNodeManager.AddNode(sampleNodePrefab);
-            NodeController.AddElements(sampleNodePrefab);
             SelectionCollection.SetVisibility(false);
         });
 
@@ -314,7 +319,6 @@ public class NoiseEditor : ScriptingNode
         };
 
         NoiseNodeManager.AddNode(singleInputNodePrefab);
-        NodeController.AddElements(singleInputNodePrefab);
         SelectionCollection.SetVisibility(false);
     }
 
@@ -326,7 +330,6 @@ public class NoiseEditor : ScriptingNode
         };
 
         NoiseNodeManager.AddNode(doubleInputNodePrefab);
-        NodeController.AddElements(doubleInputNodePrefab);
         SelectionCollection.SetVisibility(false);
     }
 

@@ -16,8 +16,8 @@ public class UIInputField : UIText
         float rotation, 
         int textureIndex, 
         Vector2 slice, 
-        TextMesh text) : 
-        base(name, controller, anchorType, positionType, pivot, scale, offset, rotation, text)
+        TextMesh text
+    ) : base(name, controller, anchorType, positionType, pivot, scale, offset, rotation, text)
     {
         SetOnClick(() => UIController.AssignInputField(this));
     }

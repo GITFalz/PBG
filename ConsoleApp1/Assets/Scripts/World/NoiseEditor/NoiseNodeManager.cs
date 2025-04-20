@@ -115,10 +115,6 @@ public static class NoiseNodeManager
 
     public static void GenerateLines()
     {
-        Console.WriteLine("Generating lines");
-        if (OutputGateConnectors.Count == 0 || InputGateConnectors.Count == 0)
-            return;
-
         _connectorLineVertices.Clear();
 
         int index = 0;
@@ -131,7 +127,6 @@ public static class NoiseNodeManager
             index += 2;
         }
 
-        Console.WriteLine($"Line count: {_connectorLineVertices.Count}");
         _connectorLineVBO.Renew(_connectorLineVertices);
         _connectorLineVAO.LinkToVAO(0, 3, _connectorLineVBO);
 
@@ -250,8 +245,6 @@ public static class NoiseNodeManager
                 {
                     displayNode.InputGateConnector.Name = inputName;
                 }
-
-                NodeController.AddElements(displayNodePrefab);
             }
             else if (nodeType == "DoubleInputOperation")
             {   
@@ -278,8 +271,6 @@ public static class NoiseNodeManager
                     doubleInputNode.Value1 = float.Parse(value1);
                     doubleInputNode.Value2 = float.Parse(value2);
                 }
-                
-                NodeController.AddElements(doubleInputNodePrefab);
             }
             else if (nodeType == "MinMaxInputOperation")
             {
@@ -304,8 +295,6 @@ public static class NoiseNodeManager
                     minMaxInputNode.Min = float.Parse(min);
                     minMaxInputNode.Max = float.Parse(max);
                 }
-
-                NodeController.AddElements(minMaxInputNodePrefab);
             }
             else if (nodeType == "Sample")
             {
@@ -326,8 +315,6 @@ public static class NoiseNodeManager
                     sampleNode.Scale = float.Parse(scale);
                     sampleNode.Offset = Parse.Vec2(noiseOffset);
                 }
-
-                NodeController.AddElements(sampleNodePrefab);
             }
         }
 

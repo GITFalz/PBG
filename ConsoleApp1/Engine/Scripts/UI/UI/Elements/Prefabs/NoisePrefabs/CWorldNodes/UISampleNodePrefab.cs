@@ -2,7 +2,6 @@ using OpenTK.Mathematics;
 
 public class UISampleNodePrefab : UINoiseNodePrefab
 {
-    public UICollection Collection;
     public UIButton MoveButton;
     public Action AddedMoveAction = () => { };
     public UIImage Background;
@@ -21,14 +20,12 @@ public class UISampleNodePrefab : UINoiseNodePrefab
 
     public Vector3 OutputPosition => OutputButton.Center;
 
-    private PositionType _positionType = PositionType.Absolute;
-    private Vector3 _buttonColor = (0.6f, 0.6f, 0.6f);
-    private Vector3 _backgroundColor = (0.5f, 0.5f, 0.5f);
-    private Vector3 _pivot = (0, 0, 0);
-    private Vector2 _scale = (100, 100);
-    private Vector4 _offset = (100, 100, 0, 0);
-    private float _rotation = 0;
-    private UIController _controller;
+    public PositionType PositionType = PositionType.Absolute;
+    public Vector3 ButtonColor = (0.6f, 0.6f, 0.6f);
+    public Vector3 BackgroundColor = (0.5f, 0.5f, 0.5f);
+    public Vector3 Pivot = (0, 0, 0);
+    public Vector2 Scale = (100, 100);
+    public float Rotation = 0;
 
     public float Depth {
         get => Collection.Depth;
@@ -37,22 +34,16 @@ public class UISampleNodePrefab : UINoiseNodePrefab
 
     private Vector2 _oldMouseButtonPosition = new Vector2(0, 0);
 
-    public UISampleNodePrefab(
-        string name, 
-        UIController controller,
-        Vector4 offset
-    ){
-        Name = name;
-        _scale = (300, 150);
-        _controller = controller;
-        _offset = offset;
+    public UISampleNodePrefab(string name, UIController controller, Vector4 offset) : base(name, controller, offset)
+    {
+        Scale = (300, 150);
 
-        UIMesh uiMesh = _controller.UiMesh;
-        TextMesh textMesh = _controller.textMesh;
+        UIMesh uiMesh = Controller.UiMesh;
+        TextMesh textMesh = Controller.TextMesh;
 
-        ElementCollection = new UICollection($"{name}ElementCollection", controller, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), _scale - (6, 17), (0, 17, 0, 0), 0);
+        ElementCollection = new UICollection($"{name}ElementCollection", controller, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), Scale - (6, 17), (0, 17, 0, 0), 0);
         
-        NameField = new UIText($"{name}Text", controller, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (_scale.X - 14, 20), (5, 6, 0, 0), 0, textMesh);
+        NameField = new UIText($"{name}Text", controller, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (Scale.X - 14, 20), (5, 6, 0, 0), 0, textMesh);
         NameField.SetTextCharCount("Sample", 0.5f).SetTextType(TextType.Alphanumeric);
         
         OutputButton = new UIButton($"{name}OutputButton", controller, AnchorType.TopRight, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (20, 20), (0, 22, 0, 0), 0, 11, (10f, 0.05f), uiMesh, UIState.Interactable);
@@ -82,40 +73,16 @@ public class UISampleNodePrefab : UINoiseNodePrefab
 
         ElementCollection.AddElements(NameField, OutputButton, ScaleInputField, OffsetXInputField, OffsetYInputField, ScaleTextField, OffsetXTextField, OffsetYTextField, scaleBackground, offsetXBackground, offsetYBackground);
 
-        Collection = new UICollection($"{name}Collection", controller, AnchorType.TopLeft, _positionType, _pivot, _scale + (0, 14), _offset, _rotation);
-        MoveButton = new UIButton($"{name}MoveButton", controller, AnchorType.TopLeft, PositionType.Relative, _buttonColor, (0, 0, 0), (_scale.X, 14), (0, 0, 0, 0), 0, 10, (5f, 0.025f), uiMesh, UIState.Interactable);
-        Background = new UIImage($"{name}Background", controller, AnchorType.TopLeft, PositionType.Relative, _backgroundColor, (0, 0, 0), _scale, (0, 14, 0, 0), 0, 10, (10f, 0.05f), uiMesh);
+        Collection = new UICollection($"{name}Collection", controller, AnchorType.TopLeft, PositionType, Pivot, Scale + (0, 14), Offset, Rotation);
+        MoveButton = new UIButton($"{name}MoveButton", controller, AnchorType.TopLeft, PositionType.Relative, ButtonColor, (0, 0, 0), (Scale.X, 14), (0, 0, 0, 0), 0, 10, (5f, 0.025f), uiMesh, UIState.Interactable);
+        Background = new UIImage($"{name}Background", controller, AnchorType.TopLeft, PositionType.Relative, BackgroundColor, (0, 0, 0), Scale, (0, 14, 0, 0), 0, 10, (10f, 0.05f), uiMesh);
 
         MoveButton.SetOnClick(SetOldMousePosition);
         MoveButton.SetOnHold(MoveNode);
 
         Collection.AddElements(MoveButton, Background, ElementCollection);
-    }
 
-    public override UIElement[] GetMainElements()
-    {
-        return [Collection];
-    }
-
-    public override void SetVisibility(bool visible)
-    {
-        Collection.SetVisibility(visible);
-
-        UIMesh uiMesh = _controller.UiMesh;
-        TextMesh textMesh = _controller.textMesh;
-
-        uiMesh.UpdateVisibility();
-        textMesh.UpdateVisibility();
-    }
-
-    public override void Clear()
-    {
-        Collection.Clear();
-    }
-
-    public override void Destroy()
-    {
-        _controller.RemoveElements(GetMainElements());
+        Controller.AddElements(this);
     }
 
     private void SetOldMousePosition() => _oldMouseButtonPosition = Input.GetMousePosition();

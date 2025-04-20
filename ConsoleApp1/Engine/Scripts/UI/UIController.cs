@@ -8,7 +8,7 @@ public class UIController
     public static UIController Empty = new();
 
     public UIMesh UiMesh = new();
-    public TextMesh textMesh = new();
+    public TextMesh TextMesh = new();
 
     public UIMesh maskMesh = new();
     public UIMesh maskeduIMesh = new();
@@ -48,31 +48,6 @@ public class UIController
         Controllers.Add(this);
     }
 
-    public void SetPosition(Vector3 position)
-    {
-        Position = position;
-        ModelMatrix = Matrix4.CreateScale(new Vector3(Scale, Scale, 1f)) * Matrix4.CreateTranslation(Position);
-        _localPosition = Vector3.TransformPosition((0, 0, 0), ModelMatrix);
-    }
-
-    public void SetScale(float scale)
-    {
-        Vector3 mousePosition = Input.GetMousePosition3();
-
-        Vector3 offset = mousePosition - Position;
-        Vector3 position = offset / Scale;
-
-        Vector3 mPosition = position * scale;
-        Vector3 mOffset = mPosition - mousePosition;
-        Vector3 newPosition = mOffset * -1;
-        Position = newPosition;
-
-        Scale = scale;
-        ModelMatrix = Matrix4.CreateScale(new Vector3(Scale, Scale, 1f)) * Matrix4.CreateTranslation(Position);
-        _localPosition = Vector3.TransformPosition((0, 0, 0), ModelMatrix);
-    }
-    
-
     // Adds the element to the list of elements to be added, but does not add it to the UIController yet.
     // This is useful for adding elements in a single pass, rather than immediately adding them.
     // And it also needs to be done at the start of the frame otherwise the list could change it's size mid-loop.
@@ -109,7 +84,7 @@ public class UIController
         RegenerateBuffers = true;
     }
 
-    private void Internal_AddElement(UIElement element, MeshType type = MeshType.UnMasked, bool test = false)
+    private void Internal_AddElement(UIElement element)
     {
         if (element.PositionType == PositionType.Absolute)
             AbsoluteElements.Add(element);
@@ -130,7 +105,7 @@ public class UIController
         {
             foreach (var e in collection.Elements)
             {
-                Internal_AddElement(e, type, test);
+                Internal_AddElement(e);
             }
         }
 
@@ -142,6 +117,14 @@ public class UIController
     // Adds the element to the list of elements to be removed, but does not remove it from the UIController yet.
     // This is needed for removing elements in a single pass, rather than immediately removing them.
     // And it also needs to be done at the start of the frame otherwise the list could change it's size mid-loop.
+    public void RemoveElements(params UIPrefab[] elements)
+    {
+        foreach (var element in elements)
+        {
+            RemoveElements(element.GetMainElements());
+        }
+    }
+
     public void RemoveElements(params UIElement[] elements)
     {
         foreach (var element in elements)
@@ -187,6 +170,32 @@ public class UIController
 
         element.CanUpdate = false;
         Elements.Remove(element);
+    }
+
+
+
+    public void SetPosition(Vector3 position)
+    {
+        Position = position;
+        ModelMatrix = Matrix4.CreateScale(new Vector3(Scale, Scale, 1f)) * Matrix4.CreateTranslation(Position);
+        _localPosition = Vector3.TransformPosition((0, 0, 0), ModelMatrix);
+    }
+
+    public void SetScale(float scale)
+    {
+        Vector3 mousePosition = Input.GetMousePosition3();
+
+        Vector3 offset = mousePosition - Position;
+        Vector3 position = offset / Scale;
+
+        Vector3 mPosition = position * scale;
+        Vector3 mOffset = mPosition - mousePosition;
+        Vector3 newPosition = mOffset * -1;
+        Position = newPosition;
+
+        Scale = scale;
+        ModelMatrix = Matrix4.CreateScale(new Vector3(Scale, Scale, 1f)) * Matrix4.CreateTranslation(Position);
+        _localPosition = Vector3.TransformPosition((0, 0, 0), ModelMatrix);
     }
 
 
@@ -374,7 +383,7 @@ public class UIController
         memory += "ElementsToAdd: " + ElementsToAdd.Count + "\n";
         memory += "ElementsToRemove: " + ElementsToRemove.Count + "\n";
         memory += "UiMesh: " + UiMesh.ElementCount + "\n";
-        memory += "TextMesh: " + textMesh.ElementCount + "\n";
+        memory += "TextMesh: " + TextMesh.ElementCount + "\n";
         memory += "MaskMesh: " + maskMesh.ElementCount + "\n";
         memory += "MaskedUiMesh: " + maskeduIMesh.ElementCount + "\n";
         memory += "MaskedTextMesh: " + maskedTextMesh.ElementCount + "\n";
@@ -384,7 +393,7 @@ public class UIController
     public void Buffers()
     {
         UiMesh.GenerateBuffers();
-        textMesh.GenerateBuffers();
+        TextMesh.GenerateBuffers();
         maskMesh.GenerateBuffers();
         maskeduIMesh.GenerateBuffers(); 
         maskedTextMesh.GenerateBuffers();
@@ -408,7 +417,7 @@ public class UIController
             ElementsToRemove.Clear();
 
             UiMesh.Clear();
-            textMesh.Clear();
+            TextMesh.Clear();
             maskMesh.Clear();
             maskeduIMesh.Clear();
             maskedTextMesh.Clear();
@@ -422,7 +431,7 @@ public class UIController
         if (UpdateVisibility)
         {
             UiMesh.UpdateVisibility();
-            textMesh.UpdateVisibility();
+            TextMesh.UpdateVisibility();
             maskMesh.UpdateVisibility();
             maskeduIMesh.UpdateVisibility();
             maskedTextMesh.UpdateVisibility();
@@ -433,7 +442,7 @@ public class UIController
 
     public void UpdateMatrices()
     { 
-        textMesh.UpdateMatrices();
+        TextMesh.UpdateMatrices();
         maskedTextMesh.UpdateMatrices();
     }
 
@@ -456,7 +465,7 @@ public class UIController
     public void Clear()
     {
         UiMesh.Clear();
-        textMesh.Clear();
+        TextMesh.Clear();
         foreach (var element in Elements)
         {
             if (element is UIInputField inputField && InputFields.Contains(inputField))
@@ -546,7 +555,7 @@ public class UIController
             _uItexture.Unbind();
         }
 
-        if (textMesh.ElementCount > 0)
+        if (TextMesh.ElementCount > 0)
         {
             _textShader.Bind();
             _textTexture.Bind();
@@ -555,7 +564,7 @@ public class UIController
             GL.UniformMatrix4(UIData.textProjectionLoc, true, ref orthographicsProjectionMatrix);
             GL.Uniform1(UIData.charsLoc, 1);
             
-            textMesh.Render();
+            TextMesh.Render();
             
             _textShader.Unbind();
             _textTexture.Unbind();

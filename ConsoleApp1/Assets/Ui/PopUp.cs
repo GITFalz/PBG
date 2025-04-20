@@ -38,7 +38,7 @@ public class PopUp
         UpdateAction = UpdateMessage;
 
         UIMesh messageUiMesh = MessageUI.UiMesh;
-        TextMesh messageTextMesh = MessageUI.textMesh;
+        TextMesh messageTextMesh = MessageUI.TextMesh;
 
         MessagePanel = new("PopupPanel", MessageUI, AnchorType.MiddleCenter, PositionType.Absolute, (0.5f, 0.5f, 0.5f), (0, 0, 0), (500, 80), (0, 0, 0, 0), 0, 0, (10, 0.05f), messageUiMesh);
         MessageCollection = new("MessageCollection", MessageUI, AnchorType.BottomCenter, PositionType.Absolute, (0, 0, 0), (500, 80), (0, 80, 0, 0), 0);
@@ -58,7 +58,7 @@ public class PopUp
 
 
         UIMesh confirmationUiMesh = ConfirmationUI.UiMesh;
-        TextMesh confirmationTextMesh = ConfirmationUI.textMesh;
+        TextMesh confirmationTextMesh = ConfirmationUI.TextMesh;
 
         ConfirmationPanel = new("AlertPanel", ConfirmationUI, AnchorType.MiddleCenter, PositionType.Absolute, (0.5f, 0.5f, 0.5f), (0, 0, 0), (500, 80), (0, 0, 0, 0), 0, 0, (10, 0.05f), confirmationUiMesh);
         ConfirmationCollection = new("AlertCollection", ConfirmationUI, AnchorType.BottomCenter, PositionType.Absolute, (0, 0, 0), (500, 80), (0, 80, 0, 0), 0);

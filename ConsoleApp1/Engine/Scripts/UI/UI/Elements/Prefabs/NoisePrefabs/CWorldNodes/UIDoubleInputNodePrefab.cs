@@ -41,7 +41,8 @@ public class UIDoubleInputNodePrefab : UINoiseNodePrefab
         UIController controller,
         Vector4 offset,
         DoubleInputOperationType type
-    ){
+    ) : base(name, controller, offset)
+    {
         Name = "display";
         _scale = (300, 150);
         _controller = controller;
@@ -49,7 +50,7 @@ public class UIDoubleInputNodePrefab : UINoiseNodePrefab
         Type = type;
 
         UIMesh uiMesh = _controller.UiMesh;
-        TextMesh textMesh = _controller.textMesh;
+        TextMesh textMesh = _controller.TextMesh;
 
         ElementCollection = new UICollection($"{name}ElementCollection", controller, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), _scale - (6, 17), (0, 17, 0, 0), 0);
         
@@ -86,33 +87,8 @@ public class UIDoubleInputNodePrefab : UINoiseNodePrefab
         MoveButton.SetOnHold(MoveNode);
 
         Collection.AddElements(MoveButton, Background, ElementCollection);
-    }
 
-    public override UIElement[] GetMainElements()
-    {
-        return [Collection];
-    }
-
-    public override void SetVisibility(bool visible)
-    {
-        Collection.SetVisibility(visible);
-
-        UIMesh uiMesh = _controller.UiMesh;
-        TextMesh textMesh = _controller.textMesh;
-
-        uiMesh.UpdateVisibility();
-        textMesh.UpdateVisibility();
-    }
-
-    public override void Clear()
-    {
-        Collection.Clear();
-    }
-
-    
-    public override void Destroy()
-    {
-        _controller.RemoveElements(GetMainElements());
+        Controller.AddElements(this);
     }
 
     private void SetOldMousePosition() => _oldMouseButtonPosition = Input.GetMousePosition();

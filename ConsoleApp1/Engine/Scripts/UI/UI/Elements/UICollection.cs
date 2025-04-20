@@ -40,7 +40,7 @@ public class UICollection : UIElement
     {
         foreach (UIPrefab e in element)
             AddElements(e.GetMainElements());
-        return this;
+        return this; 
     }
 
     public virtual UICollection AddElements(params UIElement[] element)

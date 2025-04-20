@@ -6,7 +6,7 @@ public static class Timer
     private static UIVerticalCollection _timesCollection = new("Times", _uiTimes, AnchorType.TopRight, PositionType.Absolute, (0, 0, 0), (100, 1000), (-5, 5, 5, 5), (0, 0, 0, 0), 5, 0);
     private static List<(UIText, UIText)> _timesPool = new List<(UIText, UIText)>();
     private static List<(string, double)> _times = new List<(string, double)>();
-    private static TextMesh _textMesh = _uiTimes.textMesh;
+    private static TextMesh _textMesh = _uiTimes.TextMesh;
     private static int _timerIndex = 0;
     private static Stopwatch _stopwatch = new();
 

@@ -2,12 +2,9 @@ using OpenTK.Mathematics;
 
 public class UITextButton : UIPrefab
 {
-    public UICollection Collection;
     public UICollection TextCollection;
     public UIText Text;
     public UIButton Button;
-
-    public UIController _controller;
 
     public UITextButton(
         string name, 
@@ -22,40 +19,20 @@ public class UITextButton : UIPrefab
         int? textureIndex, 
         Vector2? slice,
         UIState state = UIState.Interactable
-    ){
-        _controller = controller;
-        
-        UIMesh uiMesh = controller.UiMesh;
-        TextMesh textMesh = controller.textMesh;
+    ) : base(name, controller, offset ?? (0, 0, 0, 0))
+    {
+        UIMesh uiMesh = Controller.UiMesh;
+        TextMesh textMesh = Controller.TextMesh;
 
-        Collection = new UICollection($"{name}Collection", controller, anchorType, positionType, pivot ?? (0, 0, 0), scale ?? (100, 100), offset ?? (0, 0, 0, 0), rotation ?? 0);
+        Collection = new UICollection($"{name}Collection", controller, anchorType, positionType, pivot ?? (0, 0, 0), scale ?? (100, 100), Offset, rotation ?? 0);
         TextCollection = new UICollection($"{name}TextCollection", controller, AnchorType.MiddleCenter, PositionType.Relative, (0, 0, 0), scale ?? (100, 100), (0, 0, 0, 0), 0);
         Text = new UIText($"{name}Text", controller, AnchorType.MiddleCenter, PositionType.Relative, (0, 0, 0), (0, 0), (0, 0, 0, 0), 0, textMesh);
         Button = new UIButton($"{name}Button", controller, AnchorType.MiddleCenter, PositionType.Relative, color ?? (0.6f, 0.6f, 0.6f), (0, 0, 0), scale ?? (100, 100), (0, 0, 0, 0), 0, textureIndex ?? 0, slice ?? (10, 0.05f), uiMesh, state);
 
         TextCollection.AddElement(Text);
         Collection.AddElements(Button, TextCollection);
-    }
 
-    public override UIElement[] GetMainElements()
-    {
-        return [Collection];
-    }
-    
-    public override void SetVisibility(bool visible)
-    {   
-        Collection.SetVisibility(visible);
-
-        UIMesh uiMesh = _controller.UiMesh;
-        TextMesh textMesh = _controller.textMesh;
-
-        uiMesh.UpdateVisibility();
-        textMesh.UpdateVisibility();
-    }
-
-    public override void Clear()
-    {
-        Collection.Clear();  
+        Controller.AddElements(this);
     }
 
     public UIText SetMaxCharCount(int maxCharCount)

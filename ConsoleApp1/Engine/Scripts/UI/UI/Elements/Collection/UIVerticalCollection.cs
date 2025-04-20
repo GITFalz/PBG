@@ -38,10 +38,6 @@ public class UIVerticalCollection : UICollection
             element.SetPositionType(PositionType.Relative);
             element.SetOffset((Border.X, totalOffset, 0, 0));
             totalOffset += element.Scale.Y + Spacing;
-            if (Name == "AddDoubleInputTypeCollection")
-            {
-                Console.WriteLine($"Element: {element.Name}, Offset: {totalOffset} with {element.Offset}, Scale: {element.Scale.Y}");
-            }
         }
 
         Scale = (Scale.X, totalOffset - Spacing + Border.W);

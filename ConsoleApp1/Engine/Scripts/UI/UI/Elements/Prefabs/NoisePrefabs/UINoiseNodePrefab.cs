@@ -1,6 +1,6 @@
+using OpenTK.Mathematics;
+
 public abstract class UINoiseNodePrefab : UIPrefab
 {
-    public string Name = "";
-
-    public abstract void Destroy();
+    public UINoiseNodePrefab(string name, UIController controller, Vector4 offset) : base(name, controller, offset) {}
 }

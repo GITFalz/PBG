@@ -2,16 +2,12 @@ using OpenTK.Mathematics;
 
 public class UIRectangleDisplayPrefab : UIPrefab
 {
-    public UICollection Collection;
     public UIImage Background;
     public UIButton MoveButton;
     public UIButton ScaleButton;
 
     public Vector2 Position;
     public Vector2 Scale;
-
-    private Vector4 _offset = (0, 0, 0, 0);
-    private UIController _controller;
 
     private Vector2 _oldMouseButtonPosition = new Vector2(0, 0);
 
@@ -20,17 +16,15 @@ public class UIRectangleDisplayPrefab : UIPrefab
         set => Collection.Depth = value;
     }
 
-    public UIRectangleDisplayPrefab(Vector2 scale, Vector4 offset, UIController controller)
+    public UIRectangleDisplayPrefab(Vector2 scale, Vector4 offset, UIController controller) : base("RectangleDisplayPrefab", controller, offset)
     {
         Position = new Vector2(offset.X, offset.Y);
 
         Scale = scale;
-        _offset = offset;
-        _controller = controller;
 
-        UIMesh uiMesh = _controller.UiMesh;
+        UIMesh uiMesh = Controller.UiMesh;
 
-        Collection = new UICollection("RectangleDisplayPrefabCollection", controller, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), Scale, _offset, 0);
+        Collection = new UICollection("RectangleDisplayPrefabCollection", controller, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), Scale, Offset, 0);
         Background = new UIImage("RectangleDisplayPrefabBackground", controller, AnchorType.MiddleCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), Scale + (14, 14), (0, 0, 0, 0), 0, 11, (10, 0.05f), uiMesh);
         MoveButton = new UIButton("RectangleDisplayPrefabMoveButton", controller, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (Scale.X + 14, 14), (-6, -20, 0, 0), 0, 10, (5, 0.025f), uiMesh, UIState.Interactable);
         ScaleButton = new UIButton("RectangleDisplayPrefabScaleButton", controller, AnchorType.BottomRight, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (20, 20), (6, 6, 0, 0), 0, 10, (5, 0.025f), uiMesh, UIState.Interactable)
@@ -45,6 +39,8 @@ public class UIRectangleDisplayPrefab : UIPrefab
         ScaleButton.SetOnHold(ScaleNode);
 
         Collection.AddElements(Background, MoveButton, ScaleButton);
+
+        Controller.AddElements(this);
     }
 
     public void SetScale(float constant)
@@ -55,27 +51,6 @@ public class UIRectangleDisplayPrefab : UIPrefab
         MoveButton.SetScale((Scale.X + 14, 14));
         Collection.Align();
         Collection.UpdateScale();
-    }
-
-    public override UIElement[] GetMainElements()
-    {
-        return [Collection];
-    }
-
-    public override void SetVisibility(bool visible)
-    {
-        Collection.SetVisibility(visible);
-
-        UIMesh uiMesh = _controller.UiMesh;
-        TextMesh textMesh = _controller.textMesh;
-
-        uiMesh.UpdateVisibility();
-        textMesh.UpdateVisibility();
-    }
-
-    public override void Clear()
-    {
-        Collection.Clear();  
     }
 
     private void SetOldMousePosition() => _oldMouseButtonPosition = Input.GetMousePosition();

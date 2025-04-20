@@ -7,7 +7,7 @@ using OpenTK.Mathematics;
 public class Info
 {
     private static UIController _infoController = new();
-    private static TextMesh _textMesh = _infoController.textMesh;
+    private static TextMesh _textMesh = _infoController.TextMesh;
 
     public static UIText FpsText = new("FpsTest", _infoController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, _textMesh);
     public static UIText GPUText = new("Gpu", _infoController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0, _textMesh);
