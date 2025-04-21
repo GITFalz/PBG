@@ -38,6 +38,7 @@ public abstract class UIPanel : UIRender
 
     public override void Generate()
     {
+        SetScale(newScale);
         GenerateUIQuad(uIMesh);    
     }
 
@@ -69,7 +70,7 @@ public abstract class UIPanel : UIRender
         return lines;
     }
 
-    public void GenerateUIQuad(newUIMesh uIMesh)
+    public void GenerateUIQuad(UIMesh uIMesh)
     {
         uIMesh.AddElement(this, ref ElementIndex);
     }

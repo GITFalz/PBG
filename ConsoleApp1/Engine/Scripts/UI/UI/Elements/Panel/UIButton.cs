@@ -4,7 +4,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class UIButton : UIPanel
 {
-    public static UIButton Empty = new() { uIMesh = newUIMesh.Empty };
+    public static UIButton Empty = new() { uIMesh = UIMesh.Empty };
 
     public UIButton() : base() { }
 

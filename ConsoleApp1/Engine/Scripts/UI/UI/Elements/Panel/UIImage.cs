@@ -2,6 +2,10 @@ using OpenTK.Mathematics;
 
 public class UIImage : UIPanel
 {
+    public static UIImage Empty = new() { uIMesh = UIMesh.Empty };
+
+    public UIImage() : base() { uIMesh = UIMesh.Empty; }
+
     public UIImage(
         string name, 
         UIController controller, 

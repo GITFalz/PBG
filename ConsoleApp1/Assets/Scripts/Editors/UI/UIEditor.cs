@@ -42,20 +42,22 @@ public class UIEditor : ScriptingNode
 
         // -- Side Panel --
         
-        UICollection sidePanelCollection = new UICollection("sidePanelCollection", SidePanelController, AnchorType.ScaleRight, PositionType.Absolute, (0, 0, 0), (300, Game.Height), (0, 0, 0, 0), 0);
+        UICollection sidePanelCollection = new UICollection("sidePanelCollection", SidePanelController, AnchorType.ScaleRight, PositionType.Absolute, (0, 0, 0), (300, 200), (0, 0, 0, 0), 0);
 
         UIImage sidePanelBackground = new UIImage("sidePanelBackground", SidePanelController, AnchorType.ScaleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (300, Game.Height), (0, 0, 0, 0), 0, 0, (10, 0.05f));
-        UIScrollView sidePanelScrollView = new UIScrollView("sidePanelVerticalCollection", SidePanelController, AnchorType.TopLeft, PositionType.Relative, CollectionType.Vertical, (300, Game.Height), (0, 0, 0, 0));
+        //UIScrollView sidePanelScrollView = new UIScrollView("sidePanelVerticalCollection", SidePanelController, AnchorType.TopLeft, PositionType.Relative, CollectionType.Vertical, (300, 200), (0, 0, 0, 0));
+        UIVerticalCollection sidePanelScrollView = new UIVerticalCollection("sidePanelVerticalCollection", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (Game.Width, Game.Height), (0, 0, 0, 0), (10, 10, 10, 10), 5f, 0);
+
 
         // Section: Save and Load
 
         // Section: Add UI Elements
 
-        UICollection addUIElementsCollection = new UICollection("addUIElementsCollection", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (280, Game.Height), (0, 0, 0, 0), 0);
+        UICollection addUIElementsCollection = new UICollection("addUIElementsCollection", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (280, 200), (0, 0, 0, 0), 0);
 
-        UIImage addUIElementsBackground = new UIImage("addUIElementsBackground", SidePanelController, AnchorType.ScaleFull, PositionType.Relative, (0.4f, 0.4f, 0.4f, 1f), (0, 0, 0), (300, Game.Height), (0, 0, 0, 0), 0, 11, (10, 0.05f));
-        UIScrollView addUIElementsScrollView = new UIScrollView("addUIElementsVerticalCollection", SidePanelController, AnchorType.TopLeft, PositionType.Relative, CollectionType.Vertical, (300, 400), (0, 7, 0, 0));
-        addUIElementsScrollView.SetBorder((10, 3, 10, 3)); 
+        UIImage addUIElementsBackground = new UIImage("addUIElementsBackground", SidePanelController, AnchorType.ScaleFull, PositionType.Relative, (0.4f, 0.4f, 0.4f, 1f), (0, 0, 0), (280, 100), (0, 0, 0, 0), 0, 11, (10, 0.05f));
+        UIScrollView addUIElementsScrollView = new UIScrollView("addUIElementsVerticalCollection", SidePanelController, AnchorType.TopLeft, PositionType.Relative, CollectionType.Vertical, (260, 300), (10, 10, 0, 0));
+        addUIElementsScrollView.SetBorder((0, 0, 0, 0)); 
 
         // Add UIImage
         UICollection addUIImageCollection = new UICollection("addUIImageCollection", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (260, 30), (0, 0, 0, 0), 0);
@@ -65,21 +67,30 @@ public class UIEditor : ScriptingNode
         addUIImageText.SetTextCharCount("Add UIImage", 0.5f).SetTextType(TextType.Alphanumeric);
         addUIImageCollection.AddElements(addUIImageButton, addUIImageText);
 
+        // Add UIButton
+        UICollection addUIButtonCollection = new UICollection("addUIButtonCollection", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (260, 30), (0, 0, 0, 0), 0);
+        UIButton addUIButtonButton = new UIButton("addUIButtonButton", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (260, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f), UIState.Interactable);
+        UIText addUIButtonText = new UIText("addUIButtonText", SidePanelController, AnchorType.MiddleCenter, PositionType.Relative, Vector4.One, (0, 0, 0), (260, 30), (0, 0, 0, 0), 0);
+
+
+
         addUIElementsScrollView.AddElement(addUIImageCollection);
 
         float collectionHeight = addUIElementsScrollView.GetYScale();
-        addUIElementsCollection.SetScale((280, collectionHeight + 14));
+        addUIElementsCollection.SetScale((280, 320));
 
         addUIElementsCollection.AddElements(addUIElementsBackground, addUIElementsScrollView);
 
+        Console.WriteLine($"Add UI Elements Collection Height: {addUIElementsCollection.GetYScale()}");
+
         // Section: UI Element Hierarchy
 
-        HierarchyCollection = new UICollection("uiElementHierarchyCollection", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (280, 30), (0, 0, 0, 0), 0);
+        HierarchyCollection = new UICollection("uiElementHierarchyCollection", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (280, 200), (0, 0, 0, 0), 0);
         
-        UIImage hierarchyBackground = new UIImage("hierarchyBackground", SidePanelController, AnchorType.ScaleFull, PositionType.Relative, (0.4f, 0.4f, 0.4f, 1f), (0, 0, 0), (300, Game.Height), (0, 0, 0, 0), 0, 11, (10, 0.05f));
-        UIScrollView hierarchyScrollView = new UIScrollView("hierarchyScrollView", SidePanelController, AnchorType.TopLeft, PositionType.Relative, CollectionType.Vertical, (300, 1000), (0, 7, 0, 0));
+        UIImage hierarchyBackground = new UIImage("hierarchyBackground", SidePanelController, AnchorType.ScaleFull, PositionType.Relative, (0.4f, 0.4f, 0.4f, 1f), (0, 0, 0), (280, 200), (0, 0, 0, 0), 0, 11, (10, 0.05f));
+        UIScrollView hierarchyScrollView = new UIScrollView("hierarchyScrollView", SidePanelController, AnchorType.TopLeft, PositionType.Relative, CollectionType.Vertical, (280, 200), (0, 7, 0, 0));
 
-        HierarchyCollection.AddElements(hierarchyBackground);
+        HierarchyCollection.AddElements(hierarchyBackground, hierarchyScrollView);
 
         // Section: Initialization
         sidePanelScrollView.AddElements(addUIElementsCollection, HierarchyCollection);
@@ -119,6 +130,13 @@ public class UIEditor : ScriptingNode
         UIImage image = new UIImage("image", EditorWindowController, AnchorType.MiddleCenter, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (100, 100), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
         EditorWindowCollection.AddElement(image);
         EditorWindowController.AddElement(image);
+    }
+
+    public void AddUIButton()
+    {
+        UIButton button = new UIButton("button", EditorWindowController, AnchorType.MiddleCenter, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (100, 100), (0, 0, 0, 0), 0, 10, (10f, 0.05f), UIState.Interactable);
+        EditorWindowCollection.AddElement(button);
+        EditorWindowController.AddElement(button);
     }
 
 

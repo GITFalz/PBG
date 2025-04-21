@@ -128,6 +128,20 @@ public class UICollection : UIElement
         return GetElementScaleX();
     }
 
+    public override void SetMasked(bool masked)
+    {
+        base.SetMasked(masked);
+        foreach (UIElement element in Elements)
+            element.SetMasked(masked);
+    }
+
+    public override void SetMaskIndex(int maskIndex)
+    {
+        base.SetMaskIndex(maskIndex);
+        foreach (UIElement element in Elements)
+            element.SetMaskIndex(maskIndex);
+    }
+
     public virtual float GetElementScaleY() { return newScale.Y; }
     public virtual float GetElementScaleX() { return newScale.X; }
 }

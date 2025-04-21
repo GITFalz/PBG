@@ -5,9 +5,9 @@ public abstract class UIRender : UIElement
     public int TextureIndex = 0;
     public Vector4 Color = (1, 1, 1, 1);
     public Vector4 SizeSlice = (0, 0, 10, 0.15f);
-    public newUIMesh uIMesh;
+    public UIMesh uIMesh;
 
-    public UIRender() : base() { uIMesh = newUIMesh.Empty; } 
+    public UIRender() : base() { uIMesh = UIMesh.Empty; } 
 
     public UIRender(
         string name,
@@ -26,6 +26,12 @@ public abstract class UIRender : UIElement
         TextureIndex = textureIndex;
         Color = color;
         SizeSlice = sizeSlice;
-        uIMesh = controller.newUIMesh;
+        uIMesh = controller.UIMesh;
+    }
+
+    public override void SetMaskIndex(int maskedIndex)
+    {
+        base.SetMaskIndex(maskedIndex);
+        uIMesh.UpdateMaskedIndex(ElementIndex, Masked, MaskIndex);
     }
 }

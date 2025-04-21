@@ -27,14 +27,14 @@ public class UIScrollView : UICollection
 
         SubElements.SetScale(scale);
 
-        //MaskPanel = new UIImage($"{name}MaskPanel", controller, anchorType, PositionType.Relative, (1, 1, 1), (0, 0, 0), scale, (0, 0, 0, 0), 0, -1, (0, 0), maskMesh);
-        //MaskPanel.CanTest = true;
-        //MaskPanel.SetOnHover(MoveScrollView);
+        MaskPanel = new UIImage($"{name}MaskPanel", controller, anchorType, PositionType.Relative, (1, 1, 1, 0.5f), (0, 0, 0), scale, (0, 0, 0, 0), 0, -1, (0, 0));
+        MaskPanel.CanTest = true;
+        MaskPanel.SetOnHover(MoveScrollView);
         
-        //Elements.Add(MaskPanel);
+        Elements.Add(MaskPanel);
         Elements.Add(SubElements);
 
-        //MaskPanel.ParentElement = this;
+        MaskPanel.ParentElement = this;
         SubElements.ParentElement = this;
     }
 
@@ -48,6 +48,12 @@ public class UIScrollView : UICollection
         
         SubElements.Align();
         SubElements.UpdateTransformation();
+    }
+
+    public void GenerateMask()
+    {
+        SetMasked(true);
+        SetMaskIndex(MaskPanel.ElementIndex);
     }
 
     public override void SetVisibility(bool visible)
@@ -93,12 +99,15 @@ public class UIScrollView : UICollection
     public override UICollection AddElement(UIElement element)
     {
         SubElements.AddElement(element);
+        element.SetMasked(true);
         return this;
     }
 
     public override UICollection AddElements(params UIElement[] elements)
     {
         SubElements.AddElements(elements);
+        foreach (UIElement element in elements)
+            element.SetMasked(true);
         return this;
     }
 

@@ -22,6 +22,8 @@ public abstract class UIElement
     public bool Rotated = false;
     public bool CanTest = true;
     public bool CanUpdate = false;
+    public bool Masked = false;
+    public int MaskIndex = 0;
     public int ElementIndex = 0;
     public float Depth = 0;
 
@@ -66,12 +68,12 @@ public abstract class UIElement
     public virtual void SetOffset(Vector4 offset) { Offset = offset; totalOffset = offset; }
     public virtual void SetAnchorType(AnchorType anchorType) { AnchorType = anchorType; }
     public virtual void SetPositionType(PositionType positionType) { PositionType = positionType; }
+    public virtual void SetMasked(bool masked) { Masked = masked; }
+    public virtual void SetMaskIndex(int maskIndex) { MaskIndex = maskIndex; }
 
 
     public virtual void Generate() {}
     public virtual void Clear() { ParentElement = null; OnClick = null; OnHover = null; OnHold = null; OnRelease = null; _clicked = false; CanTest = false; CanUpdate = false; }
-    public virtual void SetUIMesh(UIMesh uIMesh) {}
-    public virtual void SetTextMesh(TextMesh textMesh) {}
     public virtual List<string> ToLines(int gap) { return []; }
 
     protected virtual void Internal_UpdateTransformation() {}
@@ -214,6 +216,8 @@ public abstract class UIElement
 
     public virtual void Align()
     {
+        Masked = false;
+        
         if (PositionType == PositionType.Free)
             return;
 

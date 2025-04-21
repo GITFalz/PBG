@@ -38,10 +38,25 @@ public class UIVerticalCollection : UICollection
             element.SetPositionType(PositionType.Relative);
             element.SetOffset((Border.X, totalOffset, 0, 0));
             totalOffset += element.Scale.Y + Spacing;
+
+            if (Name == "sidePanelVerticalCollection")
+            {
+                Console.WriteLine($"Element: {element.Name}");
+                Console.WriteLine($"Offset: {element.Offset}");
+                Console.WriteLine($"Scale: {element.Scale}");
+                Console.WriteLine($"New Scale: {element.newScale}");
+            }
         }
 
         Scale = (Scale.X, totalOffset - Spacing + Border.W);
         newScale = Scale;
+
+        if (Name == "sidePanelVerticalCollection")
+        {
+            Console.WriteLine($"Vertical Collection: {totalOffset}");
+            Console.WriteLine($"Scale: {Scale}");
+            Console.WriteLine($"New Scale: {newScale}");
+        }
 
         OnAlign = null;
     }

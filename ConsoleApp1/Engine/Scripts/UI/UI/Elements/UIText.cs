@@ -136,7 +136,7 @@ public class UIText : UIRender
     {
         TextOffset = offset;
 
-        uIMesh?.AddElement(this, ref ElementIndex, offset);
+        uIMesh.AddElement(this, ref ElementIndex, offset);
 
         offset += MaxCharCount;
     }

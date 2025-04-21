@@ -7,7 +7,7 @@ public class UIController
     public static List<UIController> Controllers = [];
     public static UIController Empty = new();
 
-    public newUIMesh newUIMesh = new();
+    public UIMesh UIMesh = new();
     
     public static ShaderProgram _uiShader = UIData.UiShader;
     public static TextureArray _uItexture = UIData.UiTexture;
@@ -17,6 +17,7 @@ public class UIController
     public static Matrix4 OrthographicProjection = Matrix4.Identity;
     public List<UIElement> Elements = [];
     public List<UIElement> AbsoluteElements = [];
+    public List<UIScrollView> ScrollViews = [];
     public List<UIButton> Buttons = [];
     public static List<UIInputField> InputFields = [];
 
@@ -84,6 +85,10 @@ public class UIController
         if (element.PositionType == PositionType.Absolute)
             AbsoluteElements.Add(element);
 
+        element.CanUpdate = true;
+        element.UIController = this;
+        Elements.Add(element);
+
         if (element is UIPanel panel)
         {
             if (panel is UIButton button)
@@ -98,15 +103,16 @@ public class UIController
         }
         else if (element is UICollection collection)
         {
+            if (collection is UIScrollView scrollView)
+            {
+                ScrollViews.Add(scrollView);
+            }
+
             foreach (var e in collection.Elements)
             {
                 Internal_AddElement(e);
             }
         }
-
-        element.CanUpdate = true;
-        element.UIController = this;
-        Elements.Add(element);
     }
     
     // Adds the element to the list of elements to be removed, but does not remove it from the UIController yet.
@@ -156,6 +162,11 @@ public class UIController
         }
         else if (element is UICollection collection)
         {
+            if (collection is UIScrollView scrollView)
+            {
+                ScrollViews.Remove(scrollView);
+            }
+
             foreach (var e in collection.Elements)
             {
                 Internal_RemoveElement(e);
@@ -367,6 +378,11 @@ public class UIController
         {
             element.Generate();    
         }
+
+        foreach (var scrollView in ScrollViews)
+        {
+            scrollView.GenerateMask(); 
+        }
     }
 
     public void PrintMemory()
@@ -377,13 +393,13 @@ public class UIController
         memory += "AbsoluteElements: " + AbsoluteElements.Count + "\n";
         memory += "ElementsToAdd: " + ElementsToAdd.Count + "\n";
         memory += "ElementsToRemove: " + ElementsToRemove.Count + "\n";
-        memory += "newUIMesh: " + newUIMesh.ElementCount + "\n";
+        memory += "newUIMesh: " + UIMesh.ElementCount + "\n";
         Console.WriteLine(memory);
     }
 
     public void Buffers()
     {
-        newUIMesh.GenerateBuffers();
+        UIMesh.GenerateBuffers();
     }
 
     public void GenerateBuffers()
@@ -403,7 +419,7 @@ public class UIController
             ElementsToAdd.Clear();
             ElementsToRemove.Clear();
 
-            newUIMesh.Clear();
+            UIMesh.Clear();
 
             Generate();
             Buffers();
@@ -413,7 +429,7 @@ public class UIController
             
         if (UpdateVisibility)
         {
-            newUIMesh.UpdateVisibility();
+            UIMesh.UpdateVisibility();
 
             UpdateVisibility = false;
         }
@@ -437,7 +453,7 @@ public class UIController
 
     public void Clear()
     {
-        newUIMesh.Clear();
+        UIMesh.Clear();
 
         foreach (var element in Elements)
         {
@@ -510,7 +526,7 @@ public class UIController
 
         Matrix4 model = ModelMatrix;
 
-        if (newUIMesh.ElementCount > 0)
+        if (UIMesh.ElementCount > 0)
         {
             _textTexture.Bind(TextureUnit.Texture0);
             _uItexture.Bind(TextureUnit.Texture2);
@@ -522,9 +538,9 @@ public class UIController
             GL.Uniform1(UIData.charsLoc, 1);
             GL.Uniform1(UIData.textureArrayLoc, 2);
 
-            newUIMesh.Render();
+            UIMesh.Render();
         
-            Shader.Error("Ui render error: ");
+            //Shader.Error("Ui render error: ");
 
             _uiShader.Unbind();
             _uItexture.Unbind();
