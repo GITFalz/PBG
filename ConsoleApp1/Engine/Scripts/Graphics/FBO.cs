@@ -18,7 +18,6 @@ public class FBO : BufferBase
         _bufferCount++;
     }
 
-    public void Renew(int width, int height, FBOType type = FBOType.ColorDepth) => Create(width, height, type);
     public void Bind() => GL.BindFramebuffer(FramebufferTarget.Framebuffer, ID);
     public void Unbind() => GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
 
@@ -67,6 +66,14 @@ public class FBO : BufferBase
 
             Console.WriteLine($"Framebuffer saved to {filePath}");
         }
+    }
+
+    public void Renew(int width, int height, FBOType type = FBOType.ColorDepth) 
+    {
+        GL.DeleteFramebuffer(ID); // The framebuffer needs to be deleted before creating a new one
+        GL.DeleteTexture(colorTextureID); // The color texture needs to be deleted before creating a new one
+        GL.DeleteTexture(depthTextureID); // The depth texture needs to be deleted before creating a new one
+        Create(width, height, type);
     }
 
     private void Create(int width, int height, FBOType type = FBOType.ColorDepth)
@@ -122,6 +129,7 @@ public class FBO : BufferBase
         GL.DeleteTexture(colorTextureID);
         GL.DeleteTexture(depthTextureID);
         _bufferCount--;
+        base.DeleteBuffer();
     }
 
     public override int GetBufferCount()

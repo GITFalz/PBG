@@ -34,12 +34,26 @@ public class ShaderProgram : BufferBase
         _recompileAction.Invoke();
     }
 
-    public void Renew(string vertexShaderFilePath) => CreateShader(vertexShaderFilePath);
-    public void Renew(string vertexShaderFilePath, string fragmentShaderFilePath) => CreateShader(vertexShaderFilePath, fragmentShaderFilePath);
-    public void Renew(string vertexShaderFilePath, string geometryShaderFilePath, string fragmentShaderFilePath) => CreateShader(vertexShaderFilePath, geometryShaderFilePath, fragmentShaderFilePath);
     public void Bind() => GL.UseProgram(ID);
     public void Unbind() => GL.UseProgram(0);
 
+    public void Renew(string vertexShaderFilePath) 
+    {
+        GL.DeleteProgram(ID); // The program needs to be deleted before creating a new one
+        CreateShader(vertexShaderFilePath);
+    }
+
+    public void Renew(string vertexShaderFilePath, string fragmentShaderFilePath)
+    {
+        GL.DeleteProgram(ID); // The program needs to be deleted before creating a new one
+        CreateShader(vertexShaderFilePath, fragmentShaderFilePath);
+    }
+
+    public void Renew(string vertexShaderFilePath, string geometryShaderFilePath, string fragmentShaderFilePath) 
+    {
+        GL.DeleteProgram(ID); // The program needs to be deleted before creating a new one
+        CreateShader(vertexShaderFilePath, geometryShaderFilePath, fragmentShaderFilePath);
+    }
     private void CreateShader(string vertexShaderFilePath)
     {
         ID = GL.CreateProgram();
@@ -108,6 +122,7 @@ public class ShaderProgram : BufferBase
     {
         GL.DeleteProgram(ID);
         _bufferCount--;
+        base.DeleteBuffer();
     }
 
     public override int GetBufferCount()

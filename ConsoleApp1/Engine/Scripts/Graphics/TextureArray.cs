@@ -17,7 +17,11 @@ public class TextureArray : BufferBase
         _bufferCount++;
     }
 
-    public void Renew(string atlasPath, int cellWidth, int cellHeight) => Create(atlasPath, cellWidth, cellHeight);
+    public void Renew(string atlasPath, int cellWidth, int cellHeight)
+    {
+        GL.DeleteTexture(ID); // The texture needs to be deleted before creating a new one
+        Create(atlasPath, cellWidth, cellHeight);
+    }
 
     public void Bind()
     {
@@ -75,6 +79,7 @@ public class TextureArray : BufferBase
     {
         GL.DeleteTexture(ID);
         _bufferCount--;
+        base.DeleteBuffer();
     }
 
     public override int GetBufferCount()

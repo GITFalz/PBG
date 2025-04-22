@@ -16,7 +16,11 @@ public class Texture : BufferBase
         _bufferCount++;
     }
 
-    public void Renew(string filePath) => Create(filePath);
+    public void Renew(string filePath)
+    {
+        GL.DeleteTexture(ID); // The texture needs to be deleted before creating a new one
+        Create(filePath);
+    }
 
     public void Bind()
     {
@@ -66,6 +70,7 @@ public class Texture : BufferBase
     {
         GL.DeleteTexture(ID);
         _bufferCount--;
+        base.DeleteBuffer();
     }
 
     public override int GetBufferCount()

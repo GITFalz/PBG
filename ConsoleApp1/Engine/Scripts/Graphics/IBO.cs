@@ -12,8 +12,7 @@ public class IBO : BufferBase
         _bufferCount++;
     }
 
-    public void Renew(List<uint> data) => Create(data.ToArray());
-    public void Renew(uint[] data) => Create(data);
+    public void Renew(List<uint> data) => Renew(data.ToArray());
     public void Bind() => GL.BindBuffer(BufferTarget.ElementArrayBuffer, ID); 
     public void Unbind() => GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0); 
 
@@ -24,10 +23,17 @@ public class IBO : BufferBase
         GL.BufferData(BufferTarget.ElementArrayBuffer, data.Length * sizeof(uint), data, BufferUsageHint.StaticDraw);
     }
 
+    public void Renew(uint[] data)
+    {
+        GL.DeleteBuffer(ID); // The buffer needs to be deleted before creating a new one
+        Create(data);
+    }
+
     public override void DeleteBuffer()
     {
         GL.DeleteBuffer(ID);
         _bufferCount--;
+        base.DeleteBuffer();
     }
 
     public override int GetBufferCount()

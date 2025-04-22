@@ -12,7 +12,6 @@ public class ComputeShader : BufferBase
         _bufferCount++;
     }
 
-    public void Renew(string computeShaderFilePath) => Create(computeShaderFilePath);
     public void Bind() => GL.UseProgram(ID); 
     public void Unbind() => GL.UseProgram(0); 
 
@@ -20,6 +19,12 @@ public class ComputeShader : BufferBase
     {
         GL.DispatchCompute(workGroupX, workGroupY, workGroupZ);
         GL.MemoryBarrier(MemoryBarrierFlags.ShaderStorageBarrierBit);
+    }
+
+    public void Renew(string computeShaderFilePath) 
+    {
+        GL.DeleteProgram(ID); // The program needs to be deleted before creating a new one
+        Create(computeShaderFilePath);
     }
 
     public void Create(string computeShaderFilePath)
@@ -53,6 +58,7 @@ public class ComputeShader : BufferBase
     {
         GL.DeleteProgram(ID);
         _bufferCount--;
+        base.DeleteBuffer();
     }
 
     public override int GetBufferCount()

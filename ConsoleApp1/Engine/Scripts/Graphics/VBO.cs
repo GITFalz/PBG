@@ -13,6 +13,7 @@ public class VBOBase : BufferBase
     {
         GL.DeleteBuffer(ID);
         _bufferCount--;
+        base.DeleteBuffer();
     }
 
     public override int GetBufferCount()
@@ -33,8 +34,7 @@ public class VBO<T> : VBOBase where T : struct
         Create(data.ToArray());
     }
 
-    public void Renew(List<T> data) => Create(data.ToArray());
-    public void Renew(T[] data) => Create(data);
+    public void Renew(List<T> data) => Renew(data.ToArray());
     public void Bind() => GL.BindBuffer(BufferTarget.ArrayBuffer, ID);
     public void Unbind() => GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
 
@@ -43,6 +43,12 @@ public class VBO<T> : VBOBase where T : struct
         Bind();
         GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, newData.Count * Marshal.SizeOf(typeof(T)), newData.ToArray());
         Unbind();
+    }
+
+    public void Renew(T[] data) 
+    {
+        GL.DeleteBuffer(ID); // The buffer needs to be deleted before creating a new one
+        Create(data);
     }
 
     private void Create(T[] data)

@@ -15,6 +15,7 @@ public class VAO : BufferBase
 
     public void Renew()
     {
+        GL.DeleteVertexArray(ID); // The VAO needs to be deleted before creating a new one
         ID = GL.GenVertexArray();
         GL.BindVertexArray(ID);
     }
@@ -35,6 +36,7 @@ public class VAO : BufferBase
     {
         GL.DeleteVertexArray(ID);
         _bufferCount--;
+        base.DeleteBuffer();
     }
 
     public override int GetBufferCount()

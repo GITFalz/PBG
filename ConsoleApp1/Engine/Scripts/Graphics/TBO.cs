@@ -15,6 +15,7 @@ public class TBOBase : BufferBase
         GL.DeleteBuffer(ID);
         GL.DeleteTexture(TextureID);
         _bufferCount--;
+        base.DeleteBuffer();
     }
 
     public override int GetBufferCount()
@@ -35,8 +36,13 @@ public class TBO<T> : TBOBase where T : struct
         Create(data.ToArray());
     }
 
-    public void Renew(List<T> data) => Create(data.ToArray());
-    public void Renew(T[] data) => Create(data);
+    public void Renew(List<T> data) => Renew(data.ToArray());
+    public void Renew(T[] data)
+    {
+        GL.DeleteBuffer(ID); // The buffer needs to be deleted before creating a new one
+        GL.DeleteTexture(TextureID); // The texture needs to be deleted before creating a new one
+        Create(data);
+    }
 
     public void Update(List<int> data)
     {
