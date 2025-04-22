@@ -1,4 +1,5 @@
-﻿using OpenTK.Graphics.OpenGL4;
+﻿using System.Collections.Concurrent;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using Veldrid;
@@ -21,6 +22,8 @@ public class WorldManager : ScriptingNode
 
     private Vector3i _currentPlayerChunk = Vector3i.Zero;
     private Vector3i _lastPlayerPosition = (int.MaxValue, int.MaxValue, int.MaxValue);
+
+    public static ConcurrentQueue<Chunk> CanPopulateQueue = new ConcurrentQueue<Chunk>();
 
     public static bool DoAmbientOcclusion = true;
     public static bool DoRealtimeShadows = false;
@@ -76,6 +79,17 @@ public class WorldManager : ScriptingNode
         }
         Info.UpdateBlocks();
         */
+
+        CWorldOutputNode outputNode = CWorldMultithreadNodeManager.CWorldOutputNode; 
+        CWorldSampleNode sampleNode = new CWorldSampleNode()
+        {
+            Size = (0.01f, 0.01f),
+        };
+        outputNode.InputNode = sampleNode;
+        
+        CWorldMultithreadNodeManager.AddNode(sampleNode);
+
+        CWorldMultithreadNodeManager.Copy(ThreadPool.ThreadCount);
     }
     
     void Awake()
@@ -523,7 +537,9 @@ public class WorldManager : ScriptingNode
         {
             bool loaded = ChunkLoader.IsChunkStored(chunk);
             chunk.Save = !loaded;
-            ThreadPool.QueueAction(() => GenerateChunk(chunk, loaded), TaskPriority.Low);
+
+            ChunkGenerationProcess chunkGenerationProcess = new ChunkGenerationProcess(chunk, loaded);
+            ThreadPool.QueueAction(chunkGenerationProcess, TaskPriority.Low);
         }
     }
 
@@ -563,68 +579,27 @@ public class WorldManager : ScriptingNode
         }
     }
 
-    private static async Task GenerateChunk(Chunk chunkData, bool loaded, bool create = true)
+    private static void PopulateChunk(Chunk chunkData)
     {
-        await Task.Run(() =>
-        {
-            if (!loaded)
-            {
-                if (ChunkGenerator.GenerateChunk(ref chunkData, chunkData.GetWorldPosition()) == -1)
-                    return;
-                chunkData.Stage = ChunkStage.Generated;
+        if (ChunkGenerator.PopulateChunk(ref chunkData) == -1)
+            return;
 
-                if (chunkData.AllNeighbourChunkStageSuperiorOrEqual(ChunkStage.Generated))
-                {
-                    ChunkManager.PopulateChunkQueue.Enqueue(chunkData);
-                    chunkData.Save = true;
-                }
-
-                foreach (var chunk in chunkData.GetNeighbourChunks())
-                {
-                    //Info.ClearBlocks();
-                    if (chunk.Stage == ChunkStage.Generated && chunk.AllNeighbourChunkStageSuperiorOrEqual(ChunkStage.Generated))
-                    {
-                        ChunkManager.PopulateChunkQueue.Enqueue(chunk);
-                        chunk.Save = true;
-                    }
-                }
-            } 
-            else
-            {
-                chunkData.LoadChunk();
-                chunkData.Stage = ChunkStage.Populated;
-                ChunkManager.GenerateMeshQueue.Enqueue(chunkData);
-                chunkData.Save = false;
-            }
-        });
+        chunkData.Stage = ChunkStage.Populated;
+        ChunkManager.GenerateMeshQueue.Enqueue(chunkData);
+        //chunkData.SaveChunk();
+        chunkData.Save = false;
     }
 
-    private static async Task PopulateChunk(Chunk chunkData)
+    private static void GenerateMeshChunk(Chunk chunkData)
     {
-        await Task.Run(() =>
-        {
-            if (ChunkGenerator.PopulateChunk(ref chunkData) == -1)
-                return;
-            chunkData.Stage = ChunkStage.Populated;
-            ChunkManager.GenerateMeshQueue.Enqueue(chunkData);
-            //chunkData.SaveChunk();
-            chunkData.Save = false;
-        });
-    }
+        if (ChunkGenerator.GenerateOcclusion(chunkData) == -1)
+            return;
+        if (ChunkGenerator.GenerateMesh(chunkData) == -1)
+            return;
 
-    private static async Task GenerateMeshChunk(Chunk chunkData)
-    {
-        await Task.Run(() =>
-        {
-            if (ChunkGenerator.GenerateOcclusion(chunkData) == -1)
-                return;
-            if (ChunkGenerator.GenerateMesh(chunkData) == -1)
-                return;
-
-            chunkData.Stage = ChunkStage.Rendered;
-            Console.WriteLine($"Chunk {chunkData.GetWorldPosition()} generated");
-            ChunkManager.CreateQueue.Enqueue(chunkData);
-        });
+        chunkData.Stage = ChunkStage.Rendered;
+        //Console.WriteLine($"Chunk {chunkData.GetWorldPosition()} generated");
+        ChunkManager.CreateQueue.Enqueue(chunkData);
     }
     
     public static bool IsBlockChcks(Vector3i[] positions)

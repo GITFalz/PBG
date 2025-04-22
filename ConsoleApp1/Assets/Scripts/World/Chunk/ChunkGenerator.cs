@@ -2,7 +2,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-public static class ChunkGenerator
+public class ChunkGenerator
 {
     public const int WIDTH = 32;
     public const int HEIGHT = 32;
@@ -18,35 +18,6 @@ public static class ChunkGenerator
         new Vector2(-1, 0),
         new Vector2(1, 1f)
     ];
-    
-    public static int GenerateChunk(ref Chunk chunkData, Vector3i position)
-    {
-        for (var x = 0; x < WIDTH; x++)
-        {
-            for (var z = 0; z < DEPTH; z++)
-            {
-                float specNoise = GetSpecNoise(new Vector3(x, 0, z) + position, 200);
-                
-                float splineVector = GetSplineVector(specNoise);
-                
-                //float noise = NoiseLib.Noise(4, ((float)x + position.X + 0.001f) / 20f, ((float)z + position.Z + 0.001f) / 20f);
-                //int height = Mathf.FloorToInt(Mathf.Lerp(20, 100, (float)(noise * 0.05 + splineVector)));
-                int height = Mathf.FloorToInt(Mathf.Lerp(20, 100, splineVector));
-
-                int terrainHeight = Mathf.Min(Mathf.Max((height - position.Y), 0), 32);
-
-                for (int y = 0; y < terrainHeight; y++)
-                {
-                    if (chunkData.Stage == ChunkStage.Empty)
-                        return -1;
-
-                    chunkData.blockStorage.SetBlock(x, y, z, new Block(true, 2));
-                }
-            }
-        }
-
-        return 1;
-    }
 
     public static int PopulateChunk(ref Chunk chunkData)
     {
@@ -161,9 +132,9 @@ public static class ChunkGenerator
         return spline[^1].Y;
     }
 
-    private static float GetSpecNoise(Vector3 position, float size = 100)
+    public static float GetSpecNoise(Vector3 position, float size = 100)
     {
-        return NoiseLib.Noise(4, ((float)position.X + 0.001f) / size, ((float)position.Z + 0.001f) / size);
+        return NoiseLib.Noise(1, ((float)position.X + 0.001f) / size, ((float)position.Z + 0.001f) / size); 
     }
 
     public static int GenerateOcclusion(Chunk chunkData, int width = WIDTH, int lod = 0)

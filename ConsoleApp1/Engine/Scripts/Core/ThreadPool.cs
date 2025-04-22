@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,14 +13,32 @@ public static class ThreadPool
     private static PriorityQueue _actions = new PriorityQueue();
     private static int _currentTaskCount = 0;
 
+    private static List<Task?> Pool = [];
+
+    static ThreadPool()
+    {
+        SetThreadCount(ThreadCount);
+    }
+
     public static void SetThreadCount(int count)
     {
         ThreadCount = Math.Clamp(count, 1, MAX_THREAD_COUNT);
+        Pool.Clear();
+        for (int i = 0; i < ThreadCount; i++)
+        {
+            Pool.Add(null);
+        }
     }
 
-    public static void QueueAction(Func<Task> action, TaskPriority priority = TaskPriority.Normal)
+    public static void QueueAction(Action action, TaskPriority priority = TaskPriority.Normal)
     {
-        _actions.Enqueue(action, priority);
+        ActionProcess actionProcess = new ActionProcess(action);
+        _actions.Enqueue(actionProcess, priority);
+    }
+
+    public static void QueueAction(ThreadProcess process, TaskPriority priority = TaskPriority.Normal)
+    {
+        _actions.Enqueue(process, priority);
     }
 
     public static void Update()
@@ -27,74 +46,98 @@ public static class ThreadPool
         ProcessTasks();
     }
 
-    private static async void ProcessTasks()
+    private static void ProcessTasks()
     {
-        while (_currentTaskCount < ThreadCount)
+        for (int i = 0; i < ThreadCount; i++)
         {
-            if (_actions.TryDequeue(out var action))
+            if (Pool[i] == null || Pool[i]!.IsCompleted)
             {
-                Interlocked.Increment(ref _currentTaskCount);
-                try
+                if (_actions.TryDequeue(out var process))
                 {
-                    await action();
-                }
-                finally
-                {
-                    Interlocked.Decrement(ref _currentTaskCount);
+                    process.SetThreadIndex(i);
+                    var task = process.ExecuteAsync().ContinueWith(t =>
+                    {
+                        Pool[i] = null;
+                    });
+
+                    Pool[i] = task;
                 }
             }
-            else
-            {
-                break;
-            }
+        }
+    }
+
+    private class ActionProcess : ThreadProcess
+    {
+        private readonly Action _action;
+        public ActionProcess(Action action)
+        {
+            _action = action;
+        }
+        protected override void Function()
+        {
+            _action.Invoke();
         }
     }
 
     private class PriorityQueue 
     {
-        private readonly ConcurrentQueue<Func<Task>> _urgentPriorityActions = [];
-        private readonly ConcurrentQueue<Func<Task>> _highPriorityActions = [];
-        private readonly ConcurrentQueue<Func<Task>> _normalPriorityActions = [];
-        private readonly ConcurrentQueue<Func<Task>> _lowPriorityActions = [];
-        private readonly ConcurrentQueue<Func<Task>> _backgroundPriorityActions = [];
+        private readonly ConcurrentQueue<ThreadProcess> _urgentPriorityActions = [];
+        private readonly ConcurrentQueue<ThreadProcess> _highPriorityActions = [];
+        private readonly ConcurrentQueue<ThreadProcess> _normalPriorityActions = [];
+        private readonly ConcurrentQueue<ThreadProcess> _lowPriorityActions = [];
+        private readonly ConcurrentQueue<ThreadProcess> _backgroundPriorityActions = [];
 
-        public void Enqueue(Func<Task> action, TaskPriority priority = TaskPriority.Normal)
+        public void Enqueue(ThreadProcess process, TaskPriority priority = TaskPriority.Normal)
         {
             switch (priority)
             {
                 case TaskPriority.Background:
-                    _backgroundPriorityActions.Enqueue(action);
+                    _backgroundPriorityActions.Enqueue(process);
                     break;
                 case TaskPriority.Low:
-                    _lowPriorityActions.Enqueue(action);
+                    _lowPriorityActions.Enqueue(process);
                     break;
                 case TaskPriority.Normal:
-                    _normalPriorityActions.Enqueue(action);
+                    _normalPriorityActions.Enqueue(process);
                     break;
                 case TaskPriority.High:
-                    _highPriorityActions.Enqueue(action);
+                    _highPriorityActions.Enqueue(process);
                     break;
                 case TaskPriority.Urgent:
-                    _urgentPriorityActions.Enqueue(action);
+                    _urgentPriorityActions.Enqueue(process);
                     break;
             }
         }
 
-        public bool TryDequeue(out Func<Task> action)
+        public bool TryDequeue([NotNullWhen(true)] out ThreadProcess? process)
         {
-            action = () => { return Task.CompletedTask; };
+            process = null;
             if (_urgentPriorityActions.TryDequeue(out var a) ||
                 _highPriorityActions.TryDequeue(out a) ||
                 _normalPriorityActions.TryDequeue(out a) ||
                 _lowPriorityActions.TryDequeue(out a) ||
                 _backgroundPriorityActions.TryDequeue(out a))
             {
-                action = a;
+                process = a;
                 return true;
             }
             return false;
         }
     }
+}
+
+public class ThreadProcess
+{
+    public int ThreadIndex { get; private set; } = -1;
+
+    public void SetThreadIndex(int index) => ThreadIndex = index;
+
+    public Task ExecuteAsync()
+    {
+        return Task.Run(Function);
+    }
+
+    protected virtual void Function() { }
 }
 
 public enum TaskPriority
