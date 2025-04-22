@@ -45,4 +45,9 @@ public class EmptyConnectorNode : ConnectorNode
     {
         throw new NotImplementedException();
     }
+
+    public override void SetValueReferences(List<float> values, ref int index)
+    {
+        throw new NotImplementedException();
+    }
 }

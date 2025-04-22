@@ -32,7 +32,7 @@ public class UICollection : UIElement
     {
         Elements.Add(element);
         element.SetPositionType(PositionType.Relative);
-        element.SetParent(this);
+        element.ParentElement = this;
         return this;
     }
 
@@ -67,7 +67,7 @@ public class UICollection : UIElement
     public override void RemoveElement(UIElement element)
     {
         if (Elements.Remove(element))
-            element.SetParent(null);
+            element.ParentElement = null;
     }
 
     public override void SetVisibility(bool visible)
@@ -86,6 +86,13 @@ public class UICollection : UIElement
         {
             element.Align();
         }
+    }
+
+    public override void Move(Vector3 offset)
+    {
+        base.Move(offset);
+        foreach (UIElement element in Elements)
+            element.Move(offset);
     }
 
     public override void Clear()

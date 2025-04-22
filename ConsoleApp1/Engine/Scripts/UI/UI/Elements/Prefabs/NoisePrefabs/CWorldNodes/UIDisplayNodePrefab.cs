@@ -53,6 +53,9 @@ public class UIDisplayNodePrefab : UINoiseNodePrefab
 
     private void MoveNode()
     {
+        if (Input.GetMouseDelta() == Vector2.Zero)
+            return;
+
         Vector2 mousePosition = Input.GetMousePosition();
         Vector2 delta = (mousePosition - _oldMouseButtonPosition) * (1 / Collection.UIController.Scale);
 

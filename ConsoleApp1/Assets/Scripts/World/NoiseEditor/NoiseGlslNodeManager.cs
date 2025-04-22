@@ -4,8 +4,10 @@ using OpenTK.Mathematics;
 public static class NoiseGlslNodeManager
 {
     public static ShaderProgram DisplayShaderProgram = new ShaderProgram("Utils/Rectangle.vert", "Noise/WorldNoise_copy.frag");
+    public static ComputeShader SetFloatComputeShader = new ComputeShader("ComputeShaders/List/SetFloatIndex.glsl");
 
     private static VAO _displayVAO = new VAO();
+    private static SSBO<float> _valueSSBO = new();
 
     private static int modelLocation = -1;
     private static int projectionLocation = -1;
@@ -13,11 +15,14 @@ public static class NoiseGlslNodeManager
     private static int noiseSizeLocation = -1;
     private static int offsetLocation = -1;
 
+    private static int indexLocation = -1;
+    private static int valueLocation = -1;
+
     public static string NoiseFragmentFile = "Noise/WorldNoise.frag";
     private static string NoiseFragmentPath;
     private static string NoiseFragmentPathCopy;
 
-    private static int _lineInsert = 153;
+    private static int _lineInsert = 157;
 
     static NoiseGlslNodeManager()
     {
@@ -26,6 +31,9 @@ public static class NoiseGlslNodeManager
         sizeLocation = DisplayShaderProgram.GetLocation("size");
         noiseSizeLocation = DisplayShaderProgram.GetLocation("noiseSize");
         offsetLocation = DisplayShaderProgram.GetLocation("offset");
+
+        indexLocation = SetFloatComputeShader.GetLocation("index");
+        valueLocation = SetFloatComputeShader.GetLocation("value");
 
         NoiseFragmentPath = Path.Combine(Game.shaderPath, NoiseFragmentFile);
         string fileName = NoiseFragmentFile.Replace(".frag", "_copy.frag");
@@ -40,76 +48,21 @@ public static class NoiseGlslNodeManager
     public static void Compile(List<ConnectorNode> nodes)
     {
         List<string> lines = File.ReadAllLines(NoiseFragmentPath).ToList();
-        int index = 0;
         int lineIndex = _lineInsert;
+        
+        List<float> values = [];
+        int index = 0;
 
         for (int i = 0; i < nodes.Count; i++)
         {
             ConnectorNode node = nodes[i];
+            node.SetValueReferences(values, ref index);
             string newLine = node.GetLine();
             lines.Insert(lineIndex, newLine);
             lineIndex++;
         }
 
-        /*
-        var cWorldNodes = CWorldNodeManager.GetNodeDictionary();
-
-        string finalLine = "";
-
-        if (cWorldNodes.Count != 0)
-            finalLine = "    color =";
-        
-
-        foreach (var (name, node) in cWorldNodes)
-        {
-            if (node is CWorldSampleNode sampleNode)
-            {
-                Vector2 offset = sampleNode.Offset;
-                Vector2 size = sampleNode.Size;
-
-                Console.WriteLine($"SampleNode: {name} Offset: {offset} Size: {size}");
-                string newLine = $"    float {name} = SampleNoise({Convert(size)});";
-                lines.Insert(lineIndex, newLine);
-                lineIndex++;
-                
-                foreach (var parameter in sampleNode.Parameters)
-                {
-                    string parameterLine = $"    {name} = {parameter.GetFunction(name)};";
-                    Console.WriteLine($"Parameter: {parameterLine}");
-                    lines.Insert(lineIndex, parameterLine);
-                    lineIndex++;
-                }
-
-                Console.WriteLine($"Offset: {sampleNode.Offset}");
-                if (sampleNode.Invert)
-                {
-                    string invertLine = $"    {name} = 1 - {name};";
-                    lines.Insert(lineIndex, invertLine);
-                    lineIndex++;
-                }
-
-                Console.WriteLine($"Amplitude: {sampleNode.Amplitude}");
-                if (sampleNode.Amplitude != 1.0f)
-                {
-                    string amplitudeLine = $"    {name} *= {sampleNode.Amplitude};";
-                    lines.Insert(lineIndex, amplitudeLine);
-                    lineIndex++;
-                }
-
-                finalLine += $" {name}";
-                if (index < cWorldNodes.Count - 1)
-                {
-                    finalLine += " +";
-                }
-            }
-
-            index++;
-        }
-
-        if (cWorldNodes.Count != 0)
-            finalLine += ";";
-        lines.Insert(lineIndex, finalLine);
-        */
+        _valueSSBO.Renew(values);
 
         File.WriteAllLines(NoiseFragmentPathCopy, lines);
 
@@ -124,6 +77,24 @@ public static class NoiseGlslNodeManager
         offsetLocation = DisplayShaderProgram.GetLocation("offset");
 
         DisplayShaderProgram.Unbind();
+    }
+
+    public static void UpdateValue(int index, float value)
+    {
+        if (index == -1)
+            return;
+
+        SetFloatComputeShader.Bind();
+
+        GL.Uniform1(indexLocation, index);
+        GL.Uniform1(valueLocation, value);
+
+        _valueSSBO.Bind(0);
+
+        SetFloatComputeShader.DispatchCompute(1, 1, 1);
+
+        _valueSSBO.Unbind();
+        SetFloatComputeShader.Unbind();
     }
 
     public static void Render(Matrix4 DisplayProjectionMatrix, Vector2 DisplayPosition, Vector2 DisplaySize, float NoiseSize, Vector2 Offset)
@@ -144,9 +115,11 @@ public static class NoiseGlslNodeManager
         GL.Uniform2(offsetLocation, ref Offset);
 
         _displayVAO.Bind();
+        _valueSSBO.Bind(0);
 
         GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
 
+        _valueSSBO.Unbind();
         _displayVAO.Unbind();
 
         DisplayShaderProgram.Unbind();

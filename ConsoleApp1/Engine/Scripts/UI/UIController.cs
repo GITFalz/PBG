@@ -86,7 +86,6 @@ public class UIController
             AbsoluteElements.Add(element);
 
         element.CanUpdate = true;
-        element.UIController = this;
         Elements.Add(element);
 
         if (element is UIPanel panel)
@@ -98,6 +97,7 @@ public class UIController
         {
             if (text is UIInputField inputField)
             {
+                Console.WriteLine("Adding input field: " + inputField.Name);
                 InputFields.Add(inputField);
             }
         }
@@ -427,12 +427,7 @@ public class UIController
             RegenerateBuffers = false;
         }
             
-        if (UpdateVisibility)
-        {
-            UIMesh.UpdateVisibility();
-
-            UpdateVisibility = false;
-        }
+        UIMesh.Update();
     }
 
     public List<string> ToLines()
@@ -542,9 +537,9 @@ public class UIController
         
             //Shader.Error("Ui render error: ");
 
-            _uiShader.Unbind();
             _uItexture.Unbind();
             _textTexture.Unbind();
+            _uiShader.Unbind();
         }
 
         GL.Disable(EnableCap.StencilTest);

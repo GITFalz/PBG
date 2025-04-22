@@ -17,25 +17,20 @@ public abstract class ConnectorNode
     public abstract UINoiseNodePrefab[] GetNodePrefabs();
     public abstract UIController GetUIController();
     public abstract string ToStringList();
+    public abstract void SetValueReferences(List<float> values, ref int index);
 
-    public void SetSlideValue(ref float value, UIInputField inputField, float speed)
+    public void SetSlideValue(ref float value, UIInputField inputField, float speed, int index)
     {
         float delta = Input.GetMouseDelta().X * speed * GameTime.DeltaTime;
         value += delta;
         inputField.SetText(value.ToString("0.00")).GenerateChars().UpdateText();
-
-        Compile();
+        NoiseGlslNodeManager.UpdateValue(index, value);
     }
 
-    public void SetValue(ref float value, UIInputField inputField, float replacement)
+    public void SetValue(ref float value, UIInputField inputField, float replacement, int index)
     {
         value = inputField.ParseFloat(replacement);
-        Compile();
-    }
-
-    public static void Compile()
-    {
-        NoiseGlslNodeManager.Compile();
+        NoiseGlslNodeManager.UpdateValue(index, value);
     }
 
     public void OutputConnectionTest(OutputGateConnector output)

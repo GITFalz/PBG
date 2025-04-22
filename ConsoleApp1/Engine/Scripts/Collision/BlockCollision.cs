@@ -33,7 +33,7 @@ public static class BlockCollision
                     continue;
 
                 if (newEntry < entryData.entryTime)
-                    entryData = (newEntry - 0.001f, newNormal.Value);
+                    entryData = (newEntry - 0.01f, newNormal.Value);
             }
         }
 

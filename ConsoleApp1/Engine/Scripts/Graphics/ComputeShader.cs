@@ -53,6 +53,10 @@ public class ComputeShader : BufferBase
         GL.DeleteShader(computeShader);
     }
 
+    public int GetLocation(string name)
+    {
+        return GL.GetUniformLocation(ID, name);
+    }
 
     public override void DeleteBuffer()
     {

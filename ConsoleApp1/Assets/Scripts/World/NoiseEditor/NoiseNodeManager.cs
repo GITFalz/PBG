@@ -160,7 +160,91 @@ public static class NoiseNodeManager
             ConnectorNode node = ConnectedNodeList[i];
             node.VariableName = "variable" + i;
         }
+
         NoiseGlslNodeManager.Compile(ConnectedNodeList);
+    }
+
+    public static void Compile(CWorldNodeManager nodeManager)
+    {
+        if (DisplayNode == null)
+            return;
+
+        nodeManager.Delete();
+
+        ConnectedNodeList = [DisplayNode];
+        GetConnectedNodes(DisplayNode, ConnectedNodeList);
+
+        Dictionary<ConnectorNode, CWorldNode> nodeMap = [];
+        for (int i = 0; i < ConnectedNodeList.Count; i++)
+        {
+            ConnectorNode node = ConnectedNodeList[i];
+            if (node is DisplayConnectorNode)
+            {
+                nodeMap.Add(node, nodeManager.CWorldOutputNode);
+            }
+            else if (node is SampleConnectorNode sampleNode)
+            {
+                CWorldSampleNode cWorldSampleNode = new CWorldSampleNode()
+                {
+                    Name = node.VariableName,
+                    Scale = (sampleNode.Scale, sampleNode.Scale),
+                    Offset = sampleNode.Offset,
+                };
+                nodeMap.Add(node, cWorldSampleNode);
+                nodeManager.AddNode(cWorldSampleNode);
+            }
+            else if (node is MinMaxInputOperationConnectorNode minMaxNode)
+            {
+                CWorldMinMaxNode cWorldMinMaxNode = new CWorldMinMaxNode(minMaxNode.Type)
+                {
+                    Name = node.VariableName,
+                    Min = minMaxNode.Min,
+                    Max = minMaxNode.Max,
+                };
+                nodeMap.Add(node, cWorldMinMaxNode);
+                nodeManager.AddNode(cWorldMinMaxNode);
+            }
+            else if (node is DoubleInputOperationConnectorNode doubleInputNode)
+            {
+                CWorldDoubleInputNode cWorldDoubleInputNode = new CWorldDoubleInputNode(doubleInputNode.Type)
+                {
+                    Name = node.VariableName,
+                    Value1 = doubleInputNode.Value1,
+                    Value2 = doubleInputNode.Value2,
+                };
+                nodeMap.Add(node, cWorldDoubleInputNode);
+                nodeManager.AddNode(cWorldDoubleInputNode);
+            }
+        }
+
+        foreach (var (node, cWorldNode) in nodeMap)
+        {
+            if (node is DisplayConnectorNode displayNode)
+            {
+                if (displayNode.InputGateConnector.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode))
+                {
+                    nodeManager.CWorldOutputNode.InputNode = (CWorldGetterNode)inputNode;
+                }
+            }
+            else if (node is MinMaxInputOperationConnectorNode minMaxNode)
+            {
+                if (minMaxNode.InputGateConnector.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode))
+                {
+                    ((CWorldMinMaxNode)cWorldNode).InputNode = (CWorldGetterNode)inputNode;
+                }
+            }
+            else if (node is DoubleInputOperationConnectorNode doubleInputNode)
+            {
+                if (doubleInputNode.InputGateConnector1.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode1))
+                {
+                    ((CWorldDoubleInputNode)cWorldNode).InputNode1 = (CWorldGetterNode)inputNode1;
+                }
+                if (doubleInputNode.InputGateConnector2.GetConnectedNode(out connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode2))
+                {
+                    ((CWorldDoubleInputNode)cWorldNode).InputNode2 = (CWorldGetterNode)inputNode2;
+                }
+            }
+        }
     }
 
     public static void SaveNodes()
@@ -416,7 +500,8 @@ public static class NoiseNodeManager
 
     public static void Clear()
     {
-        foreach (var node in NoiseNodes.Values)
+        Dictionary<UINoiseNodePrefab, ConnectorNode> copy = new(NoiseNodes);
+        foreach (var node in copy.Values)
         {
             RemoveNode(node, false);
         }

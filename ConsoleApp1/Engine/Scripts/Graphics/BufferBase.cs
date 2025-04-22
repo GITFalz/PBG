@@ -53,7 +53,8 @@ public abstract class BufferBase
 
     public static void Delete()
     {
-        foreach (var buffer in Buffers)
+        var buffers = Buffers.ToArray(); // Create a copy of the list to avoid modifying it while iterating
+        foreach (var buffer in buffers)
         {
             buffer.DeleteBuffer();
         }

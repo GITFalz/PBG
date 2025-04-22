@@ -60,7 +60,9 @@ public class PhysicsBody : ScriptingNode
 
     public void AddForce(Vector3 direction, float maxSpeed)
     {
+        Console.WriteLine($"Adding force1: {Acceleration} Direction: {direction} MaxSpeed: {maxSpeed} Mass: {Mass}");
         Acceleration += direction.Normalized() * maxSpeed / Mass;
+        Console.WriteLine($"Adding force2: {Acceleration} Direction: {direction} MaxSpeed: {maxSpeed} Mass: {Mass}");
     }
 
     void Update()
@@ -77,15 +79,12 @@ public class PhysicsBody : ScriptingNode
             return;
 
         previousPosition = physicsPosition;
-
-        Gravity();
-
+        
+        ApplyGravity();  
         Velocity += Acceleration * GameTime.FixedTime;
         Velocity *= 1f - Drag * GameTime.FixedTime;
-
         float decelerationFactor = IsGrounded ? 10f : DecelerationFactor;
         Acceleration = -decelerationFactor * Velocity;
-
         CollisionCheck();
     }
     
@@ -147,44 +146,74 @@ public class PhysicsBody : ScriptingNode
             }
         }
 
-        for (int i = 0; i < 3; i++)
+        // Check Y axis collision first
+        (float entryTime, Vector3? normal) entryData = (1f, null);
+        Vector3 testingDirection = (0, checkDistance.Y, 0);
+
+        foreach (var position in blockPositions)
         {
-            checkDistance = Velocity * GameTime.FixedTime;
-            (float entryTime, Vector3? normal) entryData = (1f, null);
-
-            foreach (var position in blockPositions)
-            {
-                if (!WorldManager.GetBlock(position))
-                    continue;
-
-                entryData = BlockCollision.GetEntry(currentCollider, checkDistance, position, 1, entryData);
-            }
-
-            if (entryData.normal != null)
-            {
-                if (entryData.normal.Value.X != 0)
-                {
-                    Velocity.X = 0;
-                    physicsPosition.X += checkDistance.X * entryData.entryTime;
-                }
-                if (entryData.normal.Value.Y != 0)
-                {
-                    Velocity.Y = 0;
-                    IsGrounded = true;
-                    physicsPosition.Y += checkDistance.Y * entryData.entryTime;
-                }
-                if (entryData.normal.Value.Z != 0)
-                {
-                    Velocity.Z = 0;
-                    physicsPosition.Z += checkDistance.Z * entryData.entryTime;
-                }
-            }
+            if (!WorldManager.GetBlock(position)) continue;
+            entryData = BlockCollision.GetEntry(currentCollider, testingDirection, position, 1, entryData);
         }
+
+        if (entryData.normal != null && entryData.normal.Value.Y != 0)
+        {
+            Velocity.Y = 0;
+            physicsPosition.Y += testingDirection.Y * entryData.entryTime;
+            IsGrounded = entryData.normal.Value.Y > 0;
+        }
+        else
+        {
+            physicsPosition.Y += checkDistance.Y;
+        }
+
+        currentCollider = collider + physicsPosition;
+
+        // Check X axis collision
+        entryData = (1f, null);
+        testingDirection = (checkDistance.X, 0, 0);
+
+        foreach (var position in blockPositions)
+        {
+            if (!WorldManager.GetBlock(position)) continue;
+            entryData = BlockCollision.GetEntry(currentCollider, testingDirection, position, 1, entryData);
+        }
+
+        if (entryData.normal != null && entryData.normal.Value.X != 0)
+        {
+            Velocity.X = 0;
+            physicsPosition.X += testingDirection.X * entryData.entryTime;
+        }
+        else
+        {
+            physicsPosition.X += checkDistance.X;
+        }
+
+        currentCollider = collider + physicsPosition;
+
+        // Check Z axis collision
+        entryData = (1f, null);
+        testingDirection = (0, 0, checkDistance.Z);
+
+        foreach (var position in blockPositions)
+        {
+            if (!WorldManager.GetBlock(position)) continue;
+            entryData = BlockCollision.GetEntry(currentCollider, testingDirection, position, 1, entryData);
+        }
+
+        if (entryData.normal != null && entryData.normal.Value.Z != 0)
+        {
+            Velocity.Z = 0;
+            physicsPosition.Z += testingDirection.Z * entryData.entryTime;
+        }
+        else
+        {
+            physicsPosition.Z += checkDistance.Z;
+        }
+
 
         if (Velocity.Y != 0)
             IsGrounded = false;
-
-        physicsPosition += Velocity * GameTime.FixedTime;
     }
 
     public Collider GetCollider()

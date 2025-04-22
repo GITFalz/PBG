@@ -83,10 +83,10 @@ public class WorldManager : ScriptingNode
         CWorldOutputNode outputNode = CWorldMultithreadNodeManager.CWorldOutputNode; 
         CWorldSampleNode sampleNode = new CWorldSampleNode()
         {
-            Size = (0.01f, 0.01f),
+            Scale = (0.01f, 0.01f),
         };
         outputNode.InputNode = sampleNode;
-        
+
         CWorldMultithreadNodeManager.AddNode(sampleNode);
 
         CWorldMultithreadNodeManager.Copy(ThreadPool.ThreadCount);
@@ -632,6 +632,7 @@ public class WorldManager : ScriptingNode
     public void Delete()
     {
         ChunkManager.Unload();
+        CWorldMultithreadNodeManager.Clear();
     }
 }
 

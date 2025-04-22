@@ -2,6 +2,8 @@ using OpenTK.Mathematics;
 
 public class UIText : UIRender
 {
+    public static UIText Empty = new();
+
     public int MaxCharCount = 20;
     public string Text = "";
     public string finalText = "";
@@ -12,6 +14,7 @@ public class UIText : UIRender
     public TextType TextType = TextType.Alphabetic;
     public int TextOffset = 0;
 
+    private UIText() : base() { }
     public UIText
     (
         string name, 
@@ -128,7 +131,7 @@ public class UIText : UIRender
         {
             Chars.Add(TextShaderHelper.GetChar(character));
         }
-        uIMesh?.SetCharacters(Chars, TextOffset);
+        uIMesh.SetCharacters(Chars, TextOffset);
         return this;
     }
 

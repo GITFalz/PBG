@@ -4,6 +4,10 @@ using Vortice.Mathematics;
 
 public class Chunk
 {
+    public const int WIDTH = 32;
+    public const int HEIGHT = 32;
+    public const int DEPTH = 32;
+    
     public static Chunk Empty = new();
 
     public ChunkStage Stage = ChunkStage.Empty;
@@ -307,6 +311,19 @@ public class Chunk
             foreach (var chunk in NeighbourCunks)
             {
                 if (chunk == null || (int)chunk.Stage < (int)stage)
+                    return false;
+            }
+            return true;
+        }   
+    }
+
+    public bool AllNeighbourChunkStageEqual(ChunkStage stage)
+    {
+        lock (this)
+        {
+            foreach (var chunk in NeighbourCunks)
+            {
+                if (chunk == null || (int)chunk.Stage != (int)stage)
                     return false;
             }
             return true;

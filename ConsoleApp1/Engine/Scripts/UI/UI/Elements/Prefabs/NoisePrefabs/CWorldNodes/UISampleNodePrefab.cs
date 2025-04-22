@@ -68,7 +68,7 @@ public class UISampleNodePrefab : UINoiseNodePrefab
         UIImage offsetXBackground = new UIImage($"{name}MinBackground", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), OffsetXInputField.newScale + (16, 16), (0, -28, 0, 0), 0, 11, (10f, 0.05f));
         UIImage offsetYBackground = new UIImage($"{name}MinBackground", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), OffsetYInputField.newScale + (16, 16), (0, 2, 0, 0), 0, 11, (10f, 0.05f));
 
-        ElementCollection.AddElements(NameField, OutputButton, ScaleInputField, OffsetXInputField, OffsetYInputField, ScaleTextField, OffsetXTextField, OffsetYTextField, scaleBackground, offsetXBackground, offsetYBackground);
+        ElementCollection.AddElements(NameField, OutputButton, scaleBackground, offsetXBackground, offsetYBackground, ScaleInputField, OffsetXInputField, OffsetYInputField, ScaleTextField, OffsetXTextField, OffsetYTextField);
 
         Collection = new UICollection($"{name}Collection", controller, AnchorType.TopLeft, PositionType, Pivot, Scale + (0, 14), Offset, Rotation);
         MoveButton = new UIButton($"{name}MoveButton", controller, AnchorType.TopLeft, PositionType.Relative, ButtonColor, (0, 0, 0), (Scale.X, 14), (0, 0, 0, 0), 0, 10, (5f, 0.025f), UIState.Interactable);
@@ -86,6 +86,9 @@ public class UISampleNodePrefab : UINoiseNodePrefab
 
     private void MoveNode()
     {
+        if (Input.GetMouseDelta() == Vector2.Zero)
+            return;
+
         Vector2 mousePosition = Input.GetMousePosition();
         Vector2 delta = (mousePosition - _oldMouseButtonPosition) * (1 / Collection.UIController.Scale);
 

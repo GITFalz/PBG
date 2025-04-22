@@ -17,15 +17,12 @@ public class UIMesh
     public int MaskCount = 0;
     public int VisibleElementCount = 0;
 
-    private bool _updateVisibility = true;
     private int _mask = 0x40000000; // 0x40000000 = 0100 0000 0000 0000 0000 0000 0000 0000
 
-    public List<UIRender> Elements = [];
+    private bool _updateData = false;
+    private bool _updateVisibility = false;
 
-    public void SetVisibility()
-    {
-        _updateVisibility = true;
-    }
+    public List<UIRender> Elements = [];
 
     public void AddElement(UIPanel element, ref int uiIndex)
     {
@@ -40,9 +37,6 @@ public class UIMesh
             TextureIndex = (element.TextureIndex, 0, ElementCount, element.Masked ? (element.MaskIndex | mask) : 0),
             Transformation = element.Transformation
         };
-
-        Console.WriteLine($"Adding element: {element.Name} with index: {uiIndex} and mask: {uiData.TextureIndex.W}");
-        Console.WriteLine(uiData);
 
         UIData.Add(uiData);
         Elements.Add(element);
@@ -77,6 +71,11 @@ public class UIMesh
         UIData[index] = data;
     }
 
+    public void SetVisibility()
+    {
+        _updateVisibility = true;
+    }
+
     public void UpdateData()
     {
         int offsetIndex = 0;
@@ -97,31 +96,11 @@ public class UIMesh
         }
     }   
 
-    public void UpdateVisibility()
-    {
-        if (!_updateVisibility) 
-            return;
-
-        UpdateData();
-
-        _updateVisibility = false;
-        _uiDataSSBO.Update(UIData, 2);
-    }
-
-
-    public void UpdateElement(UIPanel element)
-    {
-        Internal_UpdateElementTransform(element);
-        Internal_UpdateElementScale(element);
-        Internal_UpdateElementTexture(element);
-        _uiDataSSBO.Update(UIData, 0);
-    }
-
 
     public void UpdateElementTransformation(UIElement element)
     {
         Internal_UpdateElementTransform(element);
-        _uiDataSSBO.Update(UIData, 0);
+        _updateData = true;
     }
 
     private void Internal_UpdateElementTransform(UIElement element)
@@ -135,7 +114,7 @@ public class UIMesh
     public void UpdateElementScale(UIRender element)
     {
         Internal_UpdateElementScale(element);
-        _uiDataSSBO.Update(UIData, 0);
+        _updateData = true;
     }
 
     private void Internal_UpdateElementScale(UIRender element)
@@ -149,7 +128,7 @@ public class UIMesh
     public void UpdateElementTexture(UIRender element)
     {
         Internal_UpdateElementTexture(element);
-        _uiDataSSBO.Update(UIData, 0);
+        _updateData = true;
     }
 
     private void Internal_UpdateElementTexture(UIRender element)
@@ -182,6 +161,21 @@ public class UIMesh
     {
         _uiDataSSBO.Renew(UIData);
         _textTbo.Renew(chars);
+    }
+
+    public void Update()
+    {
+        if (_updateVisibility)
+        {
+            UpdateData();
+            _updateVisibility = false;
+            _updateData = true;
+        }
+        if (_updateData)
+        {
+            _uiDataSSBO.Update(UIData, 0);
+            _updateData = false;
+        }
     }
 
     public void Render()

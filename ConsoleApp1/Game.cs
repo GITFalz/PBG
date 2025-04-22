@@ -226,7 +226,8 @@ public class Game : GameWindow
         _UIEditorScene.AddNode(uiNode, menuNode);
 
         AddScenes(_worldScene, _worldNoiseEditorScene, _UIEditorScene);
-        LoadScene("UIEditor");
+        //LoadScene("WorldNoiseEditor");
+        LoadScene("World");
 
         _popUp = new PopUp();
 
@@ -248,34 +249,10 @@ public class Game : GameWindow
         Input.PressedKeys.Add(e.Key);
 
         UIController.InputField(e.Key);
-        return;
 
-        if (e.Key == Keys.Escape)
-        {
-            MoveTest = !MoveTest;
-
-            if (MoveTest)
-            {
-                Camera.lastPos = Input.GetMousePosition();
-                UpdateCamera = Camera.Update;
-            }
-            else
-            {
-                UpdateCamera = () => { };
-            }
-            
-        }
-        else if (e.Key == Keys.P)
+        if (e.Key == Keys.P)
         {
             Camera.SetCameraMode(Camera.GetCameraMode() == CameraMode.Follow ? CameraMode.Free : CameraMode.Follow);
-        }
-        else if (e.Key == Keys.F5)
-        {
-            PlayerStateMachine.Instance.ToggleView();
-        }
-        else if (e.Key == Keys.Q)
-        {
-            PlayerStateMachine.Instance.Teleport((0, 200, 0));
         }
     }
 

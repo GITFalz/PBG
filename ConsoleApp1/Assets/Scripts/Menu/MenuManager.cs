@@ -97,7 +97,9 @@ public class MenuManager : ScriptingNode
     {
         Console.WriteLine("Closing Main Menu");
         _mainMenuAction = OpenMainMenu;
-        Game.SetCursorState(CursorState.Grabbed);
+
+        if (Game.CurrentScene?.Name == "World")
+            Game.SetCursorState(CursorState.Grabbed);
 
         _updateAction = () => { };
         _renderAction = () => { };

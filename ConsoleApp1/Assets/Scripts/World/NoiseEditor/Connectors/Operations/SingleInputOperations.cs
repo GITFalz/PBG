@@ -2,6 +2,7 @@ public abstract class MinMaxInputOperations
 {
     public abstract float GetValue(float min, float max, float value);
     public abstract string GetFunction(float min, float max, string valueName);
+    public abstract string GetFunction(string min, string max, string valueName);
 
     public static MinMaxInputOperations GetOperation(MinMaxInputOperationType type)
     {
@@ -28,6 +29,11 @@ public class SingleInputClampValueOperation : MinMaxInputOperations
     {
         return $"ClampNoiseValue({min}, {max}, {valueName})";
     }
+
+    public override string GetFunction(string min, string max, string valueName)
+    {
+        return $"ClampNoiseValue({min}, {max}, {valueName})";
+    }
 }
 
 public class SingleInputIgnoreValueOperation : MinMaxInputOperations
@@ -38,6 +44,11 @@ public class SingleInputIgnoreValueOperation : MinMaxInputOperations
     }
 
     public override string GetFunction(float min, float max, string valueName)
+    {
+        return $"IgnoreNoiseValue({min}, {max}, {valueName})";
+    }
+
+    public override string GetFunction(string min, string max, string valueName)
     {
         return $"IgnoreNoiseValue({min}, {max}, {valueName})";
     }
@@ -54,6 +65,11 @@ public class SingleInputLerpValueOperation : MinMaxInputOperations
     {
         return $"LerpNoiseValue({min}, {max}, {valueName})";
     }
+
+    public override string GetFunction(string min, string max, string valueName)
+    {
+        return $"LerpNoiseValue({min}, {max}, {valueName})";
+    }
 }
 
 public class SingleInputSlideValueOperation : MinMaxInputOperations
@@ -67,6 +83,11 @@ public class SingleInputSlideValueOperation : MinMaxInputOperations
     {
         return $"SlideNoiseValue({min}, {max}, {valueName})";
     }
+
+    public override string GetFunction(string min, string max, string valueName)
+    {
+        return $"SlideNoiseValue({min}, {max}, {valueName})";
+    }
 }
 
 public class SingleInputSmoothValueOperation : MinMaxInputOperations
@@ -77,6 +98,11 @@ public class SingleInputSmoothValueOperation : MinMaxInputOperations
     }
 
     public override string GetFunction(float min, float max, string valueName)
+    {
+        return $"SmoothNoiseValue({min}, {max}, {valueName})";
+    }
+
+    public override string GetFunction(string min, string max, string valueName)
     {
         return $"SmoothNoiseValue({min}, {max}, {valueName})";
     }

@@ -22,7 +22,7 @@ public class PlayerGrapplingSwingOutState : PlayerGameBaseState
     {
         if (playerGameState.PlayerStateMachine.physicsBody.Velocity.Y < -2f)
         {
-            Camera.SetFOV(45);
+            Camera.SetFOV(60);
             playerGameState.SwitchState(playerGameState.FallingState);
             return;
         }

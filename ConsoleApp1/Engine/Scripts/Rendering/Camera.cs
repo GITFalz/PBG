@@ -10,12 +10,13 @@ public class Camera
     public float SPEED { get; private set; } = 50f;
     public float SCREEN_WIDTH { get; set; }
     public float SCREEN_HEIGHT { get; set; }
-    public float SENSITIVITY { get; private set; } = 65f;
+    public float VERTICAL_SENSITIVITY { get; private set; } = 110f;
+    public float HORIZONTAL_SENSITIVITY { get; private set; } = 80f;
     public float SCROLL_SENSITIVITY { get; private set; } = 0.4f;
     
     public float FOV { get; private set; } = 45f;
     public float targetFOV { get; private set; } = 45f;
-    public float FOV_SMOTH_FACTOR { get; private set; } = 20f;
+    public float FOV_SMOTH_FACTOR { get; private set; } = 10f;
 
     private Vector3 _lastPosition = (0, 0, 0);
     public Vector3 Position = (0, 0, 0);
@@ -262,6 +263,7 @@ public class Camera
     {
         _lastPosition = Position;
         _lastFront = front;
+        FOV = Mathf.Lerp(FOV, targetFOV, FOV_SMOTH_FACTOR * GameTime.DeltaTime);
         _cameraModes[_cameraMode].Invoke();
     }
     
@@ -275,8 +277,6 @@ public class Camera
     {
         if (MenuManager.IsOpen)
             return;
-
-        FOV = Mathf.Lerp(FOV, targetFOV, FOV_SMOTH_FACTOR * GameTime.DeltaTime);
         
         float speed = SPEED * GameTime.DeltaTime;
         Vector2 input = Input.GetMovementInput();
@@ -368,8 +368,8 @@ public class Camera
         float deltaX = _smoothMouseDelta.X;
         float deltaY = _smoothMouseDelta.Y;
 
-        deltaX *= SENSITIVITY * GameTime.DeltaTime;
-        deltaY *= SENSITIVITY * GameTime.DeltaTime;
+        deltaX *= HORIZONTAL_SENSITIVITY * GameTime.DeltaTime;
+        deltaY *= VERTICAL_SENSITIVITY * GameTime.DeltaTime;
 
         Yaw += deltaX;
         Pitch -= deltaY;

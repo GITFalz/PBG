@@ -17,7 +17,7 @@ public abstract class UIElement
     public Vector2 Scale = (100, 100);
     public Vector2 newScale = (100, 100);
     public Vector4 Offset = (0, 0, 0, 0);  
-    public Vector4 totalOffset = (0, 0, 0, 0);
+
     public float Rotation = 0f;
     public bool Rotated = false;
     public bool CanTest = true;
@@ -26,6 +26,9 @@ public abstract class UIElement
     public int MaskIndex = 0;
     public int ElementIndex = 0;
     public float Depth = 0;
+
+
+    private Vector3 _transformedOrigin = (0, 0, 0);
 
     public AnchorType AnchorType = AnchorType.MiddleCenter;
     public PositionType PositionType = PositionType.Absolute;
@@ -54,27 +57,49 @@ public abstract class UIElement
         Scale = scale;
         newScale = scale;
         Offset = offset;
-        totalOffset = offset;
         Rotation = rotation;
         CanTest = false;
     }
 
     public virtual void SetVisibility(bool visible) { Visible = visible; UIController.UpdateVisibility = true; }
-
-    public virtual void SetParent(UIElement? parent) { ParentElement = parent; }
-    public virtual void SetOrigin(Vector3 origin) { Origin = origin; }
-    public virtual void SetPivot(Vector3 pivot) { Pivot = pivot; }
-    public virtual void SetScale(Vector2 scale) { Scale = scale; newScale = scale; }
-    public virtual void SetOffset(Vector4 offset) { Offset = offset; totalOffset = offset; }
-    public virtual void SetAnchorType(AnchorType anchorType) { AnchorType = anchorType; }
-    public virtual void SetPositionType(PositionType positionType) { PositionType = positionType; }
     public virtual void SetMasked(bool masked) { Masked = masked; }
     public virtual void SetMaskIndex(int maskIndex) { MaskIndex = maskIndex; }
+    public virtual void Move(Vector3 offset) { Origin += offset; GetTransformation(); }
 
 
-    public virtual void Generate() {}
-    public virtual void Clear() { ParentElement = null; OnClick = null; OnHover = null; OnHold = null; OnRelease = null; _clicked = false; CanTest = false; CanUpdate = false; }
-    public virtual List<string> ToLines(int gap) { return []; }
+    public virtual void SetScale(Vector2 scale) { Scale = scale; newScale = scale; }
+    public virtual void SetOffset(Vector4 offset) { Offset = offset; }
+    public virtual void SetAnchorType(AnchorType anchorType) { AnchorType = anchorType; }
+    public virtual void SetPositionType(PositionType positionType) { PositionType = positionType; }
+    
+
+
+    public virtual void Generate() { }
+
+    public virtual void Align()
+    {
+        Masked = false;
+
+        if (PositionType == PositionType.Relative && ParentElement != null)
+        {
+            Width = ParentElement.newScale.X;
+            Height = ParentElement.newScale.Y;
+            GetTransformedOrigin();
+            Origin = _transformedOrigin + new Vector3(0, 0, 0.01f) + (new Vector3(0f, 0f, 0.01f) * (Depth + ParentElement.Depth)) + ParentElement.Origin;
+        }
+        else
+        {
+            Width = Game.Width;
+            Height = Game.Height;
+            GetTransformedOrigin();
+            Origin = _transformedOrigin;
+        }
+
+        GetTransformation();
+        if ((int)AnchorType >= 9) newScale = _dimensions[(int)AnchorType - 9](Width, Height, Scale, Offset);
+        Center = Origin + new Vector3(newScale.X / 2, newScale.Y / 2, 0);
+    }
+            
 
     protected virtual void Internal_UpdateTransformation() {}
     public void UpdateTransformation() 
@@ -98,21 +123,10 @@ public abstract class UIElement
     }
 
     public virtual void RemoveElement(UIElement element) {}
-
-
     public abstract float GetYScale();
     public abstract float GetXScale();
 
-
-    public void RemoveFromParent()
-    {
-        if (ParentElement == null)
-            return;
-
-        ParentElement.RemoveElement(this);
-        ParentElement = null;
-    }
-
+    # region Setters for Events
     public void SetOnClick(Action action)
     {
         OnClick = new SerializableEvent(action); 
@@ -138,7 +152,9 @@ public abstract class UIElement
         OnHoverOut = new SerializableEvent(action); 
         CanTest = true;
     }
+    # endregion
 
+    # region Mouse Events
     public virtual bool Test(Vector2 offset = default)
     { 
         if (!CanTest || !Visible) 
@@ -147,13 +163,11 @@ public abstract class UIElement
         TestButtons(IsMouseOver(offset));  
         return true;
     }
-
     public bool IsMouseOver(Vector2 offset = default)
     {
         Vector2 pos = Input.GetMousePosition();
         return MouseOver(pos, Origin.Xy, offset, Scale);
     }
-
     private void TestButtons(bool mouseOver)
     {
         if (mouseOver)
@@ -204,44 +218,7 @@ public abstract class UIElement
             return pos.X >= point1.X && pos.X <= point2.X && pos.Y >= point1.Y && pos.Y <= point2.Y;
         }
     }
-
-    public void SetPosition(Vector3 position)
-    {
-        if (PositionType != PositionType.Free)
-            return;
-
-        Origin = position;
-        Transformation = Matrix4.CreateTranslation(position);
-    }
-
-    public virtual void Align()
-    {
-        Masked = false;
-        
-        if (PositionType == PositionType.Free)
-            return;
-
-        if (PositionType == PositionType.Relative && ParentElement != null)
-        {
-            Width = ParentElement.newScale.X;
-            Height = ParentElement.newScale.Y;
-
-            totalOffset = Offset + ParentElement.totalOffset;
-            Origin = GetTransformedOrigin() + new Vector3(0, 0, 0.01f) + (new Vector3(0f, 0f, 0.01f) * (Depth + ParentElement.Depth)) + ParentElement.Origin;
-        }
-        else
-        {
-            Width = Game.Width;
-            Height = Game.Height;
-
-            totalOffset = Offset;
-            Origin = GetTransformedOrigin();
-        }
-
-        Transformation = Matrix4.CreateTranslation(Origin);
-        if ((int)AnchorType >= 9) newScale = _dimensions[(int)AnchorType - 9](Width, Height, Scale, Offset);
-        Center = Origin + new Vector3(newScale.X / 2, newScale.Y / 2, 0);
-    }
+    # endregion
 
     public static string GetMethodString(SerializableEvent? e)
     {
@@ -251,8 +228,14 @@ public abstract class UIElement
     public Vector3 GetTransformedOrigin()
     {
         int index = (int)AnchorType;
-        Origin = origins[index](Width, Height, Scale, Offset);
-        return index >= origins.Length ? (0, 0, 0) : Origin;
+        _transformedOrigin = origins[index](Width, Height, Scale, Offset);
+        return _transformedOrigin;
+    }
+
+    public Matrix4 GetTransformation()
+    {
+        Transformation = Matrix4.CreateTranslation(Origin);
+        return Transformation;
     }
 
     public List<string> GetBasicDisplayLines(string gapString)
@@ -321,6 +304,9 @@ public abstract class UIElement
     ];
 
 
+    public virtual void Clear() { ParentElement = null; OnClick = null; OnHover = null; OnHold = null; OnRelease = null; _clicked = false; CanTest = false; CanUpdate = false; }
+    public virtual List<string> ToLines(int gap) { return []; }
+
     public override string ToString()
     {
         return $"Name: {Name},\n" +
@@ -330,7 +316,6 @@ public abstract class UIElement
                $"Scale: {Scale},\n" +
                $"NewScale: {newScale},\n" +
                $"Offset: {Offset},\n" +
-               $"TotalOffset: {totalOffset},\n" +
                $"Rotation: {Rotation},\n" +
                $"State: {State}";
     }

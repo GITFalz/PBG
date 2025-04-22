@@ -11,9 +11,9 @@ public class PlayerRunningState : PlayerGameBaseState
 
         //playerGameState.PlayerStateMachine.physicsBody.Drag = 10f;
         playerGameState.NextMovingState = playerGameState.RunningState;
-        playerGameState.MovementSpeed = PlayerMovementSpeed.Walk;
+        playerGameState.MovementSpeed = PlayerMovementSpeed.Run;
 
-        Game.Camera.SetFOV(50);
+        Game.Camera.SetFOV(70);
     }
 
     public override void Update(PlayerGameState playerGameState)
@@ -67,7 +67,6 @@ public class PlayerRunningState : PlayerGameBaseState
 
     public override void Exit(PlayerGameState playerGameState)
     {
-        Game.Camera.SetFOV(45);
         //playerGameState.PlayerStateMachine.physicsBody.Drag = 0.3f;
     }
 }

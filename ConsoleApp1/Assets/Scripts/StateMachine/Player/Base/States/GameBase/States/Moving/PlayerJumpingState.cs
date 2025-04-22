@@ -30,14 +30,12 @@ public class PlayerJumpingState : PlayerGameBaseState
         
         if (playerGameState.PlayerStateMachine.physicsBody.Velocity.Y < 0)
         {
-            Camera.SetFOV(45);
             playerGameState.SwitchState(playerGameState.FallingState);
             return;
         }
         
         if (playerGameState.PlayerStateMachine.IsGrounded() && playerGameState.PlayerStateMachine.physicsBody.Velocity.Y < 0)
         {
-            Camera.SetFOV(45);
             playerGameState.SwitchState(playerGameState.GroundedState);
             return;
         }

@@ -41,7 +41,7 @@ public static class Mathf
         float x = (float)Math.Cos(yAngleRadians);
         float z = (float)Math.Sin(yAngleRadians);
 
-        return new Vector3(x, 0, z);
+        return new Vector3(x, 0, z).Normalized();
     }
 
     public static double Max(params double[] values)

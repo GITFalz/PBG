@@ -15,11 +15,12 @@ public class PlayerDashState : PlayerGameBaseState
         timer = 0;
 
         Vector3 forward = playerGameState.PlayerStateMachine.forward;
+        Console.WriteLine("Dashing with speed: " + PlayerStateMachine.DASH_SPEED + " forward: " + forward);
         playerGameState.PlayerStateMachine.physicsBody.AddForce(forward, PlayerStateMachine.DASH_SPEED);
         //playerGameState.PlayerStateMachine.physicsBody.Drag = 10f;
-        playerGameState.MovementSpeed = PlayerMovementSpeed.Run;
+        playerGameState.MovementSpeed = PlayerMovementSpeed.Sprint;
 
-        Camera.SetFOV(60); // 1STANNIVERSARY, EVERFLOWING, WITHYOU
+        Camera.SetFOV(90); // 1STANNIVERSARY, EVERFLOWING, WITHYOU
     }
 
     public override void Update(PlayerGameState playerGameState)
@@ -55,12 +56,12 @@ public class PlayerDashState : PlayerGameBaseState
 
     public override void FixedUpdate(PlayerGameState playerGameState)
     {
-        
+        if (input != Vector2.Zero)
+            playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Sprint);
     }
 
     public override void Exit(PlayerGameState playerGameState)
     {
-        Camera.SetFOV(45);
         //playerGameState.PlayerStateMachine.physicsBody.Drag = 0.3f;
     }
 }

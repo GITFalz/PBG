@@ -7,7 +7,7 @@ public struct Collider
     public Vector3 Max = (1, 1, 1);
 
     public Collider() {}
-    public Collider(Collider a, Vector3 origin) { Min = a.Min + origin; Max = a.Max + origin; Center = (Max + Min) / 2f; }
+    public Collider(Collider a, Vector3 origin) { Min = a.Min + origin; Max = a.Max + origin; Center = a.Center + origin; }
     public Collider(Vector3 min, Vector3 max) { Min = min; Max = max; Center = (max + min) / 2f; }
 
     public bool Intersects(Collider other)

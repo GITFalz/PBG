@@ -78,7 +78,7 @@ public class Info
         if (FpsUpdate())
         {
             FpsText.SetText($"Fps: {GameTime.Fps}", 0.5f).GenerateChars().UpdateText();
-            long memoryBytes = Process.GetCurrentProcess().WorkingSet64;
+            long memoryBytes = Process.GetCurrentProcess().WorkingSet64; 
             RamUsageText.SetText($"Ram: {memoryBytes / (1024 * 1024)} Mb", 0.5f).GenerateChars();
         }  
         

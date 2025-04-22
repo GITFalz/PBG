@@ -1,4 +1,5 @@
 using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
 
 public class UIRectangleDisplayPrefab : UIPrefab
 {
@@ -51,7 +52,11 @@ public class UIRectangleDisplayPrefab : UIPrefab
         Collection.UpdateScale();
     }
 
-    private void SetOldMousePosition() => _oldMouseButtonPosition = Input.GetMousePosition();
+    private void SetOldMousePosition()
+    {
+        _oldMouseButtonPosition = Input.GetMousePosition();
+        Game.SetCursorState(CursorState.Normal);
+    } 
 
     private void MoveNode()
     {

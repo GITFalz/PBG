@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using OpenTK.Mathematics;
 
 public class InputGateConnector : GateConnector
@@ -35,5 +36,17 @@ public class InputGateConnector : GateConnector
     public string GetConnectedName()
     {
         return (OutputGateConnector != null && OutputGateConnector.Node != null) ? OutputGateConnector.Name : "None";
+    }
+
+    public bool GetConnectedNode([NotNullWhen(true)] out ConnectorNode? node)
+    {
+        if (IsConnected && OutputGateConnector != null)
+        {
+            node = OutputGateConnector.Node;
+            return true;
+        }
+        
+        node = null;
+        return false;
     }
 }

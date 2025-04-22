@@ -22,10 +22,6 @@ public class UIInputField : UIText
         SetOnClick(() => UIController.AssignInputField(this));
     }
 
-    public override void SetParent(UIElement? parent)
-    {
-        base.SetParent(parent);
-    }
     public override void SetOffset(Vector4 offset)
     {
         base.SetOffset(offset);

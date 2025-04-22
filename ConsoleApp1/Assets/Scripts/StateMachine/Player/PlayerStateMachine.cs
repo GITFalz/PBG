@@ -8,7 +8,7 @@ public class PlayerStateMachine : ScriptingNode
     public CameraMode cameraMode = CameraMode.Follow;
     public const float WALK_SPEED = 80;
     public const float RUN_SPEED = 120;
-    public const float DASH_SPEED = 180;
+    public const float DASH_SPEED = 4000;
     public const float SPRINT_SPEED = 160;
     public const float FALL_SPEED = 15;
     public const float GRAPPLE_SPEED = 30;

@@ -1,14 +1,16 @@
-public class CWorldNode
+public abstract class CWorldNode
 {
     public string Name = "CWorldNode";
 
-    protected CWorldNode()
-    {
-        CWorldNodeManager.CWorldNodes.Add(this);
-    }
+    protected CWorldNode() {}
+    protected CWorldNode(string name) { Name = name; }
 
     public void Delete()
     {
-        CWorldNodeManager.CWorldNodes.Remove(this);
+        
     }
+
+    public abstract CWorldNode Copy();
+    public bool IsEmpty() => Name == "Empty";
+    public bool IsntEmpty() => Name != "Empty";
 }

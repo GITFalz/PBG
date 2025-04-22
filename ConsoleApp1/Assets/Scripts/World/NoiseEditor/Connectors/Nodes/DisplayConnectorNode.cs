@@ -88,4 +88,9 @@ public class DisplayConnectorNode : ConnectorNode
             $"Inputs: {NoSpace(InputGateConnector.Name)} " +
             $"Prefab: {NoSpace(Name)} {NoSpace(DisplayNodePrefab.Collection.Offset)}";
     }
+
+    public override void SetValueReferences(List<float> values, ref int index)
+    {
+        // No values to set for display node
+    }
 }
