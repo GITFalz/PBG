@@ -101,6 +101,13 @@ public class CWorldBlock
         BlockChecker = blockChecker;
     }
 
+    public Block GetBlock()
+    {
+        Block block = new Block(index);
+        block.SetSolid();
+        return block;
+    }
+
     public void SetIndices(int index, int value)
     {
         blockUVs.textureIndices[index] = value;

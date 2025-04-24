@@ -421,8 +421,6 @@ public class WorldManager : ScriptingNode
         if (_currentPlayerChunk == _lastPlayerPosition) 
             return;
 
-        Console.WriteLine($"Render Distance: {_currentPlayerChunk}");
-
         // Chunks in world position
         var chunks = SetChunks();
         int render = World.renderDistance;

@@ -173,9 +173,9 @@ public abstract class UIElement
         if (mouseOver)
         {
             OnHover?.Invoke();
-            
-            if ( Input.IsMousePressed(MouseButton.Left) && !_clicked)
-            {
+
+            if (Input.IsMousePressed(MouseButton.Left) && !_clicked)
+            {  
                 OnClick?.Invoke();
                 _clicked = true;
             }

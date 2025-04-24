@@ -179,7 +179,10 @@ public class UIController
         Elements.Remove(element);
     }
 
-
+    public void SetPosition(Vector2 position)
+    {
+        SetPosition(new Vector3(position.X, position.Y, Position.Z));
+    }
 
     public void SetPosition(Vector3 position)
     {

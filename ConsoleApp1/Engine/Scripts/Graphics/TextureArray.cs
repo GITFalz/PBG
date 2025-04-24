@@ -17,10 +17,22 @@ public class TextureArray : BufferBase
         _bufferCount++;
     }
 
+    public TextureArray(List<byte[]> data, int cellWidth, int cellHeight) : base()
+    {
+        Create(data, cellWidth, cellHeight);
+        _bufferCount++;
+    }
+
     public void Renew(string atlasPath, int cellWidth, int cellHeight)
     {
         GL.DeleteTexture(ID); // The texture needs to be deleted before creating a new one
         Create(atlasPath, cellWidth, cellHeight);
+    }
+
+    public void Renew(List<byte[]> data, int cellWidth, int cellHeight)
+    {
+        GL.DeleteTexture(ID); // The texture needs to be deleted before creating a new one
+        Create(data, cellWidth, cellHeight);
     }
 
     public void Bind()
@@ -54,6 +66,11 @@ public class TextureArray : BufferBase
             cellHeight = newHeight;
         }
         
+        Create(textureData, cellWidth, cellHeight);
+    }
+
+    public void Create(List<byte[]> textureData, int cellWidth, int cellHeight)
+    {
         int layers = textureData.Count;
         
         ID = GL.GenTexture();

@@ -13,7 +13,6 @@ public class ChunkGenerationProcess : ThreadProcess
 
     protected override void Function()
     {
-        Console.WriteLine($"Thread {ThreadIndex} is generating chunk {ChunkData.GetWorldPosition()}");
         if (!Loaded)
         {
             if (GenerateChunk(ref ChunkData, ChunkData.GetWorldPosition(), ThreadIndex) == -1)
@@ -43,7 +42,6 @@ public class ChunkGenerationProcess : ThreadProcess
             ChunkManager.GenerateMeshQueue.Enqueue(ChunkData);
             ChunkData.Save = false;
         }
-        Console.WriteLine($"Thread {ThreadIndex} finished generating chunk {ChunkData.GetWorldPosition()}");
     }
 
     private static int GenerateChunk(ref Chunk chunkData, Vector3i position, int threadIndex)
@@ -51,7 +49,6 @@ public class ChunkGenerationProcess : ThreadProcess
         if (!CWorldMultithreadNodeManager.GetNodeManager(threadIndex, out var nodeManager))
             return -1;
 
-        Console.WriteLine($"Is Being used? {nodeManager.IsBeingUsed}, if yes then problem");
         nodeManager.IsBeingUsed = true;
 
         Vector2 chunkWorldPosition2D = new Vector2(position.X + 0.001f, position.Z + 0.001f);

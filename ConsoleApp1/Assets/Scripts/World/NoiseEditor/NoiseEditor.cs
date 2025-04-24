@@ -50,6 +50,8 @@ public class NoiseEditor : ScriptingNode
 
     private float VoronoiSize = 10f;
 
+    private Inventory _inventory = new Inventory(10, 10);
+
     public NoiseEditor()
     {
         InternalNodeWindowPosition = new Vector2i(0, Game.Height - NodePanelHeight);
@@ -446,6 +448,7 @@ public class NoiseEditor : ScriptingNode
 
     void Update()
     {
+        /*
         // Save
         if (Input.IsKeyAndControlPressed(Keys.S))
         {
@@ -512,10 +515,19 @@ public class NoiseEditor : ScriptingNode
         {
             VoronoiSize -= mouseScrollDelta.Y * GameTime.DeltaTime * 100f * VoronoiSize;
         }
+
+        if (Input.IsKeyPressed(Keys.J)) 
+        {
+            _inventory.SetVisibility(54, false);
+        }
+        */
+
+        _inventory.Update();
     }
 
     void Render()
     {
+        /*
         MainWindowController.RenderNoDepthTest();
 
         GL.Viewport(InternalNodeWindowPosition.X + 7, InternalNodeWindowPosition.Y + 7, NodePanelWidth - 14, NodePanelHeight - 14);
@@ -558,6 +570,8 @@ public class NoiseEditor : ScriptingNode
 
         VoronoiShader.Unbind();
         */
+
+        _inventory.Render();
     }
 
     void Exit()

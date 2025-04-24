@@ -21,9 +21,9 @@ public class FBO : BufferBase
     public void Bind() => GL.BindFramebuffer(FramebufferTarget.Framebuffer, ID);
     public void Unbind() => GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
 
-    public void BindTexture()
+    public void BindTexture(TextureUnit unit)
     {
-        GL.ActiveTexture(TextureUnit.Texture0);
+        GL.ActiveTexture(unit);
         GL.BindTexture(TextureTarget.Texture2D, colorTextureID);
     }
 
@@ -41,9 +41,7 @@ public class FBO : BufferBase
 
     public void SaveFramebufferToPNG(int width, int height, string filePath)
     {
-        byte[] pixels = new byte[width * height * 4]; 
-
-        GL.ReadPixels(0, 0, width, height, PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
+        byte[] pixels = GetPixels(width, height);
 
         using (var image = new Image<Rgba32>(width, height))
         {
@@ -66,6 +64,15 @@ public class FBO : BufferBase
 
             Console.WriteLine($"Framebuffer saved to {filePath}");
         }
+    }
+
+    public byte[] GetPixels(int width, int height)
+    {
+        byte[] pixels = new byte[width * height * 4]; 
+
+        GL.ReadPixels(0, 0, width, height, PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
+
+        return pixels;
     }
 
     public void Renew(int width, int height, FBOType type = FBOType.ColorDepth) 

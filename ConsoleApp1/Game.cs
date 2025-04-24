@@ -200,6 +200,12 @@ public class Game : GameWindow
         BlockManager.Add(dirt);
         BlockManager.Add(stone);
 
+        _ = new BlockItemData(grass);
+        _ = new BlockItemData(dirt);
+        _ = new BlockItemData(stone);
+
+        ItemDataManager.GenerateIcons();
+
         // Menu
         TransformNode menuNode = new TransformNode();
         MenuManager menuManager = new MenuManager();

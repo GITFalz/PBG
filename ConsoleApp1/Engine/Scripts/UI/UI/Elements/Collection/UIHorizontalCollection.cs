@@ -38,7 +38,7 @@ public class UIHorizontalCollection : UICollection
             UIElement element = Elements[i];
             element.SetPositionType(PositionType.Relative);
             element.SetOffset((totalOffset, Border.Y, 0, 0));
-            totalOffset += element.newScale.X + Spacing;
+            totalOffset += element.Scale.X + Spacing;
         }
 
         Scale = (totalOffset - Spacing + Border.Z, Scale.Y);
