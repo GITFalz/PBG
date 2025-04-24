@@ -13,8 +13,25 @@ public class DoubleInputOperationConnectorNode : ConnectorNode
     public DoubleInputOperations Operation;
     public DoubleInputOperationType Type;
 
-    public float Value1 = 1.0f;
-    public float Value2 = 1.0f;
+    public float Value1 {
+        get {
+            return _value1; 
+        } set {
+            _value1 = value;
+            DoubleInputNodePrefab.Value1InputField.SetText(_value1.ToString());
+        }
+    }
+    public float Value2 {
+        get {
+            return _value2; 
+        } set {
+            _value2 = value;
+            DoubleInputNodePrefab.Value2InputField.SetText(_value2.ToString());
+        }
+    }
+
+    private float _value1 = 1.0f;
+    private float _value2 = 1.0f;
 
     private int _value1Index = -1;
     private int _value2Index = -1;
@@ -30,14 +47,14 @@ public class DoubleInputOperationConnectorNode : ConnectorNode
         DoubleInputNodePrefab.InputButton2.SetOnClick(() => InputConnectionTest(InputGateConnector2));
         DoubleInputNodePrefab.OutputButton.SetOnClick(() => OutputConnectionTest(OutputGateConnector));
 
-        DoubleInputNodePrefab.Value1InputField.SetOnTextChange(() => SetValue(ref Value1, DoubleInputNodePrefab.Value1InputField, 1.0f, _value1Index));
-        DoubleInputNodePrefab.Value2InputField.SetOnTextChange(() => SetValue(ref Value2, DoubleInputNodePrefab.Value2InputField, 1.0f, _value2Index));
+        DoubleInputNodePrefab.Value1InputField.SetOnTextChange(() => SetValue(ref _value1, DoubleInputNodePrefab.Value1InputField, 1.0f, _value1Index));
+        DoubleInputNodePrefab.Value2InputField.SetOnTextChange(() => SetValue(ref _value2, DoubleInputNodePrefab.Value2InputField, 1.0f, _value2Index));
 
         DoubleInputNodePrefab.Value1TextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
         DoubleInputNodePrefab.Value2TextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
 
-        DoubleInputNodePrefab.Value1TextField.SetOnHold(() => SetSlideValue(ref Value1, DoubleInputNodePrefab.Value1InputField, 5f, _value1Index));
-        DoubleInputNodePrefab.Value2TextField.SetOnHold(() => SetSlideValue(ref Value2, DoubleInputNodePrefab.Value2InputField, 5f, _value2Index));
+        DoubleInputNodePrefab.Value1TextField.SetOnHold(() => SetSlideValue(ref _value1, DoubleInputNodePrefab.Value1InputField, 5f, _value1Index));
+        DoubleInputNodePrefab.Value2TextField.SetOnHold(() => SetSlideValue(ref _value2, DoubleInputNodePrefab.Value2InputField, 5f, _value2Index));
 
         DoubleInputNodePrefab.Value1TextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
         DoubleInputNodePrefab.Value2TextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
@@ -73,8 +90,13 @@ public class DoubleInputOperationConnectorNode : ConnectorNode
         if (InputGateConnector2.IsConnected && InputGateConnector2.OutputGateConnector != null)
             connectedNodes.Add(InputGateConnector2.OutputGateConnector.Node);
 
-        if (OutputGateConnector.IsConnected && OutputGateConnector.InputGateConnector != null)
-            connectedNodes.Add(OutputGateConnector.InputGateConnector.Node);
+        if (OutputGateConnector.IsConnected)
+        {
+            foreach (var input in OutputGateConnector.InputGateConnectors)
+            {
+                connectedNodes.Add(input.Node);
+            }
+        }
         return connectedNodes;
     }
 
@@ -92,8 +114,13 @@ public class DoubleInputOperationConnectorNode : ConnectorNode
     public override List<ConnectorNode> GetOutputNodes() 
     { 
         List<ConnectorNode> outputNodes = [];
-        if (OutputGateConnector.IsConnected && OutputGateConnector.InputGateConnector != null)
-            outputNodes.Add(OutputGateConnector.InputGateConnector.Node);
+        if (OutputGateConnector.IsConnected)
+        {
+            foreach (var input in OutputGateConnector.InputGateConnectors)
+            {
+                outputNodes.Add(input.Node);
+            }
+        }
         return outputNodes;
     }
 

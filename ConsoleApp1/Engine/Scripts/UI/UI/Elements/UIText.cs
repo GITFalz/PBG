@@ -1,6 +1,6 @@
 using OpenTK.Mathematics;
 
-public class UIText : UIRender
+public class UIText : UIElement
 {
     public static UIText Empty = new();
 
@@ -11,8 +11,13 @@ public class UIText : UIRender
     public char[] Characters = [];
     public int CharCount = 0;
     public List<int> Chars = [];
+
+    public List<TextElementData> CharacteData = [];
+    
     public TextType TextType = TextType.Alphabetic;
     public int TextOffset = 0;
+
+    public TextMesh TextMesh;
 
     private UIText() : base() { }
     public UIText
@@ -26,9 +31,9 @@ public class UIText : UIRender
         Vector2 scale, 
         Vector4 offset, 
         float rotation) : 
-        base(name, controller, anchorType, positionType, color, pivot, scale, offset, rotation, 0, (scale.X, scale.Y, 0, 0))
+        base(name, controller, anchorType, positionType, pivot, scale, offset, rotation)
     {
-
+        TextMesh = controller.TextMesh;
     }
 
     public override void SetVisibility(bool visible)
@@ -37,7 +42,7 @@ public class UIText : UIRender
             return;
 
         base.SetVisibility(visible);
-        uIMesh.SetVisibility();
+        TextMesh.SetVisibility(CharacteData, visible);
     }
 
     public UIText SetText(string text, float fontSize)
@@ -71,9 +76,8 @@ public class UIText : UIRender
         CharCount = Text.Length;
         Characters = finalText.ToCharArray();
 
-        Scale = new Vector2(MaxCharCount * (20 * FontSize), 20 * FontSize);
+        Scale = new Vector2(MaxCharCount * (10 * FontSize), 10 * FontSize);
         newScale = Scale;
-        SizeSlice = new Vector4(Scale.X, Scale.Y, 0, 0);
 
         return this;
     }
@@ -107,41 +111,75 @@ public class UIText : UIRender
         if (!CanUpdate)
             return;
             
-        uIMesh.UpdateElementTransformation(this);
+        TextMesh.UpdateElementTransformation(this);
     }
 
     public void UpdateText()
     {
         if (!CanUpdate)
             return;
-
-        uIMesh.UpdateText();
     }
 
     public override void Generate()
     {
-        GenerateQuad(ref UIController.TextOffset);
+        GenerateQuad();
         GenerateChars();
+    }
+
+    public void Delete()
+    {
+        TextMesh.RemoveElement(this);
+        CharacteData.Clear();
+        Chars.Clear();
+    }
+
+    private void CreateCharacters()
+    {
+        int index = 0;
+        foreach (var character in Characters)
+        {
+            int charIndex = TextShaderHelper.GetChar(character);
+            TextElementData textData = new TextElementData
+            {
+                Character = new CharacterData
+                {
+                    PositionSize = (index * (10 * FontSize), 0, 7 * FontSize, 9 * FontSize),
+                    Index = (-1, 0x40000000, ElementIndex, 0),
+                }
+            };
+            CharacteData.Add(textData);
+            index++;
+        }
+        TextMesh.AddCharacters(CharacteData);
     }
 
     public UIText GenerateChars()
     {
+        if (CharacteData.Count == 0)
+            CreateCharacters();
+
         Chars.Clear();
+        int index = 0;
         foreach (var character in Characters)
         {
-            Chars.Add(TextShaderHelper.GetChar(character));
+            int charIndex = TextShaderHelper.GetChar(character);
+            Chars.Add(charIndex);
+
+            CharacterData Character = CharacteData[index].Character;
+            Character.PositionSize = (index * (10 * FontSize), 0, 10 * FontSize, 10 * FontSize);
+            Character.Index = (charIndex, 0x40000000, ElementIndex, 0);
+            CharacteData[index].Character = Character;
+
+            index++;
         }
-        uIMesh.SetCharacters(Chars, TextOffset);
+
+        TextMesh.UpdateCharacters(CharacteData);
         return this;
     }
 
-    public void GenerateQuad(ref int offset)
+    public void GenerateQuad()
     {
-        TextOffset = offset;
-
-        uIMesh.AddElement(this, ref ElementIndex, offset);
-
-        offset += MaxCharCount;
+        TextMesh.AddElement(this, ref ElementIndex);
     }
 
     public static string ClampText(string text, int min, int max)

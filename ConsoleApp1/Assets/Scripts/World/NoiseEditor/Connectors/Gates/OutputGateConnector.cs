@@ -5,9 +5,9 @@ public class OutputGateConnector : GateConnector
     public static OutputGateConnector Empty = new OutputGateConnector();
 
     public bool IsConnected = false;
-    public InputGateConnector? InputGateConnector = null;
+    public List<InputGateConnector> InputGateConnectors = [];
     public Vector3 Position => _button?.Center ?? Vector3.Zero;
-    public int Index = -1;
+    public List<int> Indices = [];
 
     public UIButton _button;
 
@@ -18,10 +18,19 @@ public class OutputGateConnector : GateConnector
         Node = node;
     }
 
+    public void SetIndex(InputGateConnector input, int index)
+    {
+        if (InputGateConnectors.Contains(input))
+        {
+            Indices[InputGateConnectors.IndexOf(input)] = index;
+        }
+    }
+
     public void Connect(InputGateConnector input)
     {
         IsConnected = true;
-        InputGateConnector = input;
+        Indices.Add(-1);
+        InputGateConnectors.Add(input);
 
         input.IsConnected = true;
         input.OutputGateConnector = this;
@@ -30,11 +39,16 @@ public class OutputGateConnector : GateConnector
     public void Disconnect()
     {
         IsConnected = false;
-        InputGateConnector = null;
+        Indices.Clear();
+        InputGateConnectors.Clear();
     }
 
-    public string GetConnectedName()
+    public void Disconnect(InputGateConnector input)
     {
-        return (InputGateConnector != null && InputGateConnector.Node != null) ? InputGateConnector.Name : "None";
+        if (InputGateConnectors.Contains(input))
+        {
+            Indices.Remove(InputGateConnectors.IndexOf(input));
+            InputGateConnectors.Remove(input);
+        }
     }
 }

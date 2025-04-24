@@ -8,6 +8,7 @@ public class UIController
     public static UIController Empty = new();
 
     public UIMesh UIMesh = new();
+    public TextMesh TextMesh = new();
     
     public static ShaderProgram _uiShader = UIData.UiShader;
     public static TextureArray _uItexture = UIData.UiTexture;
@@ -97,7 +98,6 @@ public class UIController
         {
             if (text is UIInputField inputField)
             {
-                Console.WriteLine("Adding input field: " + inputField.Name);
                 InputFields.Add(inputField);
             }
         }
@@ -155,6 +155,7 @@ public class UIController
         }
         else if (element is UIText text)
         {
+            text.Delete();
             if (text is UIInputField inputField)
             {
                 InputFields.Remove(inputField);
@@ -428,6 +429,7 @@ public class UIController
         }
             
         UIMesh.Update();
+        TextMesh.Update();
     }
 
     public List<string> ToLines()
@@ -450,11 +452,29 @@ public class UIController
     {
         UIMesh.Clear();
 
-        foreach (var element in Elements)
+        foreach (var element in AbsoluteElements)
         {
             RemoveElement(element);
         }
 
+        foreach (var element in ElementsToRemove)
+        {
+            Internal_RemoveElement(element);
+        }
+
+        Elements.Clear();
+        AbsoluteElements.Clear();
+        ScrollViews.Clear();
+        Buttons.Clear();
+        InputFields.Clear();
+        ElementsToAdd.Clear();
+        ElementsToRemove.Clear();
+    }
+
+    public void Delete()
+    {
+        Clear();
+        UIMesh.Delete();
         Elements.Clear();
     }
 
@@ -523,23 +543,34 @@ public class UIController
 
         if (UIMesh.ElementCount > 0)
         {
-            _textTexture.Bind(TextureUnit.Texture0);
-            _uItexture.Bind(TextureUnit.Texture2);
+            _uItexture.Bind(TextureUnit.Texture0);
             _uiShader.Bind();
 
             GL.UniformMatrix4(UIData.modelLoc, true, ref model);
             GL.UniformMatrix4(UIData.projectionLoc, true, ref orthographicsProjectionMatrix);
-            GL.Uniform1(UIData.textTextureLoc, 0);
-            GL.Uniform1(UIData.charsLoc, 1);
-            GL.Uniform1(UIData.textureArrayLoc, 2);
+            GL.Uniform1(UIData.textureArrayLoc, 0);
 
             UIMesh.Render();
         
             //Shader.Error("Ui render error: ");
 
             _uItexture.Unbind();
-            _textTexture.Unbind();
             _uiShader.Unbind();
+        }
+
+        if (TextMesh.ElementCount > 0)
+        {
+            _textTexture.Bind(TextureUnit.Texture0);
+            _textShader.Bind();
+
+            GL.UniformMatrix4(UIData.textModelLoc, true, ref model);
+            GL.UniformMatrix4(UIData.textProjectionLoc, true, ref orthographicsProjectionMatrix);
+            GL.Uniform1(UIData.textTextureLoc, 0);
+
+            TextMesh.Render();
+
+            _textShader.Unbind();
+            _textTexture.Unbind();
         }
 
         GL.Disable(EnableCap.StencilTest);

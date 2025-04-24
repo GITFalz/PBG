@@ -22,9 +22,6 @@ public class InputGateConnector : GateConnector
     {
         IsConnected = true;
         OutputGateConnector = output;
-
-        output.IsConnected = true;
-        output.InputGateConnector = this;
     }
 
     public void Disconnect()

@@ -35,39 +35,30 @@ public abstract class ConnectorNode
 
     public void OutputConnectionTest(OutputGateConnector output)
     {
-        if (output.IsConnected)
+        if (SelectedGateConnector == null)
         {
-            Disconnect(output);
+            SelectedGateConnector = output;
+            return;
+        }
+
+        if (SelectedGateConnector is OutputGateConnector)
+        {
+            SelectedGateConnector = null;
             NoiseNodeManager.GenerateLines();
             return;
         }
-        else
+
+        if (SelectedGateConnector is InputGateConnector input)
         {
-            if (SelectedGateConnector == null)
+            if (input.Node == output.Node || output.InputGateConnectors.Contains(input))
             {
-                SelectedGateConnector = output;
+                SelectedGateConnector = null;
                 return;
             }
 
-            if (SelectedGateConnector is OutputGateConnector)
-            {
-                SelectedGateConnector = null;
-                NoiseNodeManager.GenerateLines();
-                return;
-            }
-
-            if (SelectedGateConnector is InputGateConnector input)
-            {
-                if (input.Node == output.Node)
-                {
-                    SelectedGateConnector = null;
-                    return;
-                }
-
-                Connect(input, output);
-                SelectedGateConnector = null;
-                NoiseNodeManager.GenerateLines();
-            }
+            Connect(input, output);
+            SelectedGateConnector = null;
+            NoiseNodeManager.GenerateLines();
         }
     }
 
@@ -114,7 +105,6 @@ public abstract class ConnectorNode
     {
         // Make sure to disconnect first
         Disconnect(input);
-        Disconnect(output);
 
         input.Connect(output);
         output.Connect(input);
@@ -135,25 +125,28 @@ public abstract class ConnectorNode
 
     public static void Disconnect(InputGateConnector input, OutputGateConnector output)
     {
-        output.Disconnect();
+        output.Disconnect(input);
         input.Disconnect();
     }
 
     public static void Disconnect(InputGateConnector input)
     {
-        input.OutputGateConnector?.Disconnect();
+        input.OutputGateConnector?.Disconnect(input);
         input.Disconnect();
     }
 
     public static void Disconnect(OutputGateConnector output)
     {
-        output.InputGateConnector?.Disconnect();
+        foreach (var input in output.InputGateConnectors)
+        {
+            input.Disconnect();
+        }
         output.Disconnect();
     }
 
     public static bool Connected(InputGateConnector input, OutputGateConnector output)
     {
-        return input.IsConnected && output.IsConnected && input.OutputGateConnector == output && output.InputGateConnector == input;
+        return input.IsConnected && output.IsConnected && input.OutputGateConnector == output && output.InputGateConnectors.Contains(input);
     }
 
     public static string NoSpace(float value)

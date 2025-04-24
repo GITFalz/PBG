@@ -46,14 +46,14 @@ public class Info
         UIVerticalCollection infoCollection = new("FpsCollection", _infoController, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (100, 1000), (5, 5, 5, 5), (0, 0, 0, 0), 5, 0);
         UIHorizontalCollection positionCollection = new("PositionCollection", _infoController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (1000, 100), (5, 5, 5, 5), (0, 0, 0, 0), 5, 0);
 
-        FpsText.SetMaxCharCount(9).SetText("Fps: 9999", 0.5f);
-        GPUText.SetMaxCharCount(40).SetText("GPU: None", 0.5f);
-        XPosText.SetMaxCharCount(15).SetText("X: 0", 0.5f);
-        YPosText.SetMaxCharCount(15).SetText("Y: 0", 0.5f);
-        ZPosText.SetMaxCharCount(15).SetText("Z: 0", 0.5f);
-        ChunkRenderingText.SetMaxCharCount(20).SetText("Chunks: 0", 0.5f);
-        VertexCountText.SetMaxCharCount(20).SetText("Vertices: 0", 0.5f);
-        RamUsageText.SetMaxCharCount(20).SetText("Ram: 0", 0.5f);
+        FpsText.SetMaxCharCount(9).SetText("Fps: 9999", 1.2f);
+        GPUText.SetMaxCharCount(40).SetText("GPU: None", 1.2f);
+        XPosText.SetMaxCharCount(15).SetText("X: 0", 1.2f);
+        YPosText.SetMaxCharCount(15).SetText("Y: 0", 1.2f);
+        ZPosText.SetMaxCharCount(15).SetText("Z: 0", 1.2f);
+        ChunkRenderingText.SetMaxCharCount(20).SetText("Chunks: 0", 1.2f);
+        VertexCountText.SetMaxCharCount(20).SetText("Vertices: 0", 1.2f);
+        RamUsageText.SetMaxCharCount(20).SetText("Ram: 0", 1.2f);
 
         positionCollection.SetScale((positionCollection.Scale.X, FpsText.Scale.Y));
 
@@ -77,9 +77,9 @@ public class Info
 
         if (FpsUpdate())
         {
-            FpsText.SetText($"Fps: {GameTime.Fps}", 0.5f).GenerateChars().UpdateText();
+            FpsText.SetText($"Fps: {GameTime.Fps}", 1.2f).GenerateChars();
             long memoryBytes = Process.GetCurrentProcess().WorkingSet64; 
-            RamUsageText.SetText($"Ram: {memoryBytes / (1024 * 1024)} Mb", 0.5f).GenerateChars();
+            RamUsageText.SetText($"Ram: {memoryBytes / (1024 * 1024)} Mb", 1.2f).GenerateChars();
         }  
         
         _infoController.Update(); 
@@ -191,7 +191,7 @@ public class Info
     {
         if (_oldVertexCount != VertexCount)
         {
-            VertexCountText.SetText("Vertices: " + VertexCount, 0.5f).GenerateChars().UpdateText();
+            VertexCountText.SetText("Vertices: " + VertexCount, 1.2f).GenerateChars().UpdateText();
             _oldVertexCount = VertexCount;
         }
     }
@@ -202,25 +202,20 @@ public class Info
 
         if (oldPos.X != position.X)
         {
-            XPosText.SetText($"X: {position.X}", 0.5f).GenerateChars();
+            XPosText.SetText($"X: {position.X}", 1.2f).GenerateChars();
             update = true;
         }
 
         if (oldPos.Y != position.Y)
         {
-            YPosText.SetText($"Y: {position.Y}", 0.5f).GenerateChars();
+            YPosText.SetText($"Y: {position.Y}", 1.2f).GenerateChars();
             update = true;
         }
 
         if (oldPos.Z != position.Z)
         {
-            ZPosText.SetText($"Z: {position.Z}", 0.5f).GenerateChars();
+            ZPosText.SetText($"Z: {position.Z}", 1.2f).GenerateChars();
             update = true;
-        }
-
-        if (update)
-        {
-            ZPosText.uIMesh.UpdateText();
         }
     }
 

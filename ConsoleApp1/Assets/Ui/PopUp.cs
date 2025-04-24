@@ -49,7 +49,7 @@ public class PopUp
         MessageCollection.AddElement(MessageCloseButton);
 
         Message.MaxCharCount = 30;
-        Message.SetText("Hello", 0.7f);
+        Message.SetText("Hello", 1.5f);
 
         MessageUI.AddElement(MessageCollection);
 
@@ -71,9 +71,9 @@ public class PopUp
         ConfirmationCollection.AddElement(AcceptText);
 
         Confirmation.MaxCharCount = 30;
-        Confirmation.SetText("Hello", 0.7f);
+        Confirmation.SetText("Hello", 1.5f);
         AcceptText.MaxCharCount = 6;
-        AcceptText.SetText("Accept", 1f);
+        AcceptText.SetText("Accept", 2f);
 
         ConfirmationUI.AddElement(ConfirmationCollection);
     }
@@ -168,7 +168,7 @@ public class PopUp
 
         if (messages.Count > 0)
         {
-            Message.SetText(messages[0], 0.7f);
+            Message.SetText(messages[0], 1.5f);
             Message.GenerateChars();
             Message.UpdateText();
             messages.RemoveAt(0);
@@ -189,7 +189,7 @@ public class PopUp
 
         if (confirmations.Count > 0)
         {
-            Confirmation.SetText(confirmations.First().Key, 0.7f);
+            Confirmation.SetText(confirmations.First().Key, 1.5f);
             Confirmation.GenerateChars();
             Confirmation.UpdateText();
             elapsedTime = 0;
@@ -248,6 +248,8 @@ public class PopUp
 
         Instance.UpdateAction = Instance.UpdateConfirmation;
         Instance.RenderAction = Instance.RenderConfirmation;
+
+        Console.WriteLine("AddConfirmation: " + message);
     }
 
     /// <summary>

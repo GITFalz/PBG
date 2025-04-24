@@ -60,9 +60,7 @@ public class PhysicsBody : ScriptingNode
 
     public void AddForce(Vector3 direction, float maxSpeed)
     {
-        Console.WriteLine($"Adding force1: {Acceleration} Direction: {direction} MaxSpeed: {maxSpeed} Mass: {Mass}");
         Acceleration += direction.Normalized() * maxSpeed / Mass;
-        Console.WriteLine($"Adding force2: {Acceleration} Direction: {direction} MaxSpeed: {maxSpeed} Mass: {Mass}");
     }
 
     void Update()

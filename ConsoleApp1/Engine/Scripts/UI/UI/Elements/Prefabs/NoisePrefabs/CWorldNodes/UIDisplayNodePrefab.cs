@@ -31,7 +31,7 @@ public class UIDisplayNodePrefab : UINoiseNodePrefab
         ElementCollection = new UICollection($"{name}ElementCollection", controller, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), Scale - (6, 17), (0, 17, 0, 0), 0);
         
         NameField = new UIText($"{name}Display", controller, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (Scale.X - 14, 20), (6, 6, 0, 0), 0);
-        NameField.SetMaxCharCount(7).SetText("Display", 0.5f);
+        NameField.SetMaxCharCount(7).SetText("Display", 1.2f);
         
         InputButton = new UIButton($"{name}InputButton", controller, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (0, 22, 0, 0), 0, 11, (10f, 0.05f), UIState.Interactable);
         

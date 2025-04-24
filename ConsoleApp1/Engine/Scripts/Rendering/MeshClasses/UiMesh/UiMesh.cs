@@ -5,12 +5,10 @@ public class UIMesh
 {
     public static UIMesh Empty = new UIMesh();
 
-    public List<int> chars = [];
     public List<UIStruct> UIData = new List<UIStruct>();
 
     
     private VAO _vao = new VAO();
-    private TBO<int> _textTbo = new([]);
     private SSBO<UIStruct> _uiDataSSBO = new(new List<UIStruct>());
     
     public int ElementCount = 0;
@@ -19,6 +17,7 @@ public class UIMesh
 
     private int _mask = 0x40000000; // 0x40000000 = 0100 0000 0000 0000 0000 0000 0000 0000
 
+    private bool _generateBuffers = false;
     private bool _updateData = false;
     private bool _updateVisibility = false;
 
@@ -43,25 +42,8 @@ public class UIMesh
 
         ElementCount++;
         VisibleElementCount++;
-    }
 
-    public void AddElement(UIText element, ref int uiIndex, int offset)
-    {
-        uiIndex = ElementCount;
-
-        UIStruct uiData = new UIStruct()
-        {
-            SizeSlice = element.SizeSlice,
-            Color = element.Color,
-            TextureIndex = (element.MaxCharCount, offset + 1, ElementCount, element.Masked ? (element.MaskIndex | _mask) : 0), // +1 because of the way i detect if it is ui or text
-            Transformation = element.Transformation
-        };
-
-        UIData.Add(uiData);
-        Elements.Add(element);
-
-        ElementCount++;
-        VisibleElementCount++;
+        _generateBuffers = true;
     }
 
     public void UpdateMaskedIndex(int index, bool masked, int maskIndex)
@@ -78,19 +60,16 @@ public class UIMesh
 
     public void UpdateData()
     {
-        int offsetIndex = 0;
         VisibleElementCount = 0;
 
         // Assuming the Data list is the same size as _visibility
         for (int i = 0; i < Elements.Count; i++)
         {
-            UIRender element = Elements[i];
-            if (element.Visible)
+            if (Elements[i].Visible)
             {
-                UIStruct data = UIData[offsetIndex];
+                UIStruct data = UIData[VisibleElementCount];
                 data.TextureIndex.Z = i;
-                UIData[offsetIndex] = data;
-                offsetIndex++;
+                UIData[VisibleElementCount] = data;
                 VisibleElementCount++; 
             }
         }
@@ -137,34 +116,18 @@ public class UIMesh
         data.TextureIndex.X = element.TextureIndex;
         UIData[element.ElementIndex] = data;
     }
-    
-
-    // Text
-    public void SetCharacters(List<int> characters, int offset)
-    {
-        for (int i = 0; i < characters.Count; i++)
-        {
-            int index = offset + i;
-            if (index >= chars.Count)
-                chars.Add(characters[i]);
-            else
-                chars[index] = characters[i];
-        }
-    }
-
-    public void UpdateText()
-    {
-        _textTbo.Update(chars);
-    }
 
     public void GenerateBuffers()
     {
         _uiDataSSBO.Renew(UIData);
-        _textTbo.Renew(chars);
     }
 
     public void Update()
     {
+        if (_generateBuffers)
+        {
+            GenerateBuffers();
+        }
         if (_updateVisibility)
         {
             UpdateData();
@@ -182,11 +145,9 @@ public class UIMesh
     {
         _vao.Bind();
         _uiDataSSBO.Bind(0);
-        _textTbo.Bind(TextureUnit.Texture1);
 
         GL.DrawArrays(PrimitiveType.Triangles, 0, VisibleElementCount * 6);
         
-        _textTbo.Unbind();
         _uiDataSSBO.Unbind();
         _vao.Unbind();
     }
@@ -198,7 +159,13 @@ public class UIMesh
         VisibleElementCount = 0;
         MaskCount = 0;
         Elements.Clear();
-        chars.Clear();
+    }
+
+    public void Delete()
+    {
+        Clear();
+        _vao.DeleteBuffer();
+        _uiDataSSBO.DeleteBuffer();
     }
 }
 

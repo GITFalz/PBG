@@ -64,7 +64,7 @@ public class UIEditor : ScriptingNode
         UIButton addUIImageButton = new UIButton("addUIImageButton", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (260, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f), UIState.Interactable);
         UIText addUIImageText = new UIText("addUIImageText", SidePanelController, AnchorType.MiddleCenter, PositionType.Relative, Vector4.One, (0, 0, 0), (260, 30), (0, 0, 0, 0), 0);
         addUIImageButton.SetOnClick(AddUIImage);
-        addUIImageText.SetTextCharCount("Add UIImage", 0.5f).SetTextType(TextType.Alphanumeric);
+        addUIImageText.SetTextCharCount("Add UIImage", 1.2f).SetTextType(TextType.Alphanumeric);
         addUIImageCollection.AddElements(addUIImageButton, addUIImageText);
 
         // Add UIButton

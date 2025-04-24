@@ -22,7 +22,7 @@ public static class NoiseGlslNodeManager
     private static string NoiseFragmentPath;
     private static string NoiseFragmentPathCopy;
 
-    private static int _lineInsert = 157;
+    private static int _lineInsert = 320; // The line where the new lines will be inserted in the shader file
 
     static NoiseGlslNodeManager()
     {
@@ -66,6 +66,11 @@ public static class NoiseGlslNodeManager
 
         File.WriteAllLines(NoiseFragmentPathCopy, lines);
 
+        Reload();
+    }
+
+    public static void Reload()
+    {
         DisplayShaderProgram.Renew("Utils/Rectangle.vert", "Noise/WorldNoise_copy.frag");
 
         DisplayShaderProgram.Bind();
@@ -97,7 +102,7 @@ public static class NoiseGlslNodeManager
         SetFloatComputeShader.Unbind();
     }
 
-    public static void Render(Matrix4 DisplayProjectionMatrix, Vector2 DisplayPosition, Vector2 DisplaySize, float NoiseSize, Vector2 Offset)
+    public static void Render(Matrix4 DisplayProjectionMatrix, Vector2 DisplayPosition, Vector2 DisplaySize, float NoiseSize, Vector2 Offset, Vector4 color)
     {
         GL.Enable(EnableCap.Blend);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
@@ -108,11 +113,14 @@ public static class NoiseGlslNodeManager
 
         DisplayShaderProgram.Bind();
 
+        int colorLocation = DisplayShaderProgram.GetLocation("color");
+
         GL.UniformMatrix4(modelLocation, true, ref model);
         GL.UniformMatrix4(projectionLocation, true, ref DisplayProjectionMatrix);
         GL.Uniform2(sizeLocation, ref DisplaySize);
         GL.Uniform1(noiseSizeLocation, NoiseSize);
         GL.Uniform2(offsetLocation, ref Offset);
+        GL.Uniform4(colorLocation, color);
 
         _displayVAO.Bind();
         _valueSSBO.Bind(0);

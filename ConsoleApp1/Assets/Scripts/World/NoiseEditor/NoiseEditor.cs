@@ -20,6 +20,9 @@ public class NoiseEditor : ScriptingNode
     public static Matrix4 NodePanelProjectionMatrix = Matrix4.CreateOrthographicOffCenter(7, NodePanelWidth - 7, NodePanelHeight - 7, 7, -2, 2);
     public static Matrix4 SelectionProjectionMatrix = Matrix4.CreateOrthographicOffCenter(0, Game.Width, Game.Height, 0, -3, 0);
 
+    public static ShaderProgram VoronoiShader = new ShaderProgram("Painting/Rectangle.vert", "Noise/Voronoi.frag");
+    public static VAO VoronoiVAO = new VAO();
+
     public static ConnectorNode? SelectedNode = null;
 
     public UIController DisplayController;
@@ -42,6 +45,10 @@ public class NoiseEditor : ScriptingNode
     private Vector2 NodePosition = new Vector2(0, 0);
 
     private bool _isScalingNoise = false;
+
+    private ColorPicker _colorPicker = new ColorPicker(300, 200, (200, 200));
+
+    private float VoronoiSize = 10f;
 
     public NoiseEditor()
     {
@@ -96,10 +103,56 @@ public class NoiseEditor : ScriptingNode
         UIImage sidePanelBackground = new("SidePanelBackground", SidePanelController, AnchorType.ScaleRight, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (300, Game.Height), (0, 0, 0, 0), 0, 10, (10, 0.05f));
         UIVerticalCollection sidePanelVerticalCollection = new("SidePanelVerticalCollection", SidePanelController, AnchorType.ScaleRight, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), (10, 10, 10, 10), 5f, 0);
 
-        UIInputField nodeNameField = new("NodeNameField", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (1f, 1f, 1f, 1f), (0, 0, 0), (280, 30), (0, 0, 0, 0), 0f, 10, (10f, 0.05f));
-        nodeNameField.SetTextCharCount("Noise", 0.5f).SetTextType(TextType.Alphanumeric);
+        UIVerticalCollection filePanelCollection = new("FilePanelCollection", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), (0, 0, 0, 0), 0f, 0);
 
-        sidePanelVerticalCollection.AddElements(nodeNameField);
+        UICollection nodeNameCollection = new("NodeNameCollection", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), 0f);
+        UIImage nodeNameBackground = new("NodeNameBackground", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 11, (10f, 0.05f));
+        UIInputField nodeNameField = new("NodeNameField", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (1f, 1f, 1f, 1f), (0, 0, 0), (280, 30), (7, 7, 0, 0), 0f, 10, (10f, 0.05f));
+        nodeNameField.SetMaxCharCount(22).SetText("noise", 1.2f).SetTextType(TextType.Alphanumeric);
+        nodeNameField.SetOnTextChange(() => {
+            NoiseNodeManager.FileName = nodeNameField.Text.Trim();
+        });
+        nodeNameBackground.SetScale((nodeNameField.Scale.X + 14, nodeNameBackground.Scale.Y));
+        nodeNameCollection.AddElements(nodeNameBackground, nodeNameField);
+
+        UIHorizontalCollection saveLoadCollection = new("SaveLoadCollection", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), (0, 0, 0, 0), 10f, 0);
+
+        UITextButton saveButton = new("SaveButton", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (135, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        saveButton.SetOnClick(() => {
+            if (File.Exists(Path.Combine(Game.worldNoiseNodeNodeEditorPath, NoiseNodeManager.FileName + ".cWorldNode")))
+            {
+                PopUp.AddConfirmation("Overwrite nodes?", NoiseNodeManager.SaveNodes, null);
+            }
+            else
+            {
+                NoiseNodeManager.SaveNodes();
+            }
+        });
+        saveButton.SetTextCharCount("Save", 1.2f);
+        UITextButton loadButton = new("LoadButton", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (135, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        loadButton.SetOnClick(() => {
+            if (!File.Exists(Path.Combine(Game.worldNoiseNodeNodeEditorPath, NoiseNodeManager.FileName + ".cWorldNode")))
+            {
+                Console.WriteLine("File not found!");
+                PopUp.AddPopUp("File not found!");
+            }
+            else if (NoiseNodeManager.FileName != NoiseNodeManager.CurrentFileName)
+            {
+                Console.WriteLine("Save and load nodes?");
+                PopUp.AddConfirmation("Save current nodes?", () => { NoiseNodeManager.SaveNodes(NoiseNodeManager.CurrentFileName); NoiseNodeManager.LoadNodes(); }, NoiseNodeManager.LoadNodes);
+            }
+            else
+            {
+                Console.WriteLine("Load nodes!");
+                NoiseNodeManager.LoadNodes();
+            }
+        });
+        loadButton.SetTextCharCount("Load", 1.2f);
+        saveLoadCollection.AddElements(saveButton, loadButton);
+
+        filePanelCollection.AddElements(nodeNameCollection, saveLoadCollection);
+
+        sidePanelVerticalCollection.AddElements(filePanelCollection);
 
         sidePanelCollection.AddElements(sidePanelBackground, sidePanelVerticalCollection);
 
@@ -127,44 +180,56 @@ public class NoiseEditor : ScriptingNode
         UIVerticalCollection selectionVerticalCollection = new("SelectionVerticalCollection", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), (0, 0, 0, 0), 0f, 0);
 
         UITextButton addSampleButton = new("AddSampleButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
-        addSampleButton.SetTextCharCount("Add Sample", 0.5f);
+        addSampleButton.SetTextCharCount("Add Sample", 1.2f);
+        UITextButton addVoronoiButton = new("AddVoronoiButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addVoronoiButton.SetTextCharCount("Add Voronoi", 1.2f);
         UITextButton addMinMaxInputButton = new("AddSingleInputButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
-        addMinMaxInputButton.SetTextCharCount("Add Min Max Input", 0.5f);
+        addMinMaxInputButton.SetTextCharCount("Add Min Max Input", 1.2f);
         UITextButton addDoubleInputButton = new("AddDoubleInputButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
-        addDoubleInputButton.SetTextCharCount("Add Double Input", 0.5f);
+        addDoubleInputButton.SetTextCharCount("Add Double Input", 1.2f);
 
         // -- Embedded Collection --
         EmbeddedCollection = new("EmbeddedCollection", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (300, 0, 0, 0), 0);
         
+        // - AddVoronoiNodeCollection -
+        UIVerticalCollection addVoronoiNodeCollection = new("AddVoronoiNodeCollection", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), (0, 0, 0, 0), 0f, 0);
+
+        UITextButton addVoronoiButtonBasic = new("AddVoronoiButtonBasic", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addVoronoiButtonBasic.SetTextCharCount("Voronoi Basic", 1.2f);
+        UITextButton addVoronoiButtonEdge = new("AddVoronoiButtonEdge", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addVoronoiButtonEdge.SetTextCharCount("Voronoi Edge", 1.2f);
+        UITextButton addVoronoiButtonDistance = new("AddVoronoiButtonDistance", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addVoronoiButtonDistance.SetTextCharCount("Voronoi Distance", 1.2f);
+
         // - AddMinMaxInputTypeCollection -
         UIVerticalCollection addMinMaxInputTypeCollection = new("AddMinMaxInputTypeCollection", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), (0, 0, 0, 0), 0, 0);
 
         UITextButton addClampButton = new("AddClampButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
-        addClampButton.SetTextCharCount("Clamp", 0.5f);
+        addClampButton.SetTextCharCount("Clamp", 1.2f);
         UITextButton addIgnoreButton = new("AddIgnoreButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
-        addIgnoreButton.SetTextCharCount("Ignore", 0.5f);
+        addIgnoreButton.SetTextCharCount("Ignore", 1.2f);
         UITextButton addLerpButton = new("AddLerpButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
-        addLerpButton.SetTextCharCount("Lerp", 0.5f);
+        addLerpButton.SetTextCharCount("Lerp", 1.2f);
         UITextButton addSlideButton = new("AddSlideButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
-        addSlideButton.SetTextCharCount("Slide", 0.5f);
+        addSlideButton.SetTextCharCount("Slide", 1.2f);
         UITextButton addSmoothButton = new("AddSmoothButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f)); 
-        addSmoothButton.SetTextCharCount("Smooth", 0.5f);
+        addSmoothButton.SetTextCharCount("Smooth", 1.2f);
 
         // - AddDoubleInputTypeCollection -
         UIVerticalCollection addDoubleInputTypeCollection = new("AddDoubleInputTypeCollection", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), (0, 0, 0, 0), 0, 0);
 
         UITextButton addAddButton = new("AddAddButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
-        addAddButton.SetTextCharCount("Add", 0.5f);
+        addAddButton.SetTextCharCount("Add", 1.2f);
         UITextButton addSubButton = new("AddSubButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
-        addSubButton.SetTextCharCount("Subtract", 0.5f); 
+        addSubButton.SetTextCharCount("Subtract", 1.2f); 
         UITextButton addMulButton = new("AddMulButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
-        addMulButton.SetTextCharCount("Multiply", 0.5f);
-        UITextButton addDivButton = new("AddDivButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
-        addDivButton.SetTextCharCount("Divide", 0.5f);
+        addMulButton.SetTextCharCount("Multiply", 1.2f);
+        UITextButton addDivButton = new("AddDivButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 1.2f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addDivButton.SetTextCharCount("Divide", 1.2f);
         UITextButton addMinButton = new("AddMinButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
-        addMinButton.SetTextCharCount("Min", 0.5f);
+        addMinButton.SetTextCharCount("Min", 1.2f);
         UITextButton addMaxButton = new("AddMaxButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
-        addMaxButton.SetTextCharCount("Max", 0.5f);
+        addMaxButton.SetTextCharCount("Max", 1.2f);
         
 
         addSampleButton.SetOnClick(() =>
@@ -179,6 +244,12 @@ public class NoiseEditor : ScriptingNode
             SelectionCollection.SetVisibility(false);
         });
 
+        addVoronoiButton.SetOnClick(() =>
+        {
+            EmbeddedCollection.SetVisibility(false);
+            addVoronoiNodeCollection.SetVisibility(!addVoronoiNodeCollection.Visible);
+        });
+
         addMinMaxInputButton.SetOnClick(() =>
         {
             EmbeddedCollection.SetVisibility(false);
@@ -189,6 +260,25 @@ public class NoiseEditor : ScriptingNode
         {
             EmbeddedCollection.SetVisibility(false);
             addDoubleInputTypeCollection.SetVisibility(!addDoubleInputTypeCollection.Visible);
+        });
+
+
+        addVoronoiButtonBasic.SetOnClick(() =>
+        {
+            AddVoronoiOperationType(VoronoiOperationType.Basic);
+            SelectionCollection.SetVisibility(false);
+        });
+
+        addVoronoiButtonEdge.SetOnClick(() =>
+        {
+            AddVoronoiOperationType(VoronoiOperationType.Edge);
+            SelectionCollection.SetVisibility(false);
+        });
+
+        addVoronoiButtonDistance.SetOnClick(() =>
+        {
+            AddVoronoiOperationType(VoronoiOperationType.Distance);
+            SelectionCollection.SetVisibility(false);
         });
 
 
@@ -260,11 +350,12 @@ public class NoiseEditor : ScriptingNode
         });
 
 
+        addVoronoiNodeCollection.AddElements(addVoronoiButtonBasic, addVoronoiButtonEdge, addVoronoiButtonDistance);
         addMinMaxInputTypeCollection.AddElements(addClampButton, addIgnoreButton, addLerpButton, addSlideButton, addSmoothButton);
         addDoubleInputTypeCollection.AddElements(addAddButton, addSubButton, addMulButton, addDivButton, addMinButton, addMaxButton);
 
-        EmbeddedCollection.AddElements(addMinMaxInputTypeCollection, addDoubleInputTypeCollection);
-        selectionVerticalCollection.AddElements(addSampleButton, addMinMaxInputButton, addDoubleInputButton);
+        EmbeddedCollection.AddElements(addVoronoiNodeCollection, addMinMaxInputTypeCollection, addDoubleInputTypeCollection);
+        selectionVerticalCollection.AddElements(addSampleButton, addVoronoiButton, addMinMaxInputButton, addDoubleInputButton);
 
         SelectionCollection.AddElements(selectionVerticalCollection, EmbeddedCollection);
 
@@ -295,6 +386,17 @@ public class NoiseEditor : ScriptingNode
         NodeController.SetScale(scale);
 
         NoiseNodeManager.UpdateLines();
+    }
+
+    public void AddVoronoiOperationType(VoronoiOperationType type)
+    {
+        UIVoronoiPrefab voronoiNodePrefab = new("VoronoiNodePrefab", NodeController, (NodePosition.X, NodePosition.Y, 0, 0), type)
+        {
+            Depth = 1f
+        };
+
+        NoiseNodeManager.AddNode(voronoiNodePrefab);
+        SelectionCollection.SetVisibility(false);
     }
 
     public void AddMinMaxInputType(MinMaxInputOperationType type)
@@ -334,6 +436,7 @@ public class NoiseEditor : ScriptingNode
     {
         ResizeNodeWindow();
 
+        _colorPicker.Resize();
         DisplayController.Resize();
         MainWindowController.Resize();
         SidePanelController.Resize();
@@ -355,6 +458,12 @@ public class NoiseEditor : ScriptingNode
             NoiseNodeManager.LoadNodes();
         }
 
+        // Reload
+        if (Input.IsKeyAndControlPressed(Keys.R))
+        {
+            NoiseGlslNodeManager.Reload();
+        }
+
         if (Input.IsMousePressed(MouseButton.Right))
         {
             SelectionCollection.SetVisibility(!SelectionCollection.Visible);
@@ -364,6 +473,7 @@ public class NoiseEditor : ScriptingNode
             SelectionController.SetPosition(new Vector3(NodePosition.X, NodePosition.Y, 0f));
         }
 
+        _colorPicker.Update();
         NodeController.Test(NodeWindowPosition);
         DisplayController.Test();
         SidePanelController.Test();
@@ -396,6 +506,12 @@ public class NoiseEditor : ScriptingNode
 
         DisplayPosition = _displayPrefab.Position;
         _isScalingNoise = false;
+
+        Vector2 mouseScrollDelta = Input.GetMouseScrollDelta();
+        if (mouseScrollDelta.Y != 0)
+        {
+            VoronoiSize -= mouseScrollDelta.Y * GameTime.DeltaTime * 100f * VoronoiSize;
+        }
     }
 
     void Render()
@@ -411,10 +527,37 @@ public class NoiseEditor : ScriptingNode
         
         SidePanelController.RenderNoDepthTest();
         DisplayController.RenderDepthTest();
-        NoiseGlslNodeManager.Render(DisplayProjectionMatrix, DisplayPosition, _displayPrefab.Scale, NoiseSize, Offset);
+        NoiseGlslNodeManager.Render(DisplayProjectionMatrix, DisplayPosition, _displayPrefab.Scale, NoiseSize, Offset, _colorPicker.Color);
 
         if (SelectionCollection.Visible)
             SelectionController.RenderNoDepthTest();
+
+        _colorPicker.RenderTexture();
+
+        /*
+        Matrix4 model = Matrix4.CreateTranslation(100, 100, 0);
+        Matrix4 projection = UIController.OrthographicProjection;
+
+        VoronoiShader.Bind();
+
+        int modelLocation = VoronoiShader.GetLocation("model");
+        int projectionLocation = VoronoiShader.GetLocation("projection");
+        int sizeLocation = VoronoiShader.GetLocation("size");
+        int voronoiSizeLocation = VoronoiShader.GetLocation("voronoiSize");
+
+        GL.UniformMatrix4(modelLocation, true, ref model);
+        GL.UniformMatrix4(projectionLocation, true, ref projection);
+        GL.Uniform2(sizeLocation, new Vector2(500, 500));
+        GL.Uniform1(voronoiSizeLocation, VoronoiSize);
+
+        VoronoiVAO.Bind();
+
+        GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
+
+        VoronoiVAO.Unbind();
+
+        VoronoiShader.Unbind();
+        */
     }
 
     void Exit()

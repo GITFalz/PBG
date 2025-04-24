@@ -36,13 +36,13 @@ public class MenuManager : ScriptingNode
         UITextButton WorldSwitchButton = new UITextButton("World", MainMenuController, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), null, (200, 50), (20, 20, 0, 0), 0, 0, (10, 0.05f));
         UITextButton WorldNoiseEditorSwitchButton = new UITextButton("WorldNoiseEditor", MainMenuController, AnchorType.TopRight, PositionType.Relative, (0.6f, 0.6f, 0.6f), null, (200, 50), (-20, 20, 0, 0), 0, 0, (10, 0.05f));
 
-        exitGameButton.SetMaxCharCount(9).SetText("Exit Game", 0.7f).GenerateChars();
+        exitGameButton.SetMaxCharCount(9).SetText("Exit Game", 1.5f);
         exitGameButton.SetOnClick(QuitGame);
 
-        WorldSwitchButton.SetMaxCharCount(5).SetText("World", 0.7f).GenerateChars();
+        WorldSwitchButton.SetMaxCharCount(5).SetText("World", 1.5f);
         WorldSwitchButton.SetOnClick(LoadWorld);
 
-        WorldNoiseEditorSwitchButton.SetMaxCharCount(12).SetText("Noise Editor", 0.7f).GenerateChars();
+        WorldNoiseEditorSwitchButton.SetMaxCharCount(12).SetText("Noise Editor", 1.5f);
         WorldNoiseEditorSwitchButton.SetOnClick(LoadWorldNoiseEditor);
 
         mainMenuButtonCollection.AddElements(exitGameButton.GetMainElements(), WorldSwitchButton.GetMainElements(), WorldNoiseEditorSwitchButton.GetMainElements());

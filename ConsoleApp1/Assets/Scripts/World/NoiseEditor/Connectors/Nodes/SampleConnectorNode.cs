@@ -8,8 +8,28 @@ public class SampleConnectorNode : ConnectorNode
 
     public OutputGateConnector OutputGateConnector;
 
-    public float Scale = 1.0f;
-    public Vector2 Offset = (0.0f, 0.0f);
+    public float Scale
+    {
+        get {
+            return _scale; 
+        } set {
+            _scale = value;
+            SampleNodePrefab.ScaleInputField.SetText(_scale.ToString());
+        }
+    }
+    public Vector2 Offset
+    {
+        get {
+            return _offset; 
+        } set {
+            _offset = value;
+            SampleNodePrefab.OffsetXInputField.SetText(_offset.X.ToString());
+            SampleNodePrefab.OffsetYInputField.SetText(_offset.Y.ToString());
+        }
+    }
+
+    private float _scale = 1.0f;
+    private Vector2 _offset = (0.0f, 0.0f);
 
     private int _scaleIndex = -1;
     private int _offsetXIndex = -1;
@@ -21,17 +41,17 @@ public class SampleConnectorNode : ConnectorNode
         OutputGateConnector = new OutputGateConnector(SampleNodePrefab.OutputButton, this);
         SampleNodePrefab.OutputButton.SetOnClick(() => OutputConnectionTest(OutputGateConnector));
 
-        SampleNodePrefab.ScaleInputField.SetOnTextChange(() => SetValue(ref Scale, SampleNodePrefab.ScaleInputField, 1.0f, _scaleIndex));
-        SampleNodePrefab.OffsetXInputField.SetOnTextChange(() => SetValue(ref Offset.X, SampleNodePrefab.OffsetXInputField, 0.0f, _offsetXIndex));
-        SampleNodePrefab.OffsetYInputField.SetOnTextChange(() => SetValue(ref Offset.Y, SampleNodePrefab.OffsetYInputField, 0.0f, _offsetYIndex));
+        SampleNodePrefab.ScaleInputField.SetOnTextChange(() => SetValue(ref _scale, SampleNodePrefab.ScaleInputField, 1.0f, _scaleIndex));
+        SampleNodePrefab.OffsetXInputField.SetOnTextChange(() => SetValue(ref _offset.X, SampleNodePrefab.OffsetXInputField, 0.0f, _offsetXIndex));
+        SampleNodePrefab.OffsetYInputField.SetOnTextChange(() => SetValue(ref _offset.Y, SampleNodePrefab.OffsetYInputField, 0.0f, _offsetYIndex));
 
         SampleNodePrefab.ScaleTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
         SampleNodePrefab.OffsetXTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
         SampleNodePrefab.OffsetYTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
 
-        SampleNodePrefab.ScaleTextField.SetOnHold(() => SetSlideValue(ref Scale, SampleNodePrefab.ScaleInputField, 5f, _scaleIndex)); 
-        SampleNodePrefab.OffsetXTextField.SetOnHold(() => SetSlideValue(ref Offset.X, SampleNodePrefab.OffsetXInputField, 5f, _offsetXIndex));
-        SampleNodePrefab.OffsetYTextField.SetOnHold(() => SetSlideValue(ref Offset.Y, SampleNodePrefab.OffsetYInputField, 5f, _offsetYIndex));
+        SampleNodePrefab.ScaleTextField.SetOnHold(() => SetSlideValue(ref _scale, SampleNodePrefab.ScaleInputField, 5f, _scaleIndex)); 
+        SampleNodePrefab.OffsetXTextField.SetOnHold(() => SetSlideValue(ref _offset.X, SampleNodePrefab.OffsetXInputField, 5f, _offsetXIndex));
+        SampleNodePrefab.OffsetYTextField.SetOnHold(() => SetSlideValue(ref _offset.Y, SampleNodePrefab.OffsetYInputField, 5f, _offsetYIndex));
 
         SampleNodePrefab.ScaleTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
         SampleNodePrefab.OffsetXTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
@@ -55,8 +75,13 @@ public class SampleConnectorNode : ConnectorNode
     public override List<ConnectorNode> GetConnectedNodes()
     {
         List<ConnectorNode> connectedNodes = [];
-        if (OutputGateConnector.IsConnected && OutputGateConnector.InputGateConnector != null)
-            connectedNodes.Add(OutputGateConnector.InputGateConnector.Node);
+        if (OutputGateConnector.IsConnected)
+        {
+            foreach (var input in OutputGateConnector.InputGateConnectors)
+            {
+                connectedNodes.Add(input.Node);
+            }
+        }
         return connectedNodes;
     }
 
@@ -68,8 +93,13 @@ public class SampleConnectorNode : ConnectorNode
     public override List<ConnectorNode> GetOutputNodes() 
     { 
         List<ConnectorNode> outputNodes = [];
-        if (OutputGateConnector.IsConnected && OutputGateConnector.InputGateConnector != null)
-            outputNodes.Add(OutputGateConnector.InputGateConnector.Node);
+        if (OutputGateConnector.IsConnected)
+        {
+            foreach (var input in OutputGateConnector.InputGateConnectors)
+            {
+                outputNodes.Add(input.Node);
+            }
+        }
         return outputNodes;
     }
 

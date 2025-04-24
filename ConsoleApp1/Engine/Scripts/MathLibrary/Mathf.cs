@@ -8,6 +8,7 @@ public static class Mathf
     public static int FloorToInt(float value) => (int)Math.Floor(value);
     public static int FloorToInt(double value) => (int)Math.Floor(value);
     public static Vector3i FloorToInt(Vector3 value) => new Vector3i(FloorToInt(value.X), FloorToInt(value.Y), FloorToInt(value.Z));
+    public static Vector2i FloorToInt(Vector2 value) => new Vector2i(FloorToInt(value.X), FloorToInt(value.Y));
     public static float Floor(float value) => (float)Math.Floor(value);
 
     public static int RoundToInt(float value) => (int)Math.Round(value);
@@ -108,6 +109,23 @@ public static class Mathf
     
     public static float Abs(float value) => value < 0 ? -value : value;
     public static Vector3 Abs(Vector3 value) => new Vector3(Abs(value.X), Abs(value.Y), Abs(value.Z));
+    public static Vector2 Abs(Vector2 value) => new Vector2(Abs(value.X), Abs(value.Y));
+
+    public static float Fraction(float value) => value - Floor(value);
+    public static Vector2 Fraction(Vector2 value) => new Vector2(Fraction(value.X), Fraction(value.Y));
+    public static Vector3 Fraction(Vector3 value) => new Vector3(Fraction(value.X), Fraction(value.Y), Fraction(value.Z));
+
+    public static float Sin(float value) => (float)Math.Sin(value);
+    public static Vector2 Sin(Vector2 value) => new Vector2(Sin(value.X), Sin(value.Y));
+    public static Vector3 Sin(Vector3 value) => new Vector3(Sin(value.X), Sin(value.Y), Sin(value.Z));
+
+    public static float Cos(float value) => (float)Math.Cos(value);
+    public static Vector2 Cos(Vector2 value) => new Vector2(Cos(value.X), Cos(value.Y));
+    public static Vector3 Cos(Vector3 value) => new Vector3(Cos(value.X), Cos(value.Y), Cos(value.Z));
+
+    public static float Mod(float value, float mod) => value - (mod * Floor(value / mod));
+    public static Vector2 Mod(Vector2 value, float mod) => new Vector2(Mod(value.X, mod), Mod(value.Y, mod));
+    public static Vector3 Mod(Vector3 value, float mod) => new Vector3(Mod(value.X, mod), Mod(value.Y, mod), Mod(value.Z, mod));
     
     /// <summary>
     /// turns the range [a, b] into [0, 1] based on t

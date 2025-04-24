@@ -1,212 +1,250 @@
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
 public class TextMesh
 {
     public VAO TextVAO = new();
-    public SSBO<Vector4i> CharacterSSBO = new();
-    public SSBO<LineStruct> LineSSBO = new();
+    public SSBO<Matrix4> TransformationSSBO = new();
+    public SSBO<CharacterData> CharacterSSBO = new();
 
-    public List<Vector4i> Characters = [];
-    public List<LineStruct> Lines = [];
-
-    public List<TextElementData> Elements = new();
+    public List<UIText> UIElements = new();
+    
+    public List<Matrix4> TransformationMatrices = new();
+    public List<CharacterData> Characters = new();
+    public List<TextElementData> TextElements = new();
+    public Dictionary<TextElementData, int> Elements = new();
 
     public int ElementCount = 0;
     public int VisibleElementCount = 0;
 
+    private bool _generateBuffers = false;
+    private bool _updateData = false;
+    private bool _updateVisibility = false;
+
     public void AddElement(UIText element, ref int uiIndex)
     {
-        TextElementData data = new TextElementData()
-        {
-            Element = element,
-            CharCount = element.MaxCharCount
-        };
+        uiIndex = ElementCount;
 
-        if (Elements.Contains(data))
-            return;
-         uiIndex = ElementCount;
-        Elements.Add(data);
-
-        UpdateFirstIndex(data);
-
-        for (int i = 0; i < element.MaxCharCount; i++)
-            Characters.Add(new Vector4i(-1, ElementCount, i, 0)); // { character index, element index, line index, none }
+        TransformationMatrices.Add(element.Transformation);
+        UIElements.Add(element);
 
         ElementCount++;
-        VisibleElementCount++;
     }
 
-    public void UpdateCharCount(UIText element)
+    public void AddCharacters(List<TextElementData> characters)
     {
-        if (GetElementData(element, out var data))
+        foreach (var character in characters)
         {
-            int oldCharCount = data.CharCount;
-            int newCharCount = element.MaxCharCount;
-
-            if (oldCharCount == newCharCount)
-                return; // No change in character count
-
-            int firstIndex = data.FirstIndex;
-
-            if (newCharCount > oldCharCount)
-            {
-                for (int i = oldCharCount; i < newCharCount; i++)
-                {
-                    Characters.Insert(firstIndex + i, new Vector4i(-1, data.FirstIndex, i, 0));
-                }
-            }
-            else if (newCharCount < oldCharCount)
-            {
-                for (int i = oldCharCount - 1; i >= newCharCount; i--)
-                {
-                    Characters.RemoveAt(firstIndex + i);
-                }
-            }
-
-            int index = Elements.IndexOf(data);
-            data.CharCount = element.MaxCharCount;
-            Elements[index] = data;
-            UpdateFirstIndex(index+1); // Update the first index of the next element if it exists
+            AddCharacter(character);
         }
+
+        _updateVisibility = true;
+    }
+
+    public void AddCharacter(TextElementData character)
+    {
+        Elements.Add(character, Elements.Count);
+        Characters.Add(character.Character);
+        TextElements.Add(character);
+
+        VisibleElementCount++;
+
+        _generateBuffers = true;
     }
 
     public void RemoveElement(UIText element)
     {
-        if (GetElementData(element, out var data))
-        {
-            int index = Elements.IndexOf(data); // Get the index of the element in the list
-            Elements.Remove(data);
-            UpdateFirstIndex(index); // Use the same index because the previous element has been removed
-            
-            ElementCount--;
-            VisibleElementCount--;
-        }
-    }
-    
-    public void UpdateFirstIndex(int index)
-    {
-        if (index < Elements.Count && index >= 0)
-        {
-            var element = Elements[index];
-            UpdateFirstIndex(element);
-        }
-    }
+        RemoveCharacters(element.CharacteData);
 
-    public void UpdateFirstIndex(UIText element)
-    {
-        if (GetElementData(element, out var data))
-            UpdateFirstIndex(data);
-    }
+        UIElements.RemoveAt(element.ElementIndex);
+        TransformationMatrices.RemoveAt(element.ElementIndex);
 
-    public void UpdateFirstIndex(TextElementData element)
-    {
-        int index = Elements.IndexOf(element);
-        if (index == 0)
+        for (int i = element.ElementIndex; i < UIElements.Count; i++)
         {
-            element.FirstIndex = 0;
-            Elements[index] = element;
-        }
-        else
-        {
-            var previousElement = Elements[index - 1];
-            element.FirstIndex = previousElement.FirstIndex + previousElement.CharCount;
-            Elements[index] = element;
+            UIElements[i].ElementIndex--;
         }
 
-        if (index+1 < Elements.Count)
+        ElementCount--;
+
+        _generateBuffers = true;
+        _updateVisibility = true;
+    }
+
+    public void RemoveCharacters(List<TextElementData> characters)
+    {
+        foreach (var character in characters)
         {
-            var nextElement = Elements[index+1];
-            UpdateFirstIndex(nextElement); // Recursive call to update the next element's first index
+            RemoveCharacter(character);
         }
     }
 
-    private bool GetElementData(UIText element, out TextElementData data)
+    public void RemoveCharacter(TextElementData character)
     {
-        foreach (var dataElement in Elements)
+        if (Elements.TryGetValue(character, out int index))
         {
-            if (dataElement.Element == element)
+            int lastIndex = TextElements.Count - 1;
+
+            if (index != lastIndex)
             {
-                data = dataElement;
-                return true;
+                var lastElement = TextElements[lastIndex];
+                var lastCharacter = Characters[lastIndex];
+
+                TextElements[index] = lastElement;
+                Characters[index] = lastCharacter;
+
+                Elements[lastElement] = index;
             }
-        }
 
-        data = TextElementData.Empty;
-        return false;
+            TextElements.RemoveAt(lastIndex);
+            Characters.RemoveAt(lastIndex);
+            Elements.Remove(character);
+
+            VisibleElementCount--;
+
+            _generateBuffers = true;
+        }
     }
 
-    /// <summary>
-    /// Only use if the number of characters hasn't changed.
-    /// </summary>
-    /// <param name="element"></param>
-    /// <param name="characters"></param>
-    public void SetCharacters(UIText element, List<int> characters)
+    public void UpdateCharacters(List<TextElementData> characters)
     {
-        if (GetElementData(element, out var data))
+        foreach (var character in characters)
         {
-            for (int i = 0; i < characters.Count && i < element.MaxCharCount; i++)
+            UpdateCharacter(character);
+        }
+    }
+
+    public void UpdateCharacter(TextElementData character)
+    {
+        if (Elements.TryGetValue(character, out int index))
+        {
+            Characters[index] = character.Character;
+            _updateVisibility = true;
+        }
+    }
+
+    public void SetVisibility(List<TextElementData> characters, bool visible)
+    {
+        foreach (var character in characters)
+        {
+            SetVisibility(character, visible);
+        }
+    }
+
+    public void SetVisibility(TextElementData character, bool visible)
+    {
+        if (Elements.TryGetValue(character, out int index))
+        {
+            character.Character.SetVisible(visible);
+            Characters[index] = character.Character;
+            _updateVisibility = true;
+        }
+    }
+
+    public void UpdateElementTransformation(UIText element)
+    {
+        if (element.ElementIndex < 0 || element.ElementIndex >= TransformationMatrices.Count)
+            return;
+
+        TransformationMatrices[element.ElementIndex] = element.Transformation;
+        _updateData = true;
+    }
+
+    public void UpdateData()
+    {
+        VisibleElementCount = 0;
+
+        for (int i = 0; i < TextElements.Count; i++)
+        {
+            if (Characters[i].IsVisible())
             {
-                Characters[data.FirstIndex + i] = new Vector4i(characters[i], data.FirstIndex, i, 0);
+                CharacterData character = Characters[VisibleElementCount];
+                character.SetActualIndex(i);
+                Characters[VisibleElementCount] = character;
+                VisibleElementCount++;
             }
         }
     }
 
     public void GenerateBuffers()
     {
+        TransformationSSBO.Renew(TransformationMatrices);
         CharacterSSBO.Renew(Characters);
-        LineSSBO.Renew(Lines);
     }
 
     public void Update()
     {
-        UpdateText();
-        UpdateLines();
+        if (_generateBuffers)
+        {
+            GenerateBuffers();
+            _generateBuffers = false;
+        }
+        if (_updateVisibility)
+        {
+            UpdateData();
+            _updateVisibility = false;
+            _updateData = true;
+        }
+        if (_updateData)
+        {
+            TransformationSSBO.Update(TransformationMatrices, 0);
+            CharacterSSBO.Update(Characters, 0);
+            _updateData = false;
+        }
     }
 
-    public void UpdateText()
+    public void Render()
     {
-        CharacterSSBO.Update(Characters, 0);
-    }
+        TextVAO.Bind();
+        CharacterSSBO.Bind(0);
+        TransformationSSBO.Bind(1);
 
-    public void UpdateLines()
-    {
-        LineSSBO.Update(Lines, 0);
+        GL.DrawArrays(PrimitiveType.Triangles, 0, VisibleElementCount * 6);
+
+        CharacterSSBO.Unbind();
+        TransformationSSBO.Unbind();
+        TextVAO.Unbind();
     }
 }
 
-public struct LineStruct
+public class TextElementData
 {
-    public Vector2 Size;
-    public Matrix4 Transformation;
-    public Vector4 Data; // includes: spacing
-    public Vector2i Index; // includes: first char index
-};
+    public CharacterData Character = new CharacterData();
+}
 
-public struct TextElementData
+public struct CharacterData
 {
-    public static readonly TextElementData Empty = new TextElementData()
-    {
-        Element = UIText.Empty,
-        FirstIndex = 0,
-        CharCount = 0
-    };
+    public Vector4 PositionSize;
+    public Vector4i Index; // { index, *isVisible (2nd last bit) / actual index*, none, none }
 
-    public UIText Element;
-    public int FirstIndex; // Index of the first character
-    public int CharCount; // Number of characters in the text
-
-    public readonly bool Equals(TextElementData other) 
+    public bool IsVisible()
     {
-        return ReferenceEquals(Element, other.Element);
+        return (Index.Y & 0x40000000) != 0;
     }
 
-    public override readonly bool Equals(object? obj) 
+    public void SetVisible(bool visible)
     {
-        return obj is TextElementData other && Equals(other);
+        if (visible)
+            Index.Y |= 0x40000000;
+        else
+            Index.Y &= 0x0FFFFFFF;
     }
 
-    public override readonly int GetHashCode() 
+    public int GetActualIndex()
     {
-        return Element.GetHashCode();
+        return Index.Y & 0x0FFFFFFF;
+    }
+
+    public bool SetActualIndex(int index)
+    {
+        if (GetActualIndex() == index)
+            return false;
+
+        Index.Y = (Index.Y & 0x40000000) | index;
+        return true;
+    }
+
+    public override string ToString()
+    {
+        return $"\n---Character---\nPosition: ({PositionSize.X}, {PositionSize.Y})\nSize: ({PositionSize.Z}, {PositionSize.W})\nCharacter: {Index.X}\nVisible: {IsVisible()}\nActualIndex: {GetActualIndex()}";
     }
 }

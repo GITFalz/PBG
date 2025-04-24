@@ -41,22 +41,22 @@ public class UIMinMaxInputNodePrefab : UINoiseNodePrefab
         
         string displayName = type.ToString();
         NameField = new UIText($"{name}{displayName}", controller, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (Scale.X - 14, 20), (6, 6, 0, 0), 0);
-        NameField.SetMaxCharCount(displayName.Length).SetText(displayName, 0.5f);
+        NameField.SetMaxCharCount(displayName.Length).SetText(displayName, 1.2f);
         
         InputButton = new UIButton($"{name}InputButton", controller, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (0, 22, 0, 0), 0, 11, (10f, 0.05f), UIState.Interactable);
         OutputButton = new UIButton($"{name}OutputButton", controller, AnchorType.TopRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (0, 22, 0, 0), 0, 11, (10f, 0.05f), UIState.Interactable);
 
         MinInputField = new UIInputField($"{name}MinInputField", controller, AnchorType.BottomRight, PositionType.Relative, Vector4.One, (0, 0, 0), (20, 20), (-8, -36, 0, 0), 0, 11, (10f, 0.05f));
-        MinInputField.SetMaxCharCount(10).SetTextType(TextType.Decimal).SetText("0.0", 0.5f);
+        MinInputField.SetMaxCharCount(10).SetTextType(TextType.Decimal).SetText("0.0", 1.2f);
 
         MaxInputField = new UIInputField($"{name}MaxInputField", controller, AnchorType.BottomRight, PositionType.Relative, Vector4.One, (0, 0, 0), (20, 20), (-8, -6, 0, 0), 0, 11, (10f, 0.05f));
-        MaxInputField.SetMaxCharCount(10).SetTextType(TextType.Decimal).SetText("1.0", 0.5f);
+        MaxInputField.SetMaxCharCount(10).SetTextType(TextType.Decimal).SetText("1.0", 1.2f);
 
         MinTextField = new UIText($"{name}MinTextField", controller, AnchorType.BottomLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (20, 20), (6, -36, 0, 0), 0);
-        MinTextField.SetMaxCharCount(3).SetText("Min", 0.5f).SetTextType(TextType.Alphabetic);
+        MinTextField.SetMaxCharCount(3).SetText("Min", 1.2f).SetTextType(TextType.Alphabetic);
 
         MaxTextField = new UIText($"{name}MaxTextField", controller, AnchorType.BottomLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (20, 20), (6, -6, 0, 0), 0);
-        MaxTextField.SetMaxCharCount(3).SetText("Max", 0.5f).SetTextType(TextType.Alphabetic);
+        MaxTextField.SetMaxCharCount(3).SetText("Max", 1.2f).SetTextType(TextType.Alphabetic);
 
         UIImage minBackground = new UIImage($"{name}MinBackground", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), MinInputField.newScale + (16, 16), (0, -28, 0, 0), 0, 11, (10f, 0.05f));
         UIImage maxBackground = new UIImage($"{name}MaxBackground", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), MaxInputField.newScale + (16, 16), (0, 2, 0, 0), 0, 11, (10f, 0.05f));

@@ -20,6 +20,7 @@ public static class NoiseNodeManager
     public static bool HoveringOverNode = false;
 
     public static string FileName = "noise";
+    public static string CurrentFileName = "noise";
 
     public static void AddNode(UINoiseNodePrefab nodePrefab)
     {
@@ -52,6 +53,14 @@ public static class NoiseNodeManager
             NoiseNodes.Add(nodePrefab, node);
             OutputGateConnectors.Add(node.OutputGateConnector);
             sampleNodePrefab.AddedMoveAction = UpdateLines;
+        }
+        else if (nodePrefab is UIVoronoiPrefab voronoiNodePrefab)
+        {
+            var node = new VoronoiConnectorNode(voronoiNodePrefab, voronoiNodePrefab.Type);
+            connectorNode = node;
+            NoiseNodes.Add(nodePrefab, node);
+            OutputGateConnectors.Add(node.OutputGateConnector);
+            voronoiNodePrefab.AddedMoveAction = UpdateLines;
         }
         else if (nodePrefab is UIMinMaxInputNodePrefab minMaxInputNode)
         {
@@ -119,12 +128,12 @@ public static class NoiseNodeManager
 
         int index = 0;
         foreach (var (input, output) in GetConnections())
-        {
-            output.Index = index; 
+        { 
+            output.SetIndex(input, index);
             _connectorLineVertices.Add(Vector3.TransformPosition(output.Position, NodeController.ModelMatrix));
             _connectorLineVertices.Add(Vector3.TransformPosition(input.Position, NodeController.ModelMatrix));
 
-            index += 2;
+            index++;
         }
 
         _connectorLineVBO.Renew(_connectorLineVertices);
@@ -133,15 +142,49 @@ public static class NoiseNodeManager
         Compile();
     }
 
+    public static void UpdateLines()
+    {
+        if (OutputGateConnectors.Count == 0 || InputGateConnectors.Count == 0)
+            return;
+
+        foreach (var output in OutputGateConnectors)
+        {
+            if (output.IsConnected)
+            {
+                for (int i = 0; i < output.InputGateConnectors.Count; i++)
+                {
+                    int index = output.Indices[i] * 2;
+                    if (index < 0)
+                        continue;
+                    
+                    var input = output.InputGateConnectors[i];
+                    Vector3 position1 = output.Position;
+                    Vector3 position2 = input.Position;
+
+                    Vector3 translatedPosition1 = Vector3.TransformPosition(position1, NodeController.ModelMatrix);
+                    Vector3 translatedPosition2 = Vector3.TransformPosition(position2, NodeController.ModelMatrix);
+
+                    _connectorLineVertices[index] = translatedPosition1;
+                    _connectorLineVertices[index + 1] = translatedPosition2;
+                }
+            }
+        }
+
+        _connectorLineVBO.Update(_connectorLineVertices);
+    }
+
     private static List<(InputGateConnector, OutputGateConnector)> GetConnections()
     {
         List<(InputGateConnector, OutputGateConnector)> connections = [];
 
         foreach (var output in OutputGateConnectors)
         {
-            if (output.IsConnected && output.InputGateConnector != null)
+            if (output.IsConnected)
             {
-                connections.Add((output.InputGateConnector, output));
+                foreach (var input in output.InputGateConnectors)
+                {
+                    connections.Add((input, output));
+                }
             }
         }
 
@@ -192,6 +235,17 @@ public static class NoiseNodeManager
                 };
                 nodeMap.Add(node, cWorldSampleNode);
                 nodeManager.AddNode(cWorldSampleNode);
+            }
+            else if (node is VoronoiConnectorNode voronoiNode)
+            {
+                CWorldVoronoiNode cWorldVoronoiNode = new CWorldVoronoiNode(voronoiNode.Type)
+                {
+                    Name = node.VariableName,
+                    Scale = (voronoiNode.Scale, voronoiNode.Scale),
+                    Offset = voronoiNode.Offset,
+                };
+                nodeMap.Add(node, cWorldVoronoiNode);
+                nodeManager.AddNode(cWorldVoronoiNode);
             }
             else if (node is MinMaxInputOperationConnectorNode minMaxNode)
             {
@@ -249,6 +303,11 @@ public static class NoiseNodeManager
 
     public static void SaveNodes()
     {
+        SaveNodes(FileName);
+    }
+
+    public static void SaveNodes(string fileName)
+    {
         List<string> lines = [];
 
         List<ConnectorNode> nodes = [];
@@ -291,7 +350,9 @@ public static class NoiseNodeManager
             lines.Add($"{output.Name} - {input.Name}");
         }
 
-        File.WriteAllLines(Path.Combine(Game.worldNoiseNodeNodeEditorPath, FileName + ".cWorldNode"), lines);
+        File.WriteAllLines(Path.Combine(Game.worldNoiseNodeNodeEditorPath, fileName + ".cWorldNode"), lines);
+
+        CurrentFileName = fileName;
     }
 
     public static void LoadNodes()
@@ -300,6 +361,8 @@ public static class NoiseNodeManager
 
         if (!File.Exists(Path.Combine(Game.worldNoiseNodeNodeEditorPath, FileName + ".cWorldNode")))
             return;
+
+        CurrentFileName = FileName;
 
         string[] lines = File.ReadAllLines(Path.Combine(Game.worldNoiseNodeNodeEditorPath, FileName + ".cWorldNode"));
 
@@ -400,6 +463,27 @@ public static class NoiseNodeManager
                     sampleNode.Offset = Parse.Vec2(noiseOffset);
                 }
             }
+            else if (nodeType == "Voronoi")
+            {
+                string scale = values[3];
+                string noiseOffset = values[4];
+                int type = int.Parse(values[5]);
+
+                string outputName = values[7];
+
+                string name = values[9];
+                Vector4 offset = Parse.Vec4(values[10]);
+
+                UIVoronoiPrefab voronoiNodePrefab = new UIVoronoiPrefab(name, NodeController, offset, (VoronoiOperationType)type);
+
+                if (AddNode(voronoiNodePrefab, out ConnectorNode node) && node is VoronoiConnectorNode voronoiNode)
+                {
+                    voronoiNode.OutputGateConnector.Name = outputName;
+
+                    voronoiNode.Scale = float.Parse(scale);
+                    voronoiNode.Offset = Parse.Vec2(noiseOffset);
+                }
+            }
         }
 
         foreach (var output in OutputGateConnectors)
@@ -443,29 +527,6 @@ public static class NoiseNodeManager
             nodes.Insert(0, n);
             GetConnectedNodes(n, nodes);
         }
-    }
-
-    public static void UpdateLines()
-    {
-        if (OutputGateConnectors.Count == 0 || InputGateConnectors.Count == 0)
-            return;
-
-        foreach (var output in OutputGateConnectors)
-        {
-            if (output.Index != -1 && output.IsConnected && output.InputGateConnector != null)
-            {
-                Vector3 position1 = output.Position;
-                Vector3 position2 = output.InputGateConnector.Position;
-
-                Vector3 translatedPosition1 = Vector3.TransformPosition(position1, NodeController.ModelMatrix);
-                Vector3 translatedPosition2 = Vector3.TransformPosition(position2, NodeController.ModelMatrix);
-
-                _connectorLineVertices[output.Index] = translatedPosition1;
-                _connectorLineVertices[output.Index + 1] = translatedPosition2;
-            }
-        }
-
-        _connectorLineVBO.Update(_connectorLineVertices);
     }
 
     public static void RenderLine(Matrix4 orthographicProjection)

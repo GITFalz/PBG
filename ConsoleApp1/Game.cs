@@ -226,8 +226,8 @@ public class Game : GameWindow
         _UIEditorScene.AddNode(uiNode, menuNode);
 
         AddScenes(_worldScene, _worldNoiseEditorScene, _UIEditorScene);
-        //LoadScene("WorldNoiseEditor");
-        LoadScene("World");
+        LoadScene("WorldNoiseEditor");
+        //LoadScene("World");
 
         _popUp = new PopUp();
 
@@ -238,7 +238,7 @@ public class Game : GameWindow
 
         Console.WriteLine("OpenGL Version: " + GL.GetString(StringName.Renderer));
 
-        Info.GPUText.SetText($"GPU: {GL.GetString(StringName.Renderer)}", 0.5f).GenerateChars().UpdateText();
+        Info.GPUText.SetText($"GPU: {GL.GetString(StringName.Renderer)}", 1.2f).GenerateChars().UpdateText();
 
         base.OnLoad();
     }

@@ -1,6 +1,6 @@
 using OpenTK.Mathematics;
 
-public class UISampleNodePrefab : UINoiseNodePrefab
+public class UIVoronoiPrefab : UINoiseNodePrefab
 {
     public UIButton MoveButton;
     public Action AddedMoveAction = () => { };
@@ -34,14 +34,17 @@ public class UISampleNodePrefab : UINoiseNodePrefab
 
     private Vector2 _oldMouseButtonPosition = new Vector2(0, 0);
 
-    public UISampleNodePrefab(string name, UIController controller, Vector4 offset) : base(name, controller, offset)
+    public VoronoiOperationType Type;
+
+    public UIVoronoiPrefab(string name, UIController controller, Vector4 offset, VoronoiOperationType type) : base(name, controller, offset)
     {
+        Type = type;
         Scale = (300, 150);
 
         ElementCollection = new UICollection($"{name}ElementCollection", controller, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), Scale - (6, 17), (0, 17, 0, 0), 0);
         
         NameField = new UIText($"{name}Text", controller, AnchorType.TopLeft, PositionType.Relative, (1f, 1f, 1f, 1f), (0, 0, 0), (Scale.X - 14, 20), (5, 6, 0, 0), 0);
-        NameField.SetTextCharCount("Sample", 1.2f).SetTextType(TextType.Alphanumeric);
+        NameField.SetTextCharCount(type.ToString() + " Voronoi", 1.2f).SetTextType(TextType.Alphanumeric);
         
         OutputButton = new UIButton($"{name}OutputButton", controller, AnchorType.TopRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (0, 22, 0, 0), 0, 11, (10f, 0.05f), UIState.Interactable);
         
@@ -99,4 +102,4 @@ public class UISampleNodePrefab : UINoiseNodePrefab
 
         AddedMoveAction.Invoke();
     }
-} 
+}
