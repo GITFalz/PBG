@@ -28,19 +28,21 @@ public class TextureEditor : BaseEditor
 
     private UICollection _textureCollection;
     private UIButton _textureButton;
-    private UICollection _colorPanelCollection;
-    private UIButton _colorButton;
 
     private Vector3 BrushColor = new Vector3(1, 0, 0);
 
     private ColorPicker ColorPicker;
+
+    public TextureEditor()
+    {
+        ColorPicker = new ColorPicker(ColorPickerWidth, ColorPickerHeight, ColorPickerPosition);
+    }
 
     public override void Start(GeneralModelingEditor editor)
     {   
         Started = true;
 
         _ = new DrawingPanel(400, 400);
-        ColorPicker = new ColorPicker(ColorPickerWidth, ColorPickerHeight, ColorPickerPosition);
 
         _textureCollection = new ("TextureCollection", TextureUI, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (1, 1), (94, 80, 0, 0), 0);
 
@@ -50,108 +52,19 @@ public class TextureEditor : BaseEditor
 
         _textureButton.SetOnClick(() => {
             _distance = Input.GetMousePosition() - _windowPosition;
-            _colorButton.CanTest = false;
         });
 
         _textureButton.SetOnHold(DrawingPanelHold);
-
-        _textureButton.SetOnRelease (() => {
-            _colorButton.CanTest = true;
-        });
 
         BG.SetOnHover (() => {
             RenderBrushCircle = true;
         });
 
-        _colorPanelCollection = new ("ColorPanelCollection", TextureUI, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (1, 1), (94, 80, 0, 0), 0);
-
-        _colorButton = new UIButton("ColorEditorMoveButton", TextureUI, AnchorType.TopLeft, PositionType.Absolute, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (ColorPickerWidth + 12, 14), (0, 0, 0, 0), 0, 10, (5, 0.025f), UIState.Interactable);
-        UIImage ColorBG = new UIImage("ColorPanelBackGround", TextureUI, AnchorType.TopLeft, PositionType.Absolute, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (ColorPickerWidth + 12, ColorPickerHeight + 12), (0, 14, 0, 0), 0, 1, (10, 0.05f));
-        UIButton ColorPickSlider = new UIButton("ColorPickSlider", TextureUI, AnchorType.TopLeft, PositionType.Absolute, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (12, 12), (0, 14, 0, 0), 0, 10, (5, 0.025f), UIState.Interactable);
-        UIButton ColorBarSlider = new UIButton("ColorBarSlider", TextureUI, AnchorType.TopLeft, PositionType.Absolute, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (12, 12), (0, ColorPickerHeight + 4, 0, 0), 0, 10, (5, 0.025f), UIState.Interactable);
-
-        _colorButton.Depth = 10;
-        ColorBG.Depth = 10;
-        ColorPickSlider.Depth = 15;
-        ColorBarSlider.Depth = 15;
-        ColorBG.CanTest = true;
-
-        _colorButton.SetOnClick(() => {
-            _colorPickerDistance = Input.GetMousePosition() - _colorPickerPosition;
-            _textureButton.CanTest = false;
-        });
-
-        _colorButton.SetOnHold(ColorPickerHold);
-
-        _colorButton.SetOnRelease (() => {
-            _textureButton.CanTest = true;
-        });
-
-        _colorButton.SetOnHover (() => {
-            MaskCanvas = true;
-        });
-
-        ColorBG.SetOnHold(() => 
-        {
-            float x = Mathf.Clamp(0, ColorPickerWidth, Input.GetMousePosition().X - ColorPickerPosition.X);
-            float y = Input.GetMousePosition().Y - (Game.Height - ColorPickerPosition.Y) + ColorPickerHeight;
-
-            if (y > ColorPickerHeight - 20)
-            {
-                ColorBarSlider.Offset.X = x;
-                ColorBarSlider.Align();
-                ColorBarSlider.UpdateTransformation();
-
-                float rX = (Input.GetMousePosition().X - ColorPickerPosition.X) / ColorPickerWidth;
-                float h = Mathf.Clamp(0, 360, rX * 360);
-                
-                Vector4 color = (1, 0, 0, 1);
-
-                if (h < 60) color = (1, h / 60, 0, 1);
-                else if (h < 120) color = (1 - (h - 60) / 60, 1, 0, 1);
-                else if (h < 180) color = (0, 1, (h - 120) / 60, 1);
-                else if (h < 240) color = (0, 1 - (h - 180) / 60, 1, 1);
-                else if (h < 300) color = ((h - 240) / 60, 0, 1, 1);
-                else color = (1, 0, 1 - (h - 300) / 60, 1);
-
-                ColorPicker.Color = color;
-            }
-
-            x = Input.GetMousePosition().X - ColorPickerPosition.X;
-            y = (Input.GetMousePosition().Y - (Game.Height - ColorPickerPosition.Y) + ColorPickerHeight);
-
-            if (y <= ColorPickerHeight - 20)
-            {
-                x = Mathf.Clamp(0, ColorPickerHeight - 20, x);
-                y = Mathf.Clamp(0, ColorPickerHeight - 20, y);
-
-                ColorPickSlider.Offset.X = x;
-                ColorPickSlider.Offset.Y = y + 14;
-                ColorPickSlider.Align();
-                ColorPickSlider.UpdateTransformation();
-
-                float rX = x / (ColorPickerHeight - 20);
-                float rY = y / (ColorPickerHeight - 20);
- 
-                ColorPicker.Saturation = rX; 
-                ColorPicker.Brightness = 1 - rY;
-            }
-
-            UpdateColor();
-            MaskCanvas = true;
-        });
-
-        ColorBG.SetOnHover (() => {
-            MaskCanvas = true;
-        });
-
         _textureCollection.AddElements(_textureButton, BG);
-        _colorPanelCollection.AddElements(_colorButton, ColorBG, ColorPickSlider, ColorBarSlider);
 
-        TextureUI.AddElements(_colorPanelCollection, _textureCollection);
+        TextureUI.AddElements(_textureCollection);
 
         UpdateDrawingPanelPosition();
-        UpdateColorPickerPosition();
     }
 
     public void UpdateColor()
@@ -189,29 +102,10 @@ public class TextureEditor : BaseEditor
         DrawingPanel.SetDrawingCanvasPosition(CanvasPosition.X + _windowPosition.X, CanvasPosition.Y + (Game.Height - WindowHeight) - WindowPosition.Y);
     }
 
-    public void ColorPickerHold()
-    {
-        Vector2 mouseDelta = Input.GetMouseDelta();
-        if (mouseDelta != Vector2.Zero)
-        {
-            UpdateColorPickerPosition();
-        }
-    }
-
-    public void UpdateColorPickerPosition()
-    {
-        _colorPickerPosition = Input.GetMousePosition() - _colorPickerDistance;
-        ColorPickerPosition.X = (int)_colorPickerPosition.X;
-        ColorPickerPosition.Y = (int)-_colorPickerPosition.Y + (Game.Height - ColorPickerHeight);
-
-        _colorPanelCollection.SetOffset((_colorPickerPosition.X - 6, _colorPickerPosition.Y - 20, 0, 0));
-        _colorPanelCollection.Align();
-        _colorPanelCollection.UpdateTransformation();
-    }
-
     public override void Resize(GeneralModelingEditor editor)
     {
         TextureUI.Resize();
+        ColorPicker.Resize();
         WindowPosition.Y += Game.Height - Game.PreviousHeight;
         ColorPickerPosition.Y += Game.Height - Game.PreviousHeight;
     }
@@ -227,6 +121,7 @@ public class TextureEditor : BaseEditor
         RenderBrushCircle = false;
         MaskCanvas = false;
 
+        ColorPicker.Update();
         TextureUI.Test();
 
         if (Input.AreAllKeysDown([Keys.LeftControl, Keys.LeftShift, Keys.R]))
@@ -328,7 +223,7 @@ public class TextureEditor : BaseEditor
         TextureUI.RenderNoDepthTest();
 
         if (RenderBrushCircle && !MaskCanvas)
-            DrawingPanel.RenderFramebuffer();
+            DrawingPanel.RenderFramebuffer(ColorPicker.Color);
 
         DrawingPanel.RenderTexture(WindowPosition, WindowWidth, WindowHeight, CanvasPosition.X, CanvasPosition.Y);
 

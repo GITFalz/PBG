@@ -120,7 +120,7 @@ public class DrawingPanel
         DrawingCanvasSize = 1f;
     }
     
-    public static void RenderFramebuffer()
+    public static void RenderFramebuffer(Vector4 color)
     {   
         if (!IsDrawing || !Input.IsMouseDown(MouseButton.Left) || DrawingMode == DrawingMode.None || DrawingMode == DrawingMode.Move) 
             return;
@@ -155,7 +155,7 @@ public class DrawingPanel
         GL.Uniform2(sizeLocation, new Vector2(Width, Height));
         GL.Uniform2(pointLocation, mousePos);
         GL.Uniform1(radiusLocation, _drawingCanvasSize * _brushHalfSize);
-        GL.Uniform4(colorLocation, BrushColor.X, BrushColor.Y, BrushColor.Z, BrushColor.W);
+        GL.Uniform4(colorLocation, color);
         GL.Uniform1(modeLocation, (int)DrawingMode);
         GL.Uniform1(falloffLocation, Falloff);
         GL.Uniform1(brushStrengthLocation, BrushStrength);
