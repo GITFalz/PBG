@@ -65,12 +65,12 @@ public class RigMesh : Meshes
     {
         GenerateIndices();
         
-        _vertVbo = new(MeshVertices);
-        _normalVbo = new(Normals);
+        _vertVbo.Renew(MeshVertices);
+        _normalVbo.Renew(Normals);
 
-        _vertexVbo = new(Vertices);
-        _colorVbo = new(VertexColors);
-        _vertexSizeVbo = new(VertexSizes); 
+        _vertexVbo.Renew(Vertices);
+        _colorVbo.Renew(VertexColors);
+        _vertexSizeVbo.Renew(VertexSizes); 
         
         _vao.LinkToVAO(0, 3, _vertVbo);
         _vao.LinkToVAO(1, 3, _normalVbo);
@@ -81,14 +81,14 @@ public class RigMesh : Meshes
 
         GenerateRigBuffers();
         
-        _ibo = new IBO(Indices);
+        _ibo.Renew(Indices);
     }
 
     public void GenerateRigBuffers()
     {
-        _boneVbo = new(BoneVertices);
-        _boneColorVbo = new(BoneColors);
-        _boneSizeVbo = new(BoneSizes);
+        _boneVbo.Renew(BoneVertices);
+        _boneColorVbo.Renew(BoneColors);
+        _boneSizeVbo.Renew(BoneSizes);
 
         _boneVao.LinkToVAO(0, 3, _boneVbo);
         _boneVao.LinkToVAO(1, 3, _boneColorVbo);

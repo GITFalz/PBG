@@ -26,7 +26,7 @@ public class AnimationEditor : BaseEditor
 
     public override void Resize(GeneralModelingEditor editor)
     {
-        Timeline.OnResize();
+        Timeline.Resize();
     }
 
     public override void Awake(GeneralModelingEditor editor)
@@ -34,41 +34,35 @@ public class AnimationEditor : BaseEditor
         Mesh.LoadModel(editor.currentModelName);
         editor.model.SwitchState("Animation");
 
-        UIMesh uiMesh = Timeline.uIMesh;
-        UIMesh maskMesh = Timeline.maskMesh;
-        UIMesh maskeduIMesh = Timeline.maskeduIMesh;
-
-        TextMesh maskedTextMesh = Timeline.maskedTextMesh;
-
-        UICollection timelineCollection = new("TimelineCollection", AnchorType.ScaleBottom, PositionType.Absolute, (0, 0, 0), (1000, 200), (5, -5, 255, 5), 0);
+        UICollection timelineCollection = new("TimelineCollection", Timeline, AnchorType.ScaleBottom, PositionType.Absolute, (0, 0, 0), (1000, 200), (5, -5, 255, 5), 0);
         
-        UIImage timelineBackground = new("TimelineBackground", AnchorType.ScaleBottom, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (1000, 200), (0, 0, 0, 0), 0, 1, (10, 0.05f), uiMesh);
-        UIScrollView boneTimelineCollection = new("BoneTimelineScrollView", AnchorType.ScaleTop, PositionType.Relative, CollectionType.Vertical, (1000, 186), (7, 7, 7, 7), maskMesh);
+        UIImage timelineBackground = new("TimelineBackground", Timeline, AnchorType.ScaleBottom, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1), (0, 0, 0), (1000, 200), (0, 0, 0, 0), 0, 1, (10, 0.05f));
+        UIScrollView boneTimelineCollection = new("BoneTimelineScrollView", Timeline, AnchorType.ScaleTop, PositionType.Relative, CollectionType.Vertical, (1000, 186), (7, 7, 7, 7));
         boneTimelineCollection.SetSpacing(0);
 
         foreach (Bone bone in model.Bones)
         {
             // Main bone collection inside the timeline
-            UIHorizontalCollection boneCollection = new($"{bone.Name}_Collection", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (1000, 40), (0, 0, 0, 0), (0, 0, 0, 0), 5, 0);
+            UIHorizontalCollection boneCollection = new($"{bone.Name}_Collection", Timeline, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (1000, 40), (0, 0, 0, 0), (0, 0, 0, 0), 5, 0);
 
             // Bone name
-            UIText boneText = new($"{bone.Name}_Text", AnchorType.MiddleLeft, PositionType.Relative, (0, 0, 0), (10, 10), (5, 0, 0, 0), 0, 1, (10, 0.05f), maskedTextMesh);
+            UIText boneText = new($"{bone.Name}_Text", Timeline, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1), (0, 0, 0), (10, 10), (5, 0, 0, 0), 0);
             boneText.SetMaxCharCount(20).SetText(bone.Name, 0.6f);
 
             // The collection holds the bone name for alignment purposes.
             // Text scale is calculated when calling SetText so we need to use it for the collection scale.
             // (Scale info in UICollection class)
-            UIDepthCollection boneNameCollection = new($"{bone.Name}_NameCollection", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (boneText.Scale.X, 40), (0, 0, 0, 0), 0);
+            UIDepthCollection boneNameCollection = new($"{bone.Name}_NameCollection", Timeline, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (boneText.Scale.X, 40), (0, 0, 0, 0), 0);
 
             // Background for the bone timeline newt to the bone name
-            UIImage boneTimelineBackground = new($"{bone.Name}_Background", AnchorType.TopLeft, PositionType.Relative, (0.4f, 0.4f, 0.4f), (0, 0, 0), (1000, 40), (0, 0, 0, 0), 0, 1, (10, 0.05f), maskeduIMesh);
+            UIImage boneTimelineBackground = new($"{bone.Name}_Background", Timeline, AnchorType.TopLeft, PositionType.Relative, (0.4f, 0.4f, 0.4f, 1), (0, 0, 0), (1000, 40), (0, 0, 0, 0), 0, 1, (10, 0.05f));
 
-            boneCollection.AddElement(boneNameCollection.AddElement(boneText), boneTimelineBackground);
+            boneCollection.AddElements(boneNameCollection.AddElement(boneText), boneTimelineBackground);
 
             boneTimelineCollection.AddElement(boneCollection);
         }
 
-        timelineCollection.AddElement(timelineBackground, boneTimelineCollection);
+        timelineCollection.AddElements(timelineBackground, boneTimelineCollection);
         Timeline.AddElement(timelineCollection);
         Timeline.GenerateBuffers();
     }
@@ -104,7 +98,7 @@ public class AnimationEditor : BaseEditor
         editor.RenderAnimation();
         Shader.Error("after animation render: ");
         Console.WriteLine("after animation render: ");
-        Timeline.Render();
+        Timeline.RenderNoDepthTest();
     }
     
 

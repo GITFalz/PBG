@@ -152,15 +152,8 @@ public class Game : GameWindow
     
     protected override void OnUnload()
     {
-        FBO.DeleteAll();
-        IBO.Delete();
-        ShaderProgram.Delete();
-        SSBOBase.Delete(); // Because of multiple types of SSBOs
-        TBOBase.Delete(); // Because of multiple types of TBOs
-        Texture.Delete();
-        TextureArray.Delete();
-        VAO.Delete();
-        VBOBase.Delete(); // Because of multiple types of VBOs
+        BufferBase.Delete();
+        IDBOBase.Delete();
 
         GC.Collect();
         GC.WaitForPendingFinalizers();
@@ -168,6 +161,11 @@ public class Game : GameWindow
         CurrentScene?.OnExit();
         
         base.OnUnload();
+    }
+
+    public static void CloseGame()
+    {
+        Instance?.Close();
     }
     
     protected override void OnRenderFrame(FrameEventArgs args)

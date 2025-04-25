@@ -62,12 +62,12 @@ public class AnimationMesh : Meshes
         GenerateIndices();
         GenerateBasicBoneMatrices();
 
-        _vertVbo = new(Vertices);
-        _uvVbo = new(Uvs);
-        _textureVbo = new(TextureIndices);
-        _normalVbo = new(Normals);
-        _boneVbo = new(BoneIndices);
-        _boneSSBO = new(BoneMatrices);
+        _vertVbo.Renew(Vertices);
+        _uvVbo.Renew(Uvs);
+        _textureVbo.Renew(TextureIndices);
+        _normalVbo.Renew(Normals);
+        _boneVbo.Renew(BoneIndices);
+        _boneSSBO.Renew(BoneMatrices);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
         _vao.LinkToVAO(1, 2, _uvVbo);
@@ -77,14 +77,14 @@ public class AnimationMesh : Meshes
 
         GenerateRigBuffers();
         
-        _ibo = new IBO(Indices);
+        _ibo.Renew(Indices);
     }
 
     public void GenerateRigBuffers()
     {
-        _boneVertexVbo = new(BoneVertices);
-        _boneColorVbo = new(BoneColors);
-        _boneSizeVbo = new(BoneSizes);
+        _boneVertexVbo.Renew(BoneVertices);
+        _boneColorVbo.Renew(BoneColors);
+        _boneSizeVbo.Renew(BoneSizes);
 
         _boneVao.LinkToVAO(0, 3, _boneVertexVbo);
         _boneVao.LinkToVAO(1, 3, _boneColorVbo);

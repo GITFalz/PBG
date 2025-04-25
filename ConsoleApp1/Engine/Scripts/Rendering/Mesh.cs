@@ -27,13 +27,13 @@ public abstract class Mesh
             transformedVertices.Add(t + Position);
         }
         
-        _vertVbo = new(transformedVertices);
-        _uvVbo = new(Uvs);
+        _vertVbo.Renew(transformedVertices);
+        _uvVbo.Renew(Uvs);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
         _vao.LinkToVAO(1, 2, _uvVbo);
         
-        _ibo = new IBO(Indices);
+        _ibo.Renew(Indices);
     }
 
     public virtual void RenderMesh()

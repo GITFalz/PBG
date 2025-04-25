@@ -1,142 +1,250 @@
-using System.Drawing;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
 public class TextMesh
 {
-    public List<int> chars = [];
-    public List<Matrix4> TransformationMatrices = [];  
-    public List<Vector2> Sizes = [];
-    public List<Vector4i> Data = [];
+    public VAO TextVAO = new();
+    public SSBO<Matrix4> TransformationSSBO = new();
+    public SSBO<CharacterData> CharacterSSBO = new();
 
-    private VAO _vao = new VAO();
-    private SSBO<Matrix4> _transformationSsbo = new(new List<Matrix4>());
-    private SSBO<Vector2> _sizeSsbo = new(new List<Vector2>());
-    private SSBO<Vector4i> _dataSsbo = new(new List<Vector4i>());
-    private TBO<int> _textTbo = new([]);
-
-    private List<UIText> _textElements = new List<UIText>();
+    public List<UIText> UIElements = new();
+    
+    public List<Matrix4> TransformationMatrices = new();
+    public List<CharacterData> Characters = new();
+    public List<TextElementData> TextElements = new();
+    public Dictionary<TextElementData, int> Elements = new();
 
     public int ElementCount = 0;
     public int VisibleElementCount = 0;
 
-    public void SetCharacters(List<int> characters, int offset)
-    {
-        for (int i = 0; i < characters.Count; i++)
-        {
-            int index = offset + i;
-            if (index >= chars.Count)
-                chars.Add(characters[i]);
-            else
-                chars[index] = characters[i];
-        }
-    }
+    private bool _generateBuffers = false;
+    private bool _updateData = false;
+    private bool _updateVisibility = false;
 
-    public void SetVisibility(bool visible, int index)
-    {
-        if (index >= Data.Count)
-            return;
-
-        VisibleElementCount += visible ? 1 : -1;
-        UpdateData();
-    }
-
-    public void AddTextElement(UIText element, ref int uiIndex, int offset)
+    public void AddElement(UIText element, ref int uiIndex)
     {
         uiIndex = ElementCount;
 
-        Sizes.Add((element.newScale.X, element.newScale.Y));
-        Data.Add((element.MaxCharCount, offset, ElementCount, 0));
-        _textElements.Add(element);
-
         TransformationMatrices.Add(element.Transformation);
+        UIElements.Add(element);
 
         ElementCount++;
-        VisibleElementCount++;
     }
 
-    public void RemoveTextElement(UIText element)
+    public void AddCharacters(List<TextElementData> characters)
     {
-        var index = element.ElementIndex;
+        foreach (var character in characters)
+        {
+            AddCharacter(character);
+        }
 
-        Sizes.RemoveAt(index);
-        Data.RemoveAt(index);
-        _textElements.RemoveAt(index);
-        TransformationMatrices.RemoveAt(index);
+        _updateVisibility = true;
+    }
+
+    public void AddCharacter(TextElementData character)
+    {
+        Elements.Add(character, Elements.Count);
+        Characters.Add(character.Character);
+        TextElements.Add(character);
+
+        VisibleElementCount++;
+
+        _generateBuffers = true;
+    }
+
+    public void RemoveElement(UIText element)
+    {
+        RemoveCharacters(element.CharacteData);
+
+        UIElements.RemoveAt(element.ElementIndex);
+        TransformationMatrices.RemoveAt(element.ElementIndex);
+
+        for (int i = element.ElementIndex; i < UIElements.Count; i++)
+        {
+            UIElements[i].ElementIndex--;
+        }
 
         ElementCount--;
-        VisibleElementCount--;
+
+        _generateBuffers = true;
+        _updateVisibility = true;
+    }
+
+    public void RemoveCharacters(List<TextElementData> characters)
+    {
+        foreach (var character in characters)
+        {
+            RemoveCharacter(character);
+        }
+    }
+
+    public void RemoveCharacter(TextElementData character)
+    {
+        if (Elements.TryGetValue(character, out int index))
+        {
+            int lastIndex = TextElements.Count - 1;
+
+            if (index != lastIndex)
+            {
+                var lastElement = TextElements[lastIndex];
+                var lastCharacter = Characters[lastIndex];
+
+                TextElements[index] = lastElement;
+                Characters[index] = lastCharacter;
+
+                Elements[lastElement] = index;
+            }
+
+            TextElements.RemoveAt(lastIndex);
+            Characters.RemoveAt(lastIndex);
+            Elements.Remove(character);
+
+            VisibleElementCount--;
+
+            _generateBuffers = true;
+        }
+    }
+
+    public void UpdateCharacters(List<TextElementData> characters)
+    {
+        foreach (var character in characters)
+        {
+            UpdateCharacter(character);
+        }
+    }
+
+    public void UpdateCharacter(TextElementData character)
+    {
+        if (Elements.TryGetValue(character, out int index))
+        {
+            Characters[index] = character.Character;
+            _updateVisibility = true;
+        }
+    }
+
+    public void SetVisibility(List<TextElementData> characters, bool visible)
+    {
+        foreach (var character in characters)
+        {
+            SetVisibility(character, visible);
+        }
+    }
+
+    public void SetVisibility(TextElementData character, bool visible)
+    {
+        if (Elements.TryGetValue(character, out int index))
+        {
+            character.Character.SetVisible(visible);
+            Characters[index] = character.Character;
+            _updateVisibility = true;
+        }
+    }
+
+    public void UpdateElementTransformation(UIText element)
+    {
+        if (element.ElementIndex < 0 || element.ElementIndex >= TransformationMatrices.Count)
+            return;
+
+        TransformationMatrices[element.ElementIndex] = element.Transformation;
+        _updateData = true;
     }
 
     public void UpdateData()
     {
-        int offsetIndex = 0;
+        VisibleElementCount = 0;
 
-        // Assuming the Data list is the same size as _visibility
-        for (int i = 0; i < _textElements.Count; i++)
+        for (int i = 0; i < TextElements.Count; i++)
         {
-            if (_textElements[i].Visible)
+            if (Characters[i].IsVisible())
             {
-                Vector4i data = Data[offsetIndex];
-                data.Z = i;
-                Data[offsetIndex] = data;
-                offsetIndex++;
+                CharacterData character = Characters[VisibleElementCount];
+                character.SetActualIndex(i);
+                Characters[VisibleElementCount] = character;
+                VisibleElementCount++;
             }
         }
-
-        // Update the Data list
-        _dataSsbo.Update(Data, 2);
-    }   
-
-    public void UpdateElementTransformation(UIText element)
-    {
-        TransformationMatrices[element.ElementIndex] = element.Transformation;
     }
 
     public void GenerateBuffers()
     {
-        _transformationSsbo = new(TransformationMatrices);
-        _sizeSsbo = new(Sizes);
-        _dataSsbo = new(Data);
-        _textTbo = new(chars);
+        TransformationSSBO.Renew(TransformationMatrices);
+        CharacterSSBO.Renew(Characters);
+    }
+
+    public void Update()
+    {
+        if (_generateBuffers)
+        {
+            GenerateBuffers();
+            _generateBuffers = false;
+        }
+        if (_updateVisibility)
+        {
+            UpdateData();
+            _updateVisibility = false;
+            _updateData = true;
+        }
+        if (_updateData)
+        {
+            TransformationSSBO.Update(TransformationMatrices, 0);
+            CharacterSSBO.Update(Characters, 0);
+            _updateData = false;
+        }
     }
 
     public void Render()
     {
-        _vao.Bind();
-        _transformationSsbo.Bind(0);
-        _sizeSsbo.Bind(1);
-        _dataSsbo.Bind(2);
-        _textTbo.Bind(TextureUnit.Texture1);
+        TextVAO.Bind();
+        CharacterSSBO.Bind(0);
+        TransformationSSBO.Bind(1);
 
         GL.DrawArrays(PrimitiveType.Triangles, 0, VisibleElementCount * 6);
-        
-        _transformationSsbo.Unbind();
-        _sizeSsbo.Unbind();
-        _dataSsbo.Unbind();
-        _textTbo.Unbind();
-        _vao.Unbind();
+
+        CharacterSSBO.Unbind();
+        TransformationSSBO.Unbind();
+        TextVAO.Unbind();
+    }
+}
+
+public class TextElementData
+{
+    public CharacterData Character = new CharacterData();
+}
+
+public struct CharacterData
+{
+    public Vector4 PositionSize;
+    public Vector4i Index; // { index, *isVisible (2nd last bit) / actual index*, none, none }
+
+    public bool IsVisible()
+    {
+        return (Index.Y & 0x40000000) != 0;
     }
 
-    public void UpdateMatrices()
+    public void SetVisible(bool visible)
     {
-        _transformationSsbo.Update(TransformationMatrices, 0);
-        _sizeSsbo.Update(Sizes, 1);
-        _dataSsbo.Update(Data, 2);
+        if (visible)
+            Index.Y |= 0x40000000;
+        else
+            Index.Y &= 0x0FFFFFFF;
     }
 
-    public void UpdateText()
+    public int GetActualIndex()
     {
-        _textTbo.Update(chars);
+        return Index.Y & 0x0FFFFFFF;
     }
 
-    public void Clear()
+    public bool SetActualIndex(int index)
     {
-        TransformationMatrices.Clear();
-        Sizes.Clear();
-        Data.Clear();
-        chars.Clear();
-        ElementCount = 0;
-        VisibleElementCount = 0;
+        if (GetActualIndex() == index)
+            return false;
+
+        Index.Y = (Index.Y & 0x40000000) | index;
+        return true;
+    }
+
+    public override string ToString()
+    {
+        return $"\n---Character---\nPosition: ({PositionSize.X}, {PositionSize.Y})\nSize: ({PositionSize.Z}, {PositionSize.W})\nCharacter: {Index.X}\nVisible: {IsVisible()}\nActualIndex: {GetActualIndex()}";
     }
 }

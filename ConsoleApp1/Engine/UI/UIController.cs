@@ -4,12 +4,11 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class UIController
 {
-    public UIMesh uIMesh = new();
-    public TextMesh textMesh = new();
+    public static List<UIController> Controllers = [];
+    public static UIController Empty = new();
 
-    public UIMesh maskMesh = new();
-    public UIMesh maskeduIMesh = new();
-    public TextMesh maskedTextMesh = new();
+    public UIMesh UIMesh = new();
+    public TextMesh TextMesh = new();
     
     public static ShaderProgram _uiShader = UIData.UiShader;
     public static TextureArray _uItexture = UIData.UiTexture;
@@ -19,6 +18,7 @@ public class UIController
     public static Matrix4 OrthographicProjection = Matrix4.Identity;
     public List<UIElement> Elements = [];
     public List<UIElement> AbsoluteElements = [];
+    public List<UIScrollView> ScrollViews = [];
     public List<UIButton> Buttons = [];
     public static List<UIInputField> InputFields = [];
 
@@ -26,6 +26,43 @@ public class UIController
 
     public bool render = true;
     public static int TextOffset = 0;
+
+    public bool RegenerateBuffers = false;
+    public bool UpdateVisibility = true;
+
+    public List<UIElement> ElementsToAdd = [];  
+    public List<UIElement> ElementsToRemove = [];
+
+    public Matrix4 ModelMatrix = Matrix4.Identity;
+
+    public Vector3 Position { get; private set; } = (0, 0, 0);
+    public float Scale { get; private set; } = 1f;
+
+    public Vector3 _localPosition = (0, 0, 0);
+
+    public UIController()
+    {
+        Controllers.Add(this);
+    }
+
+    // Adds the element to the list of elements to be added, but does not add it to the UIController yet.
+    // This is useful for adding elements in a single pass, rather than immediately adding them.
+    // And it also needs to be done at the start of the frame otherwise the list could change it's size mid-loop.
+    public void AddElements(params UIPrefab[] elements)
+    {
+        foreach (UIPrefab element in elements)
+        {
+            AddElements(element.GetMainElements());
+        }
+    }
+
+    public void AddElements(params UIElement[][] elements)
+    {
+        foreach (UIElement[] element in elements)
+        {
+            AddElements(element);
+        }
+    }
 
     public void AddElements(params UIElement[] elements)
     {
@@ -35,10 +72,22 @@ public class UIController
         }
     }
 
-    public void AddElement(UIElement element, MeshType type = MeshType.UnMasked, bool test = false)
+    public void AddElement(UIElement element)
+    {
+        if (ElementsToAdd.Contains(element))
+            return;
+        
+        ElementsToAdd.Add(element);
+        RegenerateBuffers = true;
+    }
+
+    private void Internal_AddElement(UIElement element)
     {
         if (element.PositionType == PositionType.Absolute)
             AbsoluteElements.Add(element);
+
+        element.CanUpdate = true;
+        Elements.Add(element);
 
         if (element is UIPanel panel)
         {
@@ -49,39 +98,118 @@ public class UIController
         {
             if (text is UIInputField inputField)
             {
-                Elements.Add(inputField.Button);
-                Buttons.Add(inputField.Button);
                 InputFields.Add(inputField);
             }
         }
         else if (element is UICollection collection)
         {
+            if (collection is UIScrollView scrollView)
+            {
+                ScrollViews.Add(scrollView);
+            }
+
             foreach (var e in collection.Elements)
             {
-                AddElement(e, type, test);
+                Internal_AddElement(e);
             }
         }
-
-        element.UIController = this;
-        Elements.Add(element);
+    }
+    
+    // Adds the element to the list of elements to be removed, but does not remove it from the UIController yet.
+    // This is needed for removing elements in a single pass, rather than immediately removing them.
+    // And it also needs to be done at the start of the frame otherwise the list could change it's size mid-loop.
+    public void RemoveElements(params UIPrefab[] elements)
+    {
+        foreach (var element in elements)
+        {
+            RemoveElements(element.GetMainElements());
+        }
     }
 
-    private static readonly Dictionary<MeshType, Func<UIController, UIMesh>> uiMeshType = new Dictionary<MeshType, Func<UIController, UIMesh>>()
+    public void RemoveElements(params UIElement[] elements)
     {
-        { MeshType.UnMasked, controller => controller.uIMesh },
-        { MeshType.Masked, controller => controller.maskeduIMesh }
-    };
-
-    private static readonly Dictionary<MeshType, Func<UIController, TextMesh>> textMeshType = new Dictionary<MeshType, Func<UIController, TextMesh>>()
-    {
-        { MeshType.UnMasked, controller => controller.textMesh },
-        { MeshType.Masked, controller => controller.maskedTextMesh }
-    };
+        foreach (var element in elements)
+        {
+            RemoveElement(element);
+        }
+    }
 
     public void RemoveElement(UIElement element)
     {
-
+        if (ElementsToRemove.Contains(element))
+            return;
+        
+        ElementsToRemove.Add(element);
+        RegenerateBuffers = true;
     }
+    
+    private void Internal_RemoveElement(UIElement element)
+    {
+        if (element.PositionType == PositionType.Absolute)
+            AbsoluteElements.Remove(element);
+
+        if (element is UIPanel panel)
+        {
+            if (panel is UIButton button)
+                Buttons.Remove(button);
+        }
+        else if (element is UIText text)
+        {
+            text.Delete();
+            if (text is UIInputField inputField)
+            {
+                InputFields.Remove(inputField);
+            }
+        }
+        else if (element is UICollection collection)
+        {
+            if (collection is UIScrollView scrollView)
+            {
+                ScrollViews.Remove(scrollView);
+            }
+
+            foreach (var e in collection.Elements)
+            {
+                Internal_RemoveElement(e);
+                e.Clear();
+            }
+        }
+
+        element.CanUpdate = false;
+        Elements.Remove(element);
+    }
+
+    public void SetPosition(Vector2 position)
+    {
+        SetPosition(new Vector3(position.X, position.Y, Position.Z));
+    }
+
+    public void SetPosition(Vector3 position)
+    {
+        Position = position;
+        ModelMatrix = Matrix4.CreateScale(new Vector3(Scale, Scale, 1f)) * Matrix4.CreateTranslation(Position);
+        _localPosition = Vector3.TransformPosition((0, 0, 0), ModelMatrix);
+    }
+
+    public void SetScale(float scale)
+    {
+        Vector2 pos = Input.GetMousePosition();
+        Vector3 mousePosition = new Vector3(pos.X, pos.Y, 0f);
+
+        Vector3 offset = mousePosition - Position;
+        Vector3 position = offset / Scale;
+
+        Vector3 mPosition = position * scale;
+        Vector3 mOffset = mPosition - mousePosition;
+        Vector3 newPosition = mOffset * -1;
+        Position = newPosition;
+
+        Scale = scale;
+        ModelMatrix = Matrix4.CreateScale(new Vector3(Scale, Scale, 1f)) * Matrix4.CreateTranslation(Position);
+        _localPosition = Vector3.TransformPosition((0, 0, 0), ModelMatrix);
+    }
+
+
 
     public UIElement? GetElement<T>(string name) where T : UIElement
     {
@@ -96,17 +224,16 @@ public class UIController
 
     public void Test()
     {
-        foreach (var element in Elements)
-        {
-            element.Test();
-        }
+        Test(Vector2.Zero);
     }
 
     public void Test(Vector2 offset)
     {
+        Vector2 newOffset = offset;
+        GenerateBuffers();
         foreach (var element in Elements)
         {
-            element.Test(offset);
+            element.Test(newOffset);
         }
     }
 
@@ -196,6 +323,12 @@ public class UIController
         activeInputField = inputField;
     }
 
+    public static void AssignInputField(UIInputField inputField)
+    {
+        Console.WriteLine("Assigning: " + inputField.Name);
+        activeInputField = inputField;
+    }
+
     public static void RemoveInputField()
     {
         activeInputField = null;
@@ -250,30 +383,57 @@ public class UIController
         {
             element.Generate();    
         }
+
+        foreach (var scrollView in ScrollViews)
+        {
+            scrollView.GenerateMask(); 
+        }
+    }
+
+    public void PrintMemory()
+    {
+        string memory = "UIController: " + Elements.Count + " elements\n";
+        memory += "Buttons: " + Buttons.Count + "\n";
+        memory += "InputFields: " + InputFields.Count + "\n";
+        memory += "AbsoluteElements: " + AbsoluteElements.Count + "\n";
+        memory += "ElementsToAdd: " + ElementsToAdd.Count + "\n";
+        memory += "ElementsToRemove: " + ElementsToRemove.Count + "\n";
+        memory += "newUIMesh: " + UIMesh.ElementCount + "\n";
+        Console.WriteLine(memory);
     }
 
     public void Buffers()
     {
-        uIMesh.GenerateBuffers();
-        textMesh.GenerateBuffers();
-        maskMesh.GenerateBuffers();
-        maskeduIMesh.GenerateBuffers(); 
-        maskedTextMesh.GenerateBuffers();
+        UIMesh.GenerateBuffers();
     }
 
     public void GenerateBuffers()
     {
-        Generate();
-        Buffers();
-    }
+        if (RegenerateBuffers)
+        {
+            foreach (var element in ElementsToRemove)
+            {
+                Internal_RemoveElement(element);
+            }
 
-    public void UpdateMatrices()
-    {
-        uIMesh.UpdateMatrices();
-        textMesh.UpdateMatrices();
-        maskMesh.UpdateMatrices();
-        maskeduIMesh.UpdateMatrices();
-        maskedTextMesh.UpdateMatrices();
+            foreach (var element in ElementsToAdd)
+            {
+                Internal_AddElement(element);
+            }
+
+            ElementsToAdd.Clear();
+            ElementsToRemove.Clear();
+
+            UIMesh.Clear();
+
+            Generate();
+            Buffers();
+
+            RegenerateBuffers = false;
+        }
+            
+        UIMesh.Update();
+        TextMesh.Update();
     }
 
     public List<string> ToLines()
@@ -283,19 +443,46 @@ public class UIController
         return lines;
     }
 
+    public static void ClearAll()
+    {
+        foreach (var controller in Controllers)
+        {
+            controller.Clear();
+        }
+        Controllers.Clear();
+    }
+
     public void Clear()
     {
-        uIMesh.Clear();
-        textMesh.Clear();
-        foreach (var element in Elements)
+        UIMesh.Clear();
+
+        foreach (var element in AbsoluteElements)
         {
-            if (element is UIInputField inputField && InputFields.Contains(inputField))
-                InputFields.Remove(inputField);
+            RemoveElement(element);
         }
+
+        foreach (var element in ElementsToRemove)
+        {
+            Internal_RemoveElement(element);
+        }
+
+        Elements.Clear();
+        AbsoluteElements.Clear();
+        ScrollViews.Clear();
+        Buttons.Clear();
+        InputFields.Clear();
+        ElementsToAdd.Clear();
+        ElementsToRemove.Clear();
+    }
+
+    public void Delete()
+    {
+        Clear();
+        UIMesh.Delete();
         Elements.Clear();
     }
 
-    public void OnResize()
+    public void Resize()
     {
         foreach (var element in AbsoluteElements)
         {
@@ -307,8 +494,6 @@ public class UIController
             element.UpdateScale();
             element.UpdateTransformation();
         }
-
-        UpdateMatrices();
     }
 
     public void Update()
@@ -316,100 +501,81 @@ public class UIController
         Test();
     }
 
-    public void Render()
+    public void RenderDepthTest()
+    {
+        RenderDepthTest(OrthographicProjection);
+    }
+
+    public void RenderDepthTest(Matrix4 orthographicsProjectionMatrix)
+    {
+        GL.Enable(EnableCap.DepthTest);
+        GL.DepthMask(true);
+
+        Render(orthographicsProjectionMatrix);
+
+        GL.DepthFunc(DepthFunction.Lequal);
+        GL.DepthMask(true);
+    }
+
+    public void RenderNoDepthTest()
+    {
+        RenderNoDepthTest(OrthographicProjection);
+    }
+
+    public void RenderNoDepthTest(Matrix4 orthographicsProjectionMatrix)
+    {
+        GL.Disable(EnableCap.DepthTest);
+        GL.DepthMask(false);
+
+        Render(orthographicsProjectionMatrix);
+
+        GL.DepthFunc(DepthFunction.Lequal);
+        GL.DepthMask(true);
+    }
+
+    private void Render(Matrix4 orthographicsProjectionMatrix)
     {
         if (!render)
             return;
 
-        //GL.Disable(EnableCap.DepthTest);
-        //GL.DepthMask(false);
         GL.Enable(EnableCap.Blend);
-        GL.Disable(EnableCap.CullFace);
+        GL.Enable(EnableCap.CullFace);
         GL.FrontFace(FrontFaceDirection.Ccw);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
-        Matrix4 model = Matrix4.Identity;
+        Matrix4 model = ModelMatrix;
 
-        _uItexture.Bind();
-        _uiShader.Bind();
+        if (UIMesh.ElementCount > 0)
+        {
+            _uItexture.Bind(TextureUnit.Texture0);
+            _uiShader.Bind();
 
-        int modelLoc = GL.GetUniformLocation(_uiShader.ID, "model");
-        int projectionLoc = GL.GetUniformLocation(_uiShader.ID, "projection");
-        int cycleLoc = GL.GetUniformLocation(_uiShader.ID, "cycle");
+            GL.UniformMatrix4(UIData.modelLoc, true, ref model);
+            GL.UniformMatrix4(UIData.projectionLoc, true, ref orthographicsProjectionMatrix);
+            GL.Uniform1(UIData.textureArrayLoc, 0);
 
-        GL.UniformMatrix4(modelLoc, true, ref model);
-        GL.UniformMatrix4(projectionLoc, true, ref OrthographicProjection);
-        GL.Uniform1(cycleLoc, 6);
-        if (Input.IsKeyPressed(Keys.H))
-            Console.WriteLine((int)GameTime.TotalTime * 5);
-
-        uIMesh.Render();
-
-        _uiShader.Unbind();
-        _uItexture.Unbind();
-
-
-
-        _textShader.Bind();
-        _textTexture.Bind();
-
-        int textModelLoc = GL.GetUniformLocation(_textShader.ID, "model");
-        int textProjectionLoc = GL.GetUniformLocation(_textShader.ID, "projection");
-        int charsLoc = GL.GetUniformLocation(_textShader.ID, "charBuffer");
+            UIMesh.Render();
         
-        GL.UniformMatrix4(textModelLoc, true, ref model);
-        GL.UniformMatrix4(textProjectionLoc, true, ref OrthographicProjection);
-        GL.Uniform1(charsLoc, 1);
-        
-        textMesh.Render();
-        
-        _textShader.Unbind();
-        _textTexture.Unbind();
-        
+            //Shader.Error("Ui render error: ");
 
-        GL.Enable(EnableCap.StencilTest);
-        GL.Clear(ClearBufferMask.StencilBufferBit);
-        GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
-        GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace); 
+            _uItexture.Unbind();
+            _uiShader.Unbind();
+        }
 
-        _uiShader.Bind();
-        _uItexture.Bind();
+        if (TextMesh.ElementCount > 0)
+        {
+            _textTexture.Bind(TextureUnit.Texture0);
+            _textShader.Bind();
 
-        model = Matrix4.Identity;
-        
-        modelLoc = GL.GetUniformLocation(_uiShader.ID, "model");
-        projectionLoc = GL.GetUniformLocation(_uiShader.ID, "projection");
+            GL.UniformMatrix4(UIData.textModelLoc, true, ref model);
+            GL.UniformMatrix4(UIData.textProjectionLoc, true, ref orthographicsProjectionMatrix);
+            GL.Uniform1(UIData.textTextureLoc, 0);
 
-        GL.UniformMatrix4(modelLoc, true, ref model);
-        GL.UniformMatrix4(projectionLoc, true, ref OrthographicProjection);
+            TextMesh.Render();
 
-        maskMesh.Render();
-        
-        GL.StencilFunc(StencilFunction.Equal, 1, 0xFF);
-        GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
-
-        maskeduIMesh.Render();
-
-        _uiShader.Unbind();
-        _uItexture.Unbind();
-
-        _textShader.Bind();
-        _textTexture.Bind();
-
-        model = Matrix4.Identity;
-
-        textModelLoc = GL.GetUniformLocation(_textShader.ID, "model");
-        textProjectionLoc = GL.GetUniformLocation(_textShader.ID, "projection");
-        charsLoc = GL.GetUniformLocation(_textShader.ID, "charBuffer");
-        
-        GL.UniformMatrix4(textModelLoc, true, ref model);
-        GL.UniformMatrix4(textProjectionLoc, true, ref OrthographicProjection);
-        GL.Uniform1(charsLoc, 1);
-        
-        maskedTextMesh.Render();
-        
-        _textShader.Unbind();
-        _textTexture.Unbind();
+            _textShader.Unbind();
+            _textTexture.Unbind();
+        }
 
         GL.Disable(EnableCap.StencilTest);
         GL.DepthMask(true);

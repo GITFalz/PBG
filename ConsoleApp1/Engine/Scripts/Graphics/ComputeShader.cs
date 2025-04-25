@@ -1,10 +1,33 @@
 using OpenTK.Graphics.OpenGL4;
 
-public class ComputeShader
+public class ComputeShader : BufferBase
 {
     public int ID;
 
-    public ComputeShader(string computeShaderFilePath)
+    private static int _bufferCount = 0;
+
+    public ComputeShader(string computeShaderFilePath) : base()
+    {
+        Create(computeShaderFilePath);
+        _bufferCount++;
+    }
+
+    public void Bind() => GL.UseProgram(ID); 
+    public void Unbind() => GL.UseProgram(0); 
+
+    public void DispatchCompute(int workGroupX, int workGroupY, int workGroupZ)
+    {
+        GL.DispatchCompute(workGroupX, workGroupY, workGroupZ);
+        GL.MemoryBarrier(MemoryBarrierFlags.ShaderStorageBarrierBit);
+    }
+
+    public void Renew(string computeShaderFilePath) 
+    {
+        GL.DeleteProgram(ID); // The program needs to be deleted before creating a new one
+        Create(computeShaderFilePath);
+    }
+
+    public void Create(string computeShaderFilePath)
     {
         ID = GL.CreateProgram();
 
@@ -30,15 +53,25 @@ public class ComputeShader
         GL.DeleteShader(computeShader);
     }
 
-    public void Bind() { GL.UseProgram(ID); }
-
-    public void Unbind() { GL.UseProgram(0); }
-
-    public void DispatchCompute(int workGroupX, int workGroupY, int workGroupZ)
+    public int GetLocation(string name)
     {
-        GL.DispatchCompute(workGroupX, workGroupY, workGroupZ);
-        GL.MemoryBarrier(MemoryBarrierFlags.ShaderStorageBarrierBit);
+        return GL.GetUniformLocation(ID, name);
     }
 
-    public void Delete() { GL.DeleteProgram(ID); }
+    public override void DeleteBuffer()
+    {
+        GL.DeleteProgram(ID);
+        _bufferCount--;
+        base.DeleteBuffer();
+    }
+
+    public override int GetBufferCount()
+    {
+        return _bufferCount;
+    }
+
+    public override string GetTypeName()
+    {
+        return "ComputeShader";
+    }
 }

@@ -37,40 +37,32 @@ public class PopUp
         RenderAction = RenderMessage;
         UpdateAction = UpdateMessage;
 
-        UIMesh messageUiMesh = MessageUI.uIMesh;
-        TextMesh messageTextMesh = MessageUI.textMesh;
+        MessagePanel = new("PopupPanel", MessageUI, AnchorType.MiddleCenter, PositionType.Absolute, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (500, 80), (0, 0, 0, 0), 0, 0, (10, 0.05f));
+        MessageCollection = new("MessageCollection", MessageUI, AnchorType.BottomCenter, PositionType.Absolute, (0, 0, 0), (500, 80), (0, 80, 0, 0), 0);
+        Message = new("PopupText", MessageUI, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 100), (10, 10, 0, 0), 0);
+        MessageCloseButton = new("PopupButton", MessageUI, AnchorType.TopRight, PositionType.Relative, (0.7f, 0.7f, 0.7f, 1f), (0, 0, 0), (30, 30), (0, 0, 0, 0), 0, 89, (0, 0), UIState.Interactable);
 
-        MessagePanel = new("PopupPanel", AnchorType.MiddleCenter, PositionType.Absolute, (0.5f, 0.5f, 0.5f), (0, 0, 0), (500, 80), (0, 0, 0, 0), 0, 0, (10, 0.05f), messageUiMesh);
-        MessageCollection = new("MessageCollection", AnchorType.BottomCenter, PositionType.Absolute, (0, 0, 0), (500, 80), (0, 80, 0, 0), 0);
-        Message = new("PopupText", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (10, 10, 0, 0), 0, 0, (0, 0), messageTextMesh);
-        MessageCloseButton = new("PopupButton", AnchorType.TopRight, PositionType.Relative, (0.7f, 0.7f, 0.7f), (0, 0, 0), (30, 30), (0, 0, 0, 0), 0, 89, (0, 0), messageUiMesh, UIState.Interactable);
-
-        MessageCloseButton.OnClick = new SerializableEvent(CloseCurrentMessage);
+        MessageCloseButton.SetOnClick(CloseCurrentMessage);
 
         MessageCollection.AddElement(MessagePanel);
         MessageCollection.AddElement(Message);
         MessageCollection.AddElement(MessageCloseButton);
 
         Message.MaxCharCount = 30;
-        Message.SetText("Hello", 0.7f);
+        Message.SetText("Hello", 1.5f);
 
         MessageUI.AddElement(MessageCollection);
 
-        MessageUI.GenerateBuffers();
 
+        ConfirmationPanel = new("AlertPanel", ConfirmationUI, AnchorType.MiddleCenter, PositionType.Absolute, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (500, 80), (0, 0, 0, 0), 0, 0, (10, 0.05f));
+        ConfirmationCollection = new("AlertCollection", ConfirmationUI, AnchorType.BottomCenter, PositionType.Absolute, (0, 0, 0), (500, 80), (0, 80, 0, 0), 0);
+        Confirmation = new("AlertText", ConfirmationUI, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 100), (10, 10, 0, 0), 0);
+        ConfirmationAcceptButton = new("AlertButton", ConfirmationUI, AnchorType.BottomCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (480, 35), (0, -10, 0, 0), 0, 0, (10, 0.05f), UIState.Interactable);
+        ConfirmationDeclineButton = new("AlertButton", ConfirmationUI, AnchorType.TopRight, PositionType.Relative, (0.7f, 0.7f, 0.7f, 1f), (0, 0, 0), (30, 30), (0, 0, 0, 0), 0, 89, (0, 0), UIState.Interactable);
+        AcceptText = new("AcceptText", ConfirmationUI, AnchorType.BottomCenter, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 100), (0, -20, 0, 0), 0);
 
-        UIMesh confirmationUiMesh = ConfirmationUI.uIMesh;
-        TextMesh confirmationTextMesh = ConfirmationUI.textMesh;
-
-        ConfirmationPanel = new("AlertPanel", AnchorType.MiddleCenter, PositionType.Absolute, (0.5f, 0.5f, 0.5f), (0, 0, 0), (500, 80), (0, 0, 0, 0), 0, 0, (10, 0.05f), confirmationUiMesh);
-        ConfirmationCollection = new("AlertCollection", AnchorType.BottomCenter, PositionType.Absolute, (0, 0, 0), (500, 80), (0, 80, 0, 0), 0);
-        Confirmation = new("AlertText", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (10, 10, 0, 0), 0, 0, (0, 0), confirmationTextMesh);
-        ConfirmationAcceptButton = new("AlertButton", AnchorType.BottomCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (480, 35), (0, -10, 0, 0), 0, 0, (10, 0.05f), confirmationUiMesh, UIState.Interactable);
-        ConfirmationDeclineButton = new("AlertButton", AnchorType.TopRight, PositionType.Relative, (0.7f, 0.7f, 0.7f), (0, 0, 0), (30, 30), (0, 0, 0, 0), 0, 89, (0, 0), confirmationUiMesh, UIState.Interactable);
-        AcceptText = new("AcceptText", AnchorType.BottomCenter, PositionType.Relative, (0, 0, 0), (100, 100), (0, -20, 0, 0), 0, 0, (0, 0), confirmationTextMesh);
-
-        ConfirmationAcceptButton.OnClick = new SerializableEvent(AcceptCurrentConfirmation);
-        ConfirmationDeclineButton.OnClick = new SerializableEvent(DeclineCurrentConfirmation);
+        ConfirmationAcceptButton.SetOnClick(AcceptCurrentConfirmation);
+        ConfirmationDeclineButton.SetOnClick(DeclineCurrentConfirmation);
 
         ConfirmationCollection.AddElement(ConfirmationPanel);
         ConfirmationCollection.AddElement(Confirmation);
@@ -79,13 +71,17 @@ public class PopUp
         ConfirmationCollection.AddElement(AcceptText);
 
         Confirmation.MaxCharCount = 30;
-        Confirmation.SetText("Hello", 0.7f);
+        Confirmation.SetText("Hello", 1.5f);
         AcceptText.MaxCharCount = 6;
-        AcceptText.SetText("Accept", 1f);
+        AcceptText.SetText("Accept", 2f);
 
         ConfirmationUI.AddElement(ConfirmationCollection);
+    }
 
-        ConfirmationUI.GenerateBuffers();
+    public void Resize()
+    {
+        MessageUI.Resize();
+        ConfirmationUI.Resize();
     }
 
     public void Update()
@@ -129,12 +125,12 @@ public class PopUp
 
     public void RenderMessage()
     {
-        MessageUI.Render();      
+        MessageUI.RenderDepthTest();      
     }
 
     public void RenderConfirmation()
     {
-        ConfirmationUI.Render();
+        ConfirmationUI.RenderDepthTest();
     }
 
 
@@ -172,7 +168,7 @@ public class PopUp
 
         if (messages.Count > 0)
         {
-            Message.SetText(messages[0], 0.7f);
+            Message.SetText(messages[0], 1.5f);
             Message.GenerateChars();
             Message.UpdateText();
             messages.RemoveAt(0);
@@ -193,7 +189,7 @@ public class PopUp
 
         if (confirmations.Count > 0)
         {
-            Confirmation.SetText(confirmations.First().Key, 0.7f);
+            Confirmation.SetText(confirmations.First().Key, 1.5f);
             Confirmation.GenerateChars();
             Confirmation.UpdateText();
             elapsedTime = 0;
@@ -218,8 +214,6 @@ public class PopUp
         MessageCollection.Offset.Y = 85 - position.Y;
         MessageCollection.Align();
         MessageCollection.UpdateTransformation();
-
-        MessageUI.UpdateMatrices();
     }
 
     public void MoveConfirmation()
@@ -230,8 +224,6 @@ public class PopUp
         ConfirmationCollection.Offset.Y = 85 - position.Y;
         ConfirmationCollection.Align();
         ConfirmationCollection.UpdateTransformation();
-
-        ConfirmationUI.UpdateMatrices();
     }
 
 
@@ -256,6 +248,8 @@ public class PopUp
 
         Instance.UpdateAction = Instance.UpdateConfirmation;
         Instance.RenderAction = Instance.RenderConfirmation;
+
+        Console.WriteLine("AddConfirmation: " + message);
     }
 
     /// <summary>

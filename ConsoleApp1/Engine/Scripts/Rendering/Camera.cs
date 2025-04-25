@@ -82,12 +82,12 @@ public class Camera
     
     public Matrix4x4 GetNumericsViewMatrix()
     {
-        return Mathf.ToNumericsMatrix4(GetViewMatrix());
+        return Mathf.ToNumerics(GetViewMatrix());
     }
     
     public Matrix4x4 GetNumericsProjectionMatrix()
     {
-        return Mathf.ToNumericsMatrix4(GetProjectionMatrix());
+        return Mathf.ToNumerics(GetProjectionMatrix());
     }
     
     public Matrix4 GetViewProjectionMatrix()

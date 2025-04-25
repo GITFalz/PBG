@@ -4,40 +4,50 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 public class UIInputField : UIText
 {
     public SerializableEvent? OnTextChange = null;
-    public UIButton Button;
 
-    public UIInputField(string name, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, Vector2 slice, TextMesh? text) : base(name, anchorType, positionType, pivot, scale, offset, rotation, textureIndex, slice, text)
+    public UIInputField(
+        string name, 
+        UIController controller,
+        AnchorType anchorType, 
+        PositionType positionType, 
+        Vector4 color,
+        Vector3 pivot, 
+        Vector2 scale, 
+        Vector4 offset, 
+        float rotation, 
+        int textureIndex, 
+        Vector2 slice
+    ) : base(name, controller, anchorType, positionType, color, pivot, scale, offset, rotation)
     {
-        Button = new UIButton(name + "Button", anchorType, positionType, (0, 0, 0), pivot, scale, offset, rotation, textureIndex, slice, null, UIState.InvisibleInteractable);
-        Button.OnClick = new SerializableEvent(() => UIController.AssignInputField(name));
+        SetOnClick(() => UIController.AssignInputField(this));
     }
 
-    public override void SetParent(UIElement parent)
-    {
-        base.SetParent(parent);
-        Button.SetParent(parent);
-    }
     public override void SetOffset(Vector4 offset)
     {
         base.SetOffset(offset);
-        Button.SetOffset(offset);
     }
 
     public override void SetAnchorType(AnchorType anchorType)
     {
         base.SetAnchorType(anchorType);
-        Button.SetAnchorType(anchorType);
     }
 
     public override void SetPositionType(PositionType positionType)
     {
         base.SetPositionType(positionType);
-        Button.SetPositionType(positionType);
+    }
+
+    public UIInputField SetOnTextChange(Action onTextChange)
+    {
+        OnTextChange = new SerializableEvent(onTextChange);
+        CanTest = true;
+        return this;
     }
 
     public UIInputField SetOnTextChange(SerializableEvent onTextChange)
     {
         OnTextChange = onTextChange;
+        CanTest = true;
         return this;
     }
 
@@ -45,16 +55,12 @@ public class UIInputField : UIText
     public override UIText SetText(string text)
     {
         UIText uiText = base.SetText(text);
-        Button.Scale = Scale;
-        Button.newScale = newScale;
-        
         return uiText;
     }
 
     public override void Align()
     {
         base.Align();
-        Button.Align();
     }
 
     public override bool Test(Vector2 offset = default)
@@ -68,10 +74,10 @@ public class UIInputField : UIText
 
     public void AddCharacter(char character)
     {
-        Console.WriteLine("Text: " + Text + " Character: " + character);
+        //Console.WriteLine("Text: " + Text + " Character: " + character);
         if (!TextShaderHelper.CharExists(character)) return;
         string formatedText = Format(Text + character);
-        Console.WriteLine("Formated Text: " + formatedText);
+        //Console.WriteLine("Formated Text: " + formatedText);
         SetText(formatedText).GenerateChars().UpdateText();
     }
     
@@ -136,7 +142,6 @@ public class UIInputField : UIText
         lines.Add(gapString + "    FontSize: " + FontSize);
         lines.Add(gapString + "    MaxCharCount: " + MaxCharCount);
         lines.Add(gapString + "    TextType: " + (int)TextType);
-        lines.AddRange(Button.ToLines(gap + 1));
         lines.Add(gapString + "}");
         
         return lines;

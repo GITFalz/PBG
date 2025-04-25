@@ -159,7 +159,7 @@ public class ModelingEditor : BaseEditor
                 foreach (var vert in Mesh.VertexList)
                 {
                     min = Mathf.Min(min, vert);
-                    max = Mathf.Max(max, vert);
+                    max = Mathf.Max(max, vert); 
                 }
 
                 Vector3 bSize = max - min;
@@ -283,7 +283,7 @@ public class ModelingEditor : BaseEditor
                 
                 Vector2 mousePos = Input.GetMousePosition();
                 Vector2 max = Mathf.Max(mousePos, oldMousePos);
-                Vector2 min = Mathf.Min(mousePos, oldMousePos);
+                Vector2 min = Mathf.Min(mousePos, oldMousePos); 
                 float distance = Vector2.Distance(mousePos, oldMousePos);
                 bool regenColor = false;
 
@@ -320,7 +320,7 @@ public class ModelingEditor : BaseEditor
     public override void Render(GeneralModelingEditor editor)
     {
         editor.RenderModel();
-        Ui.Render();
+        Ui.RenderNoDepthTest();
 
         if (renderSelection)
         {

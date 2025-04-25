@@ -1,24 +1,80 @@
 ﻿using ConsoleApp1.Engine.Scripts.Core.Data;
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 using StbImageSharp;
 
-public class TextureArray
+public class TextureArray : BufferBase
 {
-    public static List<TextureArray> TextureArrays = new List<TextureArray>();
-
     public int ID;
 
-    public TextureArray(string atlasPath, int cellWidth, int cellHeight)
-    {
-        List<byte[]> textureData = TextureData.SplitTextureAtlas(Path.Combine(Game.texturePath, atlasPath), cellWidth, cellHeight);
-        
-        int layers = textureData.Count;
+    private static int _bufferCount = 0;
+    private TextureArrayLoadType _textureArrayLoadType = TextureArrayLoadType.CellSize;
 
-        Console.WriteLine($"Texture array: {Path.Combine(Game.texturePath, atlasPath)} | Width: {cellWidth} | Height: {cellHeight} | Layers: {layers}");
+    public TextureArray(string atlasPath, int cellWidth, int cellHeight, TextureArrayLoadType textureArrayLoadType = TextureArrayLoadType.CellSize) : base()
+    {
+        _textureArrayLoadType = textureArrayLoadType;
+        Create(atlasPath, cellWidth, cellHeight);
+        _bufferCount++;
+    }
+
+    public TextureArray(List<byte[]> data, int cellWidth, int cellHeight) : base()
+    {
+        Create(data, cellWidth, cellHeight);
+        _bufferCount++;
+    }
+
+    public void Renew(string atlasPath, int cellWidth, int cellHeight)
+    {
+        GL.DeleteTexture(ID); // The texture needs to be deleted before creating a new one
+        Create(atlasPath, cellWidth, cellHeight);
+    }
+
+    public void Renew(List<byte[]> data, int cellWidth, int cellHeight)
+    {
+        GL.DeleteTexture(ID); // The texture needs to be deleted before creating a new one
+        Create(data, cellWidth, cellHeight);
+    }
+
+    public void Bind()
+    {
+        GL.ActiveTexture(TextureUnit.Texture0);
+        GL.BindTexture(TextureTarget.Texture2DArray, ID);
+    }
+
+    public void Bind(TextureUnit textureUnit)
+    {
+        GL.ActiveTexture(textureUnit);
+        GL.BindTexture(TextureTarget.Texture2DArray, ID);
+    }
+
+    public void Unbind() => GL.BindTexture(TextureTarget.Texture2DArray, 0); 
+
+    private void Create(string atlasPath, int cellWidth, int cellHeight)
+    {
+        List<byte[]> textureData;
+
+        if (_textureArrayLoadType == TextureArrayLoadType.CellSize || _textureArrayLoadType == TextureArrayLoadType.CellSizeFlipped)
+        {
+            bool flipped = _textureArrayLoadType == TextureArrayLoadType.CellSizeFlipped;
+            textureData = TextureData.SplitTextureAtlasCellSize(Path.Combine(Game.texturePath, atlasPath), cellWidth, cellHeight, flipped);
+        }      
+        else
+        {
+            bool flipped = _textureArrayLoadType == TextureArrayLoadType.AtlasSizeFlipped;
+            textureData = TextureData.SplitTextureAtlasAtlasSize(Path.Combine(Game.texturePath, atlasPath), cellWidth, cellHeight, out int newWidth, out int newHeight, flipped);
+            cellWidth = newWidth;
+            cellHeight = newHeight;
+        }
+        
+        Create(textureData, cellWidth, cellHeight);
+    }
+
+    public void Create(List<byte[]> textureData, int cellWidth, int cellHeight)
+    {
+        int layers = textureData.Count;
         
         ID = GL.GenTexture();
-
-        GL.ActiveTexture(TextureUnit.Texture0); 
+        GL.ActiveTexture(TextureUnit.Texture0);
         GL.BindTexture(TextureTarget.Texture2DArray, ID);
         
         GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
@@ -26,7 +82,6 @@ public class TextureArray
         GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
         GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
 
-        GL.BindTexture(TextureTarget.Texture2DArray, ID);
         GL.TexStorage3D(TextureTarget3d.Texture2DArray, 1, SizedInternalFormat.Rgba8, cellWidth, cellHeight, layers);
 
         for (int i = 0; i < layers; i++)
@@ -35,22 +90,30 @@ public class TextureArray
         }
         
         Unbind();
-
-        TextureArrays.Add(this);
     }
 
-    public void Bind()
+    public override void DeleteBuffer()
     {
-        GL.ActiveTexture(TextureUnit.Texture0);        
-        GL.BindTexture(TextureTarget.Texture2DArray, ID);
+        GL.DeleteTexture(ID);
+        _bufferCount--;
+        base.DeleteBuffer();
     }
-    public void Unbind() { GL.BindTexture(TextureTarget.Texture2DArray, 0); }
-    public static void Delete() 
+
+    public override int GetBufferCount()
     {
-        foreach (var textureArray in TextureArrays)
-        {
-            GL.DeleteTexture(textureArray.ID);
-        }
-        TextureArrays.Clear();
+        return _bufferCount;
     }
+
+    public override string GetTypeName()
+    {
+        return "TextureArray";
+    }
+}
+
+public enum TextureArrayLoadType
+{
+    CellSize,
+    CellSizeFlipped,
+    AtlasSize,
+    AtlasSizeFlipped
 }

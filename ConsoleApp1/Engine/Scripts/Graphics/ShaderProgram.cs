@@ -1,12 +1,75 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 
-public class ShaderProgram
+public class ShaderProgram : BufferBase
 {
-    public static List<ShaderProgram> ShaderPrograms = new List<ShaderProgram>();
-
     public int ID;
+
+    private static int _bufferCount = 0;
+
+    private Action _recompileAction = () => { };
+
+    public ShaderProgram(string vertexShaderFilePath) : base()
+    {
+        CreateShader(vertexShaderFilePath);
+        _bufferCount++;
+        _recompileAction = () => Renew(vertexShaderFilePath);
+    }
     
-    public ShaderProgram(string vertexShaderFilePath, string fragmentShaderFilePath)
+    public ShaderProgram(string vertexShaderFilePath, string fragmentShaderFilePath) : base()
+    {
+        CreateShader(vertexShaderFilePath, fragmentShaderFilePath);
+        _bufferCount++;
+        _recompileAction = () => Renew(vertexShaderFilePath, fragmentShaderFilePath);
+    }
+
+    public ShaderProgram(string vertexShaderFilePath, string geometryShaderFilePath, string fragmentShaderFilePath) : base()
+    {
+        CreateShader(vertexShaderFilePath, geometryShaderFilePath, fragmentShaderFilePath);
+        _bufferCount++;
+        _recompileAction = () => Renew(vertexShaderFilePath, geometryShaderFilePath, fragmentShaderFilePath);
+    }
+
+    public void Recompile()
+    {
+        _recompileAction.Invoke();
+    }
+
+    public void Bind() => GL.UseProgram(ID);
+    public void Unbind() => GL.UseProgram(0);
+
+    public void Renew(string vertexShaderFilePath) 
+    {
+        GL.DeleteProgram(ID); // The program needs to be deleted before creating a new one
+        CreateShader(vertexShaderFilePath);
+    }
+
+    public void Renew(string vertexShaderFilePath, string fragmentShaderFilePath)
+    {
+        GL.DeleteProgram(ID); // The program needs to be deleted before creating a new one
+        CreateShader(vertexShaderFilePath, fragmentShaderFilePath);
+    }
+
+    public void Renew(string vertexShaderFilePath, string geometryShaderFilePath, string fragmentShaderFilePath) 
+    {
+        GL.DeleteProgram(ID); // The program needs to be deleted before creating a new one
+        CreateShader(vertexShaderFilePath, geometryShaderFilePath, fragmentShaderFilePath);
+    }
+    private void CreateShader(string vertexShaderFilePath)
+    {
+        ID = GL.CreateProgram();
+        
+        int vertexShader = GL.CreateShader(ShaderType.VertexShader);
+        GL.ShaderSource(vertexShader, Shader.LoadShaderSource(vertexShaderFilePath));
+        GL.CompileShader(vertexShader);
+        
+        GL.AttachShader(ID, vertexShader);
+        
+        GL.LinkProgram(ID);
+        
+        GL.DeleteShader(vertexShader);
+    }
+
+    private void CreateShader(string vertexShaderFilePath, string fragmentShaderFilePath)
     {
         ID = GL.CreateProgram();
         
@@ -25,11 +88,9 @@ public class ShaderProgram
         
         GL.DeleteShader(vertexShader);
         GL.DeleteShader(fragmentShader);
-
-        ShaderPrograms.Add(this);
     }
 
-    public ShaderProgram(string vertexShaderFilePath, string geometryShaderFilePath, string fragmentShaderFilePath)
+    private void CreateShader(string vertexShaderFilePath, string geometryShaderFilePath, string fragmentShaderFilePath)
     {
         ID = GL.CreateProgram();
         
@@ -54,19 +115,29 @@ public class ShaderProgram
         GL.DeleteShader(vertexShader);
         GL.DeleteShader(geometryShader);
         GL.DeleteShader(fragmentShader);
-
-        ShaderPrograms.Add(this);
     }
-    
-    public void Bind() { GL.UseProgram(ID); }
-    public void Unbind() { GL.UseProgram(0); }
-    public static void Delete() 
-    { 
-        foreach (var shaderProgram in ShaderPrograms) 
-        { 
-            GL.DeleteProgram(shaderProgram.ID); 
-        }
-        ShaderPrograms.Clear();
+
+
+    public override void DeleteBuffer()
+    {
+        GL.DeleteProgram(ID);
+        _bufferCount--;
+        base.DeleteBuffer();
+    }
+
+    public override int GetBufferCount()
+    {
+        return _bufferCount;
+    }
+
+    public override string GetTypeName()
+    {
+        return "ShaderProgram";
+    }
+
+    public int GetLocation(string name)
+    {
+        return GL.GetUniformLocation(ID, name);
     }
 }
 

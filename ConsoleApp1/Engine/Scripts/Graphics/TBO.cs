@@ -1,25 +1,31 @@
 ﻿using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
 
-public class TBOBase
+public class TBOBase : BufferBase
 {
-    public static List<TBOBase> TBOs = new List<TBOBase>();
-
     public int ID;
     public int TextureID;
 
-    public TBOBase()
+    private static int _bufferCount = 0;
+
+    public TBOBase() : base() { _bufferCount++; }
+
+    public override void DeleteBuffer()
     {
-        TBOs.Add(this);
+        GL.DeleteBuffer(ID);
+        GL.DeleteTexture(TextureID);
+        _bufferCount--;
+        base.DeleteBuffer();
     }
 
-    public static void Delete()
+    public override int GetBufferCount()
     {
-        foreach (var tbo in TBOs)
-        {
-            GL.DeleteBuffer(tbo.ID);
-        }
-        TBOs.Clear();
+        return _bufferCount;
+    }
+
+    public override string GetTypeName()
+    {
+        return "TBO";
     }
 }
 
@@ -27,16 +33,15 @@ public class TBO<T> : TBOBase where T : struct
 {
     public TBO(List<T> data)
     {
-        ID = GL.GenBuffer();
-        GL.BindBuffer(BufferTarget.TextureBuffer, ID);
-        GL.BufferData(BufferTarget.TextureBuffer, data.Count * Marshal.SizeOf(typeof(T)), data.ToArray(), BufferUsageHint.StaticDraw);
+        Create(data.ToArray());
+    }
 
-        TextureID = GL.GenTexture();
-        GL.BindTexture(TextureTarget.TextureBuffer, TextureID);
-
-        GL.TexBuffer(TextureBufferTarget.TextureBuffer, SizedInternalFormat.R32f, ID);
-
-        TBOs.Add(this);
+    public void Renew(List<T> data) => Renew(data.ToArray());
+    public void Renew(T[] data)
+    {
+        GL.DeleteBuffer(ID); // The buffer needs to be deleted before creating a new one
+        GL.DeleteTexture(TextureID); // The texture needs to be deleted before creating a new one
+        Create(data);
     }
 
     public void Update(List<int> data)
@@ -51,8 +56,17 @@ public class TBO<T> : TBOBase where T : struct
         GL.BindTexture(TextureTarget.TextureBuffer, TextureID);
     }
 
-    public void Unbind()
+    public void Unbind() => GL.BindTexture(TextureTarget.TextureBuffer, 0);
+
+    private void Create(T[] data)
     {
-        GL.BindTexture(TextureTarget.TextureBuffer, 0);
+        ID = GL.GenBuffer();
+        GL.BindBuffer(BufferTarget.TextureBuffer, ID);
+        GL.BufferData(BufferTarget.TextureBuffer, data.Length * Marshal.SizeOf(typeof(T)), data, BufferUsageHint.StaticDraw);
+
+        TextureID = GL.GenTexture();
+        GL.BindTexture(TextureTarget.TextureBuffer, TextureID);
+
+        GL.TexBuffer(TextureBufferTarget.TextureBuffer, SizedInternalFormat.R32f, ID);
     }
 }

@@ -149,13 +149,13 @@ public class UvMesh : Meshes
 
     public void GenerateBuffers()
     {
-        _uvVbo = new(Uvs);
+        _uvVbo.Renew(Uvs);
 
-        _vertexVbo = new(Vertices);
-        _vertexColorVbo = new(VertexColors);
+        _vertexVbo.Renew(Vertices);
+        _vertexColorVbo.Renew(VertexColors);
 
-        _edgeVbo = new(EdgeVertices);
-        _edgeColorVbo = new(EdgeColors);
+        _edgeVbo.Renew(EdgeVertices);
+        _edgeColorVbo.Renew(EdgeColors);
         
         _vao.LinkToVAO(0, 2, _uvVbo);
 
@@ -165,7 +165,7 @@ public class UvMesh : Meshes
         _edgeVao.LinkToVAO(0, 2, _edgeVbo);
         _edgeVao.LinkToVAO(1, 3, _edgeColorVbo);
         
-        _ibo = new IBO(Indices);
+        _ibo.Renew(Indices);
     }
 
     public void Render()

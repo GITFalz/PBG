@@ -709,17 +709,17 @@ public class ModelMesh : Meshes
     {
         GenerateIndices();
         
-        _vertVbo = new(_transformedVerts);
-        _uvVbo = new(Uvs);
-        _textureVbo = new(TextureIndices);
-        _normalVbo = new(Normals);
+        _vertVbo.Renew(_transformedVerts);
+        _uvVbo.Renew(Uvs);
+        _textureVbo.Renew(TextureIndices);
+        _normalVbo.Renew(Normals);
 
-        _vertexVbo = new(Vertices);
-        _vertexColorVbo = new(VertexColors);
-        _vertexSizeVbo = new(VertexSize);
+        _vertexVbo.Renew(Vertices);
+        _vertexColorVbo.Renew(VertexColors);
+        _vertexSizeVbo.Renew(VertexSize);
 
-        _edgeVbo = new(EdgeVertices);
-        _edgeColorVbo = new(EdgeColors);
+        _edgeVbo.Renew(EdgeVertices);
+        _edgeColorVbo.Renew(EdgeColors);
         
         _vao.LinkToVAO(0, 3, _vertVbo);
         _vao.LinkToVAO(1, 2, _uvVbo);
@@ -733,7 +733,7 @@ public class ModelMesh : Meshes
         _edgeVao.LinkToVAO(0, 3, _edgeVbo);
         _edgeVao.LinkToVAO(1, 3, _edgeColorVbo);
         
-        _ibo = new IBO(Indices);
+        _ibo.Renew(Indices);
     }
 
     public void Render()

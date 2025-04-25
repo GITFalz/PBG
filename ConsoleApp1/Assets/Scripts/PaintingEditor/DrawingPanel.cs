@@ -112,9 +112,7 @@ public class DrawingPanel
         Width = width;
         Height = height;
 
-        _fbo.Delete();
-        FBO.FBOs.Remove(_fbo);
-        _fbo = new FBO(width, height);
+        _fbo.Renew(width, height);
 
         _projectionMatrix = Matrix4.CreateOrthographicOffCenter(0, width, height, 0, -1, 1);
 
@@ -162,13 +160,13 @@ public class DrawingPanel
         GL.Uniform1(falloffLocation, Falloff);
         GL.Uniform1(brushStrengthLocation, BrushStrength);
 
-        _fbo.BindTexture();
+        _fbo.BindTexture(TextureUnit.Texture0);
         _vao.Bind();
 
         GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
 
         _vao.Unbind();
-        _fbo.UnbindTexture();
+        _fbo.UnbindTexture(TextureUnit.Texture0);
 
         if (Input.IsKeyPressed(Keys.U))
         {
@@ -201,13 +199,13 @@ public class DrawingPanel
         GL.UniformMatrix4(projectionLocation, true, ref _textureProjectionMatrix);
         GL.Uniform2(sizeLocation, _drawingCanvasScale);
 
-        _fbo.BindTexture();
+        _fbo.BindTexture(TextureUnit.Texture0);
         _textureVao.Bind();
 
         GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
 
         _textureVao.Unbind();
-        _fbo.UnbindTexture();
+        _fbo.UnbindTexture(TextureUnit.Texture0);   
 
         _textureShader.Unbind();
 

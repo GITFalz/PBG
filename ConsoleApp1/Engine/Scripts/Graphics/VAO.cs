@@ -1,16 +1,23 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 
-public class VAO
+public class VAO : BufferBase
 {
-    public static List<VAO> VAOs = new List<VAO>();
-
     public int ID;
+
+    private static int _bufferCount = 0;
     
-    public VAO()
+    public VAO() : base()
     {
         ID = GL.GenVertexArray();
         GL.BindVertexArray(ID);
-        VAOs.Add(this);
+        _bufferCount++;
+    }
+
+    public void Renew()
+    {
+        GL.DeleteVertexArray(ID); // The VAO needs to be deleted before creating a new one
+        ID = GL.GenVertexArray();
+        GL.BindVertexArray(ID);
     }
     
     public void LinkToVAO<T>(int location, int size, VBO<T> vbo) where T : struct
@@ -19,17 +26,26 @@ public class VAO
         vbo.Bind();
         GL.VertexAttribPointer(location, size, VertexAttribPointerType.Float, false, 0, 0);
         GL.EnableVertexAttribArray(location);
+        vbo.Unbind();
         Unbind();
     }
     
-    public void Bind() { GL.BindVertexArray(ID); }
-    public void Unbind() { GL.BindVertexArray(0); }
-    public static void Delete()
+    public void Bind() => GL.BindVertexArray(ID);
+    public void Unbind() => GL.BindVertexArray(0);
+    public override void DeleteBuffer()
     {
-        foreach (var vao in VAOs)
-        {
-            GL.DeleteVertexArray(vao.ID);
-        }
-        VAOs.Clear();
+        GL.DeleteVertexArray(ID);
+        _bufferCount--;
+        base.DeleteBuffer();
+    }
+
+    public override int GetBufferCount()
+    {
+        return _bufferCount;
+    }
+
+    public override string GetTypeName()
+    {
+        return "VAO";
     }
 }

@@ -8,26 +8,28 @@ public class UIScrollView : UICollection
     public float ScrollSpeed = 5f;
     public CollectionType CollectionType;
 
-    public UIScrollView(string name, AnchorType anchorType, PositionType positionType, CollectionType collectionType, Vector2 scale, Vector4 offset, UIMesh maskMesh) : base(name, anchorType, positionType, (0, 0, 0), scale, offset, 0)
+    public UIScrollView(
+        string name, 
+        UIController controller,
+        AnchorType anchorType, 
+        PositionType positionType, 
+        CollectionType collectionType, 
+        Vector2 scale, 
+        Vector4 offset) : 
+        base(name, controller, anchorType, positionType, (0, 0, 0), scale, offset, 0)
     {
         CollectionType = collectionType;
 
-        SubElements = newCollectionType[collectionType];
+        if (collectionType == CollectionType.Horizontal)
+            SubElements = new UIHorizontalCollection("HorizontalStacking", UIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (0, 0, 0, 0), (0, 0, 0, 0), 5, 0);
+        else 
+            SubElements = new UIVerticalCollection("VerticalStacking", UIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (0, 0, 0, 0), (0, 0, 0, 0), 5, 0);
+
         SubElements.SetScale(scale);
 
-        MaskPanel = new UIImage($"{name}MaskPanel", anchorType, PositionType.Relative, (1, 1, 1), (0, 0, 0), scale, (0, 0, 0, 0), 0, -1, (0, 0), maskMesh);
+        MaskPanel = new UIImage($"{name}MaskPanel", controller, anchorType, PositionType.Relative, (1, 1, 1, 0.5f), (0, 0, 0), scale, (0, 0, 0, 0), 0, -1, (0, 0));
         MaskPanel.CanTest = true;
-        MaskPanel.OnHover = new SerializableEvent(() => 
-        {
-            float scrollDelta = Input.GetMouseScrollDelta().Y;
-            if (scrollDelta == 0 || SubElements.Scale[(int)CollectionType] < newScale[(int)CollectionType]) return;
-
-            SubElements.Offset += scrollOffset[CollectionType](scrollDelta) * GameTime.DeltaTime * ScrollSpeed * 1000;
-            SubElements.Offset = scrollClamp[CollectionType](SubElements.Scale - newScale, SubElements.Offset);
-            
-            SubElements.Align();
-            SubElements.UpdateTransformation();
-        });
+        MaskPanel.SetOnHover(MoveScrollView);
         
         Elements.Add(MaskPanel);
         Elements.Add(SubElements);
@@ -36,12 +38,29 @@ public class UIScrollView : UICollection
         SubElements.ParentElement = this;
     }
 
+    private void MoveScrollView()
+    {
+        float scrollDelta = Input.GetMouseScrollDelta().Y;
+        if (scrollDelta == 0 || SubElements.Scale[(int)CollectionType] < newScale[(int)CollectionType]) return;
+
+        SubElements.Offset += scrollOffset[CollectionType](scrollDelta) * GameTime.DeltaTime * ScrollSpeed * 1000;
+        SubElements.Offset = scrollClamp[CollectionType](SubElements.Scale - newScale, SubElements.Offset);
+        
+        SubElements.Align();
+        SubElements.UpdateTransformation();
+    }
+
+    public void GenerateMask()
+    {
+        SetMasked(true);
+        SetMaskIndex(MaskPanel.ElementIndex);
+    }
+
     public override void SetVisibility(bool visible)
     {
-        if (Visible == visible)
-            return;
+        if (Visible != visible)
+            base.SetVisibility(visible);
 
-        base.SetVisibility(visible);
         MaskPanel.SetVisibility(visible);
         SubElements.SetVisibility(visible);
     }
@@ -71,7 +90,7 @@ public class UIScrollView : UICollection
         SubElements.SetSpacing(spacing);
     }
 
-    public override void UpdateTransformation()
+    protected override void Internal_UpdateTransformation()
     {
         foreach (UIElement element in Elements)
             element.UpdateTransformation();
@@ -80,12 +99,15 @@ public class UIScrollView : UICollection
     public override UICollection AddElement(UIElement element)
     {
         SubElements.AddElement(element);
+        element.SetMasked(true);
         return this;
     }
 
-    public override UICollection AddElement(params UIElement[] elements)
+    public override UICollection AddElements(params UIElement[] elements)
     {
-        SubElements.AddElement(elements);
+        SubElements.AddElements(elements);
+        foreach (UIElement element in elements)
+            element.SetMasked(true);
         return this;
     }
 
@@ -99,11 +121,5 @@ public class UIScrollView : UICollection
     {
         { CollectionType.Horizontal, (scale, offset) => { offset.X = Mathf.Clamp(-scale.X, 0, offset.X); return offset; } },
         { CollectionType.Vertical, (scale, offset) => { offset.Y = Mathf.Clamp(-scale.Y, 0, offset.Y); return offset; } },
-    };
-
-    private readonly Dictionary<CollectionType, UICollection> newCollectionType = new Dictionary<CollectionType, UICollection>()
-    {
-        { CollectionType.Horizontal, new UIHorizontalCollection("HorizontalStacking", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (0, 0, 0, 0), (0, 0, 0, 0), 5, 0) },
-        { CollectionType.Vertical, new UIVerticalCollection("VerticalStacking", AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (0, 0, 0, 0), (0, 0, 0, 0), 5, 0) },
     };
 }

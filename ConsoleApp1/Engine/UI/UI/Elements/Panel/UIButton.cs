@@ -4,35 +4,44 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class UIButton : UIPanel
 {
-    public UIButton(string name, AnchorType anchorType, PositionType positionType, Vector3 color, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, Vector2 slice, UIMesh? uIMesh, UIState state) : base(name, anchorType, positionType, color, pivot, scale, offset, rotation, textureIndex, slice, uIMesh)
+    public static UIButton Empty = new() { uIMesh = UIMesh.Empty };
+
+    public UIButton() : base() { }
+
+    public UIButton(
+        string name,
+        UIController controller,
+        AnchorType anchorType, 
+        PositionType positionType, 
+        Vector4 color, 
+        Vector3 pivot, 
+        Vector2 scale, 
+        Vector4 offset, 
+        float rotation, 
+        int textureIndex, 
+        Vector2 slice, 
+        UIState state) : 
+        base(name, controller, anchorType, positionType, color, pivot, scale, offset, rotation, textureIndex, slice)
     {
         State = state;
         CanTest = true;
     }
 
-    public override void SetUIMesh(UIMesh uIMesh)
-    {
-        this.uIMesh = uIMesh;
-    }
-
-    public override void UpdateTexture()
+    protected override void Internal_UpdateTexture()
     {
         if (CanGenerate())
             uIMesh.UpdateElementTexture(this);
     }
 
-    public override void UpdateTransformation()
+    protected override void Internal_UpdateTransformation()
     {
         if (CanGenerate())
-        {
             uIMesh.UpdateElementTransformation(this);
-            uIMesh.UpdateMatrices();
-        } 
     }
 
-    protected override bool CanGenerate()
+    protected bool CanGenerate()
     {
-        return base.CanGenerate() && State != UIState.InvisibleInteractable;
+        return State != UIState.InvisibleInteractable;
     }
 
     public override List<string> ToLines(int gap)

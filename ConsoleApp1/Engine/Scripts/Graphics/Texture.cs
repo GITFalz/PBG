@@ -1,16 +1,49 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using StbImageSharp;
 
-public class Texture
+public class Texture : BufferBase
 {
-    public static List<Texture> Textures = new List<Texture>();
-
     public int ID;
     
     public int Width { get; private set; }
     public int Height { get; private set; }
+
+    private static int _bufferCount = 0;
     
-    public Texture(string filePath)
+    public Texture(string filePath) : base()
+    {
+        Create(filePath);
+        _bufferCount++;
+    }
+
+    public void Renew(string filePath)
+    {
+        GL.DeleteTexture(ID); // The texture needs to be deleted before creating a new one
+        Create(filePath);
+    }
+
+    public void Bind()
+    {
+        GL.ActiveTexture(TextureUnit.Texture0);
+        GL.BindTexture(TextureTarget.Texture2D, ID);
+    }
+
+    public void Bind(TextureUnit textureUnit)
+    {
+        GL.ActiveTexture(textureUnit);
+        GL.BindTexture(TextureTarget.Texture2D, ID);
+    }
+
+    public static void Bind(int id)
+    {
+        GL.ActiveTexture(TextureUnit.Texture0);
+        GL.BindTexture(TextureTarget.Texture2D, id);
+    }
+
+    public void Unbind() => GL.BindTexture(TextureTarget.Texture2D, 0); 
+    public static void UnbindAll() => GL.BindTexture(TextureTarget.Texture2D, 0);
+
+    private void Create(string filePath)
     {
         ID = GL.GenTexture();
 
@@ -31,37 +64,22 @@ public class Texture
         GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, texture.Width, texture.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, texture.Data);
 
         Unbind();
-        Textures.Add(this);
     }
 
-    public void Bind()
+    public override void DeleteBuffer()
     {
-        GL.ActiveTexture(TextureUnit.Texture0);
-        GL.BindTexture(TextureTarget.Texture2D, ID);
+        GL.DeleteTexture(ID);
+        _bufferCount--;
+        base.DeleteBuffer();
     }
 
-    public static void Bind(int id)
+    public override int GetBufferCount()
     {
-        GL.ActiveTexture(TextureUnit.Texture0);
-        GL.BindTexture(TextureTarget.Texture2D, id);
+        return _bufferCount;
     }
 
-    public void Unbind() 
-    { 
-        GL.BindTexture(TextureTarget.Texture2D, 0); 
-    }
-
-    public static void UnbindAll()
+    public override string GetTypeName()
     {
-        GL.BindTexture(TextureTarget.Texture2D, 0);
-    }
-
-    public static void Delete()
-    {
-        foreach (var texture in Textures)
-        {
-            GL.DeleteTexture(texture.ID);
-        }
-        Textures.Clear();
+        return "Texture";
     }
 }

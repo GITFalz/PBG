@@ -1,64 +1,60 @@
 using OpenTK.Mathematics;
 
-public abstract class UIPanel : UIElement
+public abstract class UIPanel : UIRender
 {
-    public int TextureIndex = 0;
-    public Vector3 Color = (1, 1, 1);
-    public Vector2 Slice = (10, 0.15f);
-    public UIMesh? uIMesh;
-
-    public UIPanel(string name, AnchorType anchorType, PositionType positionType, Vector3 color, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation, int textureIndex, Vector2 slice, UIMesh? uIMesh) : base(name, anchorType, positionType, pivot, scale, offset, rotation)
+    public UIPanel() : base() {}
+    public UIPanel(
+        string name,
+        UIController controller,
+        AnchorType anchorType, 
+        PositionType positionType, 
+        Vector4 color, 
+        Vector3 pivot, 
+        Vector2 scale, 
+        Vector4 offset, 
+        float rotation, 
+        int textureIndex, 
+        Vector2 slice) : 
+        base(name, controller, anchorType, positionType, color, pivot, scale, offset, rotation, textureIndex, (scale.X, scale.Y, slice.X, slice.Y))
     {
-        TextureIndex = textureIndex;
-        Color = color;
-        Slice = slice;
-        this.uIMesh = uIMesh;
+
+    }
+
+    public override void SetScale(Vector2 scale)
+    {
+        base.SetScale(scale);
+        SizeSlice.X = scale.X;
+        SizeSlice.Y = scale.Y;
     }
 
     public override void SetVisibility(bool visible)
     {
-        if (uIMesh == null || Visible == visible)
+        if (Visible == visible)
             return;
 
         base.SetVisibility(visible);
-        uIMesh.SetVisibility(visible, ElementIndex);
-    }
-
-    public override void SetUIMesh(UIMesh uIMesh)
-    {
-        this.uIMesh = uIMesh;
-    }
-
-    protected virtual bool CanGenerate()
-    {
-        return uIMesh != null;
+        uIMesh.SetVisibility();
     }
 
     public override void Generate()
     {
-        if (CanGenerate())
-            GenerateUIQuad(out panel, uIMesh);
+        SetScale(newScale);
+        GenerateUIQuad(uIMesh);    
     }
 
-    public override void UpdateTransformation()
+    protected override void Internal_UpdateTransformation()
     {
-        if (CanGenerate()) 
-        {
-            uIMesh.UpdateElementTransformation(this);
-            uIMesh.UpdateMatrices();
-        }
+        uIMesh.UpdateElementTransformation(this);  
     }
 
-    public override void UpdateScale()
+    protected override void Internal_UpdateScale()
     {
-        if (CanGenerate())
-            uIMesh.UpdateElementScale(this);
+        uIMesh.UpdateElementScale(this);
     }
 
-    public override void UpdateTexture()
+    protected override void Internal_UpdateTexture()
     {
-        if (CanGenerate())
-            uIMesh.UpdateElementTexture(this);
+        uIMesh.UpdateElementTexture(this);
     }
 
     public override List<string> ToLines(int gap)
@@ -74,28 +70,18 @@ public abstract class UIPanel : UIElement
         return lines;
     }
 
-    public void GenerateUIQuad(out Panel panel, UIMesh uIMesh)
+    public void GenerateUIQuad(UIMesh uIMesh)
     {
-        panel = GetUIQuad(this);
-        uIMesh?.AddElement(this, ref ElementIndex);
+        uIMesh.AddElement(this, ref ElementIndex);
     }
 
-    public static Panel GetUIQuad(UIPanel element)
+    public override float GetYScale()
     {
-        Panel panel = new Panel();
-        
-        Vector3 p1 = Mathf.RotateAround((0,                  0,                  element.Depth), element.Pivot, (0, 0, 1), element.Rotation);
-        Vector3 p2 = Mathf.RotateAround((0,                  element.newScale.Y, element.Depth), element.Pivot, (0, 0, 1), element.Rotation);
-        Vector3 p3 = Mathf.RotateAround((element.newScale.X, element.newScale.Y, element.Depth), element.Pivot, (0, 0, 1), element.Rotation);
-        Vector3 p4 = Mathf.RotateAround((element.newScale.X, 0,                  element.Depth), element.Pivot, (0, 0, 1), element.Rotation);
-        Vector2 s = element.newScale;
-        int t = element.TextureIndex;
-        
-        panel.Vertices.AddRange(p1, p2, p3, p4);
-        panel.Uvs.AddRange((0, 0), (0, 1), (1, 1), (1, 0));
-        panel.TextUvs.AddRange(t, t, t, t);
-        panel.UiSizes.AddRange(s, s, s, s);
+        return newScale.Y;
+    }
 
-        return panel;
+    public override float GetXScale()
+    {
+        return newScale.X;
     }
 }
