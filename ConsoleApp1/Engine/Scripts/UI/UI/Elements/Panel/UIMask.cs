@@ -1,12 +1,13 @@
 using OpenTK.Mathematics;
 
-public class UIImage : UIPanel
+public class UIMask : UIPanel
 {
-    public static UIImage Empty = new() { uIMesh = UIMesh.Empty };
+    public static UIMask Empty = new() { uIMesh = UIMesh.Empty };
 
-    public UIImage() : base() { uIMesh = UIMesh.Empty; }
+    public MaskData MaskData;
 
-    public UIImage(
+    public UIMask() : base() { uIMesh = UIMesh.Empty; }
+    public UIMask(
         string name, 
         UIController controller, 
         AnchorType anchorType, 
@@ -20,6 +21,34 @@ public class UIImage : UIPanel
         Vector2 slice) : 
         base(name, controller, anchorType, positionType, color, pivot, scale, offset, rotation, textureIndex, slice)
     {
+        MaskData = controller.MaskData; 
+    }
+
+    public override void SetScale(Vector2 scale)
+    {
+        base.SetScale(scale);
+    }
+
+    public override void Generate()
+    {
+        SetScale(newScale);
+        MaskData.AddElement(this);
+    }
+
+    public override void Delete() 
+    {
+        base.Delete();
+        MaskData.RemoveElement(this);
+    }
+
+    protected override void Internal_UpdateTransformation()
+    {
+        MaskData.UpdateElementTransformation(this);  
+    }
+
+    protected override void Internal_UpdateScale()
+    {
+        MaskData.UpdateElementScale(this);
     }
 
     public override List<string> ToLines(int gap)

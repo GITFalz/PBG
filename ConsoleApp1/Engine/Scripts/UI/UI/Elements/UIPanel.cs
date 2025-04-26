@@ -20,6 +20,12 @@ public abstract class UIPanel : UIRender
 
     }
 
+    public override void SetMaskIndex(int maskedIndex)
+    {
+        base.SetMaskIndex(maskedIndex);
+        uIMesh.UpdateMaskedIndex(this, Masked, MaskIndex);
+    }
+
     public override void SetScale(Vector2 scale)
     {
         base.SetScale(scale);
@@ -42,6 +48,17 @@ public abstract class UIPanel : UIRender
         GenerateUIQuad(uIMesh);    
     }
 
+    public override void Delete() 
+    {
+        base.Delete();
+        uIMesh.RemoveElement(this);
+    }
+
+    public void GenerateUIQuad(UIMesh uIMesh)
+    {
+        uIMesh.AddElement(this);
+    }
+
     protected override void Internal_UpdateTransformation()
     {
         uIMesh.UpdateElementTransformation(this);  
@@ -55,24 +72,6 @@ public abstract class UIPanel : UIRender
     protected override void Internal_UpdateTexture()
     {
         uIMesh.UpdateElementTexture(this);
-    }
-
-    public override List<string> ToLines(int gap)
-    {
-        List<string> lines = new List<string>();
-        string gapString = new(' ', gap * 4);
-        
-        lines.Add(gapString + "Panel");
-        lines.Add(gapString + "{");
-        lines.AddRange(GetBasicDisplayLines(gapString));
-        lines.Add(gapString + "}");
-        
-        return lines;
-    }
-
-    public void GenerateUIQuad(UIMesh uIMesh)
-    {
-        uIMesh.AddElement(this, ref ElementIndex);
     }
 
     public override float GetYScale()

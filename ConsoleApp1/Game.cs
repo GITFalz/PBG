@@ -244,7 +244,7 @@ public class Game : GameWindow
 
         Console.WriteLine("OpenGL Version: " + GL.GetString(StringName.Renderer));
 
-        Info.GPUText.SetText($"GPU: {GL.GetString(StringName.Renderer)}", 1.2f).GenerateChars().UpdateText();
+        Info.GPUText.SetText($"GPU: {GL.GetString(StringName.Renderer)}", 1.2f);
 
         base.OnLoad();
     }

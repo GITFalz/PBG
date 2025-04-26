@@ -26,8 +26,13 @@ public class UITextButton : UIPrefab
         Text = new UIText($"{name}Text", controller, AnchorType.MiddleCenter, PositionType.Relative, Vector4.One, (0, 0, 0), (0, 0), (0, 0, 0, 0), 0);
         Button = new UIButton($"{name}Button", controller, AnchorType.MiddleCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), scale ?? (100, 100), (0, 0, 0, 0), 0, textureIndex ?? 0, slice ?? (10, 0.05f), state);
 
-        TextCollection.AddElement(Text);
-        Collection.AddElements(Button, TextCollection);
+        TextCollection.AddElements(Button, Text);
+        Collection.AddElements(TextCollection);
+    }
+
+    public override UIElement[] GetElements()
+    {
+        return [Collection, TextCollection, Button, Text];
     }
 
     public UIText SetMaxCharCount(int maxCharCount)

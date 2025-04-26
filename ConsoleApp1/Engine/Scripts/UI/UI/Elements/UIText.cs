@@ -12,12 +12,14 @@ public class UIText : UIElement
     public int CharCount = 0;
     public List<int> Chars = [];
 
-    public List<TextElementData> CharacteData = [];
+    public List<TextElementData> CharacterDataList = [];
     
     public TextType TextType = TextType.Alphabetic;
     public int TextOffset = 0;
 
     public TextMesh TextMesh;
+
+    private int _mask = 0x40000000;
 
     private UIText() : base() { }
     public UIText
@@ -42,7 +44,11 @@ public class UIText : UIElement
             return;
 
         base.SetVisibility(visible);
-        TextMesh.SetVisibility(CharacteData, visible);
+        foreach (var character in CharacterDataList)
+        {
+            character.SetVisibility(visible);
+        }
+        UpdateCharacters();
     }
 
     public UIText SetText(string text, float fontSize)
@@ -102,85 +108,96 @@ public class UIText : UIElement
         if (int.TryParse(text, out int scaleValue))
             value = scaleValue;
         else
-            value = replacement;
+            value = replacement; 
         return value;
     }
 
     protected override void Internal_UpdateTransformation()
     {
-        if (!CanUpdate)
-            return;
-            
         TextMesh.UpdateElementTransformation(this);
-    }
-
-    public void UpdateText()
-    {
-        if (!CanUpdate)
-            return;
     }
 
     public override void Generate()
     {
-        GenerateQuad();
+        SetScale(newScale);
         GenerateChars();
+        GenerateQuad();
     }
 
-    public void Delete()
+    public override void SetMaskIndex(int maskedIndex)
     {
-        TextMesh.RemoveElement(this);
-        CharacteData.Clear();
-        Chars.Clear();
-    }
-
-    private void CreateCharacters()
-    {
-        int index = 0;
-        foreach (var character in Characters)
+        base.SetMaskIndex(maskedIndex);
+        for (int i = 0; i < CharacterDataList.Count; i++)
         {
-            int charIndex = TextShaderHelper.GetChar(character);
-            TextElementData textData = new TextElementData
-            {
-                Character = new CharacterData
-                {
-                    PositionSize = (index * (10 * FontSize), 0, 7 * FontSize, 9 * FontSize),
-                    Index = (-1, 0x40000000, ElementIndex, 0),
-                }
-            };
-            CharacteData.Add(textData);
-            index++;
+            CharacterData Character = CharacterDataList[i].Character;
+            Character.Index.W = Masked ? (MaskIndex | _mask) : 0;
+            CharacterDataList[i].Character = Character;
         }
-        TextMesh.AddCharacters(CharacteData);
+        TextMesh.UpdateCharacters(this, CharacterDataList);
     }
 
-    public UIText GenerateChars()
+    public override void Delete() 
     {
-        if (CharacteData.Count == 0)
-            CreateCharacters();
-
+        base.Delete();
+        TextMesh.RemoveElement(this);
+        CharacterDataList.Clear();
         Chars.Clear();
+    }
+
+    public void SetCharacterElementIndex(int index)
+    {
+        foreach (var character in CharacterDataList)
+        {
+            character.SetElementIndex(index);
+        }
+    }
+
+    public void UpdateCharacters()
+    {
+        if (CharacterDataList.Count == MaxCharCount)
+        {
+            int index = 0;
+            foreach (var character in Characters)
+            {
+                int charIndex = TextShaderHelper.GetChar(character);
+                CharacterDataList[index].SetCharacterIndex(charIndex);
+                index++;
+            }
+            TextMesh.UpdateCharacters(this, CharacterDataList);
+        }
+    }
+
+    private UIText GenerateChars()
+    {
+        Chars.Clear();
+        CharacterDataList.Clear();
+
         int index = 0;
         foreach (var character in Characters)
         {
             int charIndex = TextShaderHelper.GetChar(character);
             Chars.Add(charIndex);
 
-            CharacterData Character = CharacteData[index].Character;
-            Character.PositionSize = (index * (10 * FontSize), 0, 10 * FontSize, 10 * FontSize);
-            Character.Index = (charIndex, 0x40000000, ElementIndex, 0);
-            CharacteData[index].Character = Character;
+            CharacterData Character = new CharacterData
+            {
+                PositionSize = (index * (10 * FontSize), 0, 10 * FontSize, 10 * FontSize),
+                Index = (charIndex, Visible ? _mask : 0, 0, Masked ? (MaskIndex | _mask) : 0)
+            };
+            
+            TextElementData textElementData = new TextElementData(Character);
+            CharacterDataList.Add(textElementData);
 
             index++;
         }
 
-        TextMesh.UpdateCharacters(CharacteData);
         return this;
     }
 
     public void GenerateQuad()
     {
-        TextMesh.AddElement(this, ref ElementIndex);
+        TextMesh.AddElement(this);
     }
+
 
     public static string ClampText(string text, int min, int max)
     {

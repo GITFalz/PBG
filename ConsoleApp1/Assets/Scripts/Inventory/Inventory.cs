@@ -148,7 +148,7 @@ public class Inventory
         }
 
         Items[index].Amount++;
-        IconCountText[index].SetText(Items[index].Amount.ToString(), 1.2f).GenerateChars();
+        IconCountText[index].SetText(Items[index].Amount.ToString(), 1.2f).UpdateCharacters();
     }
 
     public void RemoveFrom(int index)
@@ -169,7 +169,7 @@ public class Inventory
         }
         else
         {
-            IconCountText[index].SetText(Items[index].Amount.ToString(), 1.2f).GenerateChars();
+            IconCountText[index].SetText(Items[index].Amount.ToString(), 1.2f).UpdateCharacters();
         }   
     }
 

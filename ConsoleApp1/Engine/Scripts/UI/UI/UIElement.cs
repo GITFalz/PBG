@@ -24,7 +24,6 @@ public abstract class UIElement
     public bool CanUpdate = false;
     public bool Masked = false;
     public int MaskIndex = 0;
-    public int ElementIndex = 0;
     public float Depth = 0;
 
 
@@ -44,6 +43,7 @@ public abstract class UIElement
     public SerializableEvent? OnHold { get; private set; } = null;
     public SerializableEvent? OnRelease { get; private set; } = null;
     public SerializableEvent? OnHoverOut { get; private set; } = null;
+    public Action? OnAlign;
     private bool _clicked = false;
 
     public UIElement() {}
@@ -76,6 +76,26 @@ public abstract class UIElement
 
     public virtual void Generate() { }
 
+    public virtual void CalculateScale() {} // Used in collections
+
+    /// <summary>
+    /// Used when you want elements to be aligned at the end of the frame. 
+    /// This can prevent you from clicking a button that re-aligns BEFORE it is passed trough the mouse clicking test.
+    /// </summary>
+    public void QueueAlign()
+    {
+        UIController.QueueAlign(this);
+    }
+    
+    /// <summary>
+    /// Used when you want the element's transformation to be updated at the end of the frame.
+    /// This can prevent you from clicking a button that re-aligns BEFORE it is passed trough the mouse clicking test.
+    /// </summary>
+    public void QueueUpdateTransformation()
+    {
+        UIController.QueueElementTransformation(this);
+    }
+
     public virtual void Align()
     {
         Masked = false;
@@ -97,8 +117,22 @@ public abstract class UIElement
 
         GetTransformation();
         if ((int)AnchorType >= 9) newScale = _dimensions[(int)AnchorType - 9](Width, Height, Scale, Offset);
+        SetScale(newScale);
         Center = Origin + new Vector3(newScale.X / 2, newScale.Y / 2, 0);
+
+        return;
+        if (Name != "SidePanelBackground" && Name != "SidePanelCollection")
+            return;
+
+        Console.WriteLine();
+        Console.WriteLine($"Name: {Name}, PositionType: {PositionType}, AnchorType: {AnchorType}");
+        Console.WriteLine($"Origin: {Origin}, Transformed: {_transformedOrigin}, Center: {Center}, Scale: {newScale}, Offset: {Offset}, Width: {Width}, Height: {Height}");
+        Console.WriteLine($"Parent: {ParentElement?.Name}, Origin: {ParentElement?.Origin}, Scale: {ParentElement?.newScale}, Offset: {ParentElement?.Offset}, Width: {ParentElement?.Width}, Height: {ParentElement?.Height}");
     }
+
+    public virtual void ResetInit() {}
+    public virtual void Delete() { UIController.RemoveElement(this); }
+    public virtual void RemoveChild(UIElement element) {}
             
 
     protected virtual void Internal_UpdateTransformation() {}
@@ -122,7 +156,7 @@ public abstract class UIElement
             Internal_UpdateTexture();
     }
 
-    public virtual void RemoveElement(UIElement element) {}
+    public virtual bool RemoveElement(UIElement element) { return false;}
     public abstract float GetYScale();
     public abstract float GetXScale();
 

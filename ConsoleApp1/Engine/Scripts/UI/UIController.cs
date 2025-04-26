@@ -9,6 +9,7 @@ public class UIController
 
     public UIMesh UIMesh = new();
     public TextMesh TextMesh = new();
+    public MaskData MaskData = new();
     
     public static ShaderProgram _uiShader = UIData.UiShader;
     public static TextureArray _uItexture = UIData.UiTexture;
@@ -30,8 +31,14 @@ public class UIController
     public bool RegenerateBuffers = false;
     public bool UpdateVisibility = true;
 
-    public List<UIElement> ElementsToAdd = [];  
-    public List<UIElement> ElementsToRemove = [];
+    public Queue<UIElement> ElementsToAdd = [];  
+    public Queue<UIElement> ElementsToRemove = [];
+
+    public Queue<UIElement> AddedElements = [];
+    public Queue<UIElement> RemovedElements = [];
+
+    private Queue<UIElement> ElementsToAlign = [];
+    private Queue<UIElement> ElementsToTransform= [];
 
     public Matrix4 ModelMatrix = Matrix4.Identity;
 
@@ -77,7 +84,7 @@ public class UIController
         if (ElementsToAdd.Contains(element))
             return;
         
-        ElementsToAdd.Add(element);
+        ElementsToAdd.Enqueue(element);
         RegenerateBuffers = true;
     }
 
@@ -88,6 +95,7 @@ public class UIController
 
         element.CanUpdate = true;
         Elements.Add(element);
+        AddedElements.Enqueue(element);
 
         if (element is UIPanel panel)
         {
@@ -139,7 +147,7 @@ public class UIController
         if (ElementsToRemove.Contains(element))
             return;
         
-        ElementsToRemove.Add(element);
+        ElementsToRemove.Enqueue(element);
         RegenerateBuffers = true;
     }
     
@@ -155,7 +163,6 @@ public class UIController
         }
         else if (element is UIText text)
         {
-            text.Delete();
             if (text is UIInputField inputField)
             {
                 InputFields.Remove(inputField);
@@ -163,11 +170,6 @@ public class UIController
         }
         else if (element is UICollection collection)
         {
-            if (collection is UIScrollView scrollView)
-            {
-                ScrollViews.Remove(scrollView);
-            }
-
             foreach (var e in collection.Elements)
             {
                 Internal_RemoveElement(e);
@@ -178,6 +180,16 @@ public class UIController
         element.CanUpdate = false;
         Elements.Remove(element);
     }
+
+    public void QueueAlign(UIElement element)
+    {
+        ElementsToAlign.Enqueue(element);
+    }
+
+    public void QueueElementTransformation(UIElement element)
+    {
+        ElementsToTransform.Enqueue(element);
+    }   
 
     public void SetPosition(Vector2 position)
     {
@@ -230,10 +242,76 @@ public class UIController
     {
         Vector2 newOffset = offset;
         GenerateBuffers();
+
         foreach (var element in Elements)
-        {
             element.Test(newOffset);
+
+        PostTestUpdates();
+        UpdateMeshes();
+    }
+
+    public void GenerateBuffers()
+    {
+        if (RegenerateBuffers)
+        {
+            while (ElementsToRemove.Count > 0)
+            {
+                Internal_RemoveElement(ElementsToRemove.Dequeue());
+            }
+
+            while (ElementsToAdd.Count > 0)
+            {
+                Internal_AddElement(ElementsToAdd.Dequeue());
+            }
+
+            foreach (var element in AbsoluteElements)
+            {
+                element.Align();
+            }
+
+            foreach (var element in AddedElements)
+            {
+                element.Generate();
+            }
+
+            foreach (var scrollView in ScrollViews)
+            {
+                scrollView.GenerateMask(); 
+            }
+
+            RemovedElements.Clear();
+            AddedElements.Clear();
+
+            ElementsToAdd.Clear();
+            ElementsToRemove.Clear();
+        
+            RegenerateBuffers = false;
         }
+    }
+
+    /// <summary>
+    /// This is where stuff happens that you want to have happen after the test but before the update.
+    /// </summary>
+    public void PostTestUpdates()
+    {
+        while (ElementsToAlign.Count > 0)
+        {
+            UIElement element = ElementsToAlign.Dequeue();
+            element.Align();
+        }
+
+        while (ElementsToTransform.Count > 0)
+        {
+            UIElement element = ElementsToTransform.Dequeue();
+            element.UpdateTransformation();
+        }
+    }
+
+    public void UpdateMeshes()
+    {
+        MaskData.Update();
+        UIMesh.Update();
+        TextMesh.Update();
     }
 
     public UIElement? IsMouseOver()
@@ -369,26 +447,6 @@ public class UIController
         return false;
     }
 
-    public void Generate()
-    {
-        TextOffset = 0;
-
-        foreach (var element in AbsoluteElements)
-        {
-            element.Align();    
-        }
-
-        foreach (var element in Elements)
-        {
-            element.Generate();    
-        }
-
-        foreach (var scrollView in ScrollViews)
-        {
-            scrollView.GenerateMask(); 
-        }
-    }
-
     public void PrintMemory()
     {
         string memory = "UIController: " + Elements.Count + " elements\n";
@@ -399,40 +457,6 @@ public class UIController
         memory += "ElementsToRemove: " + ElementsToRemove.Count + "\n";
         memory += "newUIMesh: " + UIMesh.ElementCount + "\n";
         Console.WriteLine(memory);
-    }
-
-    public void Buffers()
-    {
-        UIMesh.GenerateBuffers();
-    }
-
-    public void GenerateBuffers()
-    {
-        if (RegenerateBuffers)
-        {
-            foreach (var element in ElementsToRemove)
-            {
-                Internal_RemoveElement(element);
-            }
-
-            foreach (var element in ElementsToAdd)
-            {
-                Internal_AddElement(element);
-            }
-
-            ElementsToAdd.Clear();
-            ElementsToRemove.Clear();
-
-            UIMesh.Clear();
-
-            Generate();
-            Buffers();
-
-            RegenerateBuffers = false;
-        }
-            
-        UIMesh.Update();
-        TextMesh.Update();
     }
 
     public List<string> ToLines()
@@ -453,8 +477,6 @@ public class UIController
 
     public void Clear()
     {
-        UIMesh.Clear();
-
         foreach (var element in AbsoluteElements)
         {
             RemoveElement(element);
@@ -464,6 +486,10 @@ public class UIController
         {
             Internal_RemoveElement(element);
         }
+
+        MaskData.Clear();
+        UIMesh.Clear();
+        TextMesh.Clear(); 
 
         Elements.Clear();
         AbsoluteElements.Clear();
@@ -478,6 +504,8 @@ public class UIController
     {
         Clear();
         UIMesh.Delete();
+        MaskData.Delete();
+        TextMesh.Delete();
         Elements.Clear();
     }
 
@@ -553,10 +581,13 @@ public class UIController
             GL.UniformMatrix4(UIData.projectionLoc, true, ref orthographicsProjectionMatrix);
             GL.Uniform1(UIData.textureArrayLoc, 0);
 
+            MaskData.UIMaskSSBO.Bind(1);
+
             UIMesh.Render();
         
-            //Shader.Error("Ui render error: ");
+            Shader.Error("Ui render error: ");
 
+            MaskData.UIMaskSSBO.Unbind();
             _uItexture.Unbind();
             _uiShader.Unbind();
         }
@@ -565,6 +596,7 @@ public class UIController
         {
             _textTexture.Bind(TextureUnit.Texture0);
             _textShader.Bind();
+            MaskData.UIMaskSSBO.Bind(2);
 
             GL.UniformMatrix4(UIData.textModelLoc, true, ref model);
             GL.UniformMatrix4(UIData.textProjectionLoc, true, ref orthographicsProjectionMatrix);
@@ -572,6 +604,9 @@ public class UIController
 
             TextMesh.Render();
 
+            Shader.Error("Text render error: ");
+
+            MaskData.UIMaskSSBO.Unbind();
             _textShader.Unbind();
             _textTexture.Unbind();
         }

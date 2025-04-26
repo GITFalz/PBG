@@ -23,7 +23,7 @@ public abstract class ConnectorNode
     {
         float delta = Input.GetMouseDelta().X * speed * GameTime.DeltaTime;
         value += delta;
-        inputField.SetText(value.ToString("0.00")).GenerateChars().UpdateText();
+        inputField.SetText(value.ToString("0.00")).UpdateCharacters();
         NoiseGlslNodeManager.UpdateValue(index, value);
     }
 

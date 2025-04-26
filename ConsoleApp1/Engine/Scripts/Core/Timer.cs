@@ -46,8 +46,8 @@ public static class Timer
                 string name = _times[i].Item1;
                 double time = _times[i].Item2;
 
-                GetUIText(i).Item1.SetText(name).GenerateChars();
-                GetUIText(i).Item2.SetText(time.ToString()).GenerateChars();
+                GetUIText(i).Item1.SetText(name).UpdateCharacters();
+                GetUIText(i).Item2.SetText(time.ToString()).UpdateCharacters();
             }
 
             _time = _stopwatch.Elapsed.TotalSeconds;

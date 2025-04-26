@@ -6,7 +6,8 @@ public class UIMesh
     public static UIMesh Empty = new UIMesh();
 
     public List<UIStruct> UIData = new List<UIStruct>();
-
+    public List<UIPanel> Elements = new();
+    public Dictionary<UIPanel, int> ElementIndices = new();
     
     private VAO _vao = new VAO();
     private SSBO<UIStruct> _uiDataSSBO = new(new List<UIStruct>());
@@ -15,30 +16,25 @@ public class UIMesh
     public int MaskCount = 0;
     public int VisibleElementCount = 0;
 
-    private int _mask = 0x40000000; // 0x40000000 = 0100 0000 0000 0000 0000 0000 0000 0000
+    private int _mask = 0x40000000;
 
     private bool _generateBuffers = false;
     private bool _updateData = false;
     private bool _updateVisibility = false;
 
-    public List<UIRender> Elements = [];
-
-    public void AddElement(UIPanel element, ref int uiIndex)
+    public void AddElement(UIPanel element)
     {
-        uiIndex = ElementCount;
-        
-        int mask = 0x40000000; // 0x40000000 = 0100 0000 0000 0000 0000 0000 0000 0000
-
         UIStruct uiData = new UIStruct()
         {
             SizeSlice = element.SizeSlice,
             Color = element.Color,
-            TextureIndex = (element.TextureIndex, 0, ElementCount, element.Masked ? (element.MaskIndex | mask) : 0),
+            TextureIndex = (element.TextureIndex, 0, ElementCount, element.Masked ? (element.MaskIndex | _mask) : 0),
             Transformation = element.Transformation
         };
 
         UIData.Add(uiData);
         Elements.Add(element);
+        ElementIndices.Add(element, ElementCount);
 
         ElementCount++;
         VisibleElementCount++;
@@ -46,8 +42,49 @@ public class UIMesh
         _generateBuffers = true;
     }
 
-    public void UpdateMaskedIndex(int index, bool masked, int maskIndex)
+    public bool GetElementData(UIPanel element, out int index)
     {
+        return ElementIndices.TryGetValue(element, out index);
+    }
+
+    public void RemoveElement(UIPanel element)
+    {
+        if (ElementIndices.TryGetValue(element, out int index))
+        {
+            int lastIndex = Elements.Count - 1;
+
+            if (index != lastIndex)
+            {
+                var lastElement = Elements[lastIndex];
+                var lastCharacter = UIData[lastIndex];
+
+                Elements[index] = lastElement;
+                UIData[index] = lastCharacter;
+
+                ElementIndices[lastElement] = index;
+            }
+
+            Elements.RemoveAt(lastIndex);
+            UIData.RemoveAt(lastIndex);
+            ElementIndices.Remove(element);
+
+            ElementCount--;
+
+            if (element.Visible)
+            {
+                VisibleElementCount--;
+            }
+
+            _generateBuffers = true;
+            _updateVisibility = true;
+        }
+    }
+
+    public void UpdateMaskedIndex(UIPanel element, bool masked, int maskIndex)
+    {
+        if (!GetElementData(element, out int index))
+            return;
+
         UIStruct data = UIData[index];
         data.TextureIndex.W = masked ? (maskIndex | _mask) : 0;
         UIData[index] = data;
@@ -73,48 +110,63 @@ public class UIMesh
                 VisibleElementCount++; 
             }
         }
+
+        foreach (var element in Elements)
+        {
+            if (!GetElementData(element, out int index))
+                continue;
+        }
     }   
 
 
-    public void UpdateElementTransformation(UIElement element)
+    public void UpdateElementTransformation(UIPanel element)
     {
         Internal_UpdateElementTransform(element);
         _updateData = true;
     }
 
-    private void Internal_UpdateElementTransform(UIElement element)
+    private void Internal_UpdateElementTransform(UIPanel element)
     {
-        UIStruct data = UIData[element.ElementIndex];
+        if (!GetElementData(element, out int index))
+            return;
+
+        UIStruct data = UIData[index];
         data.Transformation = element.Transformation;
-        UIData[element.ElementIndex] = data;
+        UIData[index] = data;
     }
 
 
-    public void UpdateElementScale(UIRender element)
+    public void UpdateElementScale(UIPanel element)
     {
         Internal_UpdateElementScale(element);
         _updateData = true;
     }
 
-    private void Internal_UpdateElementScale(UIRender element)
+    private void Internal_UpdateElementScale(UIPanel element)
     {
-        UIStruct data = UIData[element.ElementIndex];
+        if (!GetElementData(element, out int index))
+            return;
+
+        UIStruct data = UIData[index];
         data.SizeSlice = element.SizeSlice;
-        UIData[element.ElementIndex] = data;
+        UIData[index] = data;
     }
 
 
-    public void UpdateElementTexture(UIRender element)
+    public void UpdateElementTexture(UIPanel element)
     {
         Internal_UpdateElementTexture(element);
         _updateData = true;
     }
 
-    private void Internal_UpdateElementTexture(UIRender element)
+    private void Internal_UpdateElementTexture(UIPanel element)
     {
-        UIStruct data = UIData[element.ElementIndex];
+        if (!GetElementData(element, out int index))
+            return;
+
+        UIStruct data = UIData[index];
         data.TextureIndex.X = element.TextureIndex;
-        UIData[element.ElementIndex] = data;
+        UIData[index] = data;
     }
 
     public void GenerateBuffers()
@@ -124,15 +176,16 @@ public class UIMesh
 
     public void Update()
     {
-        if (_generateBuffers)
-        {
-            GenerateBuffers();
-        }
         if (_updateVisibility)
         {
             UpdateData();
             _updateVisibility = false;
             _updateData = true;
+        }
+        if (_generateBuffers)
+        {
+            GenerateBuffers();
+            _generateBuffers = false;
         }
         if (_updateData)
         {
@@ -158,7 +211,7 @@ public class UIMesh
         ElementCount = 0;
         VisibleElementCount = 0;
         MaskCount = 0;
-        Elements.Clear();
+        ElementIndices.Clear();
     }
 
     public void Delete()

@@ -78,13 +78,13 @@ public class UIInputField : UIText
         if (!TextShaderHelper.CharExists(character)) return;
         string formatedText = Format(Text + character);
         //Console.WriteLine("Formated Text: " + formatedText);
-        SetText(formatedText).GenerateChars().UpdateText();
+        SetText(formatedText).UpdateCharacters();
     }
     
     public void RemoveCharacter()
     {
         if (Text.Length <= 0) return;
-        SetText(Text[..^1]).GenerateChars().UpdateText();
+        SetText(Text[..^1]).UpdateCharacters();
     }
 
     public static string SetLastCharToSpace(string Text)

@@ -264,7 +264,7 @@ public class WorldManager : ScriptingNode
 
         if (renderCount != _oldRenderedChunks)
         {
-            Info.ChunkRenderingText.SetText($"Chunks: {renderCount}").GenerateChars().UpdateText();
+            Info.ChunkRenderingText.SetText($"Chunks: {renderCount}").UpdateCharacters();
             _oldRenderedChunks = renderCount;
         }
 
@@ -351,7 +351,7 @@ public class WorldManager : ScriptingNode
 
         if (renderCount != _oldRenderedChunks)
         {
-            Info.ChunkRenderingText.SetText($"Chunks: {renderCount}").GenerateChars().UpdateText();
+            Info.ChunkRenderingText.SetText($"Chunks: {renderCount}").UpdateCharacters();
             _oldRenderedChunks = renderCount;
         }
     }

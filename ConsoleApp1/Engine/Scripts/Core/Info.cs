@@ -77,9 +77,9 @@ public class Info
 
         if (FpsUpdate())
         {
-            FpsText.SetText($"Fps: {GameTime.Fps}", 1.2f).GenerateChars();
+            FpsText.SetText($"Fps: {GameTime.Fps}", 1.2f).UpdateCharacters();
             long memoryBytes = Process.GetCurrentProcess().WorkingSet64; 
-            RamUsageText.SetText($"Ram: {memoryBytes / (1024 * 1024)} Mb", 1.2f).GenerateChars();
+            RamUsageText.SetText($"Ram: {memoryBytes / (1024 * 1024)} Mb", 1.2f).UpdateCharacters();
         }  
         
         _infoController.Update(); 
@@ -191,7 +191,7 @@ public class Info
     {
         if (_oldVertexCount != VertexCount)
         {
-            VertexCountText.SetText("Vertices: " + VertexCount, 1.2f).GenerateChars().UpdateText();
+            VertexCountText.SetText("Vertices: " + VertexCount, 1.2f).UpdateCharacters();
             _oldVertexCount = VertexCount;
         }
     }
@@ -202,19 +202,19 @@ public class Info
 
         if (oldPos.X != position.X)
         {
-            XPosText.SetText($"X: {position.X}", 1.2f).GenerateChars();
+            XPosText.SetText($"X: {position.X}", 1.2f).UpdateCharacters();
             update = true;
         }
 
         if (oldPos.Y != position.Y)
         {
-            YPosText.SetText($"Y: {position.Y}", 1.2f).GenerateChars();
+            YPosText.SetText($"Y: {position.Y}", 1.2f).UpdateCharacters();
             update = true;
         }
 
         if (oldPos.Z != position.Z)
         {
-            ZPosText.SetText($"Z: {position.Z}", 1.2f).GenerateChars();
+            ZPosText.SetText($"Z: {position.Z}", 1.2f).UpdateCharacters();
             update = true;
         }
     }

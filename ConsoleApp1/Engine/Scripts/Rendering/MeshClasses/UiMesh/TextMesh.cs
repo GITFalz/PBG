@@ -7,31 +7,42 @@ public class TextMesh
     public SSBO<Matrix4> TransformationSSBO = new();
     public SSBO<CharacterData> CharacterSSBO = new();
 
-    public List<UIText> UIElements = new();
-    
     public List<Matrix4> TransformationMatrices = new();
+    public List<UIText> Elements = new();
+    public Dictionary<UIText, int> ElementIndices = new();
+
+
     public List<CharacterData> Characters = new();
     public List<TextElementData> TextElements = new();
-    public Dictionary<TextElementData, int> Elements = new();
+    public Dictionary<TextElementData, int> TextDataIndices = new();
 
     public int ElementCount = 0;
+
+    public int CharacterCount => TextDataIndices.Count;
     public int VisibleElementCount = 0;
 
     private bool _generateBuffers = false;
     private bool _updateData = false;
     private bool _updateVisibility = false;
 
-    public void AddElement(UIText element, ref int uiIndex)
-    {
-        uiIndex = ElementCount;
+    private int _mask = 0x40000000;
 
+    public void AddElement(UIText element)
+    {
         TransformationMatrices.Add(element.Transformation);
-        UIElements.Add(element);
+        Elements.Add(element);
+        ElementIndices.Add(element, ElementCount);
+
+        element.SetCharacterElementIndex(ElementCount);
+
+        AddCharacters(element.CharacterDataList);
 
         ElementCount++;
+
+        _generateBuffers = true;
     }
 
-    public void AddCharacters(List<TextElementData> characters)
+    private void AddCharacters(List<TextElementData> characters)
     {
         foreach (var character in characters)
         {
@@ -41,9 +52,11 @@ public class TextMesh
         _updateVisibility = true;
     }
 
-    public void AddCharacter(TextElementData character)
+    private void AddCharacter(TextElementData character)
     {
-        Elements.Add(character, Elements.Count);
+        character.SetActualIndex(VisibleElementCount);
+
+        TextDataIndices.Add(character, CharacterCount);
         Characters.Add(character.Character);
         TextElements.Add(character);
 
@@ -52,22 +65,42 @@ public class TextMesh
         _generateBuffers = true;
     }
 
+    public bool GetElementData(UIText element, out int index)
+    {
+        return ElementIndices.TryGetValue(element, out index);
+    }
+
     public void RemoveElement(UIText element)
     {
-        RemoveCharacters(element.CharacteData);
-
-        UIElements.RemoveAt(element.ElementIndex);
-        TransformationMatrices.RemoveAt(element.ElementIndex);
-
-        for (int i = element.ElementIndex; i < UIElements.Count; i++)
+        if (ElementIndices.TryGetValue(element, out int index))
         {
-            UIElements[i].ElementIndex--;
+            RemoveCharacters(element.CharacterDataList);
+
+            int lastIndex = Elements.Count - 1;
+
+            if (index != lastIndex)
+            {
+                var lastElement = Elements[lastIndex];
+                var lastCharacter = TransformationMatrices[lastIndex];
+
+                Elements[index] = lastElement;
+                TransformationMatrices[index] = lastCharacter;
+
+                ElementIndices[lastElement] = index;
+
+                lastElement.SetCharacterElementIndex(index); 
+                lastElement.UpdateCharacters();
+            }
+
+            Elements.RemoveAt(lastIndex);
+            TransformationMatrices.RemoveAt(lastIndex);
+            ElementIndices.Remove(element);
+
+            ElementCount--;
+
+            _generateBuffers = true;
+            _updateVisibility = true;
         }
-
-        ElementCount--;
-
-        _generateBuffers = true;
-        _updateVisibility = true;
     }
 
     public void RemoveCharacters(List<TextElementData> characters)
@@ -80,7 +113,7 @@ public class TextMesh
 
     public void RemoveCharacter(TextElementData character)
     {
-        if (Elements.TryGetValue(character, out int index))
+        if (TextDataIndices.TryGetValue(character, out int index))
         {
             int lastIndex = TextElements.Count - 1;
 
@@ -92,12 +125,14 @@ public class TextMesh
                 TextElements[index] = lastElement;
                 Characters[index] = lastCharacter;
 
-                Elements[lastElement] = index;
+                TextDataIndices[lastElement] = index;
+
+                lastElement.SetActualIndex(index);
             }
 
             TextElements.RemoveAt(lastIndex);
             Characters.RemoveAt(lastIndex);
-            Elements.Remove(character);
+            TextDataIndices.Remove(character);
 
             VisibleElementCount--;
 
@@ -105,55 +140,47 @@ public class TextMesh
         }
     }
 
-    public void UpdateCharacters(List<TextElementData> characters)
+    public void UpdateCharacters(UIText text, List<TextElementData> characters)
     {
         foreach (var character in characters)
         {
-            UpdateCharacter(character);
+            UpdateCharacter(text, character);
         }
     }
 
-    public void UpdateCharacter(TextElementData character)
+    public void UpdateCharacter(UIText text, TextElementData character)
     {
-        if (Elements.TryGetValue(character, out int index))
+        if (TextDataIndices.TryGetValue(character, out int textIndex))
         {
-            Characters[index] = character.Character;
+            Characters[textIndex] = character.Character;
             _updateVisibility = true;
         }
     }
 
-    public void SetVisibility(List<TextElementData> characters, bool visible)
+    public void SetVisibility()
     {
-        foreach (var character in characters)
-        {
-            SetVisibility(character, visible);
-        }
-    }
-
-    public void SetVisibility(TextElementData character, bool visible)
-    {
-        if (Elements.TryGetValue(character, out int index))
-        {
-            character.Character.SetVisible(visible);
-            Characters[index] = character.Character;
-            _updateVisibility = true;
-        }
+        _updateVisibility = true;
     }
 
     public void UpdateElementTransformation(UIText element)
     {
-        if (element.ElementIndex < 0 || element.ElementIndex >= TransformationMatrices.Count)
+        Internal_UpdateElementTransform(element);
+        _updateData = true;
+    }
+
+    private void Internal_UpdateElementTransform(UIText element)
+    {
+        if (!GetElementData(element, out int index))
             return;
 
-        TransformationMatrices[element.ElementIndex] = element.Transformation;
-        _updateData = true;
+        TransformationMatrices[index] = element.Transformation;
     }
 
     public void UpdateData()
     {
         VisibleElementCount = 0;
 
-        for (int i = 0; i < TextElements.Count; i++)
+        for (int i = 0; i < Characters.Count; i++)
         {
             if (Characters[i].IsVisible())
             {
@@ -204,11 +231,57 @@ public class TextMesh
         TransformationSSBO.Unbind();
         TextVAO.Unbind();
     }
+
+    public void Clear()
+    {
+        Elements.Clear();
+        TransformationMatrices.Clear();
+        Characters.Clear();
+        TextElements.Clear();
+        TextDataIndices.Clear();
+
+        ElementCount = 0;
+        VisibleElementCount = 0;
+    }
+
+    public void Delete()
+    {
+        TextVAO.DeleteBuffer();
+        TransformationSSBO.DeleteBuffer();
+        CharacterSSBO.DeleteBuffer();
+
+        Clear();
+    }
 }
 
 public class TextElementData
 {
     public CharacterData Character = new CharacterData();
+
+    public TextElementData(CharacterData character)
+    {
+        Character = character;
+    }
+
+    public void SetCharacterIndex(int index)
+    {
+        Character.SetCharacterIndex(index); 
+    }
+
+    public void SetActualIndex(int index)
+    {
+        Character.SetActualIndex(index);
+    }
+
+    public void SetElementIndex(int index)
+    {
+        Character.SetElementIndex(index);
+    }
+
+    public void SetVisibility(bool visible)
+    {
+        Character.SetVisibility(visible);
+    }
 }
 
 public struct CharacterData
@@ -216,12 +289,17 @@ public struct CharacterData
     public Vector4 PositionSize;
     public Vector4i Index; // { index, *isVisible (2nd last bit) / actual index*, none, none }
 
+    public void SetCharacterIndex(int index)
+    {
+        Index.X = index;
+    }
+
     public bool IsVisible()
     {
         return (Index.Y & 0x40000000) != 0;
     }
 
-    public void SetVisible(bool visible)
+    public void SetVisibility(bool visible)
     {
         if (visible)
             Index.Y |= 0x40000000;
@@ -232,6 +310,11 @@ public struct CharacterData
     public int GetActualIndex()
     {
         return Index.Y & 0x0FFFFFFF;
+    }
+
+    public void SetElementIndex(int index)
+    {
+        Index.Z = index;
     }
 
     public bool SetActualIndex(int index)

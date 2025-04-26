@@ -33,12 +33,6 @@ public class UIButton : UIPanel
             uIMesh.UpdateElementTexture(this);
     }
 
-    protected override void Internal_UpdateTransformation()
-    {
-        if (CanGenerate())
-            uIMesh.UpdateElementTransformation(this);
-    }
-
     protected bool CanGenerate()
     {
         return State != UIState.InvisibleInteractable;

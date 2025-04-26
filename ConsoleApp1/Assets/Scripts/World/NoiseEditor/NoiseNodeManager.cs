@@ -22,6 +22,8 @@ public static class NoiseNodeManager
     public static string FileName = "noise";
     public static string CurrentFileName = "noise";
 
+    public static Action updateFileNameAction = () => { };
+
     public static void AddNode(UINoiseNodePrefab nodePrefab)
     {
         AddNode(nodePrefab, out _);
@@ -350,21 +352,86 @@ public static class NoiseNodeManager
             lines.Add($"{output.Name} - {input.Name}");
         }
 
-        File.WriteAllLines(Path.Combine(Game.worldNoiseNodeNodeEditorPath, fileName + ".cWorldNode"), lines);
+        var file = Path.Combine(Game.worldNoiseNodeNodeEditorPath, fileName + ".cWorldNode");
+
+        if (!File.Exists(file))
+        {
+            var element = NoiseEditor.FileList.AddButton(fileName, out var button, out var deleteButton);
+            button.SetOnClick(() => {
+                SaveNodes(CurrentFileName); LoadNodes(fileName);
+            });
+            deleteButton.SetOnClick(() => {
+                DeleteFile(fileName, element);
+            });
+            element.UIController.AddElements(element);
+        }
+
+        File.WriteAllLines(file, lines);
 
         CurrentFileName = fileName;
     }
 
+    public static void DeleteFile(string fileName, UIElement button)
+    {
+        string file = Path.Combine(Game.worldNoiseNodeNodeEditorPath, fileName + ".cWorldNode");
+
+        if (File.Exists(file) && NoiseEditor.FileList.DeleteButton(button))
+        {
+            File.Delete(file);
+            button.Delete();
+            NoiseEditor.FileList.ScrollView.ResetInit();
+            NoiseEditor.FileList.ScrollView.QueueAlign();
+            NoiseEditor.FileList.ScrollView.QueueUpdateTransformation();
+
+            if (CurrentFileName == fileName)
+            {
+                ClearNoiseNodes();
+
+                var files = Directory.GetFiles(Game.worldNoiseNodeNodeEditorPath, "*.cWorldNode");
+
+                if (files.Length == 0)
+                {
+                    CurrentFileName = "noise";
+                    FileName = "noise";
+                    updateFileNameAction?.Invoke();
+                    SaveNodes(CurrentFileName);
+                }
+                else
+                {
+                    string newFileName = Path.GetFileNameWithoutExtension(files[0]);
+                    LoadNodes(newFileName);
+                }
+                
+            }
+        }
+    }
+
+    public static void DeleteAll()
+    {
+        NoiseEditor.FileList.ScrollView.DeleteSubElements();
+    }
+
     public static void LoadNodes()
+    {
+        LoadNodes(FileName);
+    }
+
+    public static void LoadNodes(string fileName)
     {
         Clear();
 
-        if (!File.Exists(Path.Combine(Game.worldNoiseNodeNodeEditorPath, FileName + ".cWorldNode")))
+        if (!File.Exists(Path.Combine(Game.worldNoiseNodeNodeEditorPath, fileName + ".cWorldNode")))
             return;
 
-        CurrentFileName = FileName;
+        if (FileName != fileName)
+        {
+            FileName = fileName;
+            updateFileNameAction?.Invoke();
+        }
 
-        string[] lines = File.ReadAllLines(Path.Combine(Game.worldNoiseNodeNodeEditorPath, FileName + ".cWorldNode"));
+        CurrentFileName = fileName;
+
+        string[] lines = File.ReadAllLines(Path.Combine(Game.worldNoiseNodeNodeEditorPath, fileName + ".cWorldNode"));
 
         Dictionary<string, OutputGateConnector> outputGateConnectors = [];
         Dictionary<string, InputGateConnector> inputGateConnectors = [];
@@ -557,6 +624,26 @@ public static class NoiseNodeManager
         _connectorLineVAO.Unbind();
 
         ConnectorLineShaderProgram.Unbind();
+    }
+
+    public static void ClearNoiseNodes()
+    {
+        Dictionary<UINoiseNodePrefab, ConnectorNode> copy = new(NoiseNodes);
+        foreach (var node in copy.Values)
+        {
+            if (node is DisplayConnectorNode) // Don't remove display node
+                continue;
+            
+            RemoveNode(node, false);
+        }
+
+        NoiseNodes.Clear();
+        ConnectedNodeList.Clear();
+        OutputGateConnectors.Clear();
+        InputGateConnectors.Clear();
+
+        GenerateLines();
+        Compile();
     }
 
     public static void Clear()

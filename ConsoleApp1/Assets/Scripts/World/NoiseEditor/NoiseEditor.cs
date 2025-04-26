@@ -5,8 +5,8 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class NoiseEditor : ScriptingNode
 {
-    public static int NodePanelWidth = 1200;
-    public static int NodePanelHeight = 700;
+    public static int NodePanelWidth = Game.Width - 300;
+    public static int NodePanelHeight = Game.Height;
 
     public static Vector2i NodeWindowPosition { get; private set; } = new Vector2i(0, 0);
     public static Vector2i InternalNodeWindowPosition { get; private set; } = new Vector2i(0, 200);
@@ -27,7 +27,7 @@ public class NoiseEditor : ScriptingNode
 
     public UIController DisplayController;
     public UIController MainWindowController;
-    public UIController SidePanelController;
+    public static UIController SidePanelController;
     public UIController NodeController;
     public UIController SelectionController;
 
@@ -35,6 +35,9 @@ public class NoiseEditor : ScriptingNode
     private UIImage _mainWindowBackground;
 
     private UIRectangleDisplayPrefab _displayPrefab;
+
+
+    public static UIListPrefab FileList;
 
 
     public UICollection SelectionCollection;
@@ -102,7 +105,7 @@ public class NoiseEditor : ScriptingNode
 
         UICollection sidePanelCollection = new("SidePanelCollection", SidePanelController, AnchorType.ScaleRight, PositionType.Absolute, (0.5f, 0.5f, 0.5f), (300, Game.Height), (0, 0, 0, 0), 0f);
         
-        UIImage sidePanelBackground = new("SidePanelBackground", SidePanelController, AnchorType.ScaleRight, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (300, Game.Height), (0, 0, 0, 0), 0, 10, (10, 0.05f));
+        UIImage sidePanelBackground = new("SidePanelBackground", SidePanelController, AnchorType.ScaleFull, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (300, Game.Height), (0, 0, 0, 0), 0, 10, (10, 0.05f));
         UIVerticalCollection sidePanelVerticalCollection = new("SidePanelVerticalCollection", SidePanelController, AnchorType.ScaleRight, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), (10, 10, 10, 10), 5f, 0);
 
         UIVerticalCollection filePanelCollection = new("FilePanelCollection", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), (0, 0, 0, 0), 0f, 0);
@@ -113,11 +116,12 @@ public class NoiseEditor : ScriptingNode
         nodeNameField.SetMaxCharCount(22).SetText("noise", 1.2f).SetTextType(TextType.Alphanumeric);
         nodeNameField.SetOnTextChange(() => {
             NoiseNodeManager.FileName = nodeNameField.Text.Trim();
+            NoiseNodeManager.updateFileNameAction = () => nodeNameField.SetText(NoiseNodeManager.FileName, 1.2f).UpdateCharacters();
         });
         nodeNameBackground.SetScale((nodeNameField.Scale.X + 14, nodeNameBackground.Scale.Y));
         nodeNameCollection.AddElements(nodeNameBackground, nodeNameField);
 
-        UIHorizontalCollection saveLoadCollection = new("SaveLoadCollection", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), (0, 0, 0, 0), 10f, 0);
+        UIHorizontalCollection saveLoadCollection = new("SaveLoadCollection", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 40), (0, 0, 0, 0), (0, 0, 0, 0), 10f, 0);
 
         UITextButton saveButton = new("SaveButton", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (135, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
         saveButton.SetOnClick(() => {
@@ -154,7 +158,22 @@ public class NoiseEditor : ScriptingNode
 
         filePanelCollection.AddElements(nodeNameCollection, saveLoadCollection);
 
-        sidePanelVerticalCollection.AddElements(filePanelCollection);
+        FileList = new("ListPrefab", SidePanelController, (280, 300), (0, 0, 0, 0));
+
+        foreach (var file in Directory.GetFiles(Game.worldNoiseNodeNodeEditorPath, "*.cWorldNode"))
+        {
+            string fileName = Path.GetFileName(file).Replace(".cWorldNode", "");
+            var element = FileList.AddButton(fileName, out var button, out var deleteButton); 
+            button.SetOnClick(() => {
+                NoiseNodeManager.SaveNodes(NoiseNodeManager.CurrentFileName); NoiseNodeManager.LoadNodes(fileName);
+            });
+            deleteButton.SetOnClick(() => {
+                NoiseNodeManager.DeleteFile(fileName, element);
+            });
+        }
+        
+
+        sidePanelVerticalCollection.AddElements(filePanelCollection, FileList.Collection);
 
         sidePanelCollection.AddElements(sidePanelBackground, sidePanelVerticalCollection);
 
@@ -448,7 +467,6 @@ public class NoiseEditor : ScriptingNode
 
     void Update()
     {
-        /*
         // Save
         if (Input.IsKeyAndControlPressed(Keys.S))
         {
@@ -518,35 +536,33 @@ public class NoiseEditor : ScriptingNode
 
         if (Input.IsKeyPressed(Keys.J)) 
         {
-            _inventory.SetVisibility(54, false);
+            NoiseNodeManager.DeleteAll();
         }
-        */
 
-        _inventory.Update();
+        //_inventory.Update();
     }
 
     void Render()
     {
-        /*
-        MainWindowController.RenderNoDepthTest();
+        MainWindowController.RenderDepthTest();
 
         GL.Viewport(InternalNodeWindowPosition.X + 7, InternalNodeWindowPosition.Y + 7, NodePanelWidth - 14, NodePanelHeight - 14);
 
-        NodeController.RenderNoDepthTest(NodePanelProjectionMatrix);
+        NodeController.RenderDepthTest(NodePanelProjectionMatrix);
         NoiseNodeManager.RenderLine(NodePanelProjectionMatrix);
 
         GL.Viewport(0, 0, Game.Width, Game.Height);
         
-        SidePanelController.RenderNoDepthTest();
+        SidePanelController.RenderDepthTest();
         DisplayController.RenderDepthTest();
         NoiseGlslNodeManager.Render(DisplayProjectionMatrix, DisplayPosition, _displayPrefab.Scale, NoiseSize, Offset, _colorPicker.Color);
 
         if (SelectionCollection.Visible)
-            SelectionController.RenderNoDepthTest();
-
-        _colorPicker.RenderTexture();
+            SelectionController.RenderDepthTest();
 
         /*
+        _colorPicker.RenderTexture();
+
         Matrix4 model = Matrix4.CreateTranslation(100, 100, 0);
         Matrix4 projection = UIController.OrthographicProjection;
 
@@ -571,7 +587,8 @@ public class NoiseEditor : ScriptingNode
         VoronoiShader.Unbind();
         */
 
-        _inventory.Render();
+
+        //_inventory.Render();
     }
 
     void Exit()
@@ -584,7 +601,7 @@ public class NoiseEditor : ScriptingNode
     public void ResizeNodeWindow()
     {
         NodePanelWidth = Game.Width - 300;
-        NodePanelHeight = Mathf.Min(700, Game.Height - 200);
+        NodePanelHeight = Game.Height;
 
         InternalNodeWindowPosition = new Vector2i(0, Game.Height - NodePanelHeight);
 

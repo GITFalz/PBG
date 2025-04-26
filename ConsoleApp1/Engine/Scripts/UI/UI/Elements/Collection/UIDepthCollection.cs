@@ -21,7 +21,7 @@ public class UIDepthCollection : UICollection
         base.Align();
     }
 
-    public override void Init()
+    public override void CalculateScale()
     {
         for (int i = 0; i < Elements.Count; i++)
         {
