@@ -14,15 +14,12 @@ public class PlayerGrapplingState : PlayerGameBaseState
         
         Camera = Game.Camera;
         
-        Camera.SetFOV(70);
+        Camera.SetFOV(90);
         
         playerGameState.PlayerStateMachine.physicsBody.DisableGravity();
         
         timer = 0;
         grappleDirection = Camera.Front();
-        
-        OldAnimationManager.Instance.SetAnimation("Player", "grappleIn");
-        OldAnimationManager.Instance.QueueLoopAnimation("Player", "grapple");
     }
 
     public override void Update(PlayerGameState playerGameState)
@@ -45,10 +42,7 @@ public class PlayerGrapplingState : PlayerGameBaseState
 
     public override void FixedUpdate(PlayerGameState playerGameState)
     {
-        Vector3 oldVelocity = playerGameState.PlayerStateMachine.physicsBody.Velocity;
         playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Grappling, grappleDirection);
-        Console.WriteLine(grappleDirection);
-        playerGameState.PlayerStateMachine.physicsBody.Velocity -= oldVelocity;
     }
 
     public override void Exit(PlayerGameState playerGameState)

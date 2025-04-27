@@ -11,9 +11,8 @@ public class PlayerGrapplingSwingOutState : PlayerGameBaseState
         Console.WriteLine("Entering grappling swing out state");
         
         Camera = Game.Camera;
-        
-        OldAnimationManager.Instance.SetAnimation("Player", "grappleSwingOut");
-        OldAnimationManager.Instance.QueueAnimation("Player", "grappleSwingEnd");
+
+        playerGameState.PlayerStateMachine.physicsBody.EnableGravity();
 
         direction = Camera.FrontYto0();
     }
@@ -36,9 +35,7 @@ public class PlayerGrapplingSwingOutState : PlayerGameBaseState
 
     public override void FixedUpdate(PlayerGameState playerGameState)
     {
-        Vector3 oldVelocity = playerGameState.PlayerStateMachine.physicsBody.GetHorizontalVelocity();
-        playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Grappling, direction);
-        playerGameState.PlayerStateMachine.physicsBody.Velocity -= oldVelocity;
+
     }
 
     public override void Exit(PlayerGameState playerGameState)

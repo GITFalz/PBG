@@ -28,6 +28,12 @@ public class PlayerSprintingState : PlayerGameBaseState
             playerGameState.SwitchState(playerGameState.IdleState);
             return;
         }
+
+        if (Input.IsKeyPressed(Keys.E))
+        {
+            playerGameState.SwitchState(playerGameState.GrapplingState);
+            return;
+        }
         
         if (!playerGameState.PlayerStateMachine.BlockSwitch)
         {

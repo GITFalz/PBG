@@ -34,6 +34,12 @@ public class PlayerWalkingState : PlayerGameBaseState
             return;
         }
 
+        if (Input.IsKeyPressed(Keys.E))
+        {
+            playerGameState.SwitchState(playerGameState.GrapplingState);
+            return;
+        }
+
         if (!playerGameState.PlayerStateMachine.BlockSwitch)
         {
             if (Input.IsMousePressed(MouseButton.Right))

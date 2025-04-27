@@ -25,6 +25,12 @@ public class PlayerRunningState : PlayerGameBaseState
             playerGameState.SwitchState(playerGameState.WalkingState);
             return;
         }
+
+        if (Input.IsKeyPressed(Keys.E))
+        {
+            playerGameState.SwitchState(playerGameState.GrapplingState);
+            return;
+        }
         
         if (input == Vector2.Zero)
         {

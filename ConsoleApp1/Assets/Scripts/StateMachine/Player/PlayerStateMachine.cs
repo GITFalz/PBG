@@ -11,7 +11,7 @@ public class PlayerStateMachine : ScriptingNode
     public const float DASH_SPEED = 4000;
     public const float SPRINT_SPEED = 160;
     public const float FALL_SPEED = 15;
-    public const float GRAPPLE_SPEED = 30;
+    public const float GRAPPLE_SPEED = 200;
     public const float JUMP_SPEED = 900;
     
     public Vector3 forward = (0, 0, -1);

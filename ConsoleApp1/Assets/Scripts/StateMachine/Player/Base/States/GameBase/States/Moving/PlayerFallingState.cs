@@ -21,6 +21,12 @@ public class PlayerFallingState : PlayerGameBaseState
     {
         input = Input.GetMovementInput();
 
+        if (Input.IsKeyPressed(Keys.E))
+        {
+            playerGameState.SwitchState(playerGameState.GrapplingState);
+            return;
+        }
+
         if (timer > 1f)
         {
             playerGameState.MovementSpeed = PlayerMovementSpeed.Walk;

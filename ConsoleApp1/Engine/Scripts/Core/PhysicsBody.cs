@@ -78,7 +78,7 @@ public class PhysicsBody : ScriptingNode
 
         previousPosition = physicsPosition;
         
-        ApplyGravity();  
+        Gravity();
         Velocity += Acceleration * GameTime.FixedTime;
         Velocity *= 1f - Drag * GameTime.FixedTime;
         float decelerationFactor = IsGrounded ? 10f : DecelerationFactor;
