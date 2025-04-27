@@ -60,8 +60,8 @@ public class Game : GameWindow
     // Miscaleanous Ui
     private PopUp _popUp;
 
-    // Initializations
-    private Action _resize = () => { };
+    // This is needed because the OnResize method is called before the load method
+    private Action _resizeAction = () => { };
     
     public Game(int width, int height) : base(GameWindowSettings.Default, new NativeWindowSettings
         {
@@ -76,6 +76,7 @@ public class Game : GameWindow
         CenterWindow(new Vector2i(width, height));
 
         _ = new Info();
+        _popUp = new PopUp();
         
         Width = width;
         Height = height;
@@ -83,7 +84,7 @@ public class Game : GameWindow
         CenterX = width / 2;
         CenterY = height / 2;
 
-        _resize = () => { _resize = OnResize; };
+        _resizeAction = OnResize;
 
         /* // Example of using the DataMerger class to merge two SSBOs
         ComputeShader MergeShader = new ComputeShader("DataTransfer/MergeSSBO.compute");
@@ -114,19 +115,20 @@ public class Game : GameWindow
 
         UIController.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, Width, Height, 0, -2, 2);
 
-        _resize.Invoke();
+        Camera.SCREEN_WIDTH = Width;
+        Camera.SCREEN_HEIGHT = Height;
+
+        _resizeAction.Invoke();
         
         base.OnResize(e);
     }
 
-    private void OnResize()
+    public void OnResize()
     {
-        Camera.SCREEN_WIDTH = Width;
-        Camera.SCREEN_HEIGHT = Height;
-
         _popUp.Resize();
         Info.Resize();
         Timer.Resize();
+        Inventory.ResizeAll();
 
         CurrentScene?.OnResize();
 
@@ -218,6 +220,12 @@ public class Game : GameWindow
         TransformNode playerNode = new TransformNode();
         playerNode.AddChild(new PlayerStateMachine(), new PhysicsBody());
 
+        TransformNode InventoryNode = new TransformNode();
+        InventoryNode.AddChild(new PlayerInventoryManager());
+
+        TransformNode SelectedItemNode = new TransformNode();
+        SelectedItemNode.AddChild(new SelectedItemManager());
+
         // World noise
         NoiseEditor noiseEditor = new NoiseEditor();
         TransformNode noiseEditorNode = new TransformNode();
@@ -227,15 +235,13 @@ public class Game : GameWindow
         TransformNode uiNode = new TransformNode();
         uiNode.AddChild(new UIEditor());
 
-        _worldScene.AddNode(playerNode, worldGenerationNode, menuNode);
+        _worldScene.AddNode(playerNode, worldGenerationNode, InventoryNode, SelectedItemNode, menuNode);
         _worldNoiseEditorScene.AddNode(noiseEditorNode, menuNode);
         _UIEditorScene.AddNode(uiNode, menuNode);
 
         AddScenes(_worldScene, _worldNoiseEditorScene, _UIEditorScene);
         //LoadScene("WorldNoiseEditor");
         LoadScene("World");
-
-        _popUp = new PopUp();
 
         _physicsThread = new Thread(PhysicsThread);
         _physicsThread.Start();

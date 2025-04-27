@@ -7,10 +7,13 @@ public class BlockItemData : ItemData
     public int BlockIndex;
     public Block Block;
 
-    public BlockItemData(CWorldBlock block) : base()
+    public BlockItemData(CWorldBlock block)
     {
+        Name = block.blockName;
         BlockIndex = block.index;
         Block = block.GetBlock();
+        MaxStackSize = 999;
+        Base(); 
     }
 
     public override void GenerateIcon()
@@ -26,13 +29,14 @@ public class BlockItemData : ItemData
         ItemDataManager.Data.Add(FBO.GetPixels(64, 64)); 
     }
 
-    public override void RenderIcon(Vector2 position)
-    {   
+    public override void RenderIcon(Vector2 position, float scale) { RenderIcon((position.X, position.Y, 0), scale); }
+    public override void RenderIcon(Vector3 position, float scale) 
+    {
         IconShader.Bind();
         ItemDataManager.Image.Bind(TextureUnit.Texture0);
         IconVAO.Bind();
 
-        Matrix4 model = Matrix4.CreateTranslation(position.X, position.Y, 0);
+        Matrix4 model = Matrix4.CreateScale(scale) * Matrix4.CreateTranslation(position.X, position.Y, position.Z);
         Matrix4 projection = Matrix4.CreateOrthographicOffCenter(0, Game.Width, Game.Height, 0, -1, 1);
 
         GL.UniformMatrix4(IconModelLocation, true, ref model);

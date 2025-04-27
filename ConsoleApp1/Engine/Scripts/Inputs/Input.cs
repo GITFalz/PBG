@@ -66,6 +66,16 @@ public static class Input
     {
         return IsKeyDown(Keys.LeftControl) && IsKeyPressed(key);
     }
+
+    public static bool IsAnyKeyPressed(params Keys[] keys)
+    {
+        foreach (var k in keys)
+        {
+            if (IsKeyPressed(k)) 
+                return true;
+        }
+        return false;
+    }
     
     public static bool AreKeysPressed(params Keys[] keys)
     {

@@ -4,6 +4,8 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class Inventory
 {
+    public static List<Inventory> InventoryList = new List<Inventory>();
+
     public static ShaderProgram InventoryShader = new ShaderProgram("Inventory/Items/Items.vert", "Utils/ArrayImages.frag");
     public static VAO InventoryVAO = new VAO();
 
@@ -30,6 +32,10 @@ public class Inventory
 
     public int Width = 0;
     public int Height = 0;
+    public Vector2 Size = Vector2.Zero;
+    public Vector2 HalfSize = Vector2.Zero;
+
+    public Vector2 Offset = Vector2.Zero;
 
     public Vector2 Position = new Vector2(100, 100);
 
@@ -38,10 +44,20 @@ public class Inventory
     private bool _updateVisibility = false;
     private bool _updateData = false;
 
-    public UIController UIController = new UIController();
+    public UIController UIController;
+    public UICollection Collection;
 
+    public AnchorType AnchorType = AnchorType.TopLeft;
+
+    public int currentIndex = 0;
+
+    public double leftTimer = 0;
+    public double rightTimer = 0;
+ 
     public Inventory(int width, int height)
     {
+        InventoryList.Add(this);
+
         Items = new ItemSlot[width * height];
         IconDataList = new IconData[width * height];
         IconSSBO = new(new IconData[width * height]);
@@ -49,10 +65,13 @@ public class Inventory
 
         Width = width;
         Height = height;
+        Size = (width * 50 + 20, height * 50 + 20);
+        HalfSize = Size / 2;
 
         for (int i = 0; i < Items.Length; i++)
         {
-            Items[i] = new ItemSlot();
+            var item = ItemDataManager.GetItem("grass_block");
+            Items[i] = new ItemSlot(item, 1);
             Items[i].Visible = true;
             Items[i].Amount = 1;
         }
@@ -61,7 +80,7 @@ public class Inventory
         {
             for (int y = 0; y < height; y++)
             {
-                int index = x + y * height;
+                int index = x + y * width;
                 IconData iconData = new IconData
                 {
                     Position = new Vector2(x * 50, y * 50),
@@ -77,7 +96,9 @@ public class Inventory
 
         _updateVisibility = true;
 
-        UICollection collection = new UICollection("Inventory", UIController, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (Width * 50 + 20, Height * 50 + 20), (-10, -10, 0, 0), 0);
+        UIController = new();
+
+        Collection = new UICollection("Inventory", UIController, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (Width * 50 + 20, Height * 50 + 20), (-10, -10, 0, 0), 0);
 
         UIButton movingBar = new UIButton("MovingBar", UIController, AnchorType.TopLeft, PositionType.Relative, (0.8f, 0.8f, 0.8f, 1f), (0, 0, 0), (Width * 50 + 20, 20), (0, -20, 0, 0), 0, 10, (10, 0.05f), UIState.Interactable);
         movingBar.SetOnHold(MoveBar); 
@@ -90,14 +111,14 @@ public class Inventory
         
             for (int x = 0; x < width; x++)
             {
-                int index = x + y * height;
+                int index = x + y * width;
                 UICollection slotCollection = new UICollection("SlotCollection" + x + "" + y, UIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (52, 52), (0, 0, 0, 0), 0);
                 UIImage slotImage = new UIImage("Slot" + x + "" + y, UIController, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (52, 52), (0, 0, 0, 0), 0, 11, (10, 0.05f));
                 UIText iconCount = new UIText("IconCount" + x + "" + y, UIController, AnchorType.BottomLeft, PositionType.Relative, (1f, 1f, 1f, 1f), (0, 0, 0), (50, 50), (5, -5, 0, 0), 0);
-                iconCount.SetMaxCharCount(3).SetText("1", 1.2f).SetTextType(TextType.Numeric);
+                iconCount.SetMaxCharCount(3).SetText(Items[index].GetAmountToString(), 1.2f).SetTextType(TextType.Numeric);
                 iconCount.Depth = 20;
                 slotCollection.AddElements(slotImage, iconCount);
-                horizontalCollection.AddElement(slotCollection);
+                horizontalCollection.AddElement(slotCollection); 
                 IconCountText[index] = iconCount;
             }
 
@@ -106,9 +127,9 @@ public class Inventory
 
         UIImage background = new UIImage("Background", UIController, AnchorType.ScaleFull, PositionType.Relative, (0.8f, 0.8f, 0.8f, 1f), (0, 0, 0), (Width * 50 + 10, Height * 50 + 10), (0, 0, 0, 0), 0, 10, (10, 0.05f));
     
-        collection.AddElements(movingBar, background, verticalCollection);
+        Collection.AddElements(movingBar, background, verticalCollection);
 
-        UIController.AddElement(collection);
+        UIController.AddElement(Collection);
 
         UIController.SetPosition(new Vector3(Position.X, Position.Y, 0));
     }
@@ -118,9 +139,27 @@ public class Inventory
         Vector2 mouseDelta = Input.GetMouseDelta();
         if (mouseDelta != Vector2.Zero)
         {
-            Position += mouseDelta;
-            UIController.SetPosition(Position);
+            SetPosition(Position + mouseDelta);
         }
+    }
+
+    public void SetPosition(Vector2 position)
+    {
+        Position = position;
+        UIController.SetPosition(position);
+    }
+
+    public void Center(Vector2 position)
+    {
+        SetPosition(position - HalfSize);
+    }
+
+    public void Align()
+    {
+        if ((int)AnchorType >= 9)
+            AnchorType = AnchorType.MiddleCenter;
+
+        SetPosition(_getPosition[(int)AnchorType](Size, Offset));
     }
 
     public void SetVisibility(int index, bool visible)
@@ -129,6 +168,47 @@ public class Inventory
             return;
 
         Items[index].Visible = visible;
+        _updateVisibility = true;
+    }
+
+    public void ExchangeItem(int index)
+    {
+        if (index < 0 || index >= IconDataList.Length)
+            return;
+
+        Items[index].Exchange(SelectedItemManager.SelectedItem);
+        IconCountText[index].SetText(Items[index].GetAmountToString(), 1.2f).UpdateCharacters();
+        SelectedItemManager.UpdateSelectedItemText.Invoke();
+        _updateVisibility = true;
+    }
+
+    public void Transfer(int index)
+    {
+        if (index < 0 || index >= IconDataList.Length)
+            return;
+
+        Items[index].Transfer(SelectedItemManager.SelectedItem);
+        IconCountText[index].SetText(Items[index].GetAmountToString(), 1.2f).UpdateCharacters();
+        SelectedItemManager.UpdateSelectedItemText.Invoke();
+        _updateVisibility = true;
+    }
+
+    public void GatherAll()
+    {
+        for (int i = 0; i < IconDataList.Length; i++)
+        {
+            if (Items[i].item.IsEmpty())
+                continue;
+
+            if (Items[i].SameItem(SelectedItemManager.SelectedItem))
+            {
+                SelectedItemManager.SelectedItem.Add(Items[i]);
+                IconCountText[i].SetText(Items[i].GetAmountToString(), 1.2f).UpdateCharacters();
+                if (SelectedItemManager.SelectedItem.HasMaxStackSize())
+                    break;
+            }
+        }
+        SelectedItemManager.UpdateSelectedItemText.Invoke();
         _updateVisibility = true;
     }
 
@@ -148,7 +228,7 @@ public class Inventory
         }
 
         Items[index].Amount++;
-        IconCountText[index].SetText(Items[index].Amount.ToString(), 1.2f).UpdateCharacters();
+        IconCountText[index].SetText(Items[index].GetAmountToString(), 1.2f).UpdateCharacters();
     }
 
     public void RemoveFrom(int index)
@@ -169,7 +249,7 @@ public class Inventory
         }
         else
         {
-            IconCountText[index].SetText(Items[index].Amount.ToString(), 1.2f).UpdateCharacters();
+            IconCountText[index].SetText(Items[index].GetAmountToString(), 1.2f).UpdateCharacters();
         }   
     }
 
@@ -178,7 +258,7 @@ public class Inventory
         VisibleItems = 0;
         for (int i = 0; i < Items.Length; i++)
         {
-            if (Items[i].Visible)
+            if (!Items[i].item.IsEmpty() && Items[i].Visible)
             {
                 IconDataList[VisibleItems].Data.Y = i;
                 VisibleItems++;
@@ -192,17 +272,36 @@ public class Inventory
         IconSSBO.Update(IconDataList, 0);
     }
 
+    public void Resize()
+    {
+        UIController.Resize();
+        Align();
+    }
+
+    public static void ResizeAll()
+    {
+        foreach (var inventory in InventoryList)
+        {
+            inventory.Resize();
+        }
+    }
+
     public void Update()
     {
         if (Input.IsMousePressed(MouseButton.Right))
+        {
+            rightTimer = 0;
+        }
+        if (Input.IsMouseDown(MouseButton.Right))
         {
             Vector2 mousePos = Input.GetMousePosition() - Position;
             mousePos = Mathf.FloorToInt(mousePos /= 50);
             if (mousePos.X >= 0 && mousePos.Y >= 0 && mousePos.X < Width && mousePos.Y < Height)
             {
-                int index = (int)mousePos.X + (int)mousePos.Y * Height;
-                if (index >= 0 || index < IconDataList.Length)
-                    AddTo(index);   
+                int index = (int)mousePos.X + (int)mousePos.Y * Width;
+                if (index != currentIndex)
+                    Transfer(index);
+                currentIndex = index;
             }
         }
         if (Input.IsMousePressed(MouseButton.Left))
@@ -211,10 +310,20 @@ public class Inventory
             mousePos = Mathf.FloorToInt(mousePos /= 50);
             if (mousePos.X >= 0 && mousePos.Y >= 0 && mousePos.X < Width && mousePos.Y < Height)
             {
-                int index = (int)mousePos.X + (int)mousePos.Y * Height;
+                int index = (int)mousePos.X + (int)mousePos.Y * Width;
                 if (index >= 0 || index < IconDataList.Length)
-                    RemoveFrom(index);   
+                {
+                    if (leftTimer < 0.2f)
+                    {
+                        GatherAll();
+                    }
+                    else
+                    {
+                        ExchangeItem(index);
+                    }
+                }
             }
+            leftTimer = 0;
         }
 
         if (_updateVisibility)
@@ -230,6 +339,9 @@ public class Inventory
         }
 
         UIController.Test();
+
+        rightTimer += GameTime.DeltaTime;
+        leftTimer += GameTime.DeltaTime;
     }
 
     public void Render()
@@ -255,6 +367,20 @@ public class Inventory
         IconSSBO.Unbind();
         InventoryShader.Unbind();
     }
+
+
+    private static readonly Func<Vector2, Vector2, Vector2>[] _getPosition =
+    [
+        (size, offset) => (offset.X,                                offset.Y),                                  // TopLeft
+        (size, offset) => (offset.X + Game.Width / 2 - size.X / 2,  offset.Y),                                  // TopCenter
+        (size, offset) => (offset.X + Game.Width - size.X,          offset.Y),                                  // TopRight
+        (size, offset) => (offset.X,                                offset.Y + Game.Height / 2 - size.Y / 2),   // MiddleLeft
+        (size, offset) => (offset.X + Game.Width / 2 - size.X / 2,  offset.Y + Game.Height / 2 - size.Y / 2),   // MiddleCenter
+        (size, offset) => (offset.X + Game.Width - size.X,          offset.Y + Game.Height / 2 - size.Y / 2),   // MiddleRight
+        (size, offset) => (offset.X,                                offset.Y + Game.Height - size.Y),           // BottomLeft
+        (size, offset) => (offset.X + Game.Width / 2 - size.X / 2,  offset.Y + Game.Height - size.Y),           // BottomCenter
+        (size, offset) => (offset.X + Game.Width - size.X,          offset.Y + Game.Height - size.Y),           // BottomRight
+    ];
 }
 
 public struct IconData {

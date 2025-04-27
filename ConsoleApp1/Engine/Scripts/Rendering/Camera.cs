@@ -55,6 +55,7 @@ public class Camera
     private CameraMode _cameraMode = CameraMode.Fixed;
     
     private Dictionary<CameraMode, Action> _cameraModes;
+    private Action _updateAction = () => { };
     
     public Action FirstMove = () => { };
 
@@ -91,6 +92,8 @@ public class Camera
         };
 
         FirstMove = FirstMove1;
+
+        _updateAction = _cameraModes[_cameraMode];
     }
 
     public Matrix4 GetViewMatrix()
@@ -211,6 +214,7 @@ public class Camera
     public void SetCameraMode(CameraMode mode)
     {
         _cameraMode = mode;
+        _updateAction = _cameraModes[mode];
     }
 
     public CameraMode GetCameraMode()
@@ -259,12 +263,22 @@ public class Camera
         return Yaw;
     }
 
+    public void Lock()
+    {
+        _updateAction = () => { };
+    }
+
+    public void Unlock()
+    {
+        _updateAction = _cameraModes[_cameraMode];
+    }
+
     public void Update()
     {
         _lastPosition = Position;
         _lastFront = front;
         FOV = Mathf.Lerp(FOV, targetFOV, FOV_SMOTH_FACTOR * GameTime.DeltaTime);
-        _cameraModes[_cameraMode].Invoke();
+        _updateAction.Invoke();
     }
     
     public void UpdateProjectionMatrix(int width, int height)

@@ -65,7 +65,7 @@ public class PhysicsBody : ScriptingNode
 
     void Update()
     {
-        if (!PlayerData.CanMove)
+        if (!PlayerData.TestInputs)
             return;
 
         Transform.Position = Vector3.Lerp(Transform.Position, physicsPosition, GameTime.DeltaTime * interpolationSpeed);
@@ -73,7 +73,7 @@ public class PhysicsBody : ScriptingNode
     
     void FixedUpdate()
     {
-        if (!PlayerData.CanMove)
+        if (!PlayerData.TestInputs)
             return;
 
         previousPosition = physicsPosition;

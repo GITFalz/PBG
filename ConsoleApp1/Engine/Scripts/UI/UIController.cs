@@ -47,6 +47,9 @@ public class UIController
 
     public Vector3 _localPosition = (0, 0, 0);
 
+    /// <summary>
+    /// Make sure to call this constructor inside of another constructor (no static fields), otherwise the ui will not render and will trow errors.
+    /// </summary>
     public UIController()
     {
         Controllers.Add(this);
@@ -153,7 +156,7 @@ public class UIController
     
     private void Internal_RemoveElement(UIElement element)
     {
-        if (element.PositionType == PositionType.Absolute)
+        if (element.PositionType == PositionType.Absolute) 
             AbsoluteElements.Remove(element);
 
         if (element is UIPanel panel)

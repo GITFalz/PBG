@@ -28,7 +28,7 @@ public class PlayerDashState : PlayerGameBaseState
         input = Input.GetMovementInput();
         timer += GameTime.DeltaTime;
 
-        if (Input.IsKeyPressed(Keys.E))
+        if (Input.IsKeyPressed(Keys.F))
         {
             playerGameState.SwitchState(playerGameState.GrapplingState);
             return;

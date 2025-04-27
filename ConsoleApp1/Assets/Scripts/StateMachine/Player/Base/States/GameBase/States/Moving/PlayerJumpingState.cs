@@ -22,7 +22,7 @@ public class PlayerJumpingState : PlayerGameBaseState
     {
         input = Input.GetMovementInput();
 
-        if (Input.IsKeyPressed(Keys.E))
+        if (Input.IsKeyPressed(Keys.F))
         {
             playerGameState.SwitchState(playerGameState.GrapplingState);
             return;

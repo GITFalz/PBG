@@ -3,19 +3,21 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class MenuManager : ScriptingNode
 {
+    public static MenuManager Instance;
     public static bool IsOpen { get; private set; } = false;
 
     public UIController MainMenuController;
-
-    private Action _mainMenuAction = () => {};
 
     private Action _updateAction = () => {};
     private Action _renderAction = () => {};
 
     private bool _started = false;
 
+    public static bool CanOpenMenu = true;
+
     public MenuManager()
     {
+        Instance = this;
         MainMenuController = new UIController();
     }
 
@@ -23,8 +25,6 @@ public class MenuManager : ScriptingNode
     {
         if (_started)
             return;
-
-        _mainMenuAction = OpenMainMenu;
 
         UICollection mainMenuCollection = new UICollection("mainMenuCollection", MainMenuController, AnchorType.MiddleCenter, PositionType.Absolute, (0, 0, 0), (600, 800), (0, 0, 0, 0), 0);
 
@@ -52,6 +52,8 @@ public class MenuManager : ScriptingNode
         MainMenuController.AddElements(mainMenuCollection);
 
         _started = true;
+
+        _updateAction = ClosedUpdate;  
     }
 
     void Awake()
@@ -66,11 +68,6 @@ public class MenuManager : ScriptingNode
 
     void Update()
     {
-        if (Input.IsKeyPressed(Keys.Escape))
-        {
-            _mainMenuAction.Invoke();
-        }
-
         _updateAction.Invoke();
     }
 
@@ -83,37 +80,65 @@ public class MenuManager : ScriptingNode
     public void OpenMainMenu()
     {
         Console.WriteLine("Opening Main Menu");
-        _mainMenuAction = CloseMainMenu;
         Game.SetCursorState(CursorState.Normal);
 
-        _updateAction = UpdateMainMenu;
-        _renderAction = RenderMainMenu;
+        _updateAction = OpenedUpdate;
+        _renderAction = OpenedRender;
 
-        PlayerData.CanMove = false;
+        PlayerData.TestInputs = false;
+        PlayerData.UpdatePhysics = false;
         IsOpen = true;
     }
 
     public void CloseMainMenu()
     {
         Console.WriteLine("Closing Main Menu");
-        _mainMenuAction = OpenMainMenu;
 
         if (Game.CurrentScene?.Name == "World")
             Game.SetCursorState(CursorState.Grabbed);
 
-        _updateAction = () => { };
+        _updateAction = ClosedUpdate;
         _renderAction = () => { };
 
-        PlayerData.CanMove = true;
+        PlayerData.TestInputs = true;
+        PlayerData.UpdatePhysics = true;
         IsOpen = false;
     }
 
-    public void UpdateMainMenu()
+    public void OpenedUpdate()
     {
+        if (Input.IsKeyPressed(Keys.Escape) && CanOpenMenu)
+        {
+            CloseMainMenu();
+        }
+
         MainMenuController.Update();
     }
 
-    public void RenderMainMenu()
+    public void WaitForNextFrameUpdate()
+    {
+        Console.WriteLine("Waiting for next frame");
+        if (IsOpen)
+        {
+            _updateAction = ClosedUpdate;
+            _renderAction = () => { };
+        }
+        else
+        {
+            _updateAction = OpenedUpdate;
+            _renderAction = OpenedRender;
+        }
+    }
+
+    public void ClosedUpdate()
+    {
+        if (Input.IsKeyPressed(Keys.Escape) && CanOpenMenu)
+        {
+            OpenMainMenu();
+        }
+    }
+
+    public void OpenedRender()
     {
         MainMenuController.RenderNoDepthTest();
     }
@@ -135,4 +160,22 @@ public class MenuManager : ScriptingNode
         Game.LoadScene("WorldNoiseEditor");
     }
     #endregion
+
+
+    public static void LockThisFrame()
+    {   
+        Instance._renderAction = () => { };
+        Instance._updateAction = () => { 
+            if (IsOpen)
+            {
+                Instance._updateAction = Instance.OpenedUpdate;
+                Instance._renderAction = Instance.OpenedRender;
+            }
+            else
+            {
+                Instance._updateAction = Instance.ClosedUpdate;
+                Instance._renderAction = () => { };
+            }
+        };
+    }
 }

@@ -201,8 +201,16 @@ public class Chunk
     {   
         lock(this)
         {
-            _ibo.Renew(_indices);
-            VertexVBO.Renew(VertexDataList);
+            try
+            {
+                _ibo.Renew(_indices);
+                VertexVBO.Renew(VertexDataList);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return;
+            }
 
             int stride = Marshal.SizeOf(typeof(VertexData));
             _chunkVao.Bind();

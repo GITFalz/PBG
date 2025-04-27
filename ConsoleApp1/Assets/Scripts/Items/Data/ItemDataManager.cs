@@ -3,7 +3,8 @@ using OpenTK.Mathematics;
 
 public static class ItemDataManager
 {
-    public static List<ItemData> AllItems = new List<ItemData>();
+    public static Dictionary<string, ItemData> AllItems = [];
+    public static EmptyItemData Empty = new EmptyItemData();
 
     public static FBO FBO = new FBO(64, 64, FBOType.Color);
     public static ShaderProgram BlockShader = new ShaderProgram("Utils/Cube.vert", "Inventory/Data/Block.frag");
@@ -53,7 +54,7 @@ public static class ItemDataManager
         GL.UniformMatrix4(CubeProjectionLocation, true, ref projection);
         GL.Uniform1(CubeTextureLocation, 0);
 
-        foreach (ItemData item in AllItems)
+        foreach (var (_, item) in AllItems)
         {
             item.GenerateIcon();
         }
@@ -68,5 +69,11 @@ public static class ItemDataManager
         GL.Viewport(0, 0, Game.Width, Game.Height);
 
         Image.Renew(Data, 64, 64);
+    }
+    
+    public static ItemData GetItem(string name)
+    {
+        name = AllItems.ContainsKey(name) ? name : "empty";
+        return AllItems[name];
     }
 }

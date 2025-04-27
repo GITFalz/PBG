@@ -29,7 +29,7 @@ public class PlayerSprintingState : PlayerGameBaseState
             return;
         }
 
-        if (Input.IsKeyPressed(Keys.E))
+        if (Input.IsKeyPressed(Keys.F))
         {
             playerGameState.SwitchState(playerGameState.GrapplingState);
             return;

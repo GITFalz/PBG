@@ -21,7 +21,9 @@ public abstract class ItemData
     protected static int CubeTextureLocation => ItemDataManager.CubeTextureLocation;
     protected static int CubeIndicesLocation => ItemDataManager.CubeIndicesLocation;
 
-    public int Index;
+    public string Name = "empty";
+    public int Index = -1;
+    public int MaxStackSize = 0;
 
     static ItemData()
     {
@@ -38,12 +40,23 @@ public abstract class ItemData
         FBO.Bind();
     }
 
-    public ItemData()
+    public void Base()
     {
-        Index = ItemDataManager.AllItems.Count;
-        ItemDataManager.AllItems.Add(this);
-    }
+        Index = ItemDataManager.AllItems.Count - 1;
+        ItemDataManager.AllItems.Add(Name, this);
+    } 
 
     public abstract void GenerateIcon();
-    public abstract void RenderIcon(Vector2 position);
+    public abstract void RenderIcon(Vector2 position, float scale);
+    public abstract void RenderIcon(Vector3 position, float scale);
+    public bool IsEmpty() => this is EmptyItemData;
+
+    public override bool Equals(object? obj)
+    {
+        if (obj is ItemData itemData)
+        {
+            return Index == itemData.Index;
+        }
+        return false;
+    }
 }

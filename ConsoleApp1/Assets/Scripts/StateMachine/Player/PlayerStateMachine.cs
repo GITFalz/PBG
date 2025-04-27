@@ -123,7 +123,7 @@ public class PlayerStateMachine : ScriptingNode
             ToggleView();
         }
 
-        if (!PlayerData.CanMove || camera.GetCameraMode() == CameraMode.Free)
+        if (!PlayerData.TestInputs || camera.GetCameraMode() == CameraMode.Free)
             return;
 
         if (Input.IsKeyDown(Keys.J))
@@ -184,7 +184,7 @@ public class PlayerStateMachine : ScriptingNode
     
     void FixedUpdate()
     {
-        if (!PlayerData.CanMove || Game.Camera.GetCameraMode() == CameraMode.Free || !Game.MoveTest)
+        if (!PlayerData.UpdatePhysics || Game.Camera.GetCameraMode() == CameraMode.Free || !Game.MoveTest)
             return;
         
         _currentState.FixedUpdate(this);
