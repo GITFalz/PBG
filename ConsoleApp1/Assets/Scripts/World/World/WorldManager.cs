@@ -7,6 +7,7 @@ using Veldrid;
 public class WorldManager : ScriptingNode
 {
     public static ShaderProgram _wireframeShader = new ShaderProgram("World/Wireframe.vert", "World/Wireframe.frag");
+    public static ShaderProgram newTestShader = new ShaderProgram("World/World.vert", "World/World.frag");  
 
     private static RenderType _renderType = RenderType.Solid;
     private Action _render = () => { };
@@ -182,11 +183,11 @@ public class WorldManager : ScriptingNode
         Matrix4 lightView = Matrix4.Identity;
         Matrix4 lightProjection = Matrix4.Identity;
 
-        GL.Disable(EnableCap.StencilTest);
         GL.Enable(EnableCap.DepthTest);
         GL.DepthFunc(DepthFunction.Less);
         GL.Enable(EnableCap.CullFace);
 
+        /*
         if (DoRealtimeShadows)
         {
             lightView = GetViewMatrix();
@@ -229,13 +230,24 @@ public class WorldManager : ScriptingNode
             // Render terrain
             GL.ColorMask(true, true, true, true);
         }
+        */
 
         Matrix4 model = Matrix4.Identity; 
-        WorldShader.Bind();
+        Matrix4 projection = camera.ProjectionMatrix;
+        Matrix4 view = camera.ViewMatrix;
 
-        WorldShader.UniformGeneral();
+        newTestShader.Bind();
 
-        //DepthPrepassFBO.BindDepthTexture(TextureUnit.Texture1);
+        int modelLocation = newTestShader.GetLocation("model");
+        int viewLocation = newTestShader.GetLocation("view");
+        int projectionLocation = newTestShader.GetLocation("projection");
+        int textureArrayLocation = newTestShader.GetLocation("textureArray");
+
+        GL.UniformMatrix4(viewLocation, true, ref view);
+        GL.UniformMatrix4(projectionLocation, true, ref projection);
+        GL.Uniform1(textureArrayLocation, 0);
+
+        WorldShader.Textures.Bind(TextureUnit.Texture0);
 
         foreach (var (_, chunk) in ChunkManager.ActiveChunks)
         {   
@@ -245,28 +257,32 @@ public class WorldManager : ScriptingNode
             renderCount++;
             Info.VertexCount += chunk.VertexCount;
             model = Matrix4.CreateTranslation(chunk.GetWorldPosition());
-            WorldShader.UniformModel(ref model);
-            chunk.Render.Invoke();
+            GL.UniformMatrix4(modelLocation, true, ref model);
+            chunk.RenderChunk();
         }
+
+        WorldShader.Textures.Unbind();
+
+        newTestShader.Unbind();
 
         Shader.Error("After Render End0");
 
         model = Matrix4.Identity;
-        WorldShader.UniformModel(ref model);
+        //WorldShader.UniformModel(ref model);
 
         Shader.Error("After Render End1");
         
-        WorldShader.Unbind();
+        //WorldShader.Unbind();
 
         //DepthPrepassFBO.UnbindTexture(TextureUnit.Texture1);
 
         Shader.Error("After Render End2");
 
-        if (renderCount != _oldRenderedChunks)
-        {
-            Info.ChunkRenderingText.SetText($"Chunks: {renderCount}").UpdateCharacters();
-            _oldRenderedChunks = renderCount;
-        }
+        //if (renderCount != _oldRenderedChunks)
+        //{
+        //    Info.ChunkRenderingText.SetText($"Chunks: {renderCount}").UpdateCharacters();
+        //    _oldRenderedChunks = renderCount;
+        //}
 
         Shader.Error("After Render End3");
     }
@@ -341,7 +357,7 @@ public class WorldManager : ScriptingNode
                 continue;
 
             renderCount++;
-            Info.VertexCount += chunk.GridAlignedFaces.Count;
+            Info.VertexCount += (int)chunk.VertexCount;
             Matrix4 model = Matrix4.CreateTranslation(chunk.GetWorldPosition());
             GL.UniformMatrix4(modelLocation, true, ref model);
             chunk.Render.Invoke();
@@ -374,7 +390,7 @@ public class WorldManager : ScriptingNode
             for (int i = 0; i < x; i++)
             {
                 startPosition.X++;
-                for (int y = -1; y < 4; y++)
+                for (int y = -1; y < World.yChunkCount; y++)
                 {
                     chunkPositions.Add(new Vector3i(startPosition.X, y, startPosition.Y) * 32 + _currentPlayerChunk);
                 }
@@ -383,7 +399,7 @@ public class WorldManager : ScriptingNode
             for (int i = 0; i < x; i++)
             {
                 startPosition.Y++;
-                for (int y = -1; y < 4; y++)
+                for (int y = -1; y < World.yChunkCount; y++)
                 {
                     chunkPositions.Add(new Vector3i(startPosition.X, y, startPosition.Y) * 32 + _currentPlayerChunk);
                 }
@@ -392,7 +408,7 @@ public class WorldManager : ScriptingNode
             for (int i = 0; i < x; i++)
             {
                 startPosition.X--;
-                for (int y = -1; y < 4; y++)
+                for (int y = -1; y < World.yChunkCount; y++)
                 {
                     chunkPositions.Add(new Vector3i(startPosition.X, y, startPosition.Y) * 32 + _currentPlayerChunk);
                 }
@@ -401,7 +417,7 @@ public class WorldManager : ScriptingNode
             for (int i = 0; i < x; i++)
             {
                 startPosition.Y--;
-                for (int y = -1; y < 4; y++)
+                for (int y = -1; y < World.yChunkCount; y++)
                 {
                     chunkPositions.Add(new Vector3i(startPosition.X, y, startPosition.Y) * 32 + _currentPlayerChunk);
                 }
@@ -524,7 +540,7 @@ public class WorldManager : ScriptingNode
             return false;
 
         chunk.blockStorage.SetBlock(VoxelData.BlockToRelativePosition(blockPosition), block);
-        ChunkManager.RegenerateMeshQueue.Enqueue(chunk);
+        ChunkManager.ReloadChunk(chunk);
         return true;
     }
 

@@ -227,13 +227,13 @@ public class Game : GameWindow
         TransformNode uiNode = new TransformNode();
         uiNode.AddChild(new UIEditor());
 
-        _worldScene.AddNode(worldGenerationNode, playerNode, menuNode);
+        _worldScene.AddNode(playerNode, worldGenerationNode, menuNode);
         _worldNoiseEditorScene.AddNode(noiseEditorNode, menuNode);
         _UIEditorScene.AddNode(uiNode, menuNode);
 
         AddScenes(_worldScene, _worldNoiseEditorScene, _UIEditorScene);
-        LoadScene("WorldNoiseEditor");
-        //LoadScene("World");
+        //LoadScene("WorldNoiseEditor");
+        LoadScene("World");
 
         _popUp = new PopUp();
 
@@ -287,6 +287,8 @@ public class Game : GameWindow
     
     protected override void OnUnload()
     {
+        CurrentScene?.OnExit();
+        
         BufferBase.Delete();
         IDBOBase.Delete();
 
@@ -296,7 +298,6 @@ public class Game : GameWindow
         isRunning = false;
         _physicsThread.Join();
         
-        CurrentScene?.OnExit();
         Timer.Stop();
         UIController.ClearAll();
         

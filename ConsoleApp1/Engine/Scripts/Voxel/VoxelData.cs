@@ -69,88 +69,15 @@ public static class VoxelData
         (x, z) => 31 - x,
     };
 
-    public static OldAnimationMesh GetEntityBoxMesh(OldAnimationMesh mesh, Vector3 size, Vector3 offset, int color)
-    {
-        MeshHelper.GenerateMeshIndices(mesh);
-        mesh.Uvs.AddRange(VoxelData.UVTable);
-
-        mesh.Vertices.Add(new Vector3(0, 0, 0) + offset);
-        mesh.Vertices.Add(new Vector3(0, size.Y, 0) + offset);
-        mesh.Vertices.Add(new Vector3(size.X, size.Y, 0) + offset);
-        mesh.Vertices.Add(new Vector3(size.X, 0, 0) + offset);
-        
-        mesh.TextureIndices.Add(color);
-        mesh.TextureIndices.Add(color);
-        mesh.TextureIndices.Add(color);
-        mesh.TextureIndices.Add(color);
-        
-        MeshHelper.GenerateMeshIndices(mesh);
-        mesh.Uvs.AddRange(VoxelData.UVTable);
-        
-        mesh.Vertices.Add(new Vector3(size.X, 0, 0) + offset);
-        mesh.Vertices.Add(new Vector3(size.X, size.Y, 0) + offset);
-        mesh.Vertices.Add(new Vector3(size.X, size.Y, size.Z) + offset);
-        mesh.Vertices.Add(new Vector3(size.X, 0, size.Z) + offset);
-        
-        mesh.TextureIndices.Add(color);
-        mesh.TextureIndices.Add(color);
-        mesh.TextureIndices.Add(color);
-        mesh.TextureIndices.Add(color);
-        
-        MeshHelper.GenerateMeshIndices(mesh);
-        mesh.Uvs.AddRange(VoxelData.UVTable);
-        
-        mesh.Vertices.Add(new Vector3(0, size.Y, 0) + offset);
-        mesh.Vertices.Add(new Vector3(0, size.Y, size.Z) + offset);
-        mesh.Vertices.Add(new Vector3(size.X, size.Y, size.Z) + offset);
-        mesh.Vertices.Add(new Vector3(size.X, size.Y, 0) + offset);
-        
-        mesh.TextureIndices.Add(color);
-        mesh.TextureIndices.Add(color);
-        mesh.TextureIndices.Add(color);
-        mesh.TextureIndices.Add(color);
-        
-        MeshHelper.GenerateMeshIndices(mesh);
-        mesh.Uvs.AddRange(VoxelData.UVTable);
-        
-        mesh.Vertices.Add(new Vector3(0, 0, size.Z) + offset);
-        mesh.Vertices.Add(new Vector3(0, size.Y, size.Z) + offset);
-        mesh.Vertices.Add(new Vector3(0, size.Y, 0) + offset);
-        mesh.Vertices.Add(new Vector3(0, 0, 0) + offset);
-        
-        mesh.TextureIndices.Add(color);
-        mesh.TextureIndices.Add(color);
-        mesh.TextureIndices.Add(color);
-        mesh.TextureIndices.Add(color);
-        
-        MeshHelper.GenerateMeshIndices(mesh);
-        mesh.Uvs.AddRange(VoxelData.UVTable);
-        
-        mesh.Vertices.Add(new Vector3(size.X, 0, size.Z) + offset);
-        mesh.Vertices.Add(new Vector3(0, 0, size.Z) + offset);
-        mesh.Vertices.Add(new Vector3(0, 0, 0) + offset);
-        mesh.Vertices.Add(new Vector3(size.X, 0, 0) + offset);
-        
-        mesh.TextureIndices.Add(color);
-        mesh.TextureIndices.Add(color);
-        mesh.TextureIndices.Add(color);
-        mesh.TextureIndices.Add(color);
-        
-        MeshHelper.GenerateMeshIndices(mesh);
-        mesh.Uvs.AddRange(VoxelData.UVTable);
-        
-        mesh.Vertices.Add(new Vector3(size.X, 0, size.Z) + offset);
-        mesh.Vertices.Add(new Vector3(size.X, size.Y, size.Z) + offset);
-        mesh.Vertices.Add(new Vector3(0, size.Y, size.Z) + offset);
-        mesh.Vertices.Add(new Vector3(0, 0, size.Z) + offset);
-        
-        mesh.TextureIndices.Add(color);
-        mesh.TextureIndices.Add(color);
-        mesh.TextureIndices.Add(color);
-        mesh.TextureIndices.Add(color);
-
-        return mesh;
-    }
+    public static readonly Func<int, int, Vector3[]>[] GetSideOffsets =
+    [
+        (width, height) => [(0, 0, 0), (0, height, 0), (width, height, 0), (width, 0, 0)],
+        (width, height) => [(1, 0, 0), (1, height, 0), (1, height, width), (1, 0, width)],
+        (width, height) => [(0, 1, 0), (0, 1, height), (width, 1, height), (width, 1, 0)],
+        (width, height) => [(0, 0, width), (0, height, width), (0, height, 0), (0, 0, 0)],
+        (width, height) => [(0, 0, height), (0, 0, 0), (width, 0, 0), (width, 0, height)],
+        (width, height) => [(width, 0, 1), (width, height, 1), (0, height, 1), (0, 0, 1)],
+    ];
 
     public static void GenerateStandardMeshBox(OldAnimationMesh mesh, Vector3 size, Vector3 position, Vector3 rotation, int color)
     {

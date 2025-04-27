@@ -49,12 +49,14 @@ public class VBO<T> : VBOBase where T : struct
     {
         GL.DeleteBuffer(ID); // The buffer needs to be deleted before creating a new one
         Create(data);
+        GL.Finish();
     }
 
     private void Create(T[] data)
     {
         ID = GL.GenBuffer();
-        GL.BindBuffer(BufferTarget.ArrayBuffer, ID);
+        Bind();
         GL.BufferData(BufferTarget.ArrayBuffer, data.Length * Marshal.SizeOf(typeof(T)), data, BufferUsageHint.DynamicDraw);
+        Unbind();
     }
 }

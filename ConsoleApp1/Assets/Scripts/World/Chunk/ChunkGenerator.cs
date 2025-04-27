@@ -297,7 +297,7 @@ public class ChunkGenerator
                             
                                 chunkData.HasBlocks = true;
 
-                                chunkData.AddFace(position, (byte)(width - 1), (byte)(height - 1), id, (byte)side);
+                                chunkData.AddFace(position, width, height, side, id);
                             }
                         }
                     }

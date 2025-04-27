@@ -192,6 +192,11 @@ public class PlayerStateMachine : ScriptingNode
 
     void Render()
     {
+        GL.Enable(EnableCap.DepthTest);
+        GL.DepthFunc(DepthFunction.Less);
+        GL.Enable(EnableCap.CullFace);
+        GL.CullFace(TriangleFace.Back);
+
         Camera camera = Game.Camera;
 
         _shaderProgram.Bind();

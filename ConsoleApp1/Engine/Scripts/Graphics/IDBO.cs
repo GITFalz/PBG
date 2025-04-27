@@ -18,10 +18,14 @@ public struct DrawElementsIndirectCommand
     public uint baseInstance;
 }
 
-public class IDBOBase
+public abstract class IDBOBase : BufferBase
 {
-    public static List<IDBOBase> IDBOs = new List<IDBOBase>();
     public int ID;
+    public int ElementCount;
+
+    private static int _bufferCount = 0;
+
+    public IDBOBase() : base() { _bufferCount++; }
     
     public void Bind()
     {
@@ -33,62 +37,61 @@ public class IDBOBase
         GL.BindBuffer(BufferTarget.DrawIndirectBuffer, 0);
     }
 
-    public static void Delete()
+    public override int GetBufferCount()
     {
-        foreach (var idbo in IDBOs)
-            GL.DeleteBuffer(idbo.ID);
-        IDBOs.Clear();
+        return _bufferCount;
+    }
+
+    public override string GetTypeName()
+    {
+        return "IDBO";
     }
 }
 
 public class ElementIDBO : IDBOBase
 {
-    public List<DrawElementsIndirectCommand> Commands { get; private set; }
-
-    public ElementIDBO(List<DrawElementsIndirectCommand> commands)
+    public ElementIDBO(List<DrawElementsIndirectCommand> commands) : base()
     {
-        Commands = commands;
         ID = GL.GenBuffer();
-        Create();
-        IDBOs.Add(this);
+        Create(commands.ToArray());
     }
 
-    private void Create()
+    private void Create(DrawElementsIndirectCommand[] commands)
     {
         Bind();
-        GL.BufferData(BufferTarget.DrawIndirectBuffer, Commands.Count * Marshal.SizeOf<DrawElementsIndirectCommand>(), Commands.ToArray(), BufferUsageHint.StaticDraw);
+        ElementCount = commands.Length;
+        GL.BufferData(BufferTarget.DrawIndirectBuffer, commands.Length * Marshal.SizeOf<DrawElementsIndirectCommand>(), commands, BufferUsageHint.StaticDraw);
         Unbind();
     }
 
-    public void SetCommands(List<DrawElementsIndirectCommand> commands)
+    public void Renew(List<DrawElementsIndirectCommand> commands) => Renew(commands.ToArray());
+    public void Renew(DrawElementsIndirectCommand[] commands)
     {
-        Commands = commands;
-        Create();
+        GL.DeleteBuffer(ID);
+        Create(commands);
     }
 }
 
 public class ArrayIDBO : IDBOBase
 {
-    public List<DrawArraysIndirectCommand> Commands { get; private set; }
-
-    public ArrayIDBO(List<DrawArraysIndirectCommand> commands)
+    public ArrayIDBO(List<DrawArraysIndirectCommand> commands) : base()
     {
-        Commands = commands;
         ID = GL.GenBuffer();
-        Create();
-        IDBOs.Add(this);
+        Create(commands.ToArray());
     }
 
-    private void Create()
+    private void Create(DrawArraysIndirectCommand[] commands)
     {
         Bind();
-        GL.BufferData(BufferTarget.DrawIndirectBuffer, Commands.Count * Marshal.SizeOf<DrawArraysIndirectCommand>(), Commands.ToArray(), BufferUsageHint.StaticDraw);
+        ElementCount = commands.Length;
+        GL.BufferData(BufferTarget.DrawIndirectBuffer, commands.Length * Marshal.SizeOf<DrawArraysIndirectCommand>(), commands, BufferUsageHint.StaticDraw);
         Unbind();
     }
 
-    public void SetCommands(List<DrawArraysIndirectCommand> commands)
+    public void Renew(List<DrawArraysIndirectCommand> commands) => Renew(commands.ToArray());
+    public void Renew(DrawArraysIndirectCommand[] commands)
     {
-        Commands = commands;
-        Create();
+        GL.DeleteBuffer(ID);
+        Create(commands);
     }
 }

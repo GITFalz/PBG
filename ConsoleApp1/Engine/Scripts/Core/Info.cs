@@ -28,6 +28,7 @@ public class Info
     private static VAO _blockVao = new VAO();
     private static SSBO<InfoBlockData> _blockSSBO = new();
     private static List<InfoBlockData> _blockData = [];
+
     private static ConcurrentBag<InfoBlockData> _blocks = new ConcurrentBag<InfoBlockData>();
     private static ShaderProgram _blockShader = new ShaderProgram("Info/InfoBlock.vert", "Info/InfoBlock.frag");
 
@@ -98,7 +99,6 @@ public class Info
 
     public static void GenerateBlocks()
     {
-        _blockVao.Renew();
         _blockSSBO.Renew(_blockData.ToArray());
     }
 
@@ -142,7 +142,7 @@ public class Info
                     };
                     commands.Add(command);
                 }
-                indirectBuffer = new ArrayIDBO(commands);
+                indirectBuffer.Renew(commands);
                 _updateBlocks = () => { };
             };
         } 
@@ -174,7 +174,7 @@ public class Info
         _blockSSBO.Bind(1);
         indirectBuffer.Bind();
 
-        GL.MultiDrawArraysIndirect(PrimitiveType.Triangles, IntPtr.Zero, indirectBuffer.Commands.Count, 0);
+        GL.MultiDrawArraysIndirect(PrimitiveType.Triangles, IntPtr.Zero, indirectBuffer.GetBufferCount(), 0);
         
         _blockSSBO.Unbind();
         _blockVao.Unbind();

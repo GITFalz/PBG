@@ -138,8 +138,12 @@ public static class NoiseNodeManager
             index++;
         }
 
+        _connectorLineVAO.Bind();
+
         _connectorLineVBO.Renew(_connectorLineVertices);
-        _connectorLineVAO.LinkToVAO(0, 3, _connectorLineVBO);
+        _connectorLineVAO.LinkToVAO(0, 3, VertexAttribPointerType.Float, 0, 0, _connectorLineVBO); 
+
+        _connectorLineVAO.Unbind();
 
         Compile();
     }
@@ -619,7 +623,9 @@ public static class NoiseNodeManager
 
         _connectorLineVAO.Bind();
 
+
         GL.DrawArrays(PrimitiveType.Lines, 0, _connectorLineVertices.Count);
+
 
         _connectorLineVAO.Unbind();
 

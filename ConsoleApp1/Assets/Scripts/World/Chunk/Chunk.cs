@@ -1,4 +1,5 @@
-﻿using OpenTK.Graphics.OpenGL4;
+﻿using System.Runtime.InteropServices;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using Vortice.Mathematics;
 
@@ -50,11 +51,20 @@ public class Chunk
     public bool HasBlocks = false;
     public int VertexCount = 0;
 
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct VertexData
+    {
+        public Vector3 Position;
+        public uint TextureIndex;
+    }
+
     private VAO _chunkVao = new VAO();
-    public SSBO <Vector2i>VertexSSBO = new(new List<Vector2i>());
-    public SSBO<int> BlockMapSSBO = new(new int[1024]);
-    private List<Vector2i> _gridAlignedData = [];
-    public List<Vector2i> GridAlignedFaces = [];
+    private IBO _ibo = new([]);
+    private VBO<VertexData> VertexVBO = new([]);
+
+    public int IndexCount = 0;
+    private List<uint> _indices = [];
+    public List<VertexData> VertexDataList = [];
 
     public Chunk()
     { 
@@ -83,20 +93,33 @@ public class Chunk
         boundingBox.Max = boundingBox.Min + new System.Numerics.Vector3(ChunkGenerator.WIDTH, ChunkGenerator.HEIGHT, ChunkGenerator.DEPTH);
     }
 
-    public void AddFace(byte posX, byte posY, byte posZ, byte width, byte height, int blockIndex, byte side)
+    public void AddFace(Vector3 position, int width, int height, int side, int textureIndex)
     {
-        int vertex = posX | (posY << 5) | (posZ << 10) | (width << 15) | (height << 20) | (side << 25);
-        int blockData = blockIndex;
+        var vertices = VoxelData.GetSideOffsets[side](width, height);
 
-        lock (this)
-        {
-            GridAlignedFaces.Add(new Vector2i(vertex, blockData));
-        }
+        AddVertex(position + vertices[0], 0, width, height, (uint)side, (uint)textureIndex);
+        AddVertex(position + vertices[1], 1, width, height, (uint)side, (uint)textureIndex);
+        AddVertex(position + vertices[2], 2, width, height, (uint)side, (uint)textureIndex);
+        AddVertex(position + vertices[3], 3, width, height, (uint)side, (uint)textureIndex);
+
+        _indices.Add((uint)VertexCount + 0);
+        _indices.Add((uint)VertexCount + 1);
+        _indices.Add((uint)VertexCount + 2);
+        _indices.Add((uint)VertexCount + 2);
+        _indices.Add((uint)VertexCount + 3);
+        _indices.Add((uint)VertexCount + 0);
+
+        VertexCount += 4;
     }
-
-    public void AddFace(Vector3 position, byte width, byte height, int blockIndex, byte side)
+    
+    public void AddVertex(Vector3 position, uint uvIndex, int width, int height, uint side, uint textureIndex)
     {
-        AddFace((byte)position.X, (byte)position.Y, (byte)position.Z, width, height, blockIndex, side);
+        VertexData vertexData = new()
+        {
+            Position = position,
+            TextureIndex = (uvIndex << 29) | (side << 26) | ((uint)(width - 1) << 21) | ((uint)(height - 1) << 16) | textureIndex
+        };
+        VertexDataList.Add(vertexData);
     }
 
     public Block this[int index]
@@ -122,7 +145,7 @@ public class Chunk
         else if (type == RenderType.Wireframe)
         {
             _edgeVbo.Renew(Wireframe.ToArray());
-            _edgeVao.LinkToVAO(0, 3, _edgeVbo);
+            _edgeVao.LinkToVAO(0, 3, VertexAttribPointerType.Float, 0, 0, _edgeVbo);
 
             Render = RenderWireframe;
             CreateChunk = CreateChunkWireframe;
@@ -152,8 +175,8 @@ public class Chunk
     public void Clear()
     {
         blockStorage.Clear();
-        GridAlignedFaces.Clear();
-        _gridAlignedData.Clear();
+        VertexDataList.Clear();
+        _indices.Clear();
         Wireframe.Clear();
         RemoveChunkFromAll();
         VertexCount = 0;
@@ -169,8 +192,8 @@ public class Chunk
         _edgeVao.DeleteBuffer();
         _edgeVbo.DeleteBuffer();
         _chunkVao.DeleteBuffer();
-        VertexSSBO.DeleteBuffer();
-        BlockMapSSBO.DeleteBuffer();
+        VertexVBO.DeleteBuffer();
+        _ibo.DeleteBuffer();
     }
 
     
@@ -178,23 +201,30 @@ public class Chunk
     {   
         lock(this)
         {
-            _gridAlignedData.Clear();
-            _gridAlignedData = [.. GridAlignedFaces];
-            VertexCount = _gridAlignedData.Count * 6;
-            GridAlignedFaces.Clear();
+            _ibo.Renew(_indices);
+            VertexVBO.Renew(VertexDataList);
 
-            _chunkVao.Renew();
-            VertexSSBO.Renew(_gridAlignedData.ToArray());
-            BlockMapSSBO.Update(FullBlockMap, 1);
+            int stride = Marshal.SizeOf(typeof(VertexData));
+            _chunkVao.Bind();
+            VertexVBO.Bind();
+
+            _chunkVao.Link(0, 3, VertexAttribPointerType.Float, stride, 0);
+            _chunkVao.IntLink(1, 1, VertexAttribIntegerType.UnsignedInt, stride, 3 * sizeof(float));
+
+            VertexVBO.Unbind();
+            _chunkVao.Unbind();
+
+            GL.Finish();
+
+            IndexCount = _indices.Count;
         }
     }
 
     public void Reload()
     {
-        _gridAlignedData.Clear();
-        GridAlignedFaces.Clear();
+        _indices.Clear();
+        VertexDataList.Clear();
         VertexCount = 0;
-        Stage = ChunkStage.Populated;
     }
 
     public void CreateChunkWireframe()
@@ -202,20 +232,18 @@ public class Chunk
         _edgeVao.Renew();
         _edgeVbo.Renew(Wireframe.ToArray());
         
-        _edgeVao.LinkToVAO(0, 3, _edgeVbo);
+        _edgeVao.LinkToVAO(0, 3, VertexAttribPointerType.Float, 0, 0, _edgeVbo);
     }
 
 
     public void RenderChunk()
     {
         _chunkVao.Bind();
-        VertexSSBO.Bind(0);
-        BlockMapSSBO.Bind(1);
+        _ibo.Bind();
 
-        GL.DrawArrays(PrimitiveType.Triangles, 0, _gridAlignedData.Count * 6);
+        GL.DrawElements(PrimitiveType.Triangles, IndexCount, DrawElementsType.UnsignedInt, 0);
         
-        BlockMapSSBO.Unbind();
-        VertexSSBO.Unbind();
+        _ibo.Unbind();
         _chunkVao.Unbind();
     }
 

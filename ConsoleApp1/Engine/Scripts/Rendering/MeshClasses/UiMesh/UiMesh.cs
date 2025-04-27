@@ -110,12 +110,6 @@ public class UIMesh
                 VisibleElementCount++; 
             }
         }
-
-        foreach (var element in Elements)
-        {
-            if (!GetElementData(element, out int index))
-                continue;
-        }
     }   
 
 

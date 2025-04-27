@@ -47,12 +47,17 @@ public static class ChunkManager
 
         foreach (var chunk in ActiveChunks.Values)
         {
-            if (chunk.Stage != ChunkStage.Rendered)
-                continue;
-
-            chunk.Reload();
-            RegenerateMeshQueue.Enqueue(chunk);
+            ReloadChunk(chunk);
         }
+    }
+
+    public static void ReloadChunk(Chunk chunk)
+    {
+        if (chunk.Stage != ChunkStage.Rendered || PopulateChunkQueue.Contains(chunk))
+            return;
+
+        chunk.Reload();
+        RegenerateMeshQueue.Enqueue(chunk);
     }
 
     public static void DisplayChunkBorders()

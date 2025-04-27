@@ -53,6 +53,7 @@ public static class ChunkPool
         foreach (var chunk in Chunks)
         {
             chunk.Delete();
+            chunk.Clear();
         }
         
         Chunks.Clear();
