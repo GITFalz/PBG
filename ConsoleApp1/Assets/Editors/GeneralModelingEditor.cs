@@ -118,6 +118,8 @@ public class GeneralModelingEditor : ScriptingNode
     public bool regenerateVertexUi = false;
     public Bone? _selectedBone = null;
 
+    public bool blocked = false;
+
     public static readonly Dictionary<int, float> SnappingFactors = new Dictionary<int, float>()
     {
         { 0, 1f },
@@ -195,7 +197,7 @@ public class GeneralModelingEditor : ScriptingNode
         UIDepthCollection snappingCollection = new("SnappingCollection", MainUi, AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (100, 36), (0, 0, 0, 0), 0);
 
         SnappingText = new("SnappingText", MainUi, AnchorType.MiddleCenter, PositionType.Relative, (1, 1, 1, 1f), (0, 40, 0), (400, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f));
-        SnappingText.SetTextType(TextType.Decimal).SetMaxCharCount(5).SetText("0", 0.7f);
+        SnappingText.SetTextType(TextType.Decimal).SetMaxCharCount(5).SetText("0", 1.2f);
         SnappingText.OnTextChange = new SerializableEvent(SnappingField);
 
         snappingCollection.AddElement(snappingPanel);
@@ -259,83 +261,152 @@ public class GeneralModelingEditor : ScriptingNode
 
         UIImage mainPanel = new("MainPanel", ModelingUi, AnchorType.ScaleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (245, Game.Height), (0, 0, 0, 0), 0, 0, (10, 0.05f));
 
-        BackfaceCullingText = new("CullingText", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (10, 35, 10, 10), 0);
-        BackfaceCullingText.SetText("cull: " + BackfaceCulling, 0.7f);
-
-        MeshAlphaText = new("AlphaText", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 20, 0), (400, 20), (10, 60, 10, 10), 0);
-        MeshAlphaText.SetText("alpha: " + MeshAlpha.ToString("F2"), 0.7f);
-
-        UIText WireframeVisibilityText = new("WireframeVisibilityText", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (10, 85, 10, 10), 0);
-        WireframeVisibilityText.MaxCharCount = 12; 
-        WireframeVisibilityText.SetText("frame: " + ModelSettings.WireframeVisible, 0.7f);
-
-        MirrorText = new UIText("MirrorText", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 60, 0), (400, 20), (10, 110, 10, 10), 0);
-        MirrorText.SetText("mirror: " + (Mirror.X == 1 ? "X" : "-") + (Mirror.Y == 1 ? "Y" : "-") + (Mirror.Z == 1 ? "Z" : "-"), 0.7f);
-
-        AxisText = new UIText("AxisText", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 80, 0), (400, 20), (10, 135, 10, 10), 0);
-        AxisText.SetText("axis: " + (AxisX == 1 ? "X" : "-") + (AxisY == 1 ? "Y" : "-") + (AxisZ == 1 ? "Z" : "-"), 0.7f);
-
-        UIText GridAlignedText = new("GridAlignedText", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 100, 0), (400, 20), (10, 160, 10, 10), 0);
-        GridAlignedText.MaxCharCount = 11;
-        GridAlignedText.SetText("grid: " + ModelSettings.GridAligned, 0.7f);
-
-        UICollection cameraSpeedStacking = new("CameraSpeedStacking", ModelingUi, AnchorType.BottomLeft, PositionType.Relative, (0, 0, 0), (400, 20), (10, -10, 10, 10), 0);
-
-        UIText CameraSpeedTextLabel = new("CameraSpeedTextLabel", ModelingUi, AnchorType.BottomLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (0, 0, 0, 0), 0);
-        CameraSpeedTextLabel.SetText("Cam Speed: ", 0.7f);
-        UIImage CameraSpeedFieldPanel = new("CameraSpeedTextLabelPanel", ModelingUi, AnchorType.BottomLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (45, 30), (142, 8, 0, 0), 0, 1, (10, 0.05f));
-        UIInputField CameraSpeedField = new("CameraSpeedText", ModelingUi, AnchorType.BottomLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 100, 0), (400, 20), (150, 0, 0, 0), 0, 0, (10, 0.05f));
-        CameraSpeedField.MaxCharCount = 2;
-        CameraSpeedField.SetText("50", 0.7f).SetTextType(TextType.Numeric);
-        CameraSpeedField.OnTextChange = new SerializableEvent(() => { try { Game.camera.SPEED = int.Parse(CameraSpeedField.Text); } catch { Game.camera.SPEED = 1; } });
-
-        cameraSpeedStacking.AddElements(CameraSpeedTextLabel, CameraSpeedFieldPanel, CameraSpeedField);
+        UIVerticalCollection mainPanelStacking = new("MainPanelStacking", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (245, 0), (0, 0, 0, 0), (5, 10, 5, 5), 5, 0);
 
 
-        UIButton cullingButton = new("CullingButton", ModelingUi, AnchorType.TopRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (40, 20), (-5, 35, 10, 10), 0, 0, (10, 0.05f), UIState.Static);
+
+        // Main panel collection
+        UICollection cullingCollection = new("CullingCollection", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 20), (0, 0, 0, 0), 0);
+
+        BackfaceCullingText = new("CullingText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (0, 0, 0, 0), 0);
+        BackfaceCullingText.SetText("cull: " + BackfaceCulling, 1.2f);
+
+        UIButton cullingButton = new("CullingButton", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (40, 20), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
         cullingButton.SetOnClick(BackFaceCullingSwitch);
 
-        UIButton alphaButton = new("AlphaUpButton", ModelingUi, AnchorType.TopRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (40, 20), (-5, 60, 10, 10), 0, 0, (10, 0.05f), UIState.Static);
-        alphaButton.SetOnHold(AlphaControl);
+        cullingCollection.AddElements(BackfaceCullingText, cullingButton);
 
-        UIButton WireframeVisibilitySwitch = new("WireframeVisibilitySwitch", ModelingUi, AnchorType.TopRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (40, 20),  (-5, 85, 10, 10), 0, 0, (10, 0.05f), UIState.Static);
+
+        // Alpha panel collection
+        UICollection alphaCollection = new("AlphaCollection", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 20), (0, 0, 0, 0), 0);
+
+        MeshAlphaText = new("AlphaText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 20, 0), (400, 20), (0, 0, 0, 0), 0);
+        MeshAlphaText.SetText("alpha: " + MeshAlpha.ToString("F2"), 1.2f);
+
+        UIButton alphaButton = new("AlphaUpButton", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (40, 20), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
+        alphaButton.SetOnClick(() => { blocked = true; });
+        alphaButton.SetOnHold(AlphaControl);
+        alphaButton.SetOnRelease(() => { blocked = false; });
+
+        alphaCollection.AddElements(MeshAlphaText, alphaButton);
+
+
+        // Wireframe panel collection
+        UICollection wireframeCollection = new("WireframeCollection", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 20), (0, 0, 0, 0), 0);
+
+        UIText WireframeVisibilityText = new("WireframeVisibilityText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (0, 0, 0, 0), 0);
+        WireframeVisibilityText.SetMaxCharCount(12).SetText("frame: " + ModelSettings.WireframeVisible, 1.2f);
+
+        UIButton WireframeVisibilitySwitch = new("WireframeVisibilitySwitch", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (40, 20),  (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
         WireframeVisibilitySwitch.SetOnClick(() => {
             ModelSettings.WireframeVisible = !ModelSettings.WireframeVisible; 
             WireframeVisibilityText.SetText("frame: " + ModelSettings.WireframeVisible).UpdateCharacters();
         });
 
-        UIButton mirrorButton = new("MirrorButton", ModelingUi, AnchorType.TopRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (40, 20), (-5, 110, 10, 10), 0, 0, (10, 0.05f), UIState.Static);
-        mirrorButton.SetOnClick(ApplyMirror);
+        wireframeCollection.AddElements(WireframeVisibilityText, WireframeVisibilitySwitch);
 
-        UIButton mirrorZButton = new("MirrorZButton", ModelingUi, AnchorType.TopRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (15, 20), (-85, 110, 10, 10), 0, 0, (10, 0.05f), UIState.InvisibleInteractable);
+
+        // Mirror panel collection
+        UICollection mirrorStackingCollection = new("MainPanelStacking", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 20), (0, 0, 0, 0), 0);
+
+        UICollection mirrorStacking = new UICollection("MirrorStacking", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (0, 0, 0), (0, 20), (0, 0, 0, 0), 0);
+
+        MirrorText = new UIText("MirrorText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 60, 0), (200, 20), (0, 0, 0, 0), 0);
+        MirrorText.SetMaxCharCount(11).SetText("mirror: " + (Mirror.X == 1 ? "X" : "-") + (Mirror.Y == 1 ? "Y" : "-") + (Mirror.Z == 1 ? "Z" : "-"), 1.2f);
+        mirrorStacking.SetScale((MirrorText.Scale.X + 3, 20f));
+
+        UIHorizontalCollection mirrorButtonStacking = new("MirrorButtonStacking", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (0, 0, 0), (20, 20), (0, 0, 0, 0), (0, 0, 0, 0), 0, 0);
+
+        UIButton mirrorZButton = new("MirrorZButton", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (14, 20), (0, 0, 0, 0), 0, -1, (0, 0), UIState.InvisibleInteractable);
         mirrorZButton.SetOnClick(() => SwitchMirror("Z"));
 
-        UIButton mirrorYButton = new("MirrorYButton", ModelingUi, AnchorType.TopRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (15, 20), (-100, 110, 10, 10), 0, 0, (10, 0.05f), UIState.InvisibleInteractable);
+        UIButton mirrorYButton = new("MirrorYButton", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (14, 20), (0, 0, 0, 0), 0, -1, (0, 0), UIState.InvisibleInteractable);
         mirrorYButton.SetOnClick(() => SwitchMirror("Y"));
 
-        UIButton mirrorXButton = new("MirrorXButton", ModelingUi, AnchorType.TopRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (15, 20), (-115, 110, 10, 10), 0, 0, (10, 0.05f), UIState.InvisibleInteractable);
+        UIButton mirrorXButton = new("MirrorXButton", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (14, 20), (0, 0, 0, 0), 0, -1, (0, 0), UIState.InvisibleInteractable);
         mirrorXButton.SetOnClick(() => SwitchMirror("X"));
 
-        UIButton axisZButton = new("AxisZButton", ModelingUi, AnchorType.TopRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (15, 20), (-113, 135, 10, 10), 0, 0, (10, 0.05f), UIState.InvisibleInteractable);
+        mirrorButtonStacking.AddElements(mirrorXButton, mirrorYButton, mirrorZButton);
+
+        mirrorStacking.AddElements(MirrorText, mirrorButtonStacking);
+
+        UIButton mirrorButton = new("MirrorButton", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (40, 20), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
+        mirrorButton.SetOnClick(ApplyMirror);
+
+        mirrorStackingCollection.AddElements(mirrorStacking, mirrorButton);
+
+
+
+        // Axis panel collection
+        UICollection axisStackingCollection = new("AxisStacking", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 20), (0, 0, 0, 0), 0);
+
+        UICollection axisStacking = new UICollection("AxisStacking", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (0, 0, 0), (0, 20), (0, 0, 0, 0), 0);
+
+        AxisText = new UIText("AxisText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 80, 0), (400, 20), (0, 0, 0, 0), 0);
+        AxisText.SetMaxCharCount(9).SetText("axis: " + (AxisX == 1 ? "X" : "-") + (AxisY == 1 ? "Y" : "-") + (AxisZ == 1 ? "Z" : "-"), 1.2f);
+        axisStacking.SetScale((AxisText.newScale.X + 3, 20f));
+
+        UIHorizontalCollection axisButtonStacking = new("AxisButtonStacking", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (0, 0, 0), (20, 20), (0, 0, 0, 0), (0, 0, 0, 0), 0, 0);
+
+        UIButton axisZButton = new("AxisZButton", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (14, 20), (0, 0, 0, 0), 0, -1, (0, 0), UIState.InvisibleInteractable);
         axisZButton.SetOnClick(() => SwitchAxis("Z"));
 
-        UIButton axisYButton = new("AxisYButton", ModelingUi, AnchorType.TopRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (15, 20), (-128, 135, 10, 10), 0, 0, (10, 0.05f), UIState.InvisibleInteractable);
+        UIButton axisYButton = new("AxisYButton", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (14, 20), (0, 0, 0, 0), 0, -1, (0, 0), UIState.InvisibleInteractable);
         axisYButton.SetOnClick(() => SwitchAxis("Y"));
 
-        UIButton axisXButton = new("AxisXButton", ModelingUi, AnchorType.TopRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (15, 20), (-143, 135, 10, 10), 0, 0, (10, 0.05f), UIState.InvisibleInteractable);
+        UIButton axisXButton = new("AxisXButton", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (14, 20), (0, 0, 0, 0), 0, -1, (0, 0), UIState.InvisibleInteractable);
         axisXButton.SetOnClick(() => SwitchAxis("X"));
 
-        UIButton gridAlignedButton = new("GridAlignedButton", ModelingUi, AnchorType.TopRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (40, 20), (-5, 160, 10, 10), 0, 0, (10, 0.05f), UIState.Static);
+        axisButtonStacking.AddElements(axisXButton, axisYButton, axisZButton);
+
+        axisStacking.AddElements(AxisText, axisButtonStacking);
+
+        axisStackingCollection.AddElements(axisStacking);
+
+
+
+        // Grid panel collection
+        UICollection gridStackingCollection = new("GridStacking", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 20), (0, 0, 0, 0), 0);
+
+        UIText GridAlignedText = new("GridAlignedText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 100, 0), (400, 20), (0, 0, 0, 0), 0);
+        GridAlignedText.MaxCharCount = 11;
+        GridAlignedText.SetText("grid: " + ModelSettings.GridAligned, 1.2f);
+
+        UIButton gridAlignedButton = new("GridAlignedButton", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (40, 20), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
         gridAlignedButton.SetOnClick(() => {
             ModelSettings.GridAligned = !ModelSettings.GridAligned; 
             GridAlignedText.SetText("grid: " + ModelSettings.GridAligned).UpdateCharacters();
         });
 
+        gridStackingCollection.AddElements(GridAlignedText, gridAlignedButton);
 
-        mainPanelCollection.AddElements(
-            mainPanel, BackfaceCullingText, MeshAlphaText, WireframeVisibilityText, MirrorText, AxisText, GridAlignedText, cameraSpeedStacking,
-            cullingButton, alphaButton, WireframeVisibilitySwitch, mirrorButton, mirrorXButton, mirrorYButton, mirrorZButton, axisXButton, axisYButton, axisZButton, gridAlignedButton
-        );
+
+
+        // Camera speed panel collection
+        UICollection cameraSpeedStacking = new("CameraSpeedStacking", ModelingUi, AnchorType.BottomCenter, PositionType.Relative, (0, 0, 0), (225, 35), (5, 0, 0, 0), 0);
+
+        UIText CameraSpeedTextLabel = new("CameraSpeedTextLabel", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (0, 0, 0, 0), 0);
+        CameraSpeedTextLabel.SetTextCharCount("Cam Speed: ", 1.2f);
+
+        UICollection speedStacking = new UICollection("CameraSpeedStacking", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (0, 0, 0), (0, 20), (0, 0, 0, 0), 0);
+        
+        UIImage CameraSpeedFieldPanel = new("CameraSpeedTextLabelPanel", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (45, 30), (0, 0, 0, 0), 0, 1, (10, 0.05f));
+        
+        UIInputField CameraSpeedField = new("CameraSpeedText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (10, 0, 0, 0), 0, 0, (10, 0.05f));
+        
+        CameraSpeedField.SetMaxCharCount(2).SetText("50", 1.2f).SetTextType(TextType.Numeric);
+        CameraSpeedField.OnTextChange = new SerializableEvent(() => { try { Game.camera.SPEED = int.Parse(CameraSpeedField.Text); } catch { Game.camera.SPEED = 1; } });
+
+        speedStacking.SetScale((45, 30f));
+
+        speedStacking.AddElements(CameraSpeedFieldPanel, CameraSpeedField);
+
+        cameraSpeedStacking.AddElements(CameraSpeedTextLabel, speedStacking);
+
+
+        mainPanelStacking.AddElements(cullingCollection, alphaCollection, wireframeCollection, mirrorStackingCollection, axisStackingCollection, gridStackingCollection);
+
+        mainPanelCollection.AddElements(mainPanel, mainPanelStacking, cameraSpeedStacking);
 
 
         // Add elements to ui
@@ -389,6 +460,7 @@ public class GeneralModelingEditor : ScriptingNode
         ModelingUi.Update();
         MainUi.Update();
         UIScrollViewTest.Update();
+
         CurrentEditor.Update(this);
         model.Update();
         base.Update();

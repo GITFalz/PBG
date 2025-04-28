@@ -204,7 +204,7 @@ public class ModelingEditor : BaseEditor
                 Selection[(int)selectionType]();
             }
 
-            if (Input.IsMouseDown(MouseButton.Left))
+            if (Input.IsMouseDown(MouseButton.Left) && !editor.blocked)
             {
                 renderSelection = true;
                 

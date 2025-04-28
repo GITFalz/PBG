@@ -120,8 +120,7 @@ public abstract class UIElement
         SetScale(newScale);
         Center = Origin + new Vector3(newScale.X / 2, newScale.Y / 2, 0);
 
-        return;
-        if (Name != "SidePanelBackground" && Name != "SidePanelCollection")
+        if (Name != "MainPanelStacking")
             return;
 
         Console.WriteLine();
