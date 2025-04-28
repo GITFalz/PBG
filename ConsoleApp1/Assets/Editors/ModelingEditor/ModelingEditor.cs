@@ -9,7 +9,8 @@ public class ModelingEditor : BaseEditor
 {
     public static RenderType selectionType = RenderType.Vertex;
     public GeneralModelingEditor Editor;
-    public ModelMesh Mesh;
+
+    public Model? Model => ModelManager.SelectedModel;
 
     public Dictionary<Keys, Action> PressedAction = new Dictionary<Keys, Action>();
     public Dictionary<Keys, Action> DownAction = new Dictionary<Keys, Action>();
@@ -17,11 +18,6 @@ public class ModelingEditor : BaseEditor
     public Action[] Selection = [ () => { }, () => { }, () => { } ];
     public Action[] Extrusion = [ () => { }, () => { }, () => { } ];
     public Func<bool>[] Deletion = [ () => false, () => false, () => false ];
-
-    public List<Vertex> SelectedVertices = new();
-    public List<Edge> SelectedEdges = new();
-    public List<Triangle> SelectedTriangles = new();
-    public Dictionary<Vertex, Vector2> Vertices = new Dictionary<Vertex, Vector2>();
 
     public UIController Ui = new UIController();
 
@@ -42,12 +38,6 @@ public class ModelingEditor : BaseEditor
     public bool CanStash = true;
     public bool CanGenerateBuffers = true;
 
-
-    public ModelCopy randomCopy = new();
-
-    
-    public ModelCopy Copy = new();
-
     public override void Start(GeneralModelingEditor editor)
     {
         Started = true;
@@ -55,7 +45,6 @@ public class ModelingEditor : BaseEditor
         Console.WriteLine("Start Modeling Editor");
 
         Editor = editor;
-        Mesh = editor.model.modelMesh;
 
         Ui.GenerateBuffers();
         
@@ -80,11 +69,14 @@ public class ModelingEditor : BaseEditor
     public override void Awake(GeneralModelingEditor editor)
     {
         editor.model.SwitchState("Modeling");
-        Mesh.LoadModel(editor.currentModelName);
+        ModelManager.LoadModel(editor.currentModelName);
     }
     
     public override void Update(GeneralModelingEditor editor)
     {
+        if (Model == null)
+            return;
+
         Ui.Test();
         renderSelection = false;
 
@@ -100,14 +92,14 @@ public class ModelingEditor : BaseEditor
             else
             {
                 Game.Instance.CursorState = CursorState.Normal;
-                UpdateVertexPosition();
+                Model.UpdateVertexPosition();
             }
         }
 
         if (Input.IsKeyPressed(Keys.Delete))
         {
-            SelectedVertices.Clear();
-            GenerateVertexColor();
+            Model.SelectedVertices.Clear();
+            Model.GenerateVertexColor();
         }
         
         if (editor.freeCamera)
@@ -143,7 +135,7 @@ public class ModelingEditor : BaseEditor
             if (Input.IsKeyPressed(Keys.D)) Handle_TriangleDeletion();
             
             // Merging
-            if (Input.IsKeyPressed(Keys.K) && SelectedVertices.Count >= 2) Handle_VertexMerging();
+            if (Input.IsKeyPressed(Keys.K) && Model.SelectedVertices.Count >= 2) Handle_VertexMerging();
 
             // Split vertices
             if (Input.IsKeyPressed(Keys.Q)) Handle_VertexSpliting();
@@ -151,79 +143,13 @@ public class ModelingEditor : BaseEditor
             // Mapping
             if (Input.IsKeyPressed(Keys.M)) Handle_Mapping();
 
-            if (Input.IsKeyPressed(Keys.T))
-            {
-                Vector3 min = (float.MaxValue, float.MaxValue, float.MaxValue);
-                Vector3  max = (float.MinValue, float.MinValue, float.MinValue);
-
-                foreach (var vert in Mesh.VertexList)
-                {
-                    min = Mathf.Min(min, vert);
-                    max = Mathf.Max(max, vert); 
-                }
-
-                Vector3 bSize = max - min;
-                float largestSide = Mathf.Max(bSize.X, bSize.Z);
-
-                // Set the uvs to the new positions / largestSide
-
-                // To apply the uvs we need to:
-                // 1. Store the uvs in a list, delete all the triangles we have now, and paste the model we copied at the start of the function
-                // 2. Set the uvs in the pasted triangles
-                // This is possible because the order of the triangles hasn't changed inside the mesh so the setting of the uvs will be correct
-
-                List<(Vector2, Vector2, Vector2)> triangleUvs = [];
-
-                foreach (var triangle in Mesh.TriangleList)
-                {
-                    Vector2 uvA = (triangle.A.X / largestSide, triangle.A.Z / largestSide);
-                    Vector2 uvB = (triangle.B.X / largestSide, triangle.B.Z / largestSide);
-                    Vector2 uvC = (triangle.C.X / largestSide, triangle.C.Z / largestSide);
-
-                    triangleUvs.Add((uvA, uvB, uvC));
-                }
-
-                Mesh.Unload();
-
-                Mesh.AddCopy(randomCopy);
-
-                for (int i = 0; i < Mesh.TriangleList.Count; i++)
-                {
-                    Triangle triangle = Mesh.TriangleList[i];
-                    triangle.UvA = triangleUvs[i].Item1;
-                    triangle.UvB = triangleUvs[i].Item2;
-                    triangle.UvC = triangleUvs[i].Item3;
-                }
-
-                Mesh.CheckUselessVertices();
-
-                Mesh.RecalculateNormals();
-                Mesh.Init();
-                Mesh.GenerateBuffers();
-
-                UpdateVertexPosition();
-                GenerateVertexColor();
-            }
+            if (Input.IsKeyPressed(Keys.T)) TestFunction();
 
             // Seperate selection
             if (Input.IsKeyPressed(Keys.L)) Handle_SeperateSelection();
 
             // Combining Duplicate Vertices
-            if (Input.IsKeyPressed(Keys.G))
-            {
-                StashMesh();
-                Mesh.CombineDuplicateVertices();
-
-                if (!CanGenerateBuffers)
-                    return;
-
-                Mesh.Init();
-                Mesh.RecalculateNormals();
-                Mesh.GenerateBuffers();
-
-                UpdateVertexPosition();
-                GenerateVertexColor();
-            }
+            if (Input.IsKeyPressed(Keys.G)) CombineDuplicateVertices();
         }
         else
         {
@@ -233,12 +159,12 @@ public class ModelingEditor : BaseEditor
             // Rotation
             if (Input.IsKeyPressed(Keys.R)) RotationInit();
             if (Input.IsKeyDown(Keys.R)) Handle_RotateSelectedVertices();
-            if (Input.IsKeyReleased(Keys.R)) UpdateVertexPosition();
+            if (Input.IsKeyReleased(Keys.R)) Model.UpdateVertexPosition();
 
             // Scaling
             if (Input.IsKeyPressed(Keys.S)) ScalingInit();
             if (Input.IsKeyDown(Keys.S)) Handle_ScalingSelectedVertices();
-            if (Input.IsKeyReleased(Keys.S)) UpdateVertexPosition();
+            if (Input.IsKeyReleased(Keys.S)) Model.UpdateVertexPosition();
             
             // Moving
             if (Input.IsKeyPressed(Keys.G)) StashMesh();
@@ -247,13 +173,11 @@ public class ModelingEditor : BaseEditor
             if (Input.IsKeyReleased(Keys.E) || Input.IsKeyReleased(Keys.G))
             {
                 ModelSettings.SnappingOffset = Vector3.Zero;
-                Mesh.CheckUselessEdges();
-                Mesh.CheckUselessTriangles();
-                UpdateVertexPosition();
+                Model.Mesh.CheckUselessEdges();
+                Model.Mesh.CheckUselessTriangles();
+                Model.UpdateVertexPosition();
             }
         }
-        
-        
         
         //Generate panels on top of each vertex
         if (editor.freeCamera && !regenerateVertexUi)
@@ -266,8 +190,8 @@ public class ModelingEditor : BaseEditor
         {
             if (regenerateVertexUi)
             {
-                UpdateVertexPosition();
-                GenerateVertexColor();
+                Model.UpdateVertexPosition();
+                Model.GenerateVertexColor();
                 regenerateVertexUi = false;
             }
             
@@ -290,29 +214,29 @@ public class ModelingEditor : BaseEditor
                 if (distance < 5)
                     return;
 
-                foreach (var vert in Vertices)
+                foreach (var vert in Model.Vertices)
                 {
                     Vector2 vPos = vert.Value;
                     if (vPos.X >= min.X && vPos.X <= max.X && vPos.Y >= min.Y && vPos.Y <= max.Y)
                     {
-                        if (!SelectedVertices.Contains(vert.Key))
+                        if (!Model.SelectedVertices.Contains(vert.Key))
                         {
                             regenColor = true;
-                            SelectedVertices.Add(vert.Key);
+                            Model.SelectedVertices.Add(vert.Key);
                         }
                     }
                     else
                     {
-                        if (!Input.IsKeyDown(Keys.LeftShift) && SelectedVertices.Contains(vert.Key))
+                        if (!Input.IsKeyDown(Keys.LeftShift) && Model.SelectedVertices.Contains(vert.Key))
                         {
                             regenColor = true;
-                            SelectedVertices.Remove(vert.Key);
+                            Model.SelectedVertices.Remove(vert.Key);
                         }
                     }
                 }
 
                 if (regenColor)
-                    GenerateVertexColor();
+                    Model.GenerateVertexColor();
             }
         }
     }
@@ -368,39 +292,49 @@ public class ModelingEditor : BaseEditor
 
     public void Handle_Undo()
     {
+        if (Model == null)
+            return;
+            
         GetLastMesh();
         
-        Mesh.Init();
-        Mesh.RecalculateNormals();
-        Mesh.GenerateBuffers();
+        Model.Mesh.Init();
+        Model.Mesh.RecalculateNormals();
+        Model.Mesh.GenerateBuffers();
 
-        UpdateVertexPosition();
-        GenerateVertexColor();
+        Model.UpdateVertexPosition();
+        Model.GenerateVertexColor();
     }
 
     public void Handle_Copy()
     {
-        ModelCopy.CopyInto(Copy, SelectedVertices);
+        if (Model == null)
+            return;
+
+        ModelCopy.CopyInto(Model.Copy, Model.SelectedVertices);
     }
 
     // Paste
     public void Handle_Paste(bool stash = true)
     {
+        if (Model == null)
+            return;
+            
+
         if (stash)
             StashMesh();
 
-        ModelCopy copy = Copy.Copy();
-        SelectedVertices = copy.newSelectedVertices;
+        ModelCopy copy = Model.Copy.Copy();
+        Model.SelectedVertices = copy.newSelectedVertices;
 
-        Mesh.AddCopy(copy);
+        Model.Mesh.AddCopy(copy);
 
         if (!CanGenerateBuffers)
             return;
 
-        Mesh.Init();
-        Mesh.GenerateBuffers();
-        UpdateVertexPosition();
-        GenerateVertexColor();
+        Model.Mesh.Init();
+        Model.Mesh.GenerateBuffers();
+        Model.UpdateVertexPosition();
+        Model.GenerateVertexColor();
     }
 
     public static void Paste(ModelCopy copy, ModelMesh mesh)
@@ -410,32 +344,38 @@ public class ModelingEditor : BaseEditor
 
     public void Handle_Flattening()
     {
-        Model.Handle_Flattening(Model.GetFullSelectedTriangles(SelectedVertices));
+        if (Model == null)
+            return;
+            
+        Model.Handle_Flattening(Model.GetFullSelectedTriangles(Model.SelectedVertices));
 
         if (!CanGenerateBuffers)
             return;
 
-        Mesh.Init();
-        Mesh.RecalculateNormals();
-        Mesh.UpdateVertices();
+        Model.Mesh.Init();
+        Model.Mesh.RecalculateNormals();
+        Model.Mesh.UpdateVertices();
         
-        UpdateVertexPosition();
-        GenerateVertexColor();
+        Model.UpdateVertexPosition();
+        Model.GenerateVertexColor();
     }
 
     
 
     // Selection
     public void HandleVertexSelection()
-    {
+    {   
+        if (Model == null)
+            return;
+            
         if (!Input.IsKeyDown(Keys.LeftShift))
-            SelectedVertices.Clear();
+            Model.SelectedVertices.Clear();
         
         Vector2 mousePos = Input.GetMousePosition();
         Vector2? closest = null;
         Vertex? closestVert = null;
     
-        foreach (var vert in Vertices)
+        foreach (var vert in Model.Vertices)
         {
             float distance = Vector2.Distance(mousePos, vert.Value);
             float distanceClosest = closest == null ? 1000 : Vector2.Distance(mousePos, (Vector2)closest);
@@ -447,10 +387,10 @@ public class ModelingEditor : BaseEditor
             }
         }
 
-        if (closestVert != null && !SelectedVertices.Remove(closestVert))
-            SelectedVertices.Add(closestVert);
+        if (closestVert != null && !Model.SelectedVertices.Remove(closestVert))
+            Model.SelectedVertices.Add(closestVert);
 
-        GenerateVertexColor();
+        Model.GenerateVertexColor();
     }
 
     public void HandleEdgeSelection()
@@ -467,6 +407,9 @@ public class ModelingEditor : BaseEditor
     // Extrusion
     public void Handle_Extrusion()
     {
+        if (Model == null)
+            return;
+            
         StashMesh();
         
         Console.WriteLine("Extruding");
@@ -475,32 +418,35 @@ public class ModelingEditor : BaseEditor
         if (!CanGenerateBuffers)
             return;
 
-        Mesh.Init();
-        Mesh.GenerateBuffers();
-        Mesh.UpdateMesh();
+        Model.Mesh.Init();
+        Model.Mesh.GenerateBuffers();
+        Model.Mesh.UpdateMesh();
 
-        UpdateVertexPosition();
-        GenerateVertexColor();
+        Model.UpdateVertexPosition();
+        Model.GenerateVertexColor();
     }
 
     public void HandleVertexExtrusion()
     {
+        if (Model == null)
+            return;
+            
         List<Vertex> newVertices = new List<Vertex>();
 
-        foreach (var vertex in SelectedVertices)
+        foreach (var vertex in Model.SelectedVertices)
         {
             Vertex newVertex = vertex.Copy();
             newVertices.Add(newVertex);
 
-            Mesh.EdgeList.Add(new Edge(vertex, newVertex));
+            Model.Mesh.EdgeList.Add(new Edge(vertex, newVertex));
         }
 
-        SelectedVertices.Clear();
-        SelectedVertices.AddRange(newVertices);
+        Model.SelectedVertices.Clear();
+        Model.SelectedVertices.AddRange(newVertices);
 
-        GenerateVertexColor();
+        Model.GenerateVertexColor();
 
-        Mesh.AddVertices(newVertices);
+        Model.Mesh.AddVertices(newVertices);
     }
 
     public void HandleEdgeExtrusion()
@@ -517,6 +463,9 @@ public class ModelingEditor : BaseEditor
     // Deletion
     public void Handle_TriangleDeletion(bool stash = true)
     {
+        if (Model == null)
+            return;
+            
         if (stash)
             StashMesh();
         
@@ -527,54 +476,63 @@ public class ModelingEditor : BaseEditor
         if (!CanGenerateBuffers)
             return;
 
-        Mesh.Init();
-        Mesh.GenerateBuffers();
+        Model.Mesh.Init();
+        Model.Mesh.GenerateBuffers();
 
-        UpdateVertexPosition();
-        GenerateVertexColor();
+        Model.UpdateVertexPosition();
+        Model.GenerateVertexColor();
     }
     public bool HandleVertexDeletion()
     {
-        if (SelectedVertices.Count == 0)
+        if (Model == null)
+            return false;
+            
+        if (Model.SelectedVertices.Count == 0)
             return false;
 
-        foreach (var vert in SelectedVertices)
+        foreach (var vert in Model.SelectedVertices)
         {
-            Mesh.RemoveVertex(vert);
+            Model.Mesh.RemoveVertex(vert);
         }
-        SelectedVertices.Clear();
+        Model.SelectedVertices.Clear();
 
         return true;
     }
 
     public bool HandleEdgeDeletion()
     {
-        if (SelectedVertices.Count == 0)
+        if (Model == null)
+            return false;
+            
+        if (Model.SelectedVertices.Count == 0)
             return false;
 
-        List<Edge> edges = Model.GetFullSelectedEdges(SelectedVertices);
+        List<Edge> edges = Model.GetFullSelectedEdges(Model.SelectedVertices);
         foreach (var edge in edges)
         {
-            Mesh.RemoveEdge(edge);
+            Model.Mesh.RemoveEdge(edge);
         }
 
-        SelectedVertices.Clear();
-        SelectedEdges.Clear();
+        Model.SelectedVertices.Clear();
+        Model.SelectedEdges.Clear();
 
         return true;
     }
 
     public bool HandleTriangleDeletion()
     {
-        List<Triangle> triangles = Model.GetFullSelectedTriangles(SelectedVertices);
+        if (Model == null)
+            return false;
+            
+        List<Triangle> triangles = Model.GetFullSelectedTriangles(Model.SelectedVertices);
 
         if (triangles.Count > 0)
         {
             foreach (var triangle in triangles)
             {
-                Mesh.RemoveTriangle(triangle);
+                Model.Mesh.RemoveTriangle(triangle);
             }
-            SelectedVertices.Clear();
+            Model.SelectedVertices.Clear();
 
             return true;
         }
@@ -602,10 +560,12 @@ public class ModelingEditor : BaseEditor
 
     public void Handle_FlipTriangleNormal()
     {
+        if (Model == null)
+            return;
+
         StashMesh();
 
-        List<Triangle> triangles = Model.GetFullSelectedTriangles(SelectedVertices);
-        ModelMesh modelMesh = Mesh;
+        List<Triangle> triangles = Model.GetFullSelectedTriangles(Model.SelectedVertices);
 
         if (triangles.Count > 0)
         {
@@ -613,20 +573,23 @@ public class ModelingEditor : BaseEditor
             {
                 Vertex A = triangle.A;
                 Vertex B = triangle.B;
-                if (modelMesh.SwapVertices(A, B))
+                if (Model.Mesh.SwapVertices(A, B))
                 {
                     triangle.Invert();
                     triangle.UpdateNormal();
                 }
             }
 
-            modelMesh.Init();
-            modelMesh.UpdateMesh();
+            Model.Mesh.Init();
+            Model.Mesh.UpdateMesh();
         }
     }
 
     public void Handle_Mapping()
     {
+        if (Model == null)
+            return;
+            
         StashMesh();
 
         Handle_SelectAllVertices();
@@ -634,7 +597,7 @@ public class ModelingEditor : BaseEditor
         CanStash = false;
         CanGenerateBuffers = false;
 
-        List<Triangle> triangles = Model.GetFullSelectedTriangles(SelectedVertices);
+        List<Triangle> triangles = Model.GetFullSelectedTriangles(Model.SelectedVertices);
         Dictionary<string, Triangle> trianglesDict = [];
         List<BoundingBoxRegion> boundingBoxes = [];
 
@@ -647,15 +610,15 @@ public class ModelingEditor : BaseEditor
         Vector3 min = Vector3.Zero;
         Vector3 max = Vector3.Zero;
 
-        ModelCopy copy = new ModelCopy(SelectedVertices);
+        ModelCopy copy = new ModelCopy(Model.SelectedVertices);
 
         // Basic flattening and packing
         while (triangles.Count > 0)
         {
             // Get a region of triangles from a mesh to flatten out
-            SelectedTriangles = triangles[0].GetTriangleRegion([]).ToList();
-            SelectedVertices = Model.GetVertices(SelectedTriangles);
-            triangles.RemoveAll(t => SelectedTriangles.Contains(t));
+            Model.SelectedTriangles = triangles[0].GetTriangleRegion([]).ToList();
+            Model.SelectedVertices = Model.GetVertices(Model.SelectedTriangles);
+            triangles.RemoveAll(t => Model.SelectedTriangles.Contains(t));
 
             // Remove region from the original mesh and flatten the region
             Handle_SeperateSelection();
@@ -666,10 +629,10 @@ public class ModelingEditor : BaseEditor
             // if any vertices are present:
             // 1. Flip the region if the normal of the first triangle is facing down
             // 2. Get the smallest possible bounding box of the selected region and rotate it if needed before moving it next to the last one
-            if (SelectedVertices.Count != 0)
+            if (Model.SelectedVertices.Count != 0)
             {
                 // Flip the region if the normal of the first triangle is facing down
-                List<Triangle> tris = Model.GetFullSelectedTriangles(SelectedVertices);
+                List<Triangle> tris = Model.GetFullSelectedTriangles(Model.SelectedVertices);
                 if (tris.Count > 0)
                 {
                     Triangle first = tris[0];
@@ -677,14 +640,14 @@ public class ModelingEditor : BaseEditor
 
                     if (Vector3.Dot(first.Normal, (0, 1, 0)) < 0)
                     {
-                        Vector3 center = SelectedVertices[0];
-                        for (int i = 1; i < SelectedVertices.Count; i++)
+                        Vector3 center = Model.SelectedVertices[0];
+                        for (int i = 1; i < Model.SelectedVertices.Count; i++)
                         {
-                            center += SelectedVertices[i];
+                            center += Model.SelectedVertices[i];
                         }
-                        center /= SelectedVertices.Count;
+                        center /= Model.SelectedVertices.Count;
 
-                        foreach (var vert in SelectedVertices)
+                        foreach (var vert in Model.SelectedVertices)
                         {
                             vert.SetPosition(Mathf.RotatePoint(vert, center, (1, 0, 0), 180f));
                         }
@@ -692,13 +655,13 @@ public class ModelingEditor : BaseEditor
                 }
 
                 // Get the smallest possible bounding box of the selected region and rotate it if needed before moving it next to the last one
-                Mathf.GetSmallestBoundingBox(SelectedVertices, out min, out max);
+                Mathf.GetSmallestBoundingBox(Model.SelectedVertices, out min, out max);
                 Vector3 size = max - min;
                 Vector3 vOffset = (offset.X - min.X, 0, -min.Z);
-                BoundingBoxRegion region = new BoundingBoxRegion(min + vOffset, max + vOffset, [.. SelectedVertices]);
+                BoundingBoxRegion region = new BoundingBoxRegion(min + vOffset, max + vOffset, [.. Model.SelectedVertices]);
                 boundingBoxes.Add(region);
 
-                foreach (var vert in SelectedVertices)
+                foreach (var vert in Model.SelectedVertices)
                 {
                     vert.MovePosition(vOffset);
                 }
@@ -708,7 +671,7 @@ public class ModelingEditor : BaseEditor
         }
 
         Handle_SelectAllVertices();
-        foreach (var tris in Model.GetFullSelectedTriangles(SelectedVertices))
+        foreach (var tris in Model.GetFullSelectedTriangles(Model.SelectedVertices))
             trianglesDict[tris.ID] = tris;
 
         // Better packing algorithm
@@ -838,14 +801,14 @@ public class ModelingEditor : BaseEditor
 
         Handle_SelectAllVertices();
 
-        foreach (var vert in SelectedVertices)
+        foreach (var vert in Model.SelectedVertices)
         {
             min = Mathf.Min(min, vert);
             max = Mathf.Max(max, vert);
         }
 
         // Move the mesh to 0,0,0
-        foreach (var vert in SelectedVertices)
+        foreach (var vert in Model.SelectedVertices)
         {
             vert.MovePosition(-min);
         }
@@ -856,11 +819,11 @@ public class ModelingEditor : BaseEditor
         Vector3 bSize = max - min;
         float largestSide = Mathf.Max(bSize.X, bSize.Z);
 
-        Mesh.Unload();
-        Mesh.AddCopy(copy.Copy());
+        Model.Mesh.Unload();
+        Model.Mesh.AddCopy(copy.Copy());
 
         Handle_SelectAllVertices();
-        triangles = Model.GetFullSelectedTriangles(SelectedVertices);
+        triangles = Model.GetFullSelectedTriangles(Model.SelectedVertices);
 
         foreach (var triangle in triangles)
         {
@@ -874,89 +837,59 @@ public class ModelingEditor : BaseEditor
         CanStash = true;
         CanGenerateBuffers = true;
 
-        Mesh.CheckUselessVertices();
+        Model.Mesh.CheckUselessVertices();
 
-        Mesh.RecalculateNormals();
-        Mesh.Init();
-        Mesh.GenerateBuffers();
+        Model.Mesh.RecalculateNormals();
+        Model.Mesh.Init();
+        Model.Mesh.GenerateBuffers();
 
-        UpdateVertexPosition();
-        GenerateVertexColor();
+        Model.UpdateVertexPosition();
+        Model.GenerateVertexColor();
     }
 
     public void MoveSelectedVertices(Vector3 move)
     {
-        Model.MoveSelectedVertices(move, SelectedVertices);
+        if (Model == null)
+            return;
+            
+        Model.MoveSelectedVertices(move, Model.SelectedVertices);
     }
 
 
     // Utility
-    public void UpdateVertexPosition()
-    {
-        Vertices.Clear();
-
-        System.Numerics.Matrix4x4 projection = Game.camera.GetNumericsProjectionMatrix();
-        System.Numerics.Matrix4x4 view = Game.camera.GetNumericsViewMatrix();
-    
-        foreach (var vert in Mesh.VertexList)
-        {
-            Vector2? screenPos = Mathf.WorldToScreen(vert, projection, view);
-            if (screenPos == null)
-                continue;
-            
-            Vertices.Add(vert, screenPos.Value);
-        }
-    }
-
-    public void GenerateVertexColor()
-    {
-        foreach (var vert in Mesh.VertexList)
-        {
-            int vertIndex = Mesh.VertexList.IndexOf(vert);
-            vert.Color = SelectedVertices.Contains(vert) ? (0.25f, 0.3f, 1) : (0f, 0f, 0f);
-
-            if (Mesh.VertexColors.Count <= vertIndex)
-                continue;
-            Mesh.VertexColors[vertIndex] = vert.Color;
-        }
-
-        foreach (var edge in Mesh.EdgeList)
-        {
-            int edgeIndex = Mesh.EdgeList.IndexOf(edge) * 2;
-            if (Mesh.EdgeColors.Count > edgeIndex)
-                Mesh.EdgeColors[edgeIndex] = edge.A.Color;
-
-            if (Mesh.EdgeColors.Count > edgeIndex + 1)
-                Mesh.EdgeColors[edgeIndex + 1] = edge.B.Color;
-        }
-
-        Mesh.UpdateVertexColors();
-        Mesh.UpdateEdgeColors();
-    }
 
     public void Handle_MovingSelectedVertices()
     {
+        if (Model == null)
+            return;
+            
         Vector3 move = GetSnappingMovement();
         MoveSelectedVertices(move);
 
         if (!CanGenerateBuffers)
             return;
         
-        Mesh.RecalculateNormals();
-        Mesh.Init();
-        Mesh.UpdateMesh();
+        Model.Mesh.RecalculateNormals();
+        Model.Mesh.Init();
+        Model.Mesh.UpdateMesh();
     }
 
     public void RotationInit()
     {
+        if (Model == null)
+            return;
+            
         StashMesh();
         rotation = 0;
-        selectedCenter = Model.GetSelectedCenter(SelectedVertices);
+        selectedCenter = Model.GetSelectedCenter(Model.SelectedVertices);
     }
 
     public void Handle_RotateSelectedVertices()
     {
-        if (SelectedVertices.Count == 0)
+        if (Model == null)
+            return;
+            
+        if (Model.SelectedVertices.Count == 0)
             return;
 
         Vector3 axis = Game.camera.front * ModelSettings.axis;
@@ -974,7 +907,7 @@ public class ModelingEditor : BaseEditor
                 return;
         }
 
-        foreach (var vert in SelectedVertices)
+        foreach (var vert in Model.SelectedVertices)
         {
             vert.SetPosition(Mathf.RotatePoint(vert, selectedCenter, axis, rotation));
         }
@@ -984,24 +917,27 @@ public class ModelingEditor : BaseEditor
         if (!CanGenerateBuffers)
             return;
 
-        Mesh.RecalculateNormals();
-        Mesh.Init();
-        Mesh.UpdateVertices();
+        Model.Mesh.RecalculateNormals();
+        Model.Mesh.Init();
+        Model.Mesh.UpdateVertices();
 
-        UpdateVertexPosition();
-        GenerateVertexColor();
+        Model.UpdateVertexPosition();
+        Model.GenerateVertexColor();
     }
 
     public void ScalingInit()
     {
+        if (Model == null)
+            return;
+            
         StashMesh();
         scale = 1;
-        selectedCenter = Model.GetSelectedCenter(SelectedVertices);
+        selectedCenter = Model.GetSelectedCenter(Model.SelectedVertices);
     }
 
     public void Handle_ScalingSelectedVertices()
     {
-        if (SelectedVertices.Count < 2)
+        if (Model == null || Model.SelectedVertices.Count < 2)
             return;
 
         float mouseDelta = Input.GetMouseDelta().X * (GameTime.DeltaTime * 50);
@@ -1015,7 +951,7 @@ public class ModelingEditor : BaseEditor
                 return;
         }
 
-        foreach (var vert in SelectedVertices)
+        foreach (var vert in Model.SelectedVertices)
         { 
             Vector3 oldPosition = vert;
             Vector3 direction = vert - selectedCenter;
@@ -1036,8 +972,8 @@ public class ModelingEditor : BaseEditor
         if (!CanGenerateBuffers)
             return;
 
-        Mesh.Init();
-        Mesh.UpdateVertices();
+        Model.Mesh.Init();
+        Model.Mesh.UpdateVertices();
     }
 
     public Vector3 GetSnappingMovement()
@@ -1104,17 +1040,15 @@ public class ModelingEditor : BaseEditor
 
     public void Handle_VertexMerging()
     {        
-        if (SelectedVertices.Count < 2)
+        if (Model == null || Model.SelectedVertices.Count < 2)
             return;
 
         StashMesh();
 
-        ModelMesh modelMesh = Mesh;
-
-        modelMesh.MergeVertices(SelectedVertices);
+        Model.Mesh.MergeVertices(Model.SelectedVertices);
                 
-        Vertex first = SelectedVertices[0];
-        SelectedVertices = [first];
+        Vertex first = Model.SelectedVertices[0];
+        Model.SelectedVertices = [first];
                 
         Ui.Clear();
                 
@@ -1123,12 +1057,12 @@ public class ModelingEditor : BaseEditor
 
     public void Handle_VertexSpliting()
     {
-        if (SelectedVertices.Count == 0)
+        if (Model == null || Model.SelectedVertices.Count == 0)
             return;
 
         StashMesh();
 
-        foreach (var vert in SelectedVertices)
+        foreach (var vert in Model.SelectedVertices)
         {
             SplitVertex(vert);
         }
@@ -1136,12 +1070,12 @@ public class ModelingEditor : BaseEditor
         if (!CanGenerateBuffers)
             return;
 
-        Mesh.RecalculateNormals();
-        Mesh.Init();
-        Mesh.GenerateBuffers();
+        Model.Mesh.RecalculateNormals();
+        Model.Mesh.Init();
+        Model.Mesh.GenerateBuffers();
 
-        UpdateVertexPosition();
-        GenerateVertexColor();
+        Model.UpdateVertexPosition();
+        Model.GenerateVertexColor();
     }   
 
     public void Handle_SeperateSelection()
@@ -1162,6 +1096,9 @@ public class ModelingEditor : BaseEditor
 
     public void SplitVertex(Vertex vertex)
     {
+        if (Model == null)
+            return;
+            
         List<Triangle> triangles = [.. vertex.ParentTriangles];
         foreach (var tris in triangles)
         {
@@ -1172,21 +1109,21 @@ public class ModelingEditor : BaseEditor
             {
                 Edge ab = new(tris.AB);
                 tris.AB = ab;
-                Mesh.EdgeList.Add(ab);
+                Model.Mesh.EdgeList.Add(ab);
                 replace = true;
             }
             if (tris.BC.Has(vertex) && tris.BC.ParentTriangles.Count > 1)
             {
                 Edge bc = new(tris.BC);
                 tris.BC = bc;
-                Mesh.EdgeList.Add(bc);
+                Model.Mesh.EdgeList.Add(bc);
                 replace = true;
             }
             if (tris.CA.Has(vertex) && tris.CA.ParentTriangles.Count > 1)
             {
                 Edge ca = new(tris.CA);
                 tris.CA = ca;
-                Mesh.EdgeList.Add(ca);
+                Model.Mesh.EdgeList.Add(ca);
                 replace = true;
             }
 
@@ -1200,65 +1137,68 @@ public class ModelingEditor : BaseEditor
                     tris.C = replacement;
 
                 tris.SetVertexTo(vertex, replacement);
-                Mesh.AddVertex(replacement, false);
+                Model.Mesh.AddVertex(replacement, false);
             }
         }
 
-        Mesh.RemoveVertex(vertex);
+        Model.Mesh.RemoveVertex(vertex);
 
         if (!CanGenerateBuffers)
             return;
 
-        Mesh.Init();
-        Mesh.RecalculateNormals();
-        Mesh.GenerateBuffers();
+        Model.Mesh.Init();
+        Model.Mesh.RecalculateNormals();
+        Model.Mesh.GenerateBuffers();
 
-        UpdateVertexPosition();
-        GenerateVertexColor();
+        Model.UpdateVertexPosition();
+        Model.GenerateVertexColor();
     }
 
     public void Handle_GenerateNewFace()
     {
-        if (selectionType != RenderType.Vertex || SelectedVertices.Count > 4)
+        if (Model == null || selectionType != RenderType.Vertex || Model.SelectedVertices.Count > 4)
             return;
 
         StashMesh();
 
-        if (SelectedVertices.Count == 2)
+        if (Model.SelectedVertices.Count == 2)
         { 
-            if (ModelingHelper.Generate_2_Selected(SelectedVertices))
+            if (ModelingHelper.Generate_2_Selected(Model.SelectedVertices))
             {
-                List<Vertex> nextVertices = [SelectedVertices[2], SelectedVertices[3]];
-                ModelingHelper.Generate_4_Selected(SelectedVertices, Mesh);
-                SelectedVertices = nextVertices;
+                List<Vertex> nextVertices = [Model.SelectedVertices[2], Model.SelectedVertices[3]];
+                ModelingHelper.Generate_4_Selected(Model.SelectedVertices, Model.Mesh);
+                Model.SelectedVertices = nextVertices;
             }
         }
 
-        if (SelectedVertices.Count == 3)
+        if (Model.SelectedVertices.Count == 3)
         { 
-            ModelingHelper.Generate_3_Selected(SelectedVertices, Mesh);
+            ModelingHelper.Generate_3_Selected(Model.SelectedVertices, Model.Mesh);
         }
 
-        if (SelectedVertices.Count == 4)
+        if (Model.SelectedVertices.Count == 4)
         { 
-            ModelingHelper.Generate_4_Selected(SelectedVertices, Mesh);    
+            ModelingHelper.Generate_4_Selected(Model.SelectedVertices, Model.Mesh);    
         }
 
         if (!CanGenerateBuffers)
             return;
 
-        Mesh.Init();
-        Mesh.GenerateBuffers();
+        Model.Mesh.Init();
+        Model.Mesh.GenerateBuffers();
 
-        GenerateVertexColor();
+        Model.GenerateVertexColor();
     }
 
     public void Handle_FlipSelection()
     {
+        if (Model == null)
+            return;
+            
         StashMesh();
-        Vector3 center = Model.GetSelectedCenter(SelectedVertices);
+        Vector3 center = Model.GetSelectedCenter(Model.SelectedVertices);
 
-        foreach (var vert in SelectedVertices)
+        foreach (var vert in Model.SelectedVertices)
         {
             Vector3 centeredPosition = vert - center;
             centeredPosition.X *= ModelSettings.axis.X == 1 ? -1 : 1;
@@ -1270,30 +1210,109 @@ public class ModelingEditor : BaseEditor
         if (!CanGenerateBuffers)
             return;
 
-        Mesh.RecalculateNormals();
-        Mesh.Init();
-        Mesh.UpdateMesh();
+        Model.Mesh.RecalculateNormals();
+        Model.Mesh.Init();
+        Model.Mesh.UpdateMesh();
 
-        GenerateVertexColor();
-        UpdateVertexPosition();
+        Model.GenerateVertexColor();
+        Model.UpdateVertexPosition();
     }
 
     public void Handle_SelectAllVertices()
     {
-        SelectedVertices.Clear();
+        if (Model == null)
+            return;
+
+        Model.SelectedVertices.Clear();
                 
-        foreach (var vert in Mesh.VertexList)
+        foreach (var vert in Model.Mesh.VertexList)
         {
-            SelectedVertices.Add(vert);
+            Model.SelectedVertices.Add(vert);
         }
                 
-        GenerateVertexColor();
+        Model.GenerateVertexColor();
+    }
+
+    public void CombineDuplicateVertices()
+    {
+        if (Model == null)
+            return;
+
+        StashMesh();
+        Model.Mesh.CombineDuplicateVertices();
+
+        if (!CanGenerateBuffers)
+            return;
+
+        Model.Mesh.Init();
+        Model.Mesh.RecalculateNormals();
+        Model.Mesh.GenerateBuffers();
+
+        Model.UpdateVertexPosition();
+        Model.GenerateVertexColor();
+    }
+
+    public void TestFunction()
+    {
+        if (Model == null)
+            return;
+
+        Vector3 min = (float.MaxValue, float.MaxValue, float.MaxValue);
+        Vector3  max = (float.MinValue, float.MinValue, float.MinValue);
+        
+        foreach (var vert in Model.Mesh.VertexList)
+        {
+            min = Mathf.Min(min, vert);
+            max = Mathf.Max(max, vert); 
+        }
+
+        Vector3 bSize = max - min;
+        float largestSide = Mathf.Max(bSize.X, bSize.Z);
+
+        // Set the uvs to the new positions / largestSide
+
+        // To apply the uvs we need to:
+        // 1. Store the uvs in a list, delete all the triangles we have now, and paste the model we copied at the start of the function
+        // 2. Set the uvs in the pasted triangles
+        // This is possible because the order of the triangles hasn't changed inside the mesh so the setting of the uvs will be correct
+
+        List<(Vector2, Vector2, Vector2)> triangleUvs = [];
+
+        foreach (var triangle in Model.Mesh.TriangleList)
+        {
+            Vector2 uvA = (triangle.A.X / largestSide, triangle.A.Z / largestSide);
+            Vector2 uvB = (triangle.B.X / largestSide, triangle.B.Z / largestSide);
+            Vector2 uvC = (triangle.C.X / largestSide, triangle.C.Z / largestSide);
+
+            triangleUvs.Add((uvA, uvB, uvC));
+        }
+
+        Model.Mesh.Unload();
+
+        Model.Mesh.AddCopy(Model.randomCopy);
+
+        for (int i = 0; i < Model.Mesh.TriangleList.Count; i++)
+        {
+            Triangle triangle = Model.Mesh.TriangleList[i];
+            triangle.UvA = triangleUvs[i].Item1;
+            triangle.UvB = triangleUvs[i].Item2;
+            triangle.UvC = triangleUvs[i].Item3;
+        }
+
+        Model.Mesh.CheckUselessVertices();
+
+        Model.Mesh.RecalculateNormals();
+        Model.Mesh.Init();
+        Model.Mesh.GenerateBuffers();
+
+        Model.UpdateVertexPosition();
+        Model.GenerateVertexColor();
     }
 
     // Stashing
     public void StashMesh(int maxCount = 30)
     {
-        if (!CanStash)
+        if (Model == null || !CanStash)
             return;
 
         string fileName = Editor.currentModelName + "_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss-fff");
@@ -1314,7 +1333,7 @@ public class ModelingEditor : BaseEditor
         }
         Console.WriteLine("Stashing mesh");
         Editor.MeshSaveNames.Add(fileName);
-        Mesh.SaveModel(fileName, folderPath);
+        Model.Mesh.SaveModel(fileName, folderPath);
     }
 
     public void ClearStash()
@@ -1328,7 +1347,7 @@ public class ModelingEditor : BaseEditor
 
     public void GetLastMesh()
     {
-        if (Editor.MeshSaveNames.Count == 0)
+        if (Model == null || Editor.MeshSaveNames.Count == 0)
             return;
 
         string name = Editor.MeshSaveNames[^1];
@@ -1342,7 +1361,7 @@ public class ModelingEditor : BaseEditor
         Console.WriteLine("Getting last mesh");
         
         Editor.MeshSaveNames.RemoveAt(Editor.MeshSaveNames.Count - 1);
-        Mesh.LoadModel(name, Path.Combine(Game.undoModelPath, Editor.currentModelName));
+        Model.Mesh.LoadModel(name, Path.Combine(Game.undoModelPath, Editor.currentModelName));
     }
 
     // Data

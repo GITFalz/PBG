@@ -600,6 +600,7 @@ public class ModelMesh : Meshes
         string path = Path.Combine(basePath, $"{modelName.Trim()}.model");
         if (!File.Exists(path))
         {
+            Console.WriteLine($"Model {modelName} does not exist.");
             PopUp.AddPopUp("The model does not exist.");
             return false;
         }

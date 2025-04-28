@@ -1,3 +1,4 @@
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
 public class Model
@@ -5,14 +6,207 @@ public class Model
     public string Name = "Model";
     public bool IsShown = true;
     public bool IsSelected = false;
+
+    public string CurrentModelName = "";
     
 
     public ModelMesh Mesh = new();
 
+    private static ShaderProgram _shaderProgram = new ShaderProgram("Model/Model.vert", "Model/Model.frag");
+    private static Texture _texture = new Texture("dirt_block.png");
+
+
+    public static ModelCopy randomCopy = new();
+    public static ModelCopy Copy = new();
+
+
+    public List<Vertex> SelectedVertices = new();
+    public List<Edge> SelectedEdges = new();
+    public List<Triangle> SelectedTriangles = new();
+    public Dictionary<Vertex, Vector2> Vertices = new Dictionary<Vertex, Vector2>();
+    
+
     public void Render()
     {
+        var camera = ModelSettings.Camera;
+        if (camera == null)
+            return;
 
+        _shaderProgram.Bind();
+
+        GL.Enable(EnableCap.DepthTest);
+        GL.DepthFunc(DepthFunction.Lequal);
+
+        Matrix4 Model = Matrix4.Identity;
+        Matrix4 view = camera.GetViewMatrix();
+        Matrix4 projection = camera.GetProjectionMatrix();
+
+        int modelLocation;
+        int viewLocation;
+        int projectionLocation;
+        int colorAlphaLocation;
+
+        foreach (var flip in ModelSettings.Mirrors)
+        { 
+            Model = Matrix4.CreateScale(flip);
+
+            modelLocation = GL.GetUniformLocation(_shaderProgram.ID, "model");
+            viewLocation = GL.GetUniformLocation(_shaderProgram.ID, "view");
+            projectionLocation = GL.GetUniformLocation(_shaderProgram.ID, "projection");
+            colorAlphaLocation = GL.GetUniformLocation(_shaderProgram.ID, "colorAlpha");
+            
+            GL.UniformMatrix4(modelLocation, true, ref Model);
+            GL.UniformMatrix4(viewLocation, true, ref view);
+            GL.UniformMatrix4(projectionLocation, true, ref projection);
+            GL.Uniform1(colorAlphaLocation, ModelSettings.MeshAlpha);
+
+            _texture.Bind();
+            
+            Mesh.Render();
+
+            _texture.Unbind();
+        }
+
+        _shaderProgram.Unbind();
+
+        if (ModelSettings.WireframeVisible)
+        {
+            GL.Enable(EnableCap.DepthTest);
+            GL.DepthFunc(DepthFunction.Always);
+
+            Model = Matrix4.Identity;
+
+            ModelSettings.EdgeShader.Bind();
+
+            modelLocation = GL.GetUniformLocation(ModelSettings.EdgeShader.ID, "model");
+            viewLocation = GL.GetUniformLocation(ModelSettings.EdgeShader.ID, "view");
+            projectionLocation = GL.GetUniformLocation(ModelSettings.EdgeShader.ID, "projection");
+
+            GL.UniformMatrix4(modelLocation, true, ref Model);
+            GL.UniformMatrix4(viewLocation, true, ref view);
+            GL.UniformMatrix4(projectionLocation, true, ref projection);
+
+            Mesh.RenderEdges();
+
+            ModelSettings.EdgeShader.Unbind();
+
+            ModelSettings.VertexShader.Bind();
+
+            modelLocation = GL.GetUniformLocation(ModelSettings.VertexShader.ID, "model");
+            viewLocation = GL.GetUniformLocation(ModelSettings.VertexShader.ID, "view");
+            projectionLocation = GL.GetUniformLocation(ModelSettings.VertexShader.ID, "projection");
+
+            GL.UniformMatrix4(modelLocation, true, ref Model);
+            GL.UniformMatrix4(viewLocation, true, ref view);
+            GL.UniformMatrix4(projectionLocation, true, ref projection);
+
+            Mesh.RenderVertices();
+
+            ModelSettings.VertexShader.Unbind();
+
+            GL.Disable(EnableCap.DepthTest);
+            GL.DepthFunc(DepthFunction.Lequal);
+        }
     }
+
+
+    public void UpdateVertexPosition()
+    {
+        Vertices.Clear();
+
+        System.Numerics.Matrix4x4 projection = Game.camera.GetNumericsProjectionMatrix();
+        System.Numerics.Matrix4x4 view = Game.camera.GetNumericsViewMatrix();
+    
+        foreach (var vert in Mesh.VertexList)
+        {
+            Vector2? screenPos = Mathf.WorldToScreen(vert, projection, view);
+            if (screenPos == null)
+                continue;
+            
+            Vertices.Add(vert, screenPos.Value);
+        }
+    }
+
+    public void GenerateVertexColor()
+    {
+        foreach (var vert in Mesh.VertexList)
+        {
+            int vertIndex = Mesh.VertexList.IndexOf(vert);
+            vert.Color = SelectedVertices.Contains(vert) ? (0.25f, 0.3f, 1) : (0f, 0f, 0f);
+
+            if (Mesh.VertexColors.Count <= vertIndex)
+                continue;
+            Mesh.VertexColors[vertIndex] = vert.Color;
+        }
+
+        foreach (var edge in Mesh.EdgeList)
+        {
+            int edgeIndex = Mesh.EdgeList.IndexOf(edge) * 2;
+            if (Mesh.EdgeColors.Count > edgeIndex)
+                Mesh.EdgeColors[edgeIndex] = edge.A.Color;
+
+            if (Mesh.EdgeColors.Count > edgeIndex + 1)
+                Mesh.EdgeColors[edgeIndex + 1] = edge.B.Color;
+        }
+
+        Mesh.UpdateVertexColors();
+        Mesh.UpdateEdgeColors();
+    }
+
+
+    public bool LoadModel(string fileName)
+    {
+        if (fileName.Length == 0)
+        {
+            PopUp.AddPopUp("Please enter a model name.");
+            return false;
+        }
+
+        string folderPath = Path.Combine(Game.undoModelPath, fileName);
+        if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
+
+        return Load(fileName);
+    }
+
+    public void SaveModel(string fileName)
+    {
+        if (fileName.Length == 0)
+        {
+            PopUp.AddPopUp("Please enter a model name.");
+            return;
+        }
+
+        string folderPath = Path.Combine(Game.undoModelPath, fileName);
+        if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
+
+        string path = Path.Combine(Game.modelPath, $"{fileName}.model");
+        if (File.Exists(path))
+            PopUp.AddConfirmation("Overwrite existing model?", () => Mesh.SaveModel(fileName), null);
+        else
+            Mesh.SaveModel(fileName);  
+    }
+
+    public void SaveAndLoad(string fileName)
+    {
+        Mesh.SaveModel(CurrentModelName);
+        Load(fileName);
+    }
+
+    public bool Load(string fileName)
+    {
+        if (Mesh.LoadModel(fileName))
+        {
+            CurrentModelName = fileName;
+            return true;
+        }
+        return false;
+    }
+
+    public void Unload()
+    {
+        Mesh.Unload();
+    }
+
     
     public static List<Edge> GetFullSelectedEdges(List<Vertex> selectedVertices)
     {

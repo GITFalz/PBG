@@ -421,19 +421,7 @@ public class GeneralModelingEditor : ScriptingNode
     public void LoadModel()
     {
         string fileName = FileName.Text.Trim();
-        if (fileName.Length == 0)
-        {
-            PopUp.AddPopUp("Please enter a model name.");
-            return;
-        }
-
-        string folderPath = Path.Combine(Game.undoModelPath, fileName);
-        if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
-
-        if (File.Exists(Path.Combine(Game.modelPath, $"{fileName}.model")) && currentModelName != fileName && currentModelName != "")
-            PopUp.AddConfirmation("Save current model?", () => SaveAndLoad(fileName), () => Load(fileName));
-        else
-            Load(fileName);
+        ModelManager.LoadModel(fileName);
     }
 
     public void SaveModel()
@@ -522,7 +510,7 @@ public class GeneralModelingEditor : ScriptingNode
             GL.Disable(EnableCap.CullFace);
         }
 
-        model.Render();
+        ModelManager.Render();
     }
 
     #region Saved ui functions (Do not delete)
@@ -662,44 +650,6 @@ public class GeneralModelingEditor : ScriptingNode
         text += AxisZ == 1 ? "Z" : "-";
         
         AxisText.SetText("axis: " + text).UpdateCharacters();
-    }
-
-    public List<Link<Vector2>> GetLinkPositions(List<Link<Vector3>> worldLinks)
-    {
-        Camera camera = Game.camera;
-
-        System.Numerics.Matrix4x4 projection = camera.GetNumericsProjectionMatrix();
-        System.Numerics.Matrix4x4 view = camera.GetNumericsViewMatrix();
-        
-        List<Link<Vector2>> screenLinks = new List<Link<Vector2>>();
-        
-        foreach (var link in worldLinks)
-        {
-            Vector2? screenPosA = Mathf.WorldToScreen(link.A, projection, view);
-            Vector2? screenPosB = Mathf.WorldToScreen(link.B, projection, view);
-            if (screenPosA == null || screenPosB == null) continue;
-            screenLinks.Add(new Link<Vector2>(screenPosA.Value, screenPosB.Value)); 
-        }
-        return screenLinks;
-    }
-
-    public List<Link<Vector2>> GetLinkPositions(List<Bone> worldLinks)
-    {
-        Camera camera = Game.camera;
-
-        System.Numerics.Matrix4x4 projection = camera.GetNumericsProjectionMatrix();
-        System.Numerics.Matrix4x4 view = camera.GetNumericsViewMatrix();
-        
-        List<Link<Vector2>> screenLinks = new List<Link<Vector2>>();
-        
-        foreach (var bone in worldLinks)
-        {
-            Vector2? screenPosA = Mathf.WorldToScreen(bone.Pivot.Position, projection, view);
-            Vector2? screenPosB = Mathf.WorldToScreen(bone.End.Position, projection, view);
-            if (screenPosA == null || screenPosB == null) continue;
-            screenLinks.Add(new Link<Vector2>(screenPosA.Value, screenPosB.Value)); 
-        }
-        return screenLinks;
     }
 }
 
