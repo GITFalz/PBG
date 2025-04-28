@@ -56,14 +56,18 @@ public static class ModelManager
         Model model = new Model();
         model.LoadModel(name);
         model.SaveModel(newFile);
+        model.Name = newFile;
 
         Models.Add(newFile, model);
         if (SelectedModel != null)
         {
             SelectedModel.IsSelected = false;
+            SelectedModel.SelectedVertices.Clear();
+            SelectedModel.GenerateVertexColor();
         }
         SelectedModel = model;
         SelectedModel.IsSelected = true;
+        SelectedModel.UpdateVertexPosition();
     }
 
     public static void Unload()

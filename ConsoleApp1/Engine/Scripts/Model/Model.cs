@@ -88,6 +88,8 @@ public class Model
 
             Mesh.RenderEdges();
 
+            Shader.Error("Rendering edges error: ");
+
             ModelSettings.EdgeShader.Unbind();
 
             ModelSettings.VertexShader.Bind();
@@ -101,6 +103,8 @@ public class Model
             GL.UniformMatrix4(projectionLocation, true, ref projection);
 
             Mesh.RenderVertices();
+
+            Shader.Error("Rendering vertices error: ");
 
             ModelSettings.VertexShader.Unbind();
 
@@ -134,9 +138,11 @@ public class Model
             int vertIndex = Mesh.VertexList.IndexOf(vert);
             vert.Color = SelectedVertices.Contains(vert) ? (0.25f, 0.3f, 1) : (0f, 0f, 0f);
 
-            if (Mesh.VertexColors.Count <= vertIndex)
+            if (Mesh.Vertices.Count <= vertIndex)
                 continue;
-            Mesh.VertexColors[vertIndex] = vert.Color;
+            var vertexData = Mesh.Vertices[vertIndex];
+            vertexData.Color = new Vector4(vert.Color.X, vert.Color.Y, vert.Color.Z, 1);
+            Mesh.Vertices[vertIndex] = vertexData;
         }
 
         foreach (var edge in Mesh.EdgeList)
@@ -205,6 +211,12 @@ public class Model
     public void Unload()
     {
         Mesh.Unload();
+    }
+
+    public void Delete()
+    {
+        Mesh.Delete();
+        ModelManager.Models.Remove(Name);
     }
 
     

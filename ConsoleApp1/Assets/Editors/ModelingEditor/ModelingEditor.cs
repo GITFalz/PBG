@@ -150,6 +150,9 @@ public class ModelingEditor : BaseEditor
 
             // Combining Duplicate Vertices
             if (Input.IsKeyPressed(Keys.G)) CombineDuplicateVertices();
+
+            // Delete model
+            if (Input.IsKeyPressed(Keys.Delete)) Model.Delete();
         }
         else
         {

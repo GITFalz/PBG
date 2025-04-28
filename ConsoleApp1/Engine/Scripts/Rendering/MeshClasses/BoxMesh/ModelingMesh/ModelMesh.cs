@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
@@ -18,14 +19,15 @@ public class ModelMesh : Meshes
     public List<Vector3> _transformedVerts = new List<Vector3>();
 
     // Vertex
+    public struct VertexData
+    {
+        public Vector3 Position;
+        public Vector4 Color;
+        public float Size;
+    }
     private VAO _vertexVao = new VAO();
-    private VBO<Vector3> _vertexVbo = new(new List<Vector3>());
-    private VBO<Vector3> _vertexColorVbo = new(new List<Vector3>());
-    private VBO<float> _vertexSizeVbo = new(new List<float>());
-
-    public List<Vector3> Vertices = new List<Vector3>();
-    public List<Vector3> VertexColors = new List<Vector3>();
-    public List<float> VertexSize = new List<float>();
+    private VBO<VertexData> _vertexVbo = new(new List<VertexData>());
+    public List<VertexData> Vertices = new List<VertexData>();
 
     // Edge
     private VAO _edgeVao = new VAO();
@@ -44,13 +46,13 @@ public class ModelMesh : Meshes
     public void Init()
     {
         Vertices.Clear();
-        VertexColors.Clear();
-        VertexSize.Clear();
         foreach (var v in VertexList)
         {
-            Vertices.Add(v);
-            VertexColors.Add(v.Color);
-            VertexSize.Add(10f);
+            Vertices.Add(new VertexData{
+                Position = v.Position,
+                Color = new Vector4(v.Color.X, v.Color.Y, v.Color.Z, 1f),
+                Size = 10f
+            });
         }
 
         EdgeVertices.Clear();
@@ -96,8 +98,12 @@ public class ModelMesh : Meshes
                 if (VertexSharePosition(vertex, out var v)) vertex = v;
 
                 VertexList.Add(vertex);
-                Vertices.Add(vertex);
-                VertexColors.Add(new Vector3(0f, 0f, 0f));
+                Vertices.Add(new VertexData
+                {
+                    Position = vertex.Position,
+                    Color = new Vector4(vertex.Color.X, vertex.Color.Y, vertex.Color.Z, 1f),
+                    Size = 10f
+                });
             }
 
             for (int i = 0; i < currentEdges.Count; i++)
@@ -152,8 +158,12 @@ public class ModelMesh : Meshes
         if (!VertexList.Contains(vertex))
         {
             VertexList.Add(vertex);
-            Vertices.Add(vertex);
-            VertexColors.Add(new Vector3(0f, 0f, 0f));
+            Vertices.Add(new VertexData
+            {
+                Position = vertex.Position,
+                Color = new Vector4(vertex.Color.X, vertex.Color.Y, vertex.Color.Z, 1f),
+                Size = 10f
+            });
         }
 
         if (updateMesh)
@@ -242,8 +252,12 @@ public class ModelMesh : Meshes
             if (!VertexList.Contains(vertex))
             {
                 VertexList.Add(vertex);
-                Vertices.Add(vertex);
-                VertexColors.Add(new Vector3(0f, 0f, 0f));
+                Vertices.Add(new VertexData
+                {
+                    Position = vertex.Position,
+                    Color = new Vector4(vertex.Color.X, vertex.Color.Y, vertex.Color.Z, 1f),
+                    Size = 10f
+                });
             }
         }
 
@@ -272,7 +286,6 @@ public class ModelMesh : Meshes
 
         VertexList.Remove(vertex);
         Vertices.RemoveAt(index);
-        VertexColors.RemoveAt(index);
 
         List<Triangle> triangles = [.. vertex.ParentTriangles];
         List<Edge> edges = [.. vertex.ParentEdges];
@@ -505,7 +518,6 @@ public class ModelMesh : Meshes
         _textureVbo.Update(TextureIndices);
 
         _vertexVbo.Update(Vertices);
-        _vertexColorVbo.Update(VertexColors);
 
         _edgeVbo.Update(EdgeVertices);
     }
@@ -519,7 +531,7 @@ public class ModelMesh : Meshes
 
     public void UpdateVertexColors()
     {
-        _vertexColorVbo.Update(VertexColors);
+        _vertexVbo.Update(Vertices);
     }
 
     public void UpdateEdgeColors()
@@ -621,7 +633,6 @@ public class ModelMesh : Meshes
             vertex.Name = "Vertex " + i;
             vertex.Index = int.Parse(values[4]);
             VertexList.Add(vertex);
-            VertexColors.Add(new Vector3(0f, 0f, 0f));
         }
 
         for (int i = vertexCount + 2; i <= vertexCount + edgeCount + 1; i++)
@@ -699,11 +710,26 @@ public class ModelMesh : Meshes
         TextureIndices.Clear();
         Normals.Clear();
         _transformedVerts.Clear();
-        VertexColors.Clear();
-        VertexSize.Clear();
         Vertices.Clear();
         EdgeVertices.Clear();
         EdgeList.Clear();
+    }
+
+    public void Delete()
+    {
+        Unload();
+
+        _vao.DeleteBuffer();
+        _ibo.DeleteBuffer();
+        _vertVbo.DeleteBuffer();
+        _uvVbo.DeleteBuffer();
+        _textureVbo.DeleteBuffer();
+        _normalVbo.DeleteBuffer();
+        _vertexVbo.DeleteBuffer();
+        _edgeVbo.DeleteBuffer();
+        _edgeColorVbo.DeleteBuffer();
+        _vertexVao.DeleteBuffer();
+        _edgeVao.DeleteBuffer();
     }
     
     public void GenerateBuffers()
@@ -716,8 +742,6 @@ public class ModelMesh : Meshes
         _normalVbo.Renew(Normals);
 
         _vertexVbo.Renew(Vertices);
-        _vertexColorVbo.Renew(VertexColors);
-        _vertexSizeVbo.Renew(VertexSize);
 
         _edgeVbo.Renew(EdgeVertices);
         _edgeColorVbo.Renew(EdgeColors);
@@ -733,9 +757,14 @@ public class ModelMesh : Meshes
 
         _vertexVao.Bind();  
 
-        _vertexVao.LinkToVAO(0, 3, VertexAttribPointerType.Float, 0, 0, _vertexVbo);
-        _vertexVao.LinkToVAO(1, 3, VertexAttribPointerType.Float, 0, 0, _vertexColorVbo);
-        _vertexVao.LinkToVAO(2, 1, VertexAttribPointerType.Float, 0, 0, _vertexSizeVbo);
+        _vertexVbo.Bind();
+
+        int stride = Marshal.SizeOf(typeof(VertexData));
+        _vertexVao.Link(0, 3, VertexAttribPointerType.Float, stride, 0);
+        _vertexVao.Link(1, 3, VertexAttribPointerType.Float, stride, 3 * sizeof(float));
+        _vertexVao.Link(2, 1, VertexAttribPointerType.Float, stride, 7 * sizeof(float));
+
+        _vertexVbo.Unbind();
 
         _vertexVao.Unbind();
 
@@ -762,17 +791,14 @@ public class ModelMesh : Meshes
 
     public void RenderVertices()
     {
-        GL.Enable(EnableCap.PointSprite);
         GL.Enable(EnableCap.ProgramPointSize);
 
         _vertexVao.Bind();
 
-        GL.PointSize(10.0f);
         GL.DrawArrays(PrimitiveType.Points, 0, Vertices.Count);
 
         _vertexVao.Unbind();
 
-        GL.Disable(EnableCap.PointSprite);
         GL.Disable(EnableCap.ProgramPointSize);
     }
 
@@ -780,7 +806,6 @@ public class ModelMesh : Meshes
     {
         _edgeVao.Bind();
 
-        GL.LineWidth(2.0f);
         GL.DrawArrays(PrimitiveType.Lines, 0, EdgeVertices.Count);
 
         _edgeVao.Unbind();
