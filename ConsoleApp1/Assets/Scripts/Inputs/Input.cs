@@ -2,7 +2,6 @@
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using MouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
-using Vector3 = System.Numerics.Vector3;
 
 public static class Input
 {
@@ -133,6 +132,10 @@ public static class Input
         return false;
     }
     
+    public static Vector3 GetMousePosition3()
+    {
+        return new Vector3(_previousMouseState.X, _previousMouseState.Y, 0);
+    }
     public static Vector2 GetMousePosition()
     {
         return new Vector2(_previousMouseState.X, _previousMouseState.Y);

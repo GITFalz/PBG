@@ -10,9 +10,9 @@ public class GeneralModelingEditor : ScriptingNode
     public AnimationEditor animationEditor = new AnimationEditor();
     public TextureEditor textureEditor = new TextureEditor();
 
-    public UIController MainUi = new UIController();
-    public UIController ModelingUi = new UIController();
-    public UIController UIScrollViewTest = new UIController();
+    public UIController MainUi;
+    public UIController ModelingUi;
+    public UIController UIScrollViewTest;
     public OldModel model = new OldModel();
 
     public string currentModelName = "cube";
@@ -126,6 +126,13 @@ public class GeneralModelingEditor : ScriptingNode
         { 3, 0.2f },
         { 4, 0.1f }
     };
+
+    public GeneralModelingEditor()
+    {
+        MainUi = new UIController();
+        ModelingUi = new UIController();
+        UIScrollViewTest = new UIController();
+    }
 
     public override void Start()
     {
@@ -294,7 +301,7 @@ public class GeneralModelingEditor : ScriptingNode
         UIButton WireframeVisibilitySwitch = new("WireframeVisibilitySwitch", ModelingUi, AnchorType.TopRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (40, 20),  (-5, 85, 10, 10), 0, 0, (10, 0.05f), UIState.Static);
         WireframeVisibilitySwitch.SetOnClick(() => {
             ModelSettings.WireframeVisible = !ModelSettings.WireframeVisible; 
-            WireframeVisibilityText.SetText("frame: " + ModelSettings.WireframeVisible).GenerateChars().UpdateText();
+            WireframeVisibilityText.SetText("frame: " + ModelSettings.WireframeVisible).UpdateCharacters();
         });
 
         UIButton mirrorButton = new("MirrorButton", ModelingUi, AnchorType.TopRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (40, 20), (-5, 110, 10, 10), 0, 0, (10, 0.05f), UIState.Static);
@@ -321,7 +328,7 @@ public class GeneralModelingEditor : ScriptingNode
         UIButton gridAlignedButton = new("GridAlignedButton", ModelingUi, AnchorType.TopRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (40, 20), (-5, 160, 10, 10), 0, 0, (10, 0.05f), UIState.Static);
         gridAlignedButton.SetOnClick(() => {
             ModelSettings.GridAligned = !ModelSettings.GridAligned; 
-            GridAlignedText.SetText("grid: " + ModelSettings.GridAligned).GenerateChars().UpdateText();
+            GridAlignedText.SetText("grid: " + ModelSettings.GridAligned).UpdateCharacters();
         });
 
 
@@ -379,9 +386,9 @@ public class GeneralModelingEditor : ScriptingNode
 
     public override void Update()
     {
-        ModelingUi.Test();
-        MainUi.Test();
-        UIScrollViewTest.Test();
+        ModelingUi.Update();
+        MainUi.Update();
+        UIScrollViewTest.Update();
         CurrentEditor.Update(this);
         model.Update();
         base.Update();
@@ -579,20 +586,20 @@ public class GeneralModelingEditor : ScriptingNode
             
         MeshAlpha += mouseX * GameTime.DeltaTime;
         MeshAlpha = Mathf.Clamp(0, 1, MeshAlpha);
-        MeshAlphaText.SetText("alpha: " + MeshAlpha.ToString("F2")).GenerateChars().UpdateText();
+        MeshAlphaText.SetText("alpha: " + MeshAlpha.ToString("F2")).UpdateCharacters();
     }
 
     public void BackFaceCullingSwitch()
     {
         BackfaceCulling = !BackfaceCulling;
-        BackfaceCullingText.SetText("cull: " + BackfaceCulling).GenerateChars().UpdateText();
+        BackfaceCullingText.SetText("cull: " + BackfaceCulling).UpdateCharacters();
     }
 
     public void SnappingField()
     {
         string text = SnappingText.Text.EndsWith('.') ? SnappingText.Text[..^1] : SnappingText.Text;
         SnappingFactor = Mathf.Clamp(0, 100, Float.Parse(text));
-        SnappingText.SetText(SnappingFactor.ToString() + (SnappingText.Text.EndsWith('.') ? "." : "")).GenerateChars().UpdateText();
+        SnappingText.SetText(SnappingFactor.ToString() + (SnappingText.Text.EndsWith('.') ? "." : "")).UpdateCharacters();
         Snapping = SnappingFactor != 0.0f;
     }
     
@@ -644,7 +651,7 @@ public class GeneralModelingEditor : ScriptingNode
         text += Mirror.Y == 1 ? "Y" : "-";
         text += Mirror.Z == 1 ? "Z" : "-";
         
-        MirrorText.SetText("mirror: " + text).GenerateChars().UpdateText();
+        MirrorText.SetText("mirror: " + text).UpdateCharacters();
     }
 
     public void UpdateAxisText()
@@ -654,7 +661,7 @@ public class GeneralModelingEditor : ScriptingNode
         text += AxisY == 1 ? "Y" : "-";
         text += AxisZ == 1 ? "Z" : "-";
         
-        AxisText.SetText("axis: " + text).GenerateChars().UpdateText();
+        AxisText.SetText("axis: " + text).UpdateCharacters();
     }
 
     public List<Link<Vector2>> GetLinkPositions(List<Link<Vector3>> worldLinks)

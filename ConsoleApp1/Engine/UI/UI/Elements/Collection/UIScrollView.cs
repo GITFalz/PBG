@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 
 public class UIScrollView : UICollection
 {
-    public UIImage MaskPanel;
+    public UIMask MaskPanel;
     public UICollection SubElements;
 
     public float ScrollSpeed = 5f;
@@ -27,7 +27,7 @@ public class UIScrollView : UICollection
 
         SubElements.SetScale(scale);
 
-        MaskPanel = new UIImage($"{name}MaskPanel", controller, anchorType, PositionType.Relative, (1, 1, 1, 0.5f), (0, 0, 0), scale, (0, 0, 0, 0), 0, -1, (0, 0));
+        MaskPanel = new UIMask($"{name}MaskPanel", controller, anchorType, PositionType.Relative, (1, 1, 1, 0.5f), (0, 0, 0), scale, (0, 0, 0, 0), 0, -1, (0, 0));
         MaskPanel.CanTest = true;
         MaskPanel.SetOnHover(MoveScrollView);
         
@@ -53,7 +53,7 @@ public class UIScrollView : UICollection
     public void GenerateMask()
     {
         SetMasked(true);
-        SetMaskIndex(MaskPanel.ElementIndex);
+        SetMaskIndex(0);
     }
 
     public override void SetVisibility(bool visible)
@@ -98,17 +98,42 @@ public class UIScrollView : UICollection
 
     public override UICollection AddElement(UIElement element)
     {
+        ResetInit();
         SubElements.AddElement(element);
         element.SetMasked(true);
         return this;
     }
 
-    public override UICollection AddElements(params UIElement[] elements)
+    public override void ResetInit()
     {
-        SubElements.AddElements(elements);
-        foreach (UIElement element in elements)
-            element.SetMasked(true);
-        return this;
+        OnAlign = CalculateScale;
+        SubElements?.ResetInit();
+    }
+
+    public override bool RemoveElement(UIElement element) 
+    {
+        if (SubElements.RemoveElement(element))
+        {
+            element.ParentElement = null;
+            return true;
+        }
+        return false;
+    }
+
+    public override void RemoveChild(UIElement element)
+    {
+        RemoveElement(element);
+    }
+
+    public void DeleteSubElements()
+    {
+        SubElements.Delete();
+    }
+
+    public override void Delete()
+    {
+        base.Delete();
+        DeleteSubElements();
     }
 
     public readonly Dictionary<CollectionType, Func<float, Vector4>> scrollOffset = new Dictionary<CollectionType, Func<float, Vector4>>()

@@ -104,10 +104,14 @@ public class SkyboxMesh
         _vertVbo.Renew(_transformedVerts);
         _uvVbo.Renew(Uvs);
         _textureVbo.Renew(TextureIndices);
+
+        _vao.Bind();
         
-        _vao.LinkToVAO(0, 3, _vertVbo);
-        _vao.LinkToVAO(1, 2, _uvVbo);
-        _vao.LinkToVAO(2, 1, _textureVbo);
+        _vao.LinkToVAO(0, 3, VertexAttribPointerType.Float, 0, 0, _vertVbo);
+        _vao.LinkToVAO(1, 2, VertexAttribPointerType.Float, 0, 0, _uvVbo);
+        _vao.IntLinkToVAO(2, 1, VertexAttribIntegerType.Int, 0, 0, _textureVbo);
+
+        _vao.Unbind();
         
         _ibo.Renew(Indices);
     }

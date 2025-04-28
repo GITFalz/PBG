@@ -3,7 +3,6 @@ using OpenTK.Mathematics;
 public class UICollection : UIElement
 {
     public List<UIElement> Elements = new List<UIElement>();
-    protected Action? OnAlign;
 
     /*
         ---Important!---
@@ -30,6 +29,7 @@ public class UICollection : UIElement
 
     public virtual UICollection AddElement(UIElement element)
     {
+        ResetInit();
         Elements.Add(element);
         element.SetPositionType(PositionType.Relative);
         element.ParentElement = this;
@@ -57,17 +57,30 @@ public class UICollection : UIElement
         return this;
     }
 
-    public UICollection RemoveElements(params UIElement[] elements)
+    public virtual void RemoveElements(params UIPrefab[] elements)
     {
-        foreach (UIElement element in elements)
-            RemoveElement(element);
-        return this;
+        foreach (UIPrefab element in elements)
+        {
+            RemoveElements(element.GetMainElements());
+        } 
     }
 
-    public override void RemoveElement(UIElement element)
+    public virtual void RemoveElements(params UIElement[] elements)
+    {
+        foreach (UIElement element in elements)
+        {
+            RemoveElement(element);
+        }
+    }
+
+    public override bool RemoveElement(UIElement element) 
     {
         if (Elements.Remove(element))
+        {
             element.ParentElement = null;
+            return true;
+        }
+        return false;
     }
 
     public override void SetVisibility(bool visible)
@@ -81,6 +94,7 @@ public class UICollection : UIElement
 
     public override void Align()
     {
+        OnAlign?.Invoke(); // This is when a function has to be called before the alignment of the element
         base.Align();
         foreach (UIElement element in Elements)
         {
@@ -101,7 +115,12 @@ public class UICollection : UIElement
         foreach (UIElement element in Elements)
             element.Clear();
         Elements.Clear();
-        OnAlign = null;
+        OnAlign = null; 
+    }
+
+    public override void RemoveChild(UIElement element)
+    {
+        Elements.Remove(element);
     }
 
     protected override void Internal_UpdateTransformation()
@@ -116,12 +135,15 @@ public class UICollection : UIElement
             element.UpdateScale();
     }
 
-    public void ResetInit()
+    public override void ResetInit()
     {
-        OnAlign = Init;
+        OnAlign = CalculateScale;
+        foreach (UIElement element in Elements)
+        {
+            element.ResetInit();
+        }
     }
 
-    public virtual void Init() {}
     public virtual void SetSpacing(float spacing) {}
     public virtual void SetBorder(Vector4 border) {}
 
@@ -151,6 +173,14 @@ public class UICollection : UIElement
 
     public virtual float GetElementScaleY() { return newScale.Y; }
     public virtual float GetElementScaleX() { return newScale.X; }
+
+    public override void Delete()
+    {
+        base.Delete();
+        foreach (UIElement element in Elements)
+            element.Delete();
+        Elements.Clear();
+    }
 }
 
 public enum CollectionType

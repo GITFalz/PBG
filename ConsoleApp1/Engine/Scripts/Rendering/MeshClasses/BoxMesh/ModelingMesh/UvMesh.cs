@@ -156,14 +156,26 @@ public class UvMesh : Meshes
 
         _edgeVbo.Renew(EdgeVertices);
         _edgeColorVbo.Renew(EdgeColors);
+
+        _vao.Bind();
         
-        _vao.LinkToVAO(0, 2, _uvVbo);
+        _vao.LinkToVAO(0, 2, VertexAttribPointerType.Float, 0, 0, _uvVbo);
 
-        _vertexVao.LinkToVAO(0, 2, _vertexVbo);
-        _vertexVao.LinkToVAO(1, 3, _vertexColorVbo);
+        _vao.Unbind();  
 
-        _edgeVao.LinkToVAO(0, 2, _edgeVbo);
-        _edgeVao.LinkToVAO(1, 3, _edgeColorVbo);
+        _vertexVao.Bind();
+
+        _vertexVao.LinkToVAO(0, 2, VertexAttribPointerType.Float, 0, 0, _vertexVbo);
+        _vertexVao.LinkToVAO(1, 3, VertexAttribPointerType.Float, 0, 0, _vertexColorVbo);
+
+        _vertexVao.Unbind();
+
+        _edgeVao.Bind();
+
+        _edgeVao.LinkToVAO(0, 2, VertexAttribPointerType.Float, 0, 0, _edgeVbo);
+        _edgeVao.LinkToVAO(1, 3, VertexAttribPointerType.Float, 0, 0, _edgeColorVbo);
+
+        _edgeVao.Unbind();
         
         _ibo.Renew(Indices);
     }

@@ -30,9 +30,6 @@ public abstract class Mesh
         _vertVbo.Renew(transformedVertices);
         _uvVbo.Renew(Uvs);
         
-        _vao.LinkToVAO(0, 3, _vertVbo);
-        _vao.LinkToVAO(1, 2, _uvVbo);
-        
         _ibo.Renew(Indices);
     }
 

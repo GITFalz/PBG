@@ -71,13 +71,21 @@ public class RigMesh : Meshes
         _vertexVbo.Renew(Vertices);
         _colorVbo.Renew(VertexColors);
         _vertexSizeVbo.Renew(VertexSizes); 
-        
-        _vao.LinkToVAO(0, 3, _vertVbo);
-        _vao.LinkToVAO(1, 3, _normalVbo);
 
-        _vertexVao.LinkToVAO(0, 3, _vertexVbo);
-        _vertexVao.LinkToVAO(1, 3, _colorVbo);
-        _vertexVao.LinkToVAO(2, 1, _vertexSizeVbo);
+        _vao.Bind();
+        
+        _vao.LinkToVAO(0, 3, VertexAttribPointerType.Float, 0, 0, _vertVbo);
+        _vao.LinkToVAO(1, 3, VertexAttribPointerType.Float, 0, 0, _normalVbo);
+
+        _vao.Unbind();  
+
+        _vertexVao.Bind();
+
+        _vertexVao.LinkToVAO(0, 3, VertexAttribPointerType.Float, 0, 0, _vertexVbo);
+        _vertexVao.LinkToVAO(1, 3, VertexAttribPointerType.Float, 0, 0, _colorVbo);
+        _vertexVao.LinkToVAO(2, 1, VertexAttribPointerType.Float, 0, 0, _vertexSizeVbo);
+
+        _vertexVao.Unbind();
 
         GenerateRigBuffers();
         
@@ -90,9 +98,13 @@ public class RigMesh : Meshes
         _boneColorVbo.Renew(BoneColors);
         _boneSizeVbo.Renew(BoneSizes);
 
-        _boneVao.LinkToVAO(0, 3, _boneVbo);
-        _boneVao.LinkToVAO(1, 3, _boneColorVbo);
-        _boneVao.LinkToVAO(2, 1, _boneSizeVbo);
+        _boneVao.Bind();
+
+        _boneVao.LinkToVAO(0, 3, VertexAttribPointerType.Float, 0, 0, _boneVbo);
+        _boneVao.LinkToVAO(1, 3, VertexAttribPointerType.Float, 0, 0, _boneColorVbo);
+        _boneVao.LinkToVAO(2, 1, VertexAttribPointerType.Float, 0, 0, _boneSizeVbo);
+
+        _boneVao.Unbind();
     }
 
     public void GenerateIndices()

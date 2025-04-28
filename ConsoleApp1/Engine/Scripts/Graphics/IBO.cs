@@ -19,8 +19,9 @@ public class IBO : BufferBase
     private void Create(uint[] data)
     {
         ID = GL.GenBuffer();
-        GL.BindBuffer(BufferTarget.ElementArrayBuffer, ID);
+        Bind();
         GL.BufferData(BufferTarget.ElementArrayBuffer, data.Length * sizeof(uint), data, BufferUsageHint.StaticDraw);
+        Unbind();
     }
 
     public void Renew(uint[] data)

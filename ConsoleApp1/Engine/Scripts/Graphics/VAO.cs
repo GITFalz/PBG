@@ -20,15 +20,51 @@ public class VAO : BufferBase
         GL.BindVertexArray(ID);
     }
     
-    public void LinkToVAO<T>(int location, int size, VBO<T> vbo) where T : struct
+    public void LinkToVAO<T>(int location, int size, VertexAttribPointerType type, int stride, int offset, VBO<T> vbo) where T : struct
     {
-        Bind();
         vbo.Bind();
-        GL.VertexAttribPointer(location, size, VertexAttribPointerType.Float, false, 0, 0);
-        GL.EnableVertexAttribArray(location);
+        Link(location, size, type, stride, offset);
         vbo.Unbind();
-        Unbind();
     }
+
+    public void IntLinkToVAO<T>(int location, int size, VertexAttribIntegerType type, int stride, int offset, VBO<T> vbo) where T : struct
+    {
+        vbo.Bind();
+        IntLink(location, size, type, stride, offset);
+        vbo.Unbind();
+    }
+
+    public void InstanceLinkToVAO<T>(int location, int size, VertexAttribPointerType type, int stride, int offset, VBO<T> vbo, int divisor = 1) where T : struct
+    {
+        vbo.Bind();
+        InstanceLink(location, size, type, stride, offset, divisor);
+        vbo.Unbind();
+    }
+
+    public void Link(int location, int size, VertexAttribPointerType type, int stride, int offset)
+    {
+        GL.EnableVertexAttribArray(location);
+        GL.VertexAttribPointer(location, size, type, false, stride, offset);
+    }
+
+    public void IntLink(int location, int size, VertexAttribIntegerType type, int stride, int offset)
+    {
+        GL.EnableVertexAttribArray(location);
+        GL.VertexAttribIPointer(location, size, type, stride, offset);
+    }
+
+    public void InstanceLink(int location, int size, VertexAttribPointerType type, int stride, int offset, int divisor = 1)
+    {
+        Link(location, size, type, stride, offset);
+        GL.VertexAttribDivisor(location, divisor);
+    }
+
+    public void InstanceIntLink(int location, int size, VertexAttribIntegerType type, int stride, int offset, int divisor = 1)
+    {
+        IntLink(location, size, type, stride, offset);
+        GL.VertexAttribDivisor(location, divisor);
+    }
+    
     
     public void Bind() => GL.BindVertexArray(ID);
     public void Unbind() => GL.BindVertexArray(0);

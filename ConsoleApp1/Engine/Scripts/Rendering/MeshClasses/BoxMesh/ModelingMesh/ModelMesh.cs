@@ -720,18 +720,30 @@ public class ModelMesh : Meshes
 
         _edgeVbo.Renew(EdgeVertices);
         _edgeColorVbo.Renew(EdgeColors);
+
+        _vao.Bind();
         
-        _vao.LinkToVAO(0, 3, _vertVbo);
-        _vao.LinkToVAO(1, 2, _uvVbo);
-        _vao.LinkToVAO(2, 1, _textureVbo);
-        _vao.LinkToVAO(3, 3, _normalVbo);
+        _vao.LinkToVAO(0, 3, VertexAttribPointerType.Float, 0, 0, _vertVbo);
+        _vao.LinkToVAO(1, 2, VertexAttribPointerType.Float, 0, 0, _uvVbo);
+        _vao.IntLinkToVAO(2, 1, VertexAttribIntegerType.Int, 0, 0, _textureVbo);
+        _vao.LinkToVAO(3, 3, VertexAttribPointerType.Float, 0, 0, _normalVbo); 
 
-        _vertexVao.LinkToVAO(0, 3, _vertexVbo);
-        _vertexVao.LinkToVAO(1, 3, _vertexColorVbo);
-        _vertexVao.LinkToVAO(2, 1, _vertexSizeVbo);
+        _vao.Unbind();  
 
-        _edgeVao.LinkToVAO(0, 3, _edgeVbo);
-        _edgeVao.LinkToVAO(1, 3, _edgeColorVbo);
+        _vertexVao.Bind();  
+
+        _vertexVao.LinkToVAO(0, 3, VertexAttribPointerType.Float, 0, 0, _vertexVbo);
+        _vertexVao.LinkToVAO(1, 3, VertexAttribPointerType.Float, 0, 0, _vertexColorVbo);
+        _vertexVao.LinkToVAO(2, 1, VertexAttribPointerType.Float, 0, 0, _vertexSizeVbo);
+
+        _vertexVao.Unbind();
+
+        _edgeVao.Bind();
+
+        _edgeVao.LinkToVAO(0, 3, VertexAttribPointerType.Float, 0, 0, _edgeVbo);
+        _edgeVao.LinkToVAO(1, 3, VertexAttribPointerType.Float, 0, 0, _edgeColorVbo);
+
+        _edgeVao.Unbind();
         
         _ibo.Renew(Indices);
     }

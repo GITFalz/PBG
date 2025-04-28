@@ -28,10 +28,4 @@ public abstract class UIRender : UIElement
         SizeSlice = sizeSlice;
         uIMesh = controller.UIMesh;
     }
-
-    public override void SetMaskIndex(int maskedIndex)
-    {
-        base.SetMaskIndex(maskedIndex);
-        uIMesh.UpdateMaskedIndex(ElementIndex, Masked, MaskIndex);
-    }
 }

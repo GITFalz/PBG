@@ -25,11 +25,10 @@ public class UIHorizontalCollection : UICollection
 
     public override void Align()
     {
-        OnAlign?.Invoke();
         base.Align();
     }
 
-    public override void Init()
+    public override void CalculateScale()
     {
         float totalOffset = Border.X;
 

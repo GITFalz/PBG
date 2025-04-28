@@ -24,12 +24,16 @@ public class UIVerticalCollection : UICollection
 
     public override void Align()
     {
-        OnAlign?.Invoke();
         base.Align();
     }
 
-    public override void Init()
+    public override void CalculateScale()
     {
+        for (int i = 0; i < Elements.Count; i++)
+        {
+            Elements[i].OnAlign?.Invoke(); // Allows child collections to have the correct scale before alignment
+        }
+
         float totalOffset = Border.Y;
 
         for (int i = 0; i < Elements.Count; i++)
@@ -38,6 +42,12 @@ public class UIVerticalCollection : UICollection
             element.SetPositionType(PositionType.Relative);
             element.SetOffset((Border.X, totalOffset, 0, 0));
             totalOffset += element.Scale.Y + Spacing;
+            
+            /*
+            Console.WriteLine();
+            Console.WriteLine($"This: {Name}, Element: {element.Name}, Offset: {element.Offset}, Scale: {element.Scale}");
+            Console.WriteLine($"TotalOffset: {totalOffset}, Border: {Border}, Spacing: {Spacing}, Parent: {ParentElement?.Name}");
+            */
         }
 
         Scale = (Scale.X, totalOffset - Spacing + Border.W);

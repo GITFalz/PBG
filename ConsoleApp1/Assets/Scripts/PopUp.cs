@@ -30,6 +30,8 @@ public class PopUp
     private bool isShowing = false;
     private bool isDone = false;
 
+    public Matrix4 ModelMatrix = Matrix4.Identity;
+
     public PopUp()
     {
         Instance ??= this;
@@ -169,8 +171,7 @@ public class PopUp
         if (messages.Count > 0)
         {
             Message.SetText(messages[0], 1.5f);
-            Message.GenerateChars();
-            Message.UpdateText();
+            Message.UpdateCharacters();
             messages.RemoveAt(0);
             elapsedTime = 0;
             isShowing = true;
@@ -190,8 +191,7 @@ public class PopUp
         if (confirmations.Count > 0)
         {
             Confirmation.SetText(confirmations.First().Key, 1.5f);
-            Confirmation.GenerateChars();
-            Confirmation.UpdateText();
+            Confirmation.UpdateCharacters();
             elapsedTime = 0;
             isShowing = true;
             return true;
@@ -211,9 +211,7 @@ public class PopUp
         if (!MoveMessageEase(90, 1.5f))
             return;
 
-        MessageCollection.Offset.Y = 85 - position.Y;
-        MessageCollection.Align();
-        MessageCollection.UpdateTransformation();
+        MessageUI.SetPosition(new Vector3(0, -position.Y, 0));
     }
 
     public void MoveConfirmation()
@@ -221,9 +219,7 @@ public class PopUp
         if (!MoveConfirmationEaseIn(90, 1.5f))
             return;
 
-        ConfirmationCollection.Offset.Y = 85 - position.Y;
-        ConfirmationCollection.Align();
-        ConfirmationCollection.UpdateTransformation();
+        ConfirmationUI.SetPosition(new Vector3(0, -position.Y, 0));
     }
 
 

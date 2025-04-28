@@ -20,6 +20,11 @@ public abstract class UIPrefab
         return [Collection];
     }
 
+    public virtual UIElement[] GetElements()
+    {
+        return [Collection];
+    }
+
     public virtual void SetVisibility(bool visible)
     {
         Collection.SetVisibility(visible);
@@ -32,6 +37,6 @@ public abstract class UIPrefab
 
     public virtual void Destroy()
     {
-        Controller.RemoveElements(this);
+        Collection.Delete();
     }
 }

@@ -152,7 +152,7 @@ public class ColorPicker
 
     public void UpdateColorPickerPosition()
     {
-        _colorPickerPosition += Mathf.FloorToInt(Input.GetMouseDelta());  
+        _colorPickerPosition += Mathf.FloorToInt(Input.GetMouseDelta()); 
         Vector2i newPosition = ((int)_colorPickerPosition.X, (int)-_colorPickerPosition.Y + (Game.Height - Height));
         ColorPickerPosition = newPosition;
 
