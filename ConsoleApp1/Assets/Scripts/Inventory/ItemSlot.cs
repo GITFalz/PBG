@@ -3,6 +3,7 @@ public class ItemSlot
     public ItemData item;
     public int Amount;
     public bool Visible = false;
+    public Inventory? Inventory = null;
 
     public ItemSlot(ItemData item, int amount)
     {
@@ -14,12 +15,6 @@ public class ItemSlot
     {
         item = ItemDataManager.Empty;
         Amount = 0;
-    }
-
-    public ItemSlot(ItemData item)
-    {
-        this.item = item;
-        Amount = 1;
     }
 
     public void Exchange(ItemSlot slot)
@@ -70,6 +65,28 @@ public class ItemSlot
         }
     }
 
+    public void Add(ItemData item, ref int count)
+    {
+        if (SameItem(item))
+        {
+            if (Amount + count > item.MaxStackSize)
+            {
+                count = Amount + count - item.MaxStackSize;
+                Amount = item.MaxStackSize;
+            }
+            else
+            {
+                Amount += count;
+                count = 0;
+            }
+        }
+        else if (Amount == 0)
+        {
+            this.item = item;
+            Add(item, ref count);
+        }
+    }
+
     // Transfer count from slot to this slot
     public void Transfer(ItemSlot slot, int count = 1)
     {
@@ -107,9 +124,29 @@ public class ItemSlot
         }
     }
 
+    public bool Remove(int count = 1)
+    {
+        if (Amount > count)
+        {
+            Amount -= count;
+            return true;
+        }
+        else if (Amount == count)
+        {
+            Empty();
+            return true;
+        }
+        return false;
+    }
+
     public bool SameItem(ItemSlot slot)
     {
         return item == slot.item;
+    }
+
+    public bool SameItem(ItemData item)
+    {
+        return this.item == item;
     }
 
     public bool HasMaxStackSize()

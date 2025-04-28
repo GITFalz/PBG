@@ -544,6 +544,21 @@ public class WorldManager : ScriptingNode
         return true;
     }
 
+    public static bool GetRemoveBlock(Vector3i blockPosition, Block block, out Chunk chunkData, out Block swapped)
+    {
+        chunkData = Chunk.Empty;
+        swapped = Block.Air;
+
+        Vector3i chunkPosition = VoxelData.BlockToChunkPosition(blockPosition);
+
+        if (!ChunkManager.ActiveChunks.TryGetValue(chunkPosition, out var chunk))
+            return false;
+        
+        swapped = chunk.blockStorage.GetRemoveBlock(VoxelData.BlockToRelativePosition(blockPosition), block);
+        ChunkManager.ReloadChunk(chunk);
+        return true;
+    }
+
 
     private void GenerateChunks()
     {

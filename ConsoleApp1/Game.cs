@@ -202,9 +202,13 @@ public class Game : GameWindow
         BlockManager.Add(dirt);
         BlockManager.Add(stone);
 
-        _ = new BlockItemData(grass);
-        _ = new BlockItemData(dirt);
-        _ = new BlockItemData(stone);
+        Block grassBlock = grass.GetBlock();
+        Block dirtBlock = dirt.GetBlock();
+        Block stoneBlock = stone.GetBlock();
+
+        var grassBlockData = new BlockItemData(grass);
+        var dirtBlockData = new BlockItemData(dirt);
+        var stoneBlockData = new BlockItemData(stone);
 
         ItemDataManager.GenerateIcons();
 

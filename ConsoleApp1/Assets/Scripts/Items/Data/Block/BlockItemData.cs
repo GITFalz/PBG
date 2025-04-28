@@ -53,4 +53,22 @@ public class BlockItemData : ItemData
         ItemDataManager.Image.Unbind();
         IconShader.Unbind();
     }
+
+    public override void LeftClick(ItemSlot slot) 
+    { 
+        if (RemoveBlock(PlayerData.LookingAtBlockPosition, out Block swappedBlock) && BlockManager.GetBlock(swappedBlock.BlockId(), out var block))
+        {
+            PlayerInventoryManager.AddBlock(block);
+        }
+    }
+    public override void RightClick(ItemSlot slot) 
+    { 
+        if (slot.Amount <= 0 || slot.Inventory == null)
+            return;
+
+        if (PlaceBlock(PlayerData.LookingAtBlockPlacementPosition, Block))
+        {
+            slot.Inventory.Remove(slot, 1);
+        }
+    }
 }

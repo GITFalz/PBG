@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 public static class BlockManager
@@ -9,6 +10,15 @@ public static class BlockManager
         if (Blocks.TryGetValue(index, out var block))
             return block;
         return CWorldBlock.Base;
+    }
+
+    public static bool GetBlock(int index, [NotNullWhen(true)] out CWorldBlock? block)
+    {
+        if (Blocks.TryGetValue(index, out block))
+            return true;
+            
+        block = null;
+        return false;
     }
 
     public static bool Exists(CWorldBlock block)

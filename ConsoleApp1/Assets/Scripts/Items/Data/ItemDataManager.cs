@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
@@ -75,5 +76,16 @@ public static class ItemDataManager
     {
         name = AllItems.ContainsKey(name) ? name : "empty";
         return AllItems[name];
+    }
+
+    public static bool GetItem(string name, [NotNullWhen(true)] out ItemData? item)
+    {
+        item = null;
+        if (AllItems.ContainsKey(name))
+        {
+            item = AllItems[name];
+            return true;
+        }
+        return false;
     }
 }

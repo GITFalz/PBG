@@ -374,10 +374,9 @@ public class Camera
 
     private void RotateCamera()
     {
-        pos = Input.GetMousePosition();
+        Vector2 delta = Input.GetMouseDelta();
 
-        Vector2 currentMouseDelta = new Vector2(pos.X - lastPos.X, pos.Y - lastPos.Y);
-        _smoothMouseDelta = _smooth ? Vector2.Lerp(_smoothMouseDelta, currentMouseDelta, SMOOTH_FACTOR * GameTime.DeltaTime) : currentMouseDelta;
+        _smoothMouseDelta = _smooth ? Vector2.Lerp(_smoothMouseDelta, delta, SMOOTH_FACTOR * GameTime.DeltaTime) : delta;
 
         float deltaX = _smoothMouseDelta.X;
         float deltaY = _smoothMouseDelta.Y;
@@ -395,12 +394,14 @@ public class Camera
 
     private void CameraZoom()
     {
-        float scroll = Input.GetMouseScroll().Y;
+        if (Input.IsKeyDown(Keys.LeftControl))
+        {
+            float scroll = Input.GetMouseScrollDelta().Y;
             
-        CameraDistance -= (scroll - oldScroll) * SCROLL_SENSITIVITY;
-        CameraDistance = Math.Clamp(CameraDistance, 3, 10);
-        oldScroll = scroll;
-
+            CameraDistance -= scroll * SCROLL_SENSITIVITY;
+            CameraDistance = Math.Clamp(CameraDistance, 3, 10);
+        }
+            
         float distance = CameraDistance;
 
         if (VoxelData.Raycast(PlayerData.Position, -front, CameraDistance, out Hit hit))

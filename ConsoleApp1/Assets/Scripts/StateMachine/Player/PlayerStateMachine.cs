@@ -72,6 +72,7 @@ public class PlayerStateMachine : ScriptingNode
         _lastCameraPosition = Game.Camera.Position;
         
         physicsBody = Transform.GetComponent<PhysicsBody>();
+        PlayerData.PhysicsBody = physicsBody; 
         
         _currentState = _gameState;
         _currentState.Enter(this);
@@ -144,7 +145,9 @@ public class PlayerStateMachine : ScriptingNode
         forward = Mathf.YAngleToDirection(-yaw);
         camera.Center = Transform.Position + (0f, 0.5f, 0f);
 
-        BlockSwitch = false;
+        PlayerData.LookingAtBlock = false;
+        PlayerData.LookingAtBlockPosition = Vector3i.Zero;
+        PlayerData.LookingAtBlockPlacementPosition = Vector3i.Zero;
 
         if (VoxelData.Raycast(camera.Center, camera.front, 4, out Hit hit))
         {
@@ -153,27 +156,9 @@ public class PlayerStateMachine : ScriptingNode
             int index = n.X != 0 ? (n.X == 1 ? 1 : 3) : (n.Y != 0 ? (n.Y == 1 ? 2 : 4) : n.Z == 1 ? 5 : 0);
             _renderHit = () => RenderHit((blockPos.X, blockPos.Y, blockPos.Z, index));
 
-            if (Input.IsMousePressed(MouseButton.Left)) 
-            {
-                if (!WorldManager.SetBlock(blockPos, Block.Air, out Chunk chunkData))
-                {
-                    Console.WriteLine($"Failed to set block at {blockPos}");
-                }
-
-                ModifiedBlockPosition = blockPos;
-                if (WorldManager.GetBlock(blockPos, out var b) != -1)
-                {
-                    Console.WriteLine($"Block: {b} : {b.ToBits()}");
-                }
-                BlockSwitch = true;
-            }     
-
-            if (Input.IsMousePressed(MouseButton.Right) && !BlockCollision.IsColliding(physicsBody.GetCollider(), blockPos + n, 1)) 
-            {
-                WorldManager.SetBlock(blockPos + n, new Block(true, 1), out Chunk chunkData);
-                ModifiedBlockPosition = blockPos + n;
-                BlockSwitch = true;
-            } 
+            PlayerData.LookingAtBlock = true;
+            PlayerData.LookingAtBlockPosition = blockPos;
+            PlayerData.LookingAtBlockPlacementPosition = blockPos + n;
         }
             
         _currentState.Update(this);

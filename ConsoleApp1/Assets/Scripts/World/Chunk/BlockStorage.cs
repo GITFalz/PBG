@@ -6,7 +6,7 @@ public abstract class BlockStorage
 
     public abstract void SetBlock(Vector3i position, Block block);
     public abstract void SetBlock(int x, int y, int z, Block block);
-
+    public abstract Block GetRemoveBlock(Vector3i position, Block block);
     public abstract Block GetBlock(Vector3i position);
     public abstract Block GetBlock(int x, int y, int z);
 
@@ -51,6 +51,14 @@ public class FullBlockStorage : BlockStorage
         this[index] = block;
     }
 
+    public override Block GetRemoveBlock(Vector3i position, Block block)
+    {
+        int index = GetIndex(position.X, position.Y, position.Z);
+        Block oldBlock = this[index];
+        this[index] = block;
+        return oldBlock;
+    }
+
     public override Block GetBlock(Vector3i position)
     {
         return GetBlock(position.X, position.Y, position.Z);
@@ -60,6 +68,11 @@ public class FullBlockStorage : BlockStorage
     {
         int index = (x & 31) + (z & 31) * 32 + (y & 31) * 1024;
         return this[index];
+    }
+
+    public int GetIndex(int x, int y, int z)
+    {
+        return (x & 31) + (z & 31) * 32 + (y & 31) * 1024;
     }
 
     public override void Clear()
@@ -137,6 +150,13 @@ public class CornerBlockStorage : BlockStorage
             
             Blocks[arrayIndex][blockIndex] = block;
         }
+    }
+
+    public override Block GetRemoveBlock(Vector3i position, Block block)
+    {
+        Block oldBlock = GetBlock(position.X, position.Y, position.Z, out int blockIndex, out int arrayIndex);
+        SetBlock(blockIndex, arrayIndex, block);
+        return oldBlock;
     }
     
     public Block GetBlock(int x, int y, int z, out int blockIndex, out int arrayIndex)

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -41,6 +42,8 @@ public class Inventory
 
     public int VisibleItems = 0;
 
+    public bool Test = false;
+
     private bool _updateVisibility = false;
     private bool _updateData = false;
 
@@ -72,6 +75,7 @@ public class Inventory
         {
             var item = ItemDataManager.GetItem("grass_block");
             Items[i] = new ItemSlot(item, 1);
+            Items[i].Inventory = this;
             Items[i].Visible = true;
             Items[i].Amount = 1;
         }
@@ -154,6 +158,68 @@ public class Inventory
         SetPosition(position - HalfSize);
     }
 
+    public bool UpdateSlot(ItemSlot item)
+    {
+        if (ContainsItem(item, out int? index))
+        {
+            IconCountText[index.Value].SetText(Items[index.Value].GetAmountToString(), 1.2f).UpdateCharacters();
+            _updateVisibility = true;
+            return true;
+        }
+        return false;
+    }
+
+    public bool Remove(ItemSlot item, int count = 1)
+    {
+        if (ContainsItem(item, out int? index))
+        {
+            Items[index.Value].Remove(count);
+            IconCountText[index.Value].SetText(Items[index.Value].GetAmountToString(), 1.2f).UpdateCharacters();
+            _updateVisibility = true;
+            return true;
+        }
+        return false;
+    }
+
+    public bool GetEmptyOrSame(ItemData item, [NotNullWhen(true)] out int? index)
+    {
+        index = null;
+        int emptyIndex = -1;
+        for (int i = 0; i < Items.Length; i++)
+        {
+            if (Items[i].item.IsEmpty() && emptyIndex == -1)
+            {
+                emptyIndex = i;
+                continue;
+            }
+            if (Items[i].SameItem(item) && !Items[i].HasMaxStackSize())
+            {
+                index = i;
+                return true;
+            }
+        }
+        if (emptyIndex != -1)
+        {
+            index = emptyIndex;
+            return true;
+        }
+        return false;
+    }
+
+    public bool ContainsItem(ItemSlot item, [NotNullWhen(true)] out int? index)
+    {
+        index = null;
+        for (int i = 0; i < Items.Length; i++)
+        {
+            if (ReferenceEquals(Items[i], item))
+            {
+                index = i;
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void Align()
     {
         if ((int)AnchorType >= 9)
@@ -211,6 +277,18 @@ public class Inventory
         SelectedItemManager.UpdateSelectedItemText.Invoke();
         _updateVisibility = true;
     }
+    
+    public bool GetItem(int index, [NotNullWhen(true)] out ItemSlot? item)
+    {
+        if (index < 0 || index >= IconDataList.Length)
+        {
+            item = null;
+            return false;
+        }
+
+        item = Items[index];
+        return true;
+    }
 
     public void AddTo(int index)
     {
@@ -229,6 +307,21 @@ public class Inventory
 
         Items[index].Amount++;
         IconCountText[index].SetText(Items[index].GetAmountToString(), 1.2f).UpdateCharacters();
+    }
+
+    public void AddTo(ItemData item, int count)
+    {
+        if (GetEmptyOrSame(item, out int? index))
+        {
+            Items[index.Value].Add(item, ref count);
+            IconCountText[index.Value].SetText(Items[index.Value].GetAmountToString(), 1.2f).UpdateCharacters();
+            if (count > 0)
+            {
+                AddTo(item, count);
+            }
+            _updateVisibility = true;
+        }
+        return;
     }
 
     public void RemoveFrom(int index)
@@ -258,6 +351,7 @@ public class Inventory
         VisibleItems = 0;
         for (int i = 0; i < Items.Length; i++)
         {
+            IconDataList[i].Data.X = Items[i].item.Index;
             if (!Items[i].item.IsEmpty() && Items[i].Visible)
             {
                 IconDataList[VisibleItems].Data.Y = i;
@@ -288,42 +382,45 @@ public class Inventory
 
     public void Update()
     {
-        if (Input.IsMousePressed(MouseButton.Right))
+        if (Test)
         {
-            rightTimer = 0;
-        }
-        if (Input.IsMouseDown(MouseButton.Right))
-        {
-            Vector2 mousePos = Input.GetMousePosition() - Position;
-            mousePos = Mathf.FloorToInt(mousePos /= 50);
-            if (mousePos.X >= 0 && mousePos.Y >= 0 && mousePos.X < Width && mousePos.Y < Height)
+            if (Input.IsMousePressed(MouseButton.Right))
             {
-                int index = (int)mousePos.X + (int)mousePos.Y * Width;
-                if (index != currentIndex)
-                    Transfer(index);
-                currentIndex = index;
+                rightTimer = 0;
             }
-        }
-        if (Input.IsMousePressed(MouseButton.Left))
-        {
-            Vector2 mousePos = Input.GetMousePosition() - Position;
-            mousePos = Mathf.FloorToInt(mousePos /= 50);
-            if (mousePos.X >= 0 && mousePos.Y >= 0 && mousePos.X < Width && mousePos.Y < Height)
+            if (Input.IsMouseDown(MouseButton.Right))
             {
-                int index = (int)mousePos.X + (int)mousePos.Y * Width;
-                if (index >= 0 || index < IconDataList.Length)
+                Vector2 mousePos = Input.GetMousePosition() - Position;
+                mousePos = Mathf.FloorToInt(mousePos /= 50);
+                if (mousePos.X >= 0 && mousePos.Y >= 0 && mousePos.X < Width && mousePos.Y < Height)
                 {
-                    if (leftTimer < 0.2f)
-                    {
-                        GatherAll();
-                    }
-                    else
-                    {
-                        ExchangeItem(index);
-                    }
+                    int index = (int)mousePos.X + (int)mousePos.Y * Width;
+                    if (index != currentIndex)
+                        Transfer(index);
+                    currentIndex = index;
                 }
             }
-            leftTimer = 0;
+            if (Input.IsMousePressed(MouseButton.Left))
+            {
+                Vector2 mousePos = Input.GetMousePosition() - Position;
+                mousePos = Mathf.FloorToInt(mousePos /= 50);
+                if (mousePos.X >= 0 && mousePos.Y >= 0 && mousePos.X < Width && mousePos.Y < Height)
+                {
+                    int index = (int)mousePos.X + (int)mousePos.Y * Width;
+                    if (index >= 0 || index < IconDataList.Length)
+                    {
+                        if (leftTimer < 0.2f)
+                        {
+                            GatherAll();
+                        }
+                        else
+                        {
+                            ExchangeItem(index);
+                        }
+                    }
+                }
+                leftTimer = 0;
+            }
         }
 
         if (_updateVisibility)

@@ -49,6 +49,9 @@ public abstract class ItemData
     public abstract void GenerateIcon();
     public abstract void RenderIcon(Vector2 position, float scale);
     public abstract void RenderIcon(Vector3 position, float scale);
+    public abstract void LeftClick(ItemSlot slot);
+    public abstract void RightClick(ItemSlot slot);
+    
     public bool IsEmpty() => this is EmptyItemData;
 
     public override bool Equals(object? obj)
@@ -58,5 +61,15 @@ public abstract class ItemData
             return Index == itemData.Index;
         }
         return false;
+    }
+
+    public static bool PlaceBlock(Vector3i position, Block block)
+    {
+        return !BlockCollision.IsColliding(PlayerData.PhysicsBody.GetCollider(), position, 1) && WorldManager.SetBlock(PlayerData.LookingAtBlockPlacementPosition, block, out Chunk chunkData);
+    }
+
+    public static bool RemoveBlock(Vector3i position, out Block swappedBlock)
+    {
+        return WorldManager.GetBlock(position, out swappedBlock) == 0 && WorldManager.SetBlock(position, Block.Air, out _);  
     }
 }

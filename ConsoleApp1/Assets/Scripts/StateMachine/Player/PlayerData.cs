@@ -8,6 +8,12 @@ public class PlayerData
     public static bool TestInputs = true;
     public static bool UpdatePhysics = true;
 
+    public static bool LookingAtBlock = false;
+    public static Vector3i LookingAtBlockPosition = new Vector3i(0, 0, 0);
+    public static Vector3i LookingAtBlockPlacementPosition = new Vector3i(0, 0, 0);
+
+    public static PhysicsBody PhysicsBody;
+
     public static Inventory PlayerInventory;
     public static Inventory HotbarInventory;
 
@@ -18,5 +24,8 @@ public class PlayerData
 
         PlayerInventory.AnchorType = AnchorType.MiddleCenter;
         HotbarInventory.AnchorType = AnchorType.BottomCenter;
+
+        PlayerInventory.Align();
+        HotbarInventory.Align();
     }
 }

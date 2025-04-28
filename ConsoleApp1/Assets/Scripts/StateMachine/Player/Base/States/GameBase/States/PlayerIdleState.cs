@@ -25,12 +25,6 @@ public class PlayerIdleState : PlayerGameBaseState
             playerGameState.SwitchState(playerGameState.JumpingState);
             return;
         }
-
-        if (!playerGameState.PlayerStateMachine.BlockSwitch && Input.IsMousePressed(MouseButton.Left))
-        {
-            playerGameState.SwitchState(playerGameState.Attack1State);
-            return;
-        }
         
         if (!playerGameState.PlayerStateMachine.IsGrounded())
         {

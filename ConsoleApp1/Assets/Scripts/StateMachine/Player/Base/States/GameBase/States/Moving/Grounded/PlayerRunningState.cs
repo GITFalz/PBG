@@ -45,12 +45,6 @@ public class PlayerRunningState : PlayerGameBaseState
                 playerGameState.SwitchState(playerGameState.DashState);
                 return;
             }
-            
-            if (Input.IsMousePressed(MouseButton.Left))
-            {
-                playerGameState.SwitchState(playerGameState.Attack1State);
-                return;
-            }
         }
         
         if (Input.IsKeyDown(Keys.Space) && Game.MoveTest)
