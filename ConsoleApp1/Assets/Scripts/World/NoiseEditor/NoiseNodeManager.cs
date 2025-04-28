@@ -486,8 +486,8 @@ public static class NoiseNodeManager
                     doubleInputNode.InputGateConnector2.Name = inputName2;
                     doubleInputNode.OutputGateConnector.Name = outputName;
 
-                    doubleInputNode.Value1 = float.Parse(value1);
-                    doubleInputNode.Value2 = float.Parse(value2);
+                    doubleInputNode.Value1 = Float.Parse(value1);
+                    doubleInputNode.Value2 = Float.Parse(value2);
                 }
             }
             else if (nodeType == "MinMaxInputOperation")
@@ -510,8 +510,8 @@ public static class NoiseNodeManager
                     minMaxInputNode.InputGateConnector.Name = inputName;
                     minMaxInputNode.OutputGateConnector.Name = outputName;
 
-                    minMaxInputNode.Min = float.Parse(min);
-                    minMaxInputNode.Max = float.Parse(max);
+                    minMaxInputNode.Min = Float.Parse(min);
+                    minMaxInputNode.Max = Float.Parse(max);
                 }
             }
             else if (nodeType == "Sample")
@@ -530,7 +530,7 @@ public static class NoiseNodeManager
                 {
                     sampleNode.OutputGateConnector.Name = outputName;
 
-                    sampleNode.Scale = float.Parse(scale);
+                    sampleNode.Scale = Float.Parse(scale);
                     sampleNode.Offset = Parse.Vec2(noiseOffset);
                 }
             }
@@ -551,7 +551,7 @@ public static class NoiseNodeManager
                 {
                     voronoiNode.OutputGateConnector.Name = outputName;
 
-                    voronoiNode.Scale = float.Parse(scale);
+                    voronoiNode.Scale = Float.Parse(scale);
                     voronoiNode.Offset = Parse.Vec2(noiseOffset);
                 }
             }
