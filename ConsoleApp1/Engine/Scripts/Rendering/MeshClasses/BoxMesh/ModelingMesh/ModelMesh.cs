@@ -217,10 +217,6 @@ public class ModelMesh : Meshes
         if (!EdgeList.Contains(triangle.CA))
             EdgeList.Add(triangle.CA);
 
-        Uvs.Add((0, 0));
-        Uvs.Add((0, 1));
-        Uvs.Add((1, 1));
-
         Indices.Add((uint)Indices.Count + 0);
         Indices.Add((uint)Indices.Count + 1);
         Indices.Add((uint)Indices.Count + 2);

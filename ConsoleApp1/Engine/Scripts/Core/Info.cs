@@ -12,26 +12,10 @@ public class Info
     public static UIText GPUText = new("Gpu", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (0, 0, 0, 0), 0);
     public static UIText RamUsageText = new("RamUsage", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (0, 0, 0, 0), 0);
 
-    private static int _oldVertexCount = 0;
-    public static int VertexCount = 0;
-
-
     private static int frameCount = 0;
     private static float elapsedTime = 0;
 
-
-    private static VAO _blockVao = new VAO();
-    private static SSBO<InfoBlockData> _blockSSBO = new();
-    private static List<InfoBlockData> _blockData = [];
-
-    private static ConcurrentBag<InfoBlockData> _blocks = new ConcurrentBag<InfoBlockData>();
-    private static ShaderProgram _blockShader = new ShaderProgram("Info/InfoBlock.vert", "Info/InfoBlock.frag");
-
     private static Action _updateBlocks = () => { };
-
-    private static ArrayIDBO indirectBuffer = new([]);
-
-    private static object lockObj = new object();
 
     public static bool RenderInfo = true;
 
@@ -45,8 +29,6 @@ public class Info
         RamUsageText.SetMaxCharCount(20).SetText("Ram: 0", 1.2f);
 
         infoCollection.AddElements(FpsText, GPUText, RamUsageText);
-
-        GenerateBlocks();
 
         _infoController.AddElements(infoCollection);
     }
@@ -77,97 +59,7 @@ public class Info
         if (!RenderInfo)
             return;
 
-        RenderBlocks();
         _infoController.RenderDepthTest();
-    }
-
-    public static void GenerateBlocks()
-    {
-        _blockSSBO.Renew(_blockData.ToArray());
-    }
-
-    public static void ClearBlocks()
-    {
-        _blocks.Clear();
-    }
-
-    public static void AddBlock(InfoBlockData block)
-    {
-        lock (lockObj)
-        {
-            _blocks.Add(block);
-        }
-    }
-
-    public static void AddBlock(params InfoBlockData[] block)
-    {
-        foreach (var b in block)
-            AddBlock(b);
-    }
-
-
-    public static void UpdateBlocks()
-    {
-        lock (lockObj)
-        {
-            _updateBlocks = () => 
-            {
-                _blockData = [.. _blocks];
-                GenerateBlocks();
-                List<DrawArraysIndirectCommand> commands = new List<DrawArraysIndirectCommand>();
-                for (int i = 0; i < _blockData.Count; i++)
-                {
-                    DrawArraysIndirectCommand command = new DrawArraysIndirectCommand
-                    {
-                        count = 36,
-                        instanceCount = 1,
-                        first = i * 36,
-                        baseInstance = 0
-                    };
-                    commands.Add(command);
-                }
-                indirectBuffer.Renew(commands);
-                _updateBlocks = () => { };
-            };
-        } 
-    }
-
-    public static void RenderBlocks()
-    {
-        if (_blockData.Count == 0)
-            return;
-
-        GL.Disable(EnableCap.CullFace);
-        GL.Disable(EnableCap.DepthTest);
-
-        _blockShader.Bind();
-
-        Matrix4 model = Matrix4.Identity;
-        Matrix4 view = Game.camera.ViewMatrix;
-        Matrix4 projection = Game.camera.ProjectionMatrix;
-
-        int modelLocationA = GL.GetUniformLocation(_blockShader.ID, "model");
-        int viewLocationA = GL.GetUniformLocation(_blockShader.ID, "view");
-        int projectionLocationA = GL.GetUniformLocation(_blockShader.ID, "projection");
-        
-        GL.UniformMatrix4(viewLocationA, true, ref view);
-        GL.UniformMatrix4(projectionLocationA, true, ref projection);
-        GL.UniformMatrix4(modelLocationA, true, ref model);
-
-        _blockVao.Bind();
-        _blockSSBO.Bind(1);
-        indirectBuffer.Bind();
-
-        GL.MultiDrawArraysIndirect(PrimitiveType.Triangles, IntPtr.Zero, indirectBuffer.GetBufferCount(), 0);
-        
-        _blockSSBO.Unbind();
-        _blockVao.Unbind();
-        indirectBuffer.Unbind();
-
-        _blockShader.Unbind();
-
-        GL.Enable(EnableCap.CullFace);
-        GL.Enable(EnableCap.DepthTest);
     }
 
     private static bool FpsUpdate()
@@ -187,22 +79,5 @@ public class Info
         }
         
         return false;
-    }
-}
-
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct InfoBlockData
-{
-    public Vector3 Position;
-    private float Padding1 = 0;
-    public Vector3 Size;
-    private float Padding2 = 0;
-    public Vector4 Color;
-
-    public InfoBlockData(Vector3 position, Vector3 size, Vector4 color)
-    {
-        Position = position;
-        Size = size;
-        Color = color;
     }
 }

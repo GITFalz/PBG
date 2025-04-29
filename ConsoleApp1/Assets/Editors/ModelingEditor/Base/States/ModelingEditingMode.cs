@@ -976,6 +976,8 @@ public class ModelingEditingMode : ModelingBase
         Vector3 bSize = max - min;
         float largestSide = Mathf.Max(bSize.X, bSize.Z);
 
+        ModelCopy.CopyInto(Model.randomCopy, Model.Mesh.VertexList);
+
         // Set the uvs to the new positions / largestSide
 
         // To apply the uvs we need to:

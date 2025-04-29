@@ -70,6 +70,11 @@ public static class ModelManager
         SelectedModel.UpdateVertexPosition();
     }
 
+    public static void SaveModel(string fileName)
+    {
+        SelectedModel?.SaveModel(fileName);
+    }
+
     public static void DeleteModel(Model model)
     {
         Models.Remove(model.Name);

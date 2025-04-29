@@ -512,20 +512,7 @@ public class GeneralModelingEditor : ScriptingNode
     public void SaveModel()
     {
         string fileName = FileName.Text.Trim();
-        if (fileName.Length == 0)
-        {
-            PopUp.AddPopUp("Please enter a model name.");
-            return;
-        }
-
-        string folderPath = Path.Combine(Game.undoModelPath, fileName);
-        if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
-
-        string path = Path.Combine(Game.modelPath, $"{fileName}.model");
-        if (File.Exists(path))
-            PopUp.AddConfirmation("Overwrite existing model?", () => model.CurrentMesh.SaveModel(fileName), null);
-        else
-            model.CurrentMesh.SaveModel(fileName);  
+        ModelManager.SaveModel(fileName);
     }
 
     public void SaveAndLoad(string fileName)
