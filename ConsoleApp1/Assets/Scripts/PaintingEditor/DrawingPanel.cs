@@ -4,6 +4,9 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class DrawingPanel
 {
+    public static int WindowWidth = 1000;
+    public static int WindowHeight = 800;
+
     public static int Width;
     public static int Height;
 
@@ -45,6 +48,9 @@ public class DrawingPanel
         }
     }
 
+    public static Vector2 CanvasPosition = new Vector2(0, 0);
+    public static Vector2i WindowPosition = new Vector2i(0, 0);
+
     public static void SetDrawingCanvasPosition(float x, float y) { SetDrawingCanvasPosition((x, y));}
     public static void SetDrawingCanvasPosition(Vector2 position) { DrawingCanvasPosition = position; }
 
@@ -61,9 +67,25 @@ public class DrawingPanel
 
     public static void SetDrawingCanvasSize(float size) { DrawingCanvasSize = size; }
 
-    public static void ZoomAt(Vector2 center, float zoomFactor)
+
+    public static void Zoom(float zoomFactor)
     {
-        DrawingCanvasSize += zoomFactor; 
+        SetScale(DrawingCanvasSize + zoomFactor);
+    }
+
+    public static void SetScale(float scale)
+    {
+        Vector2 mousePosition = Input.GetMousePosition() - WindowPosition;
+
+        Vector2 offset = mousePosition - CanvasPosition;
+        Vector2 position = offset / DrawingCanvasSize;
+
+        Vector2 mPosition = position * scale;
+        Vector2 mOffset = mPosition - mousePosition;
+        Vector2 newPosition = mOffset * -1;
+        CanvasPosition = newPosition;
+        DrawingCanvasSize = scale;
+        DrawingPanel.SetDrawingCanvasPosition(CanvasPosition.X + WindowPosition.X, DrawingPanel.CanvasPosition.Y + (Game.Height - WindowHeight) - WindowPosition.Y);
     }
 
     public static void ZoomBrush(float zoomFactor)
@@ -179,17 +201,17 @@ public class DrawingPanel
         GL.Disable(EnableCap.Blend);
     }
 
-    public static void RenderTexture(Vector2i offset, int width, int height, int x, int y)
+    public static void RenderTexture()
     {
-        GL.Viewport(offset.X, offset.Y, width, height);
+        GL.Viewport(WindowPosition.X, WindowPosition.Y, WindowWidth, WindowHeight);
 
         _textureShader.Bind();
 
         GL.Enable(EnableCap.Blend);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
-        Matrix4 model = Matrix4.CreateTranslation(x, y, 0.01f);
-        _textureProjectionMatrix = Matrix4.CreateOrthographicOffCenter(0, width, height, 0, -1, 1);
+        Matrix4 model = Matrix4.CreateTranslation(CanvasPosition.X, CanvasPosition.Y, 0.01f);
+        _textureProjectionMatrix = Matrix4.CreateOrthographicOffCenter(0, WindowWidth, WindowHeight, 0, -1, 1);
 
         int modelLocation = GL.GetUniformLocation(_textureShader.ID, "model");
         int projectionLocation = GL.GetUniformLocation(_textureShader.ID, "projection");
