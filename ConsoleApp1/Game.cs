@@ -129,6 +129,7 @@ public class Game : GameWindow
         AddScenes(_modelingScene);
         LoadScene("Modeling");
 
+        _ = new Info();
         _popUp = new PopUp();
         
         GL.Enable(EnableCap.DepthTest);
@@ -182,6 +183,7 @@ public class Game : GameWindow
         Skybox.Render();
         CurrentScene?.OnRender();
         _popUp.Render();
+        Info.Render();
         
         Context.SwapBuffers();
         
@@ -212,6 +214,8 @@ public class Game : GameWindow
         }
 
         _popUp.Update();
+        camera.Update();
+        Info.Update();
         
         CurrentScene?.OnUpdate();
         

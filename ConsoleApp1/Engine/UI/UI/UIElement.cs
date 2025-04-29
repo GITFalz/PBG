@@ -119,14 +119,6 @@ public abstract class UIElement
         if ((int)AnchorType >= 9) newScale = _dimensions[(int)AnchorType - 9](Width, Height, Scale, Offset);
         SetScale(newScale);
         Center = Origin + new Vector3(newScale.X / 2, newScale.Y / 2, 0);
-
-        if (Name != "MainPanelStacking")
-            return;
-
-        Console.WriteLine();
-        Console.WriteLine($"Name: {Name}, PositionType: {PositionType}, AnchorType: {AnchorType}");
-        Console.WriteLine($"Origin: {Origin}, Transformed: {_transformedOrigin}, Center: {Center}, Scale: {newScale}, Offset: {Offset}, Width: {Width}, Height: {Height}");
-        Console.WriteLine($"Parent: {ParentElement?.Name}, Origin: {ParentElement?.Origin}, Scale: {ParentElement?.newScale}, Offset: {ParentElement?.Offset}, Width: {ParentElement?.Width}, Height: {ParentElement?.Height}");
     }
 
     public virtual void ResetInit() {}

@@ -215,8 +215,17 @@ public class Model
 
     public void Delete()
     {
+        Clear();
         Mesh.Delete();
-        ModelManager.Models.Remove(Name);
+        ModelManager.DeleteModel(this);
+    }
+
+    public void Clear()
+    {
+        SelectedVertices.Clear();
+        SelectedEdges.Clear();
+        SelectedTriangles.Clear();
+        Vertices.Clear();
     }
 
     

@@ -18,7 +18,7 @@ public static class Skybox
        
         _skyboxShader.Bind();
         
-        Matrix4 model = Matrix4.CreateTranslation(Game.camera.position);
+        Matrix4 model = Matrix4.CreateTranslation(Game.camera.Position);
         Matrix4 view = Game.camera.GetViewMatrix();
         Matrix4 projection = Game.camera.GetProjectionMatrix();
 

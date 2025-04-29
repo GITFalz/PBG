@@ -5,10 +5,10 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 public class GeneralModelingEditor : ScriptingNode
 {
     public BaseEditor CurrentEditor;
-    public ModelingEditor modelingEditor = new ModelingEditor();
-    public RiggingEditor riggingEditor = new RiggingEditor();
-    public AnimationEditor animationEditor = new AnimationEditor();
-    public TextureEditor textureEditor = new TextureEditor();
+    public ModelingEditor modelingEditor;
+    public RiggingEditor riggingEditor;
+    public AnimationEditor animationEditor;
+    public TextureEditor textureEditor;
 
     public UIController MainUi;
     public UIController ModelingUi;
@@ -134,6 +134,11 @@ public class GeneralModelingEditor : ScriptingNode
         MainUi = new UIController();
         ModelingUi = new UIController();
         UIScrollViewTest = new UIController();
+
+        modelingEditor = new ModelingEditor(this); 
+        riggingEditor = new RiggingEditor();
+        animationEditor = new AnimationEditor();
+        textureEditor = new TextureEditor();
     }
 
     public override void Start()
@@ -153,17 +158,25 @@ public class GeneralModelingEditor : ScriptingNode
 
         UIHorizontalCollection stateStacking = new("StateStacking", MainUi, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (0, 0), (0, 0, 0, 0), (7, 7, 7, 7), 5, 0);
 
-        UIButton modelingButton = new("ModelingButton", MainUi, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (75, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
+        UITextButton modelingButton = new("ModelingButton", MainUi, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (75, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
         modelingButton.SetOnClick(() => SwitchScene("Modeling"));
+        modelingButton.SetTextCharCount("Modeling", 1.2f);
+        modelingButton.Collection.SetScale((modelingButton.Text.newScale.X + 16, 36f));
 
-        UIButton riggingButton = new("RiggingButton", MainUi, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (75, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
+        UITextButton riggingButton = new("RiggingButton", MainUi, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (75, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
         riggingButton.SetOnClick(() => SwitchScene("Rigging"));
+        riggingButton.SetTextCharCount("Rigging", 1.2f);
+        riggingButton.Collection.SetScale((riggingButton.Text.newScale.X + 16, 36f));
 
-        UIButton animationButton = new("AnimationButton", MainUi, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (75, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
+        UITextButton animationButton = new("AnimationButton", MainUi, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (75, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
         animationButton.SetOnClick(() => SwitchScene("Animation"));
+        animationButton.SetTextCharCount("Animation", 1.2f);
+        animationButton.Collection.SetScale((animationButton.Text.newScale.X + 16, 36f));
 
-        UIButton textureButton = new("TextureButton", MainUi, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (75, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
+        UITextButton textureButton = new("TextureButton", MainUi, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (75, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
         textureButton.SetOnClick(() => SwitchScene("Texture"));
+        textureButton.SetTextCharCount("Texture", 1.2f);
+        textureButton.Collection.SetScale((textureButton.Text.newScale.X + 16, 36f));
 
         UIButton vertexSelectionButton = new("VertexSelectionButton", MainUi, AnchorType.TopLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 97, (0, 0), UIState.Static);
         vertexSelectionButton.SetOnClick(() => ModelingEditor.SwitchSelection(RenderType.Vertex));
@@ -208,7 +221,7 @@ public class GeneralModelingEditor : ScriptingNode
         UIHorizontalCollection fileStacking = new("FileStacking", MainUi, AnchorType.TopRight, PositionType.Relative, (0, 0, 0), (0, 0), (0, 0, 0, 0), (7, 7, 7, 7), 5, 0);
 
         FileName = new("ModelName", MainUi, AnchorType.MiddleCenter, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (200, 36), (0, 0, 0, 0), 0, 0, (10, 0.15f));
-        FileName.SetText("cube", 0.7f);
+        FileName.SetMaxCharCount(24).SetText("cube", 1.2f);
 
         
         UIButton saveModelButton = new("saveModelButton", MainUi, AnchorType.TopLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 95, (0, 0), UIState.Static);
@@ -239,10 +252,10 @@ public class GeneralModelingEditor : ScriptingNode
 
         stateCollection.AddElement(statePanel);
 
-        stateStacking.AddElement(modelingButton);
-        stateStacking.AddElement(riggingButton);
-        stateStacking.AddElement(animationButton);
-        stateStacking.AddElement(textureButton);
+        stateStacking.AddElement(modelingButton.Collection);
+        stateStacking.AddElement(riggingButton.Collection);
+        stateStacking.AddElement(animationButton.Collection);
+        stateStacking.AddElement(textureButton.Collection);
         stateStacking.AddElement(vertexCollection);
         stateStacking.AddElement(edgeCollection);
         stateStacking.AddElement(faceCollection);
@@ -395,7 +408,7 @@ public class GeneralModelingEditor : ScriptingNode
         UIInputField CameraSpeedField = new("CameraSpeedText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (10, 0, 0, 0), 0, 0, (10, 0.05f));
         
         CameraSpeedField.SetMaxCharCount(2).SetText("50", 1.2f).SetTextType(TextType.Numeric);
-        CameraSpeedField.OnTextChange = new SerializableEvent(() => { try { Game.camera.SPEED = int.Parse(CameraSpeedField.Text); } catch { Game.camera.SPEED = 1; } });
+        CameraSpeedField.OnTextChange = new SerializableEvent(() => { try { Game.camera.SPEED = int.Parse(CameraSpeedField.Text); } catch { Game.camera.SPEED = 1; } }); 
 
         speedStacking.SetScale((45, 30f));
 
@@ -420,9 +433,9 @@ public class GeneralModelingEditor : ScriptingNode
 
         camera.SetCameraMode(CameraMode.Free);
         
-        camera.position = new Vector3(0, 0, 5);
-        camera.pitch = 0;
-        camera.yaw = -90;
+        camera.Position = new Vector3(0, 0, 5);
+        camera.Pitch = 0;
+        camera.Yaw = -90;
         
         camera.UpdateVectors();
         

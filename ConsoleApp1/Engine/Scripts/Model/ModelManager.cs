@@ -70,6 +70,15 @@ public static class ModelManager
         SelectedModel.UpdateVertexPosition();
     }
 
+    public static void DeleteModel(Model model)
+    {
+        Models.Remove(model.Name);
+        if (SelectedModel == model)
+        {
+            SelectedModel = null;
+        }
+    }
+
     public static void Unload()
     {
         foreach (var (name, model) in Models)

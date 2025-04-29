@@ -78,11 +78,12 @@ public class AnimationEditor : BaseEditor
             if (freeCamera)
             {
                 Game.Instance.CursorState = CursorState.Grabbed;
-                Game.camera.firstMove = true;
+                Game.camera.Unlock();
             }
             else
             {
                 Game.Instance.CursorState = CursorState.Normal;
+                Game.camera.Lock();
             }
         }
 
