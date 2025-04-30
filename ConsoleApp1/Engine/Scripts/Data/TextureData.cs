@@ -34,7 +34,7 @@ public static class TextureData
         {
             for (int col = 0; col < cols; col++)
             {
-                int effectiveRow = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? (flipped ? (rows - row - 1) : row) : (flipped ? (rows - row - 1) : row);
+                int effectiveRow = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? (flipped ? row : (rows - row - 1)) : (flipped ? (rows - row - 1) : row);
                 byte[] subImage = ExtractSubImage(atlas, col * width, effectiveRow * height, width, height);
                 textures.Add(subImage);
             }
