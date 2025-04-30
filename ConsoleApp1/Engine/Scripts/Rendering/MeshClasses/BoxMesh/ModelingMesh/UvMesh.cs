@@ -149,12 +149,31 @@ public class UvMesh : Meshes
 
     public override void SaveModel(string modelName)
     {
-        
+        SaveModel(modelName, Game.modelPath);
     }
 
     public override void SaveModel(string modelName, string basePath)
     {
-        
+        string path = Path.Combine(basePath, $"{modelName}.model");
+        if (!File.Exists(path)) 
+            return;
+
+        List<string> lines = [.. File.ReadAllLines(path)];
+
+        int vertexCount = int.Parse(lines[0]);
+        int edgeCount = int.Parse(lines[vertexCount + 1]);
+        int uvCount = int.Parse(lines[edgeCount + vertexCount + 2]);
+
+        for (int i = 0; i < UvList.Count; i++)
+        {
+            if (i >= uvCount)
+                break;
+
+            var uv = UvList[i];
+            lines[i + edgeCount + vertexCount + 3] = $"uv {Float.Str(uv.X)} {Float.Str(uv.Y)}";
+        }
+
+        File.WriteAllLines(path, lines);
     }
 
     public void UpdateVertexColors()

@@ -44,7 +44,7 @@ public class TextureEditor : BaseEditor
     public Dictionary<Vector2, PositionData> Vertices = [];
     public List<Uv> SelectedVertices = [];
 
-    public TextureEditor()
+    public TextureEditor(GeneralModelingEditor editor) : base(editor)
     {
         ColorPicker = new ColorPicker(ColorPickerWidth, ColorPickerHeight, ColorPickerPosition);
 
@@ -63,12 +63,24 @@ public class TextureEditor : BaseEditor
 
         TextureUI.AddElements(_textureCollection);
 
-        UvMesh.LoadModel("swordUvs");
+        UvMesh.LoadModel("cube");
     }
 
     public override void Start(GeneralModelingEditor editor)
     {   
         Started = true;
+
+        Editor.textureFileSaveButton.SetOnClick(() => 
+        {
+            string fileName = Editor.textureFileField.Text;
+            if (fileName.Length == 0)
+            {
+                PopUp.AddPopUp("Please enter a model name.");
+                return;
+            }
+
+            DrawingPanel.SaveTexture(fileName);
+        });
     }
 
     public override void Resize(GeneralModelingEditor editor)
@@ -89,6 +101,35 @@ public class TextureEditor : BaseEditor
         DrawingPanel.WindowPosition = (_windowPosition.X, Game.Height - (_windowPosition.Y + _windowSize.Y));
         DrawingPanel.WindowWidth = _windowSize.X;
         DrawingPanel.WindowHeight = _windowSize.Y;
+
+        Editor.LoadAction = LoadUvs;
+        Editor.SaveAction = SaveUvs;
+
+        _regenerateColors = true;
+    }
+
+    public void LoadUvs()
+    {
+        UvMesh.Unload();
+        UvMesh.LoadModel(FileName);
+    }
+
+    public void SaveUvs()
+    {
+        if (FileName.Length == 0)
+        {
+            PopUp.AddPopUp("Please enter a model name.");
+            return;
+        }
+
+        string folderPath = Path.Combine(Game.undoModelPath, FileName);
+        if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
+
+        string path = Path.Combine(Game.modelPath, $"{FileName}.model");
+        if (File.Exists(path))
+            PopUp.AddConfirmation("Overwrite existing model?", () => UvMesh.SaveModel(FileName), null);
+        else
+            UvMesh.SaveModel(FileName);  
     }
 
     public override void Update(GeneralModelingEditor editor)
@@ -121,6 +162,8 @@ public class TextureEditor : BaseEditor
                     DrawingPanel.BrushSize += delta * GameTime.DeltaTime * 100 * (1 + DrawingPanel.BrushSize);
                     DrawingPanel.BrushSize = Mathf.Clamp(1, 100, DrawingPanel.BrushSize);
                 }
+                delta = 0;
+                DrawingPanel.RenderSet = 0;
             }
             if (Input.IsKeyDown(Keys.F)) // Falloff
             {
@@ -129,6 +172,7 @@ public class TextureEditor : BaseEditor
                     DrawingPanel.Falloff += delta * GameTime.DeltaTime * 50 * (1 + DrawingPanel.Falloff);
                     DrawingPanel.Falloff = Mathf.Clamp(0, 5, DrawingPanel.Falloff);
                 }
+                delta = 0;
                 DrawingPanel.RenderSet = 1;
             }
             if (Input.IsKeyDown(Keys.W)) // brush strength
@@ -138,11 +182,10 @@ public class TextureEditor : BaseEditor
                     DrawingPanel.BrushStrength += delta * GameTime.DeltaTime * 10 * (1 + DrawingPanel.BrushStrength);
                     DrawingPanel.BrushStrength = Mathf.Clamp(0, 1, DrawingPanel.BrushStrength);
                 }
+                delta = 0;
                 DrawingPanel.RenderSet = 2;
             }
 
-            // Drawing
-            delta = Input.GetMouseScrollDelta().Y;
             if (delta != 0)
             {
                 DrawingPanel.Zoom(delta * GameTime.DeltaTime * 20 * (1 + DrawingPanel.DrawingCanvasSize)); 

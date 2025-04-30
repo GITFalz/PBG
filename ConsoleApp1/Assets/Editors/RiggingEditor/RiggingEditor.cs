@@ -21,6 +21,11 @@ public class RiggingEditor : BaseEditor
 
     private bool regenerateVertexUi = true;
 
+    public RiggingEditor(GeneralModelingEditor editor) : base(editor)
+    {
+        
+    }
+
     public override void Start(GeneralModelingEditor editor)
     {
         Started = true;

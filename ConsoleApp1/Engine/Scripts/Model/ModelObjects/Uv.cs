@@ -51,6 +51,6 @@ public class Uv
     public static implicit operator Uv(Vector2 v) => new(v);
     public static Vector2 operator -(Uv uv1, Uv uv2) => uv1 - uv2;
     public static Vector2 operator +(Uv uv1, Uv uv2) => uv1 + uv2;
-    public static bool operator ==(Uv uv1, Uv uv2) => ReferenceEquals(uv1, uv2) || uv1.Value == uv2.Value;
-    public static bool operator !=(Uv uv1, Uv uv2) => !ReferenceEquals(uv1, uv2) && uv1.Value != uv2.Value;
+    public static bool operator ==(Uv uv1, Uv uv2) => ReferenceEquals(uv1, uv2);
+    public static bool operator !=(Uv uv1, Uv uv2) => !ReferenceEquals(uv1, uv2);
 }

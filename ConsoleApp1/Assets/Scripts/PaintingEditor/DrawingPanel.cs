@@ -10,7 +10,10 @@ public class DrawingPanel
     public static int Width;
     public static int Height;
 
-    private static FBO _fbo = new FBO(100, 100);
+    public static int TextureWidth = 100;
+    public static int TextureHeight = 100;
+
+    private static FBO _fbo = new FBO(TextureWidth, TextureHeight);
     private static ShaderProgram _paintingShader = new ShaderProgram("Painting/Painting.vert", "Painting/Painting.frag");
     private static ShaderProgram _textureShader = new ShaderProgram("Painting/Rectangle.vert", "Painting/Texture.frag");
     private static ShaderProgram _brushCircleShader = new ShaderProgram("Painting/Rectangle.vert", "Painting/CircleOutline.frag");
@@ -92,6 +95,11 @@ public class DrawingPanel
     {
         BrushSize += zoomFactor;
         Console.WriteLine($"Brush Size: {BrushSize}");
+    }
+
+    public static void SaveTexture(string fileName)
+    {
+        _fbo.SaveFramebufferToPNG(Width, Height, fileName + ".png");
     }
 
 

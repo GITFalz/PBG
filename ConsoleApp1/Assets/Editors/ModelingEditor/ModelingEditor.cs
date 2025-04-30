@@ -26,7 +26,7 @@ public class ModelingEditor : BaseEditor
     public bool CanStash = true;
     public bool CanGenerateBuffers = true;
 
-    public ModelingEditor(GeneralModelingEditor editor)
+    public ModelingEditor(GeneralModelingEditor editor) : base(editor)
     {
         Editor = editor;
 
@@ -34,6 +34,8 @@ public class ModelingEditor : BaseEditor
         EditingMode = new ModelingEditingMode(this);
 
         CurrentMode = EditingMode;
+
+        ModelManager.LoadModel("cube");
     }
 
     public void SwitchMode(ModelingBase mode)
@@ -69,7 +71,11 @@ public class ModelingEditor : BaseEditor
     public override void Awake(GeneralModelingEditor editor)
     {
         editor.model.SwitchState("Modeling");
-        ModelManager.LoadModel(editor.currentModelName);
+
+        Editor.LoadAction = Editor.LoadModel;
+        Editor.SaveAction = Editor.SaveModel;
+
+        Console.WriteLine("Awake Modeling Editor");
     }
     
     public override void Update(GeneralModelingEditor editor)

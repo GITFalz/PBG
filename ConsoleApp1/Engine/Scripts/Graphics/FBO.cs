@@ -41,6 +41,17 @@ public class FBO : BufferBase
 
     public void SaveFramebufferToPNG(int width, int height, string filePath)
     {
+        filePath = Path.Combine(Game.texturePath, filePath);
+
+        if (File.Exists(filePath))
+            PopUp.AddConfirmation("Overwrite existing model?", () => SaveToImage(width, height, filePath), null);
+        else
+            SaveToImage(width, height, filePath);
+            
+    }
+
+    public void SaveToImage(int width, int height, string filePath)
+    {
         byte[] pixels = GetPixels(width, height);
 
         using (var image = new Image<Rgba32>(width, height))
@@ -59,10 +70,7 @@ public class FBO : BufferBase
                 }
             }
 
-            filePath = Path.Combine(Game.texturePath, filePath);
             image.Save(filePath);
-
-            Console.WriteLine($"Framebuffer saved to {filePath}");
         }
     }
 

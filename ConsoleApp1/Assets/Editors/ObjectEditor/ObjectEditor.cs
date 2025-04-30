@@ -1,5 +1,10 @@
 public class ObjectEditor : BaseEditor
 {
+    public ObjectEditor(GeneralModelingEditor editor) : base(editor)
+    {
+        // Constructor logic here
+    }
+    
     public override void Awake(GeneralModelingEditor editor)
     {
         throw new NotImplementedException();

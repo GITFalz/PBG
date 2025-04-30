@@ -112,6 +112,9 @@ public class GeneralModelingEditor : ScriptingNode
         set => ModelSettings.axis.Z = value;
     }
 
+    public Action LoadAction = () => {};
+    public Action SaveAction = () => {};
+
     
     public bool freeCamera = false;
     public int _selectedModel = 0;
@@ -129,6 +132,10 @@ public class GeneralModelingEditor : ScriptingNode
         { 4, 0.1f }
     };
 
+    public UIInputField textureFileField;
+    public UITextButton textureFileSaveButton;
+    public UITextButton textureFileLoadButton;
+
     public GeneralModelingEditor()
     {
         MainUi = new UIController();
@@ -136,9 +143,9 @@ public class GeneralModelingEditor : ScriptingNode
         UIScrollViewTest = new UIController();
 
         modelingEditor = new ModelingEditor(this); 
-        riggingEditor = new RiggingEditor();
-        animationEditor = new AnimationEditor();
-        textureEditor = new TextureEditor();
+        riggingEditor = new RiggingEditor(this); 
+        animationEditor = new AnimationEditor(this);
+        textureEditor = new TextureEditor(this);
     }
 
     public override void Start()
@@ -225,10 +232,10 @@ public class GeneralModelingEditor : ScriptingNode
 
         
         UIButton saveModelButton = new("saveModelButton", MainUi, AnchorType.TopLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 95, (0, 0), UIState.Static);
-        saveModelButton.SetOnClick(() => SaveModel());
+        saveModelButton.SetOnClick(Save);
 
         UIButton loadModelButton = new("loadModelButton", MainUi, AnchorType.TopLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 94, (0, 0), UIState.Static);
-        loadModelButton.SetOnClick(() => LoadModel());
+        loadModelButton.SetOnClick(Load);
 
 
         UIImage fileNamePanel = new("FileNamePanel", MainUi, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (310, 36), (0, 0, 0, 0), 0, 1, (10, 0.05f));
@@ -394,6 +401,34 @@ public class GeneralModelingEditor : ScriptingNode
         gridStackingCollection.AddElements(GridAlignedText, gridAlignedButton);
 
 
+        // Texture file collection
+        UIVerticalCollection textureFileStacking = new("TextureFileStacking", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 50), (0, 0, 0, 0), (0, 0, 0, 0), 5, 0);
+
+        UICollection textureFileFieldCollection = new("TextureFileFieldCollection", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (0, 0, 0), (0, 20), (0, 0, 0, 0), 0);
+        
+        UIImage textureFileFieldPanel = new("TextureFileFieldPanel", ModelingUi, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (45, 30), (0, 0, 0, 0), 0, 1, (10, 0.05f));
+        
+        textureFileField = new("TextureFileField", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (10, 0, 0, 0), 0, 0, (10, 0.05f));
+        textureFileField.SetMaxCharCount(24).SetText("cube", 0.9f).SetTextType(TextType.Alphanumeric);
+        textureFileField.OnTextChange = new SerializableEvent(() => {});
+
+        textureFileFieldCollection.SetScale((textureFileField.newScale.X, 30f));
+
+        textureFileFieldCollection.AddElements(textureFileFieldPanel, textureFileField);
+
+        UIHorizontalCollection textureFileButtonStacking = new("TextureFileButtonStacking", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (0, 0, 0), (20, 20), (0, 0, 0, 0), (0, 0, 0, 0), 5, 0);
+
+        textureFileSaveButton = new("TextureFileSaveButton", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (110, 30), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
+        textureFileSaveButton.SetTextCharCount("Save", 1.2f);
+
+        textureFileLoadButton = new("TextureFileLoadButton", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (100, 30), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
+        textureFileLoadButton.SetTextCharCount("Load", 1.2f);
+
+        textureFileButtonStacking.AddElements(textureFileSaveButton.Collection, textureFileLoadButton.Collection);
+
+        textureFileStacking.AddElements(textureFileFieldCollection, textureFileButtonStacking);
+
+
 
         // Camera speed panel collection
         UICollection cameraSpeedStacking = new("CameraSpeedStacking", ModelingUi, AnchorType.BottomCenter, PositionType.Relative, (0, 0, 0), (225, 35), (5, 0, 0, 0), 0);
@@ -417,7 +452,7 @@ public class GeneralModelingEditor : ScriptingNode
         cameraSpeedStacking.AddElements(CameraSpeedTextLabel, speedStacking);
 
 
-        mainPanelStacking.AddElements(cullingCollection, alphaCollection, wireframeCollection, mirrorStackingCollection, axisStackingCollection, gridStackingCollection);
+        mainPanelStacking.AddElements(cullingCollection, alphaCollection, wireframeCollection, mirrorStackingCollection, axisStackingCollection, gridStackingCollection, textureFileStacking);
 
         mainPanelCollection.AddElements(mainPanel, mainPanelStacking, cameraSpeedStacking);
 
@@ -501,6 +536,16 @@ public class GeneralModelingEditor : ScriptingNode
         if (!CurrentEditor.Started)
             CurrentEditor.Start(this);
         CurrentEditor.Awake(this);
+    }
+
+    public void Load()
+    {
+        LoadAction?.Invoke();
+    }
+
+    public void Save()
+    {
+        SaveAction?.Invoke();
     }
 
     public void LoadModel()
@@ -728,6 +773,13 @@ public class GeneralModelingEditor : ScriptingNode
 public abstract class BaseEditor 
 { 
     public bool Started = false;
+    public GeneralModelingEditor Editor;
+    public string FileName => GeneralModelingEditor.FileName.Text;
+
+    public BaseEditor(GeneralModelingEditor editor)
+    {
+        Editor = editor;
+    }
 
     public abstract void Start(GeneralModelingEditor editor);
     public abstract void Resize(GeneralModelingEditor editor);

@@ -46,13 +46,29 @@ public static class ModelManager
         string folderPath = Path.Combine(Game.undoModelPath, fileName);
         if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
 
+        /*
         string newFile = fileName;
 
         while (Models.ContainsKey(newFile))
         {
             newFile = $"{newFile}_{Models.Count}";
         }
+        */
 
+        SelectedModel?.Unload();
+
+        if (SelectedModel == null)
+        {
+            SelectedModel = new Model();
+            Models.Add(name, SelectedModel);
+        }
+
+        SelectedModel.LoadModel(name);
+        SelectedModel.Name = name;
+        SelectedModel.IsSelected = true;
+        SelectedModel.UpdateVertexPosition();
+
+        /*
         Model model = new Model();
         model.LoadModel(name);
         model.SaveModel(newFile);
@@ -68,6 +84,7 @@ public static class ModelManager
         SelectedModel = model;
         SelectedModel.IsSelected = true;
         SelectedModel.UpdateVertexPosition();
+        */
     }
 
     public static void SaveModel(string fileName)

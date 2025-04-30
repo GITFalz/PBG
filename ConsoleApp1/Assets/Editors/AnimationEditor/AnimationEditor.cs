@@ -9,6 +9,11 @@ public class AnimationEditor : BaseEditor
     public OldModel model;
     public AnimationMesh Mesh;
     public UIController Timeline;
+
+    public AnimationEditor(GeneralModelingEditor editor) : base(editor)
+    {
+        // Constructor logic here
+    }
     
     public override void Start(GeneralModelingEditor editor)
     {

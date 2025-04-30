@@ -25,6 +25,7 @@ public class Game : GameWindow
     public static string assetPath = Path.Combine(mainPath, "Saves");
     public static string shaderPath = Path.Combine(mainPath, "Shaders");
     public static string uiPath = Path.Combine(assetPath, "UI");
+    public static string customTexturesPath = Path.Combine(assetPath, "CustomTextures");
     public static string texturePath = Path.Combine(assetPath, "Textures");
     public static readonly string modelPath = Path.Combine(assetPath, "Models");
     public static readonly string undoModelPath = Path.Combine(mainPath, "UndoModels");
@@ -104,6 +105,9 @@ public class Game : GameWindow
     
     protected override void OnLoad()
     {
+        if (!Directory.Exists(mainPath))
+            Directory.CreateDirectory(mainPath);
+            
         if (!Directory.Exists(modelPath))
             Directory.CreateDirectory(modelPath);
         if (!Directory.Exists(undoModelPath))
@@ -113,7 +117,14 @@ public class Game : GameWindow
             Directory.CreateDirectory(assetPath);
         if (!Directory.Exists(uiPath))
             Directory.CreateDirectory(uiPath);
-        
+
+        if (!Directory.Exists(shaderPath))
+            Directory.CreateDirectory(shaderPath);
+        if (!Directory.Exists(texturePath))
+            Directory.CreateDirectory(texturePath);
+        if (!Directory.Exists(customTexturesPath))
+            Directory.CreateDirectory(customTexturesPath);
+
         // Input
         MouseState mouse = MouseState;
         KeyboardState keyboard = KeyboardState;
