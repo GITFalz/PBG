@@ -52,6 +52,13 @@ public static class Mathf
             max = Max(max, values[i]);
         return max;
     } 
+    public static Vector2 Max(params Vector2[] values)
+    {
+        Vector2 max = values[0];
+        for (int i = 1; i < values.Length; i++)
+            max = Max(max, values[i]);
+        return max;
+    } 
     public static double Max(double a, double b) => a > b ? a : b;
     public static Vector2 Max(Vector2 a, Vector2 b) => new Vector2(Max(a.X, b.X), Max(a.Y, b.Y));
     public static Vector3 Max(Vector3 a, Vector3 b) => new Vector3(Max(a.X, b.X), Max(a.Y, b.Y), Max(a.Z, b.Z));
@@ -79,6 +86,13 @@ public static class Mathf
     public static double Min(params double[] values)
     {
         double min = values[0];
+        for (int i = 1; i < values.Length; i++)
+            min = Min(min, values[i]);
+        return min;
+    }
+    public static Vector2 Min(params Vector2[] values)
+    {
+        Vector2 min = values[0];
         for (int i = 1; i < values.Length; i++)
             min = Min(min, values[i]);
         return min;

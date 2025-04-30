@@ -13,4 +13,9 @@ public static class Float
             return 0f;
         }
     }
+
+    public static string Str(float value)
+    {
+        return value.ToString(CultureInfo.InvariantCulture);
+    }
 }

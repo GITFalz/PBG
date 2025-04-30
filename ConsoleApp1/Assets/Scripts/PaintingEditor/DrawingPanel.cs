@@ -60,7 +60,7 @@ public class DrawingPanel
         set
         {
             _drawingCanvasSize = 1 / value;
-            _drawingCanvasScale = new Vector2(Width, Height) / _drawingCanvasSize;
+            CanvasScale = new Vector2(Width, Height) / _drawingCanvasSize;
             _drawingCanvasOffset = _drawingCanvasPosition * _drawingCanvasSize;
         }
     }
@@ -70,7 +70,7 @@ public class DrawingPanel
 
     public static void Zoom(float zoomFactor)
     {
-        SetScale(DrawingCanvasSize + zoomFactor);
+        SetScale(Mathf.Clamp(1, 100, DrawingCanvasSize + zoomFactor));
     }
 
     public static void SetScale(float scale)
@@ -97,7 +97,7 @@ public class DrawingPanel
 
     private static Vector2 _drawingCanvasPosition = new Vector2(0, 0);
     private static Vector2 _drawingCanvasOffset = new Vector2(0, 0);
-    private static Vector2 _drawingCanvasScale = new Vector2(1, 1);
+    public static Vector2 CanvasScale = new Vector2(1, 1);
 
     private static float _drawingCanvasSize = 2f;
 
@@ -219,7 +219,7 @@ public class DrawingPanel
 
         GL.UniformMatrix4(modelLocation, true, ref model);
         GL.UniformMatrix4(projectionLocation, true, ref _textureProjectionMatrix);
-        GL.Uniform2(sizeLocation, _drawingCanvasScale);
+        GL.Uniform2(sizeLocation, CanvasScale);
 
         _fbo.BindTexture(TextureUnit.Texture0);
         _textureVao.Bind();

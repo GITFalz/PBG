@@ -602,13 +602,34 @@ public class ModelingEditingMode : ModelingBase
         Handle_SelectAllVertices();
         triangles = Model.GetFullSelectedTriangles(Model.SelectedVertices);
 
+        Vector2 uvMin = Vector2.One;
+        Vector2 uvMax = Vector2.Zero;
+
         foreach (var triangle in triangles)
         {
             Triangle oldTriangle = trianglesDict[triangle.ID];
 
-            triangle.UvA = (oldTriangle.A.X / largestSide, oldTriangle.A.Z / largestSide);
-            triangle.UvB = (oldTriangle.B.X / largestSide, oldTriangle.B.Z / largestSide);
-            triangle.UvC = (oldTriangle.C.X / largestSide, oldTriangle.C.Z / largestSide);
+            Vector2 uvA = (oldTriangle.A.X / largestSide, oldTriangle.A.Z / largestSide);
+            Vector2 uvB = (oldTriangle.B.X / largestSide, oldTriangle.B.Z / largestSide);
+            Vector2 uvC = (oldTriangle.C.X / largestSide, oldTriangle.C.Z / largestSide);
+
+            uvMin = Mathf.Min(uvA, uvB, uvC, uvMin);
+            uvMax = Mathf.Max(uvA, uvB, uvC, uvMax); 
+
+            triangle.UvA = uvA;
+            triangle.UvB = uvB;
+            triangle.UvC = uvC;
+        }
+
+        Vector2 uvSize = uvMax - uvMin;
+        float smallest = Mathf.Max(uvSize.X, uvSize.Y);
+        float multiplier = smallest == 0 ? 1 : 1 / smallest;
+
+        foreach (var triangle in triangles)
+        {
+            triangle.UvA = (triangle.UvA - uvMin) * multiplier;
+            triangle.UvB = (triangle.UvB - uvMin) * multiplier;
+            triangle.UvC = (triangle.UvC - uvMin) * multiplier;
         }
 
         CanStash = true;

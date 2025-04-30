@@ -561,7 +561,7 @@ public class ModelMesh : Meshes
         newLines.Add(VertexList.Count.ToString());
         foreach (var vertex in VertexList)
         {
-            newLines.Add($"v {vertex.X} {vertex.Y} {vertex.Z} {vertex.Index}");
+            newLines.Add($"v {Float.Str(vertex.X)} {Float.Str(vertex.Y)} {Float.Str(vertex.Z)} {vertex.Index}");
         }
 
         newLines.Add(EdgeList.Count.ToString());
@@ -573,9 +573,9 @@ public class ModelMesh : Meshes
         newLines.Add((TriangleList.Count * 3).ToString());
         foreach (var triangle in TriangleList)
         {
-            newLines.Add($"uv {triangle.UvA.X} {triangle.UvA.Y}");
-            newLines.Add($"uv {triangle.UvB.X} {triangle.UvB.Y}");
-            newLines.Add($"uv {triangle.UvC.X} {triangle.UvC.Y}");
+            newLines.Add($"uv {Float.Str(triangle.UvA.X)} {Float.Str(triangle.UvA.Y)}");
+            newLines.Add($"uv {Float.Str(triangle.UvB.X)} {Float.Str(triangle.UvB.Y)}");
+            newLines.Add($"uv {Float.Str(triangle.UvC.X)} {Float.Str(triangle.UvC.Y)}");
         }
 
         newLines.Add(TriangleList.Count.ToString());
@@ -587,7 +587,7 @@ public class ModelMesh : Meshes
         newLines.Add(Normals.Count.ToString());
         foreach (var normal in Normals)
         {
-            newLines.Add($"n {normal.X} {normal.Y} {normal.Z}");
+            newLines.Add($"n {Float.Str(normal.X)} {Float.Str(normal.Y)} {Float.Str(normal.Z)}");
         }
 
         for (int i = rigStart; i < oldLines.Count; i++)

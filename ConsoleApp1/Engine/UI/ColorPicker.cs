@@ -3,6 +3,8 @@ using OpenTK.Mathematics;
 
 public class ColorPicker
 {
+    public static List<ColorPicker> ColorPickers = [];
+
     public int Width;
     public int Height;
 
@@ -148,6 +150,8 @@ public class ColorPicker
         _colorPanelCollection.AddElements(_colorButton, ColorBG, ColorPickSlider, ColorBarSlider);
 
         ColorPickerController.AddElements(_colorPanelCollection);
+
+        ColorPickers.Add(this);
     }
 
     public void UpdateColorPickerPosition()
@@ -172,7 +176,7 @@ public class ColorPicker
         ColorPickerController.Test();
     }
 
-    public void RenderTexture()
+    public void Render()
     {
         GL.Clear(ClearBufferMask.DepthBufferBit);
 
@@ -226,5 +230,13 @@ public class ColorPicker
     {
         _colorPickerVao.DeleteBuffer();
         ColorPickerController.Delete();
+    }
+
+    public static void DeleteAll()
+    {
+        foreach (var picker in ColorPickers)
+        {
+            picker.Delete();
+        }
     }
 }

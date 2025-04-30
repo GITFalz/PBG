@@ -10,6 +10,8 @@ public class UvTriangle
     public UvEdge BC;
     public UvEdge CA;
 
+    public bool Hidden = false;
+
     public UvTriangle(Uv uv1, Uv uv2, Uv uv3, UvEdge ab, UvEdge bc, UvEdge ca)
     {
         A = uv1;
