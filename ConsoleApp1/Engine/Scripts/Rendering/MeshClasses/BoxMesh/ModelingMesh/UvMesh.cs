@@ -120,7 +120,6 @@ public class UvMesh : Meshes
         for (int i = edgeCount + vertexCount + 3; i <= edgeCount + vertexCount + uvCount + 2; i++)
         {
             string[] values = lines[i].Split(' ');
-            Console.WriteLine(string.Join(", ", values));
             uvs.Add(new Vector2(Float.Parse(values[1]), Float.Parse(values[2])));
         }
 

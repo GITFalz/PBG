@@ -7,7 +7,7 @@ using SharpGen.Runtime;
 
 public class ModelingEditor : BaseEditor
 {
-    public GeneralModelingEditor Editor;
+    public GeneralModelingEditor Editor; 
 
     public ModelingBase CurrentMode;
 
@@ -25,6 +25,7 @@ public class ModelingEditor : BaseEditor
 
     public bool CanStash = true;
     public bool CanGenerateBuffers = true;
+
 
     public ModelingEditor(GeneralModelingEditor editor) : base(editor)
     {
@@ -111,7 +112,7 @@ public class ModelingEditor : BaseEditor
                 oldMousePos = Input.GetMousePosition();
             }
 
-            if (Input.IsMouseDown(MouseButton.Left) && !editor.blocked)
+            if (Input.IsMouseDown(MouseButton.Left) && !blocked)
             {
                 renderSelection = true;
                 
@@ -260,7 +261,7 @@ public class ModelingEditor : BaseEditor
         Vector2 mouseDelta = Input.GetMouseDelta() * (GameTime.DeltaTime * 10);
         Vector3 move = camera.right * mouseDelta.X + camera.up * -mouseDelta.Y;
 
-        move *= ModelSettings.axis;
+        move *= ModelSettings.Axis;
         if (move.Length == 0) return Vector3.Zero;
         
         if (ModelSettings.Snapping)

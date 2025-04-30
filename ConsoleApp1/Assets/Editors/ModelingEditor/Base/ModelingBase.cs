@@ -8,6 +8,7 @@ public abstract class ModelingBase
 {
     public ModelingEditor Editor;
     public Model? Model => Editor.Model;
+
     public bool CanStash {
         get => Editor.CanStash;
         set => Editor.CanStash = value;
@@ -24,6 +25,7 @@ public abstract class ModelingBase
     }
 
     public abstract void Start();
+    public abstract void Resize();
     public abstract void Update();
     public abstract void Render();
     public abstract void Exit();

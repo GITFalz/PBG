@@ -8,12 +8,14 @@ public class Model
     public bool IsSelected = false;
 
     public string CurrentModelName = "";
+    public string TextureName = "empty.png";
+    public TextureLocation TextureLocation = TextureLocation.NormalTexture;
     
 
     public ModelMesh Mesh = new();
 
     private static ShaderProgram _shaderProgram = new ShaderProgram("Model/Model.vert", "Model/Model.frag");
-    private static Texture _texture = new Texture("dirt_block.png");
+    public Texture Texture = new Texture("empty.png", TextureLocation.NormalTexture);
 
 
     public static ModelCopy randomCopy = new();
@@ -24,7 +26,19 @@ public class Model
     public List<Edge> SelectedEdges = new();
     public List<Triangle> SelectedTriangles = new();
     public Dictionary<Vertex, Vector2> Vertices = new Dictionary<Vertex, Vector2>();
-    
+
+    public void Renew(string fileName, TextureLocation textureLocation)
+    {
+        TextureName = fileName;
+        TextureLocation = textureLocation;
+        Texture.Renew(fileName, textureLocation);
+    }
+
+    public void Reload()
+    {
+        Texture.Renew(TextureName, TextureLocation);
+    }
+
 
     public void Render()
     {
@@ -60,11 +74,11 @@ public class Model
             GL.UniformMatrix4(projectionLocation, true, ref projection);
             GL.Uniform1(colorAlphaLocation, ModelSettings.MeshAlpha);
 
-            _texture.Bind();
+            Texture.Bind();
             
             Mesh.Render();
 
-            _texture.Unbind();
+            Texture.Unbind();
         }
 
         _shaderProgram.Unbind();

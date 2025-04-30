@@ -3,7 +3,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-public class TextureEditor : BaseEditor
+public class TextureEditor : BaseEditor 
 {
     public static ShaderProgram UvShader = new ShaderProgram("Uv/Uv.vert", "Uv/Uv.frag");
     public static ShaderProgram UvEdgeShader = new ShaderProgram("Uv/Edge.vert", "Uv/Edge.frag");
@@ -44,6 +44,20 @@ public class TextureEditor : BaseEditor
     public Dictionary<Vector2, PositionData> Vertices = [];
     public List<Uv> SelectedVertices = [];
 
+
+
+    public UIInputField textureFileField;
+    public UITextButton textureFileSaveButton;
+    public UITextButton textureFileLoadButton;
+
+
+    public UIInputField newTextureWidthField;
+    public UIInputField newTextureHeightField;
+
+
+    public UIController ModelingUi = new UIController();
+
+
     public TextureEditor(GeneralModelingEditor editor) : base(editor)
     {
         ColorPicker = new ColorPicker(ColorPickerWidth, ColorPickerHeight, ColorPickerPosition);
@@ -64,15 +78,97 @@ public class TextureEditor : BaseEditor
         TextureUI.AddElements(_textureCollection);
 
         UvMesh.LoadModel("cube");
+
+
+        ModelingUi = new UIController();
+
+        UICollection mainPanelCollection = new("MainPanelCollection", ModelingUi, AnchorType.ScaleRight, PositionType.Absolute, (0, 0, 0), (250, Game.Height), (-5, 5, 5, 5), 0);
+
+        UIImage mainPanel = new("MainPanel", ModelingUi, AnchorType.ScaleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (245, Game.Height), (0, 0, 0, 0), 0, 0, (10, 0.05f));
+
+        UIVerticalCollection mainPanelStacking = new("MainPanelStacking", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (245, 0), (0, 0, 0, 0), (5, 10, 5, 5), 5, 0);
+
+
+        // Texture file collection
+        UIVerticalCollection textureFileStacking = new("TextureFileStacking", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 50), (0, 0, 0, 0), (0, 0, 0, 0), 5, 0);
+
+        UICollection textureFileFieldCollection = new("TextureFileFieldCollection", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (0, 20), (0, 0, 0, 0), 0);
+        
+        UIImage textureFileFieldPanel = new("TextureFileFieldPanel", ModelingUi, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (45, 30), (0, 0, 0, 0), 0, 1, (10, 0.05f));
+        
+        textureFileField = new("TextureFileField", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (10, 0, 0, 0), 0, 0, (10, 0.05f));
+        textureFileField.SetMaxCharCount(24).SetText("cube", 0.93f).SetTextType(TextType.Alphanumeric);
+        textureFileField.OnTextChange = new SerializableEvent(() => {});
+
+        textureFileFieldCollection.SetScale((textureFileField.newScale.X, 30f));
+
+        textureFileFieldCollection.AddElements(textureFileFieldPanel, textureFileField);
+
+        UIHorizontalCollection textureFileButtonStacking = new("TextureFileButtonStacking", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (20, 30), (0, 0, 0, 0), (0, 0, 0, 0), 5, 0);
+
+        textureFileSaveButton = new("TextureFileSaveButton", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (110, 30), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
+        textureFileSaveButton.SetTextCharCount("Save", 1.2f);
+
+        textureFileLoadButton = new("TextureFileLoadButton", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (110, 30), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
+        textureFileLoadButton.SetTextCharCount("Load", 1.2f);
+
+        textureFileButtonStacking.AddElements(textureFileSaveButton.Collection, textureFileLoadButton.Collection);
+
+        textureFileStacking.AddElements(textureFileFieldCollection, textureFileButtonStacking);
+
+
+        // New texture creation (needs two input fields aligned horizontally with a max char count of 5 each and a TextType of Numeric)
+        UIHorizontalCollection newTextureStacking = new("NewTextureStacking", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 50), (0, 0, 0, 0), (0, 0, 0, 0), 5, 0);
+
+        UICollection newTextureWidthFieldCollection = new("NewTextureWidthFieldCollection", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (0, 30), (0, 0, 0, 0), 0);
+
+        UIImage newTextureFieldPanel = new("NewTextureFieldPanel", ModelingUi, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (45, 30), (0, 0, 0, 0), 0, 1, (10, 0.05f));
+
+        newTextureWidthField = new("NewTextureWidthField", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (10, 0, 0, 0), 0, 0, (10, 0.05f));
+        newTextureWidthField.SetMaxCharCount(5).SetText("512", 0.93f).SetTextType(TextType.Numeric);
+        newTextureWidthField.OnTextChange = new SerializableEvent(() => {});
+
+        newTextureWidthFieldCollection.SetScale((newTextureWidthField.newScale.X + 20, 30f));
+
+        newTextureWidthFieldCollection.AddElements(newTextureFieldPanel, newTextureWidthField);
+
+
+        UICollection newTextureHeightFieldCollection = new("NewTextureHeightFieldCollection", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (0, 30), (0, 0, 0, 0), 0);
+
+        UIImage newTextureHeightFieldPanel = new("NewTextureHeightFieldPanel", ModelingUi, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (45, 30), (0, 0, 0, 0), 0, 1, (10, 0.05f));
+
+        newTextureHeightField = new("NewTextureHeightField", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (10, 0, 0, 0), 0, 0, (10, 0.05f));
+        newTextureHeightField.SetMaxCharCount(5).SetText("512", 0.93f).SetTextType(TextType.Numeric);
+        newTextureHeightField.OnTextChange = new SerializableEvent(() => {});
+
+        newTextureHeightFieldCollection.SetScale((newTextureHeightField.newScale.X + 20, 30f));
+
+        newTextureHeightFieldCollection.AddElements(newTextureHeightFieldPanel, newTextureHeightField);
+
+
+        UITextButton newTextureButton = new("NewTextureButton", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (225 - newTextureWidthField.newScale.X - newTextureHeightField.newScale.X - 50, 30), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
+        newTextureButton.SetTextCharCount("Create", 1.2f);
+        newTextureButton.SetOnClick(CreateNewTexture);
+
+
+        newTextureStacking.AddElements(newTextureWidthFieldCollection, newTextureHeightFieldCollection, newTextureButton.Collection);
+
+
+
+        mainPanelStacking.AddElements(textureFileStacking, newTextureStacking);
+
+        mainPanelCollection.AddElements(mainPanel, mainPanelStacking);
+        
+        ModelingUi.AddElements(mainPanelCollection);
     }
 
     public override void Start(GeneralModelingEditor editor)
     {   
         Started = true;
 
-        Editor.textureFileSaveButton.SetOnClick(() => 
+        textureFileSaveButton.SetOnClick(() => 
         {
-            string fileName = Editor.textureFileField.Text;
+            string fileName = textureFileField.Text;
             if (fileName.Length == 0)
             {
                 PopUp.AddPopUp("Please enter a model name.");
@@ -81,10 +177,23 @@ public class TextureEditor : BaseEditor
 
             DrawingPanel.SaveTexture(fileName);
         });
+
+        textureFileLoadButton.SetOnClick(() => 
+        {
+            string fileName = textureFileField.Text;
+            if (fileName.Length == 0)
+            {
+                PopUp.AddPopUp("Please enter a model name.");
+                return;
+            }
+
+            DrawingPanel.LoadTexture(fileName);
+        });
     }
 
     public override void Resize(GeneralModelingEditor editor)
     {
+        ModelingUi.Resize();
         TextureUI.Resize();
         ColorPicker.Resize();
         ColorPickerPosition.Y += Game.Height - Game.PreviousHeight;
@@ -108,6 +217,43 @@ public class TextureEditor : BaseEditor
         _regenerateColors = true;
     }
 
+    public void CreateNewTexture()
+    {
+        string widthText = newTextureWidthField.Text;
+        string heightText = newTextureHeightField.Text;
+
+        if (widthText.Length == 0 || heightText.Length == 0)
+        {
+            PopUp.AddPopUp("Please enter a width and height.");
+            return;
+        }
+
+        int width = int.Parse(widthText);
+        int height = int.Parse(heightText);
+
+        if (width < 1 || height < 1)
+        {
+            PopUp.AddPopUp("Width and height must be greater than 0.");
+            return;
+        }
+
+        string fileName = textureFileField.Text;
+        if (fileName.Length == 0)
+        {
+            PopUp.AddPopUp("Please enter a model name.");
+            return;
+        }
+
+        string folderPath = Path.Combine(Game.modelPath, fileName);
+        if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
+
+        string path = Path.Combine(Game.modelPath, $"{fileName}.model");
+        if (File.Exists(path))
+            PopUp.AddConfirmation("Overwrite existing model?", () => { DrawingPanel.SaveTexture(fileName); DrawingPanel.Renew(width, height); }, () => DrawingPanel.Renew(width, height));
+        else
+            DrawingPanel.Renew(width, height);
+    }
+
     public void LoadUvs()
     {
         UvMesh.Unload();
@@ -122,7 +268,7 @@ public class TextureEditor : BaseEditor
             return;
         }
 
-        string folderPath = Path.Combine(Game.undoModelPath, FileName);
+        string folderPath = Path.Combine(Game.modelPath, FileName);
         if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
 
         string path = Path.Combine(Game.modelPath, $"{FileName}.model");
@@ -138,6 +284,7 @@ public class TextureEditor : BaseEditor
         MaskCanvas = false;
 
         ColorPicker.Update();
+        ModelingUi.Update();
         TextureUI.Test();
 
         Vector2 mousePos = Input.GetMousePosition();
@@ -188,7 +335,7 @@ public class TextureEditor : BaseEditor
 
             if (delta != 0)
             {
-                DrawingPanel.Zoom(delta * GameTime.DeltaTime * 20 * (1 + DrawingPanel.DrawingCanvasSize)); 
+                DrawingPanel.Zoom(delta * (1 + DrawingPanel.DrawingCanvasSize) * 0.05f); 
             }
 
             if (DrawingPanel.DrawingMode == DrawingMode.Move)
@@ -209,7 +356,6 @@ public class TextureEditor : BaseEditor
                     }
                 }
             }
-
             return;
         }
 
@@ -339,6 +485,7 @@ public class TextureEditor : BaseEditor
         GL.DepthMask(true);
 
         TextureUI.RenderNoDepthTest();
+        ModelingUi.RenderNoDepthTest();
 
         bool ctrl = Input.IsKeyDown(Keys.LeftControl);
         if (RenderBrushCircle && !MaskCanvas && ctrl)
@@ -388,7 +535,7 @@ public class TextureEditor : BaseEditor
 
         UvEdgeShader.Bind();
 
-        modelLocation = UvShader.GetLocation("model");
+        modelLocation = UvEdgeShader.GetLocation("model");
         projectionLocation = UvEdgeShader.GetLocation("projection");
         sizeLocation = UvEdgeShader.GetLocation("size");
 

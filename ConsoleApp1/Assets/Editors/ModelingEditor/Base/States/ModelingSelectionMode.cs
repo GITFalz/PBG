@@ -9,6 +9,11 @@ public class ModelingSelectionMode : ModelingBase
         
     }
 
+    public override void Resize()
+    {
+        
+    }
+
     public override void Update()
     {
         if (Model == null)

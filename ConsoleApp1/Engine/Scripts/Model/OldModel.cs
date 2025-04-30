@@ -434,10 +434,10 @@ public static class ModelSettings
     public static int SnappingFactorIndex = 0;
     public static Vector3 SnappingOffset = new Vector3(0, 0, 0);
 
-    public static Vector3i mirror = (0, 0, 0);
-    public static Vector3i axis = (1, 1, 1);
-    public static Vector3[] Mirrors => Mirroring[mirror];
-    public static bool[] Swaps => Swapping[mirror];
+    public static Vector3i Mirror = (0, 0, 0);
+    public static Vector3i Axis = (1, 1, 1);
+    public static Vector3[] Mirrors => Mirroring[Mirror];
+    public static bool[] Swaps => Swapping[Mirror];
     public static readonly Dictionary<Vector3i, Vector3[]> Mirroring = new Dictionary<Vector3i, Vector3[]>()
     {
         { (0, 0, 0), [(1, 1, 1)] },

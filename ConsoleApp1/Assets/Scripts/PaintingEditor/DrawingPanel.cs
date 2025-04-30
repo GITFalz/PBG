@@ -13,12 +13,22 @@ public class DrawingPanel
     public static int TextureWidth = 100;
     public static int TextureHeight = 100;
 
-    private static FBO _fbo = new FBO(TextureWidth, TextureHeight);
+    private static FBO _fbo = new FBO(TextureWidth, TextureHeight, FBOType.Color);
     private static ShaderProgram _paintingShader = new ShaderProgram("Painting/Painting.vert", "Painting/Painting.frag");
     private static ShaderProgram _textureShader = new ShaderProgram("Painting/Rectangle.vert", "Painting/Texture.frag");
     private static ShaderProgram _brushCircleShader = new ShaderProgram("Painting/Rectangle.vert", "Painting/CircleOutline.frag");
     private static VAO _vao = new VAO();
     private static VAO _textureVao = new VAO();
+
+    private static int modelLocation = _paintingShader.GetLocation("model");
+    private static int projectionLocation = _paintingShader.GetLocation("projection");
+    private static int sizeLocation = _paintingShader.GetLocation("size");
+    private static int pointLocation = _paintingShader.GetLocation("point");
+    private static int radiusLocation = _paintingShader.GetLocation("radius");  
+    private static int colorLocation = _paintingShader.GetLocation("color");
+    private static int modeLocation = _paintingShader.GetLocation("paintMode");
+    private static int falloffLocation = _paintingShader.GetLocation("falloff");
+    private static int brushStrengthLocation = _paintingShader.GetLocation("brushStrength");
     
     private static Matrix4 _projectionMatrix;
     private static Matrix4 _textureProjectionMatrix = Matrix4.Identity;
@@ -88,7 +98,7 @@ public class DrawingPanel
         Vector2 newPosition = mOffset * -1;
         CanvasPosition = newPosition;
         DrawingCanvasSize = scale;
-        DrawingPanel.SetDrawingCanvasPosition(CanvasPosition.X + WindowPosition.X, DrawingPanel.CanvasPosition.Y + (Game.Height - WindowHeight) - WindowPosition.Y);
+        SetDrawingCanvasPosition(CanvasPosition.X + WindowPosition.X, DrawingPanel.CanvasPosition.Y + (Game.Height - WindowHeight) - WindowPosition.Y);
     }
 
     public static void ZoomBrush(float zoomFactor)
@@ -97,9 +107,22 @@ public class DrawingPanel
         Console.WriteLine($"Brush Size: {BrushSize}");
     }
 
+    public static void LoadTexture(string fileName)
+    {
+        Console.WriteLine($"Loading texture: {fileName}");
+        _fbo.LoadTexture(fileName + ".png", out int width, out int height);
+        Width = width;
+        Height = height;
+
+        _projectionMatrix = Matrix4.CreateOrthographicOffCenter(0, width, height, 0, -1, 1);
+
+        DrawingCanvasSize = DrawingCanvasSize;
+        DrawingCanvasPosition = DrawingCanvasPosition;
+    }
+
     public static void SaveTexture(string fileName)
     {
-        _fbo.SaveFramebufferToPNG(Width, Height, fileName + ".png");
+        _fbo.SaveTexture(Width, Height, fileName + ".png");
     }
 
 
@@ -142,12 +165,35 @@ public class DrawingPanel
         Width = width;
         Height = height;
 
-        _fbo.Renew(width, height);
+        _fbo.Renew(width, height, FBOType.Color);
 
         _projectionMatrix = Matrix4.CreateOrthographicOffCenter(0, width, height, 0, -1, 1);
 
         DrawingCanvasPosition = new Vector2(0, 0);
         DrawingCanvasSize = 1f;
+
+        modelLocation = GL.GetUniformLocation(_paintingShader.ID, "model");
+        projectionLocation = GL.GetUniformLocation(_paintingShader.ID, "projection");
+        sizeLocation = GL.GetUniformLocation(_paintingShader.ID, "size");
+        pointLocation = GL.GetUniformLocation(_paintingShader.ID, "point");
+        radiusLocation = GL.GetUniformLocation(_paintingShader.ID, "radius");  
+        colorLocation = GL.GetUniformLocation(_paintingShader.ID, "color");
+        modeLocation = GL.GetUniformLocation(_paintingShader.ID, "paintMode");
+        falloffLocation = GL.GetUniformLocation(_paintingShader.ID, "falloff");
+        brushStrengthLocation = GL.GetUniformLocation(_paintingShader.ID, "brushStrength");
+    }
+
+    public static void Renew(int width, int height)
+    {
+        Width = width;
+        Height = height;
+
+        _fbo.Renew(width, height, FBOType.Color);
+
+        _projectionMatrix = Matrix4.CreateOrthographicOffCenter(0, width, height, 0, -1, 1);
+
+        DrawingCanvasSize = DrawingCanvasSize;
+        DrawingCanvasPosition = DrawingCanvasPosition;
     }
     
     public static void RenderFramebuffer(Vector4 color)
@@ -169,16 +215,6 @@ public class DrawingPanel
         
         Matrix4 model = Matrix4.Identity;
         Vector2 mousePos = Input.GetMousePosition() * _drawingCanvasSize - _drawingCanvasOffset;
-
-        int modelLocation = GL.GetUniformLocation(_paintingShader.ID, "model");
-        int projectionLocation = GL.GetUniformLocation(_paintingShader.ID, "projection");
-        int sizeLocation = GL.GetUniformLocation(_paintingShader.ID, "size");
-        int pointLocation = GL.GetUniformLocation(_paintingShader.ID, "point");
-        int radiusLocation = GL.GetUniformLocation(_paintingShader.ID, "radius");  
-        int colorLocation = GL.GetUniformLocation(_paintingShader.ID, "color");
-        int modeLocation = GL.GetUniformLocation(_paintingShader.ID, "paintMode");
-        int falloffLocation = GL.GetUniformLocation(_paintingShader.ID, "falloff");
-        int brushStrengthLocation = GL.GetUniformLocation(_paintingShader.ID, "brushStrength");
 
         GL.UniformMatrix4(modelLocation, false, ref model);
         GL.UniformMatrix4(projectionLocation, true, ref _projectionMatrix);

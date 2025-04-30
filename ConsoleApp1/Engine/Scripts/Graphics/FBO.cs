@@ -39,6 +39,82 @@ public class FBO : BufferBase
         GL.BindTexture(TextureTarget.Texture2D, 0);
     }
 
+    public void SaveTexture(int width, int height, string fileName)
+    {
+        string filePath = Path.Combine(Game.customTexturesPath, fileName);
+
+        if (File.Exists(filePath))
+            PopUp.AddConfirmation("Overwrite existing model?", () => SaveTextureToPNG(width, height, filePath), null);
+        else
+            SaveTextureToPNG(width, height, filePath);  
+    }
+
+    private void SaveTextureToPNG(int width, int height, string filePath)
+    {
+        byte[] pixels = new byte[width * height * 4];
+        GL.BindTexture(TextureTarget.Texture2D, colorTextureID);
+        GL.GetTexImage(TextureTarget.Texture2D, 0, PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
+
+        using (var image = new Image<Rgba32>(width, height))
+        {
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    int pixelIndex = (y * width + x) * 4;
+                    byte r = pixels[pixelIndex + 0];
+                    byte g = pixels[pixelIndex + 1];
+                    byte b = pixels[pixelIndex + 2];
+                    byte a = pixels[pixelIndex + 3];
+
+                    image[x, y] = new Rgba32(r, g, b, a); 
+                }
+            }
+
+            image.Save(filePath);
+        }
+
+        GL.BindTexture(TextureTarget.Texture2D, 0);
+    }
+
+    public void LoadTexture(string fileName, out int width, out int height)
+    {
+        width = 0;
+        height = 0;
+        string filePath = Path.Combine(Game.customTexturesPath, fileName);
+
+        if (!File.Exists(filePath))
+            return;
+
+        LoadFileToPNG(filePath, out width, out height);
+    }
+
+    private void LoadFileToPNG(string filePath, out int width, out int height)
+    {
+        using (var image = Image.Load<Rgba32>(filePath))
+        {
+            width = image.Width;
+            height = image.Height;
+
+            Renew(width, height, FBOType.Color);
+
+            byte[] pixels = new byte[width * height * 4];
+            image.CopyPixelDataTo(pixels);
+
+            GL.BindTexture(TextureTarget.Texture2D, colorTextureID);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
+
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+        }
+    }
+
+
+
     public void SaveFramebufferToPNG(int width, int height, string filePath)
     {
         filePath = Path.Combine(Game.texturePath, filePath);
@@ -46,8 +122,7 @@ public class FBO : BufferBase
         if (File.Exists(filePath))
             PopUp.AddConfirmation("Overwrite existing model?", () => SaveToImage(width, height, filePath), null);
         else
-            SaveToImage(width, height, filePath);
-            
+            SaveToImage(width, height, filePath);  
     }
 
     public void SaveToImage(int width, int height, string filePath)
@@ -66,7 +141,7 @@ public class FBO : BufferBase
                     byte b = pixels[pixelIndex + 2];
                     byte a = pixels[pixelIndex + 3];
 
-                    image[x, height - y - 1] = new Rgba32(r, g, b, a); 
+                    image[x, y] = new Rgba32(r, g, b, a); 
                 }
             }
 
@@ -98,10 +173,11 @@ public class FBO : BufferBase
             colorTextureID = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, colorTextureID);
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (float)TextureMinFilter.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (float)TextureMagFilter.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (float)TextureWrapMode.ClampToEdge);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (float)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
         }
         
         if (type == FBOType.ColorDepth || type == FBOType.Depth)
@@ -109,10 +185,11 @@ public class FBO : BufferBase
             depthTextureID = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, depthTextureID);
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.DepthComponent24, width, height, 0, PixelFormat.DepthComponent, PixelType.Float, IntPtr.Zero);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (float)TextureMinFilter.Nearest);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (float)TextureMagFilter.Nearest);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (float)TextureWrapMode.ClampToEdge);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (float)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
         }
 
         ID = GL.GenFramebuffer();
