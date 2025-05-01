@@ -6,7 +6,7 @@ public class UvMesh : Meshes
 {
     // Mesh
     private VAO _vao = new VAO();
-    private IBO _ibo = new IBO([]);
+    private IBO _ibo = new();
     private VBO<Vector2> _uvVbo = new(new List<Vector2>());
 
     public List<Vector2> Uvs = new List<Vector2>();

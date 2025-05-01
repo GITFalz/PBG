@@ -327,6 +327,30 @@ public static class Mathf
         return (rotatedQuat.X, rotatedQuat.Y, rotatedQuat.Z) + center;
     }
 
+    public static Matrix4 GetRotationMatrix(Vector3 originalDirection, Vector3 newDirection)
+    {
+        if (newDirection == originalDirection)
+        {
+            return Matrix4.Identity;
+        }
+        else if (newDirection == -originalDirection)
+        {
+            Vector3 axis = Vector3.Cross(originalDirection, Vector3.UnitX);
+            if (axis.LengthSquared < 0.01f)
+                axis = Vector3.Cross(originalDirection, Vector3.UnitZ);
+            axis.Normalize();
+            Quaternion q = Quaternion.FromAxisAngle(axis, MathHelper.Pi);
+            return Matrix4.CreateFromQuaternion(q);
+        }
+        else
+        {
+            Vector3 axis = Vector3.Cross(originalDirection, newDirection);
+            float angle = MathF.Acos(Vector3.Dot(originalDirection, newDirection));
+            Quaternion q = Quaternion.FromAxisAngle(axis.Normalized(), angle);
+            return Matrix4.CreateFromQuaternion(q);
+        }
+    }
+
     
     
     public static bool IsPointNearLine(Link<Vector2> link, Vector2 point, float distance)

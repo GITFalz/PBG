@@ -11,8 +11,10 @@ public class Model
     public string TextureName = "empty.png";
     public TextureLocation TextureLocation = TextureLocation.NormalTexture;
     
+    
 
-    public ModelMesh Mesh = new();
+    public ModelMesh Mesh;
+
 
     private static ShaderProgram _shaderProgram = new ShaderProgram("Model/Model.vert", "Model/Model.frag");
     public Texture Texture = new Texture("empty.png", TextureLocation.NormalTexture);
@@ -26,6 +28,30 @@ public class Model
     public List<Edge> SelectedEdges = new();
     public List<Triangle> SelectedTriangles = new();
     public Dictionary<Vertex, Vector2> Vertices = new Dictionary<Vertex, Vector2>();
+
+
+    public bool HasRig = true; // A root bone will always be created, even if the model has no rig.
+    public RootBone RootBone = new RootBone("RootBone");
+    public List<Bone> Bones = [];
+
+    public bool RenderBones = false;
+
+
+    public Model()
+    {
+        Mesh = new ModelMesh(this);
+
+        ChildBone childBone1 = new ChildBone(RootBone, RootBone, "ChildBone1"); 
+        ChildBone childBone11 = new ChildBone(RootBone, childBone1, "ChildBone11");
+        ChildBone childBone12 = new ChildBone(RootBone, childBone1, "ChildBone12");
+        ChildBone childBone2 = new ChildBone(RootBone, RootBone, "ChildBone2");
+        ChildBone childBone21 = new ChildBone(RootBone, childBone2, "ChildBone21");
+        ChildBone childBone22 = new ChildBone(RootBone, childBone2, "ChildBone22");
+
+        childBone1.Rotation = new Quaternion()
+
+        Mesh.InitRig();
+    }
 
     public void Renew(string fileName, TextureLocation textureLocation)
     {
@@ -124,6 +150,11 @@ public class Model
 
             GL.Disable(EnableCap.DepthTest);
             GL.DepthFunc(DepthFunction.Lequal);
+        }
+
+        if (HasRig && RenderBones)
+        {
+            Mesh.RenderBones();
         }
     }
 

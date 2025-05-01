@@ -9,52 +9,134 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class RiggingEditor : BaseEditor
 {
-    public ShaderProgram _shaderProgram;
-    public UIController BoneUi = new UIController();
-    public OldModel model;
-    public RigMesh Mesh;
+    public UIController ModelingUi;
+
+    public static UIText BackfaceCullingText;
+    public static UIText MeshAlphaText;
+    public static UIText AxisText;
 
     public List<Vertex> SelectedVertices = new();
-    public List<BoneVertex> SelectedBones = new();
     public Dictionary<Vertex, Vector2> Vertices = new Dictionary<Vertex, Vector2>();
-    public Dictionary<BoneVertex, Vector2> Bones = [];
 
     private bool regenerateVertexUi = true;
 
     public RiggingEditor(GeneralModelingEditor editor) : base(editor)
     {
+        ModelingUi = new UIController();
+
+        UICollection mainPanelCollection = new("MainPanelCollection", ModelingUi, AnchorType.ScaleRight, PositionType.Absolute, (0, 0, 0), (250, Game.Height), (-5, 5, 5, 5), 0);
+
+        UIImage mainPanel = new("MainPanel", ModelingUi, AnchorType.ScaleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (245, Game.Height), (0, 0, 0, 0), 0, 0, (10, 0.05f));
+
+        UIVerticalCollection mainPanelStacking = new("MainPanelStacking", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (245, 0), (0, 0, 0, 0), (5, 10, 5, 5), 5, 0);
+
+
+
+        // Main panel collection
+        UICollection cullingCollection = new("CullingCollection", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 20), (0, 0, 0, 0), 0);
+
+        BackfaceCullingText = new("CullingText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (0, 0, 0, 0), 0);
+        BackfaceCullingText.SetText("cull: " + ModelSettings.BackfaceCulling, 1.2f);
+
+        UIButton cullingButton = new("CullingButton", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (40, 20), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
+        cullingButton.SetOnClick(BackFaceCullingSwitch); 
+
+        cullingCollection.AddElements(BackfaceCullingText, cullingButton);
+
+
+        // Alpha panel collection
+        UICollection alphaCollection = new("AlphaCollection", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 20), (0, 0, 0, 0), 0);
+
+        MeshAlphaText = new("AlphaText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 20, 0), (400, 20), (0, 0, 0, 0), 0);
+        MeshAlphaText.SetText("alpha: " + ModelSettings.MeshAlpha.ToString("F2"), 1.2f);
+
+        UIButton alphaButton = new("AlphaUpButton", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (40, 20), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
+        alphaButton.SetOnClick(() => { blocked = true; });
+        alphaButton.SetOnHold(AlphaControl);
+        alphaButton.SetOnRelease(() => { blocked = false; });
+
+        alphaCollection.AddElements(MeshAlphaText, alphaButton);
         
+        
+
+        // Camera speed panel collection
+        UICollection cameraSpeedStacking = new("CameraSpeedStacking", ModelingUi, AnchorType.BottomCenter, PositionType.Relative, (0, 0, 0), (225, 35), (5, 0, 0, 0), 0);
+
+        UIText CameraSpeedTextLabel = new("CameraSpeedTextLabel", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (0, 0, 0, 0), 0);
+        CameraSpeedTextLabel.SetTextCharCount("Cam Speed: ", 1.2f);
+
+        UICollection speedStacking = new UICollection("CameraSpeedStacking", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (0, 0, 0), (0, 20), (0, 0, 0, 0), 0);
+        
+        UIImage CameraSpeedFieldPanel = new("CameraSpeedTextLabelPanel", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (45, 30), (0, 0, 0, 0), 0, 1, (10, 0.05f));
+        
+        UIInputField CameraSpeedField = new("CameraSpeedText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (10, 0, 0, 0), 0, 0, (10, 0.05f));
+        
+        CameraSpeedField.SetMaxCharCount(2).SetText("50", 1.2f).SetTextType(TextType.Numeric);
+        CameraSpeedField.OnTextChange = new SerializableEvent(() => { try { Game.camera.SPEED = int.Parse(CameraSpeedField.Text); } catch { Game.camera.SPEED = 1; } }); 
+
+        speedStacking.SetScale((45, 30f));
+        speedStacking.AddElements(CameraSpeedFieldPanel, CameraSpeedField);
+
+        cameraSpeedStacking.AddElements(CameraSpeedTextLabel, speedStacking);
+
+        mainPanelStacking.AddElements(cullingCollection, alphaCollection);
+
+        mainPanelCollection.AddElements(mainPanel, mainPanelStacking, cameraSpeedStacking);
+
+
+        // Add elements to ui
+        ModelingUi.AddElement(mainPanelCollection);
+    }
+
+    public void AlphaControl()
+    {
+        float mouseX = Input.GetMouseDelta().X;
+        if (mouseX == 0)
+            return;
+            
+        ModelSettings.MeshAlpha += mouseX * GameTime.DeltaTime;
+        ModelSettings.MeshAlpha = Mathf.Clamp(0, 1, ModelSettings.MeshAlpha);
+        MeshAlphaText.SetText("alpha: " + ModelSettings.MeshAlpha.ToString("F2")).UpdateCharacters();
+    }
+
+    public void BackFaceCullingSwitch()
+    {
+        ModelSettings.BackfaceCulling = !ModelSettings.BackfaceCulling;
+        BackfaceCullingText.SetText("cull: " + ModelSettings.BackfaceCulling).UpdateCharacters();
     }
 
     public override void Start(GeneralModelingEditor editor)
     {
         Started = true;
 
-        Console.WriteLine("Start Rigging Editor");
 
-        Mesh = editor.model.rigMesh;
-        model = editor.model;
+        Console.WriteLine("Start Rigging Editor");
     }
 
     public override void Resize(GeneralModelingEditor editor)
     {
-        
+        ModelingUi.Resize();
     }
 
     public override void Awake(GeneralModelingEditor editor)
     {
-        Mesh.LoadModel(editor.currentModelName);
-        editor.model.SwitchState("Rigging");
-        model.UpdateBones();
+        if (Model == null)
+            return;
+
+        Model.RenderBones = true;
     }
     
     public override void Render(GeneralModelingEditor editor)
     {
-        editor.RenderRigging();
+        editor.RenderModel();
+
+        ModelingUi.RenderDepthTest();
     }
 
     public override void Update(GeneralModelingEditor editor)
     {
+        ModelingUi.Update();
+
         if (Input.IsKeyPressed(Keys.Escape))
         {
             editor.freeCamera = !editor.freeCamera;
@@ -68,134 +150,24 @@ public class RiggingEditor : BaseEditor
             {
                 Game.Instance.CursorState = CursorState.Normal;
                 Game.camera.Lock();
-            }
-        }
-
-        if (editor.freeCamera)
-        {
-            Game.camera.Update();
-        }
-
-        if (Input.AreAllKeysDown(Keys.LeftControl, Keys.LeftShift))
-        {
-            if (Input.IsKeyPressed(Keys.D) && SelectedBones.Count > 0)
-            {
-                BoneVertex bone = SelectedBones.First();
-                Bone parentBone = bone.Parent;
-                Bone childBone = new Bone(parentBone.RootBone, "Child");
-                childBone = parentBone.AddChild(childBone);
-
-                BoneVertex childSelection;
-
-                bool endSelected = bone.IsEnd();
-
-                if (!endSelected)
-                {
-                    childBone.Pivot.Position = parentBone.Pivot.Position;
-                    childBone.End.Position = parentBone.Pivot.Position - (parentBone.End.Position - parentBone.Pivot.Position);
-
-                    childSelection = childBone.Pivot;
-                }
-                else
-                {
-                    childBone.Pivot.Position = parentBone.End.Position;
-                    childBone.End.Position = parentBone.End.Position + (parentBone.End.Position - parentBone.Pivot.Position);
-
-                    childSelection = childBone.End;
-                }
-
-                SelectedBones.Clear();
-                SelectedBones.Add(childSelection);
-
-                model.UpdateBones();
-                UpdateVertexPosition();
-                Mesh.Init();
-                Mesh.GenerateRigBuffers();
-            }
-
-            if (Input.IsKeyPressed(Keys.A) && SelectedBones.Count > 0)
-            {
-                var bone = SelectedBones.First();
-                int index = model.Bones.IndexOf(bone.Parent);
-
-                foreach (var vert in SelectedVertices)
-                {
-                    vert.Index = index;
-                }
-            }
-
-            if (Input.IsKeyDown(Keys.D))
-            {
-                HandleBoneMovement();
-            }
-        }
-
-        if (Input.IsKeyDown(Keys.G))
-        {
-            HandleBoneMovement();
-        }
-
-        if (Input.AnyKeysReleased(Keys.G, Keys.D))
-        {
-            UpdateBonePosition();
-        }
-
-        if (editor.freeCamera && !regenerateVertexUi)
-        {
-            Console.WriteLine("Clear Vertex UI");
-            regenerateVertexUi = true;
-        }
-        
-        if (!editor.freeCamera)
-        {
-            if (regenerateVertexUi)
-            {
-                UpdatePositions();
-                regenerateVertexUi = false;
-            }
-            
-            if (Input.IsMousePressed(MouseButton.Left))
-            {
-                HandleVertexSelection();
-                HandleBoneSelection();
-                GenerateVertexColor();
-
-                //Console.WriteLine("Selected Vertices: " + SelectedVertices.Count);
+                Model?.UpdateVertexPosition();
             }
         }
     }
 
     public override void Exit(GeneralModelingEditor editor)
     {
-        //editor.model.CurrentAnimation = null;
-    }
-
-    // Utility
-    public void UpdatePositions()
-    {
-        System.Numerics.Matrix4x4 projection = Game.camera.GetNumericsProjectionMatrix();
-        System.Numerics.Matrix4x4 view = Game.camera.GetNumericsViewMatrix();
-    
-        UpdateVertexPosition(projection, view);
-        UpdateBonePosition(projection, view);
-
-        GenerateVertexColor();
-    }
-
-    public void UpdateVertexPosition()
-    {
-        System.Numerics.Matrix4x4 projection = Game.camera.GetNumericsProjectionMatrix();
-        System.Numerics.Matrix4x4 view = Game.camera.GetNumericsViewMatrix();
-    
-        UpdateVertexPosition(projection, view);
-
-        GenerateVertexColor();
+        if (Model == null)
+            return;
+            
+        Model.RenderBones = false;
     }
 
     public void UpdateVertexPosition(System.Numerics.Matrix4x4 projection, System.Numerics.Matrix4x4 view)
     {
         Vertices.Clear();
 
+        /*
         foreach (var vert in Mesh.VertexList)
         {
             Vector2? screenPos = Mathf.WorldToScreen(vert, projection, view);
@@ -204,118 +176,7 @@ public class RiggingEditor : BaseEditor
             
             Vertices.Add(vert, screenPos.Value);
         }
-    }
-
-    public void UpdateBonePosition()
-    {
-        System.Numerics.Matrix4x4 projection = Game.camera.GetNumericsProjectionMatrix();
-        System.Numerics.Matrix4x4 view = Game.camera.GetNumericsViewMatrix();
-    
-        UpdateBonePosition(projection, view);
-
-        GenerateVertexColor();
-    }
-
-    public void UpdateBonePosition(System.Numerics.Matrix4x4 projection, System.Numerics.Matrix4x4 view)
-    {
-        Bones.Clear();
-
-        foreach (var bone in model.rigMesh.RootBone.GetBones())
-        {
-            (Vector2?, Vector2?) screenPos = (Mathf.WorldToScreen(bone.Pivot.Position, projection, view), Mathf.WorldToScreen(bone.End.Position, projection, view));
-            if (screenPos.Item1 == null || screenPos.Item2 == null)
-                continue;
-
-            Bones.Add(bone.Pivot, screenPos.Item1.Value);
-            Bones.Add(bone.End, screenPos.Item2.Value);
-        }
-    }
-
-    public void HandleVertexSelection()
-    {
-        if (!Input.IsKeyDown(Keys.LeftShift))
-            SelectedVertices.Clear();
-        
-        Vector2 mousePos = Input.GetMousePosition();
-        Vector2? closest = null;
-        Vertex? closestVert = null;
-    
-        foreach (var vert in Vertices)
-        {
-            float distance = Vector2.Distance(mousePos, vert.Value);
-            float distanceClosest = closest == null ? 1000 : Vector2.Distance(mousePos, (Vector2)closest);
-        
-            if (distance < distanceClosest && distance < 10)
-            {
-                closest = vert.Value;
-                closestVert = vert.Key;
-            }
-        }
-
-        if (closestVert != null && !SelectedVertices.Remove(closestVert))
-            SelectedVertices.Add(closestVert);
-    }
-
-    public void HandleBoneSelection()
-    {
-        if (!Input.IsKeyDown(Keys.LeftShift))
-            SelectedBones.Clear();
-        
-        Vector2 mousePos = Input.GetMousePosition();
-        Vector2? closest = null;
-        BoneVertex? closestVert = null;
-
-        foreach (var bone in Bones)
-        {
-            float distance = Vector2.Distance(mousePos, bone.Value);
-            float distanceClosest = closest == null ? 1000 : Vector2.Distance(mousePos, closest.Value);
-        
-            if (distance < distanceClosest && distance < 10)
-            {
-                closest = bone.Value;
-                closestVert = bone.Key;
-            }
-        }
-
-        if (closestVert != null && !SelectedBones.Remove(closestVert))
-            SelectedBones.Add(closestVert);
-    }
-
-    public void GenerateVertexColor()
-    {
-        foreach (var vert in Mesh.VertexList)
-        {
-            int vertIndex = Mesh.VertexList.IndexOf(vert);
-            Vector3 color = SelectedVertices.Contains(vert) ? (0.25f, 0.3f, 1) : (0f, 0f, 0f);
-            if (Mesh.VertexColors.Count <= vertIndex)
-                continue;
-            Mesh.VertexColors[vertIndex] = color;
-        }
-
-        foreach (var bone in model.rigMesh.RootBone.GetBones())
-        {
-            int boneIndex = model.Bones.IndexOf(bone) * 2;
-            Vector3 color = SelectedBones.Contains(bone.Pivot) ? (1f, 0.3f, 0.25f) : (0.1f, 0.03f, 0.025f);
-            if (Mesh.BoneColors.Count > boneIndex)
-                Mesh.BoneColors[boneIndex] = color;
-
-            color = SelectedBones.Contains(bone.End) ? (1f, 0.3f, 0.25f) : (0.1f, 0.03f, 0.025f);
-            if (Mesh.BoneColors.Count > boneIndex + 1)
-                Mesh.BoneColors[boneIndex + 1] = color;
-        }
-
-        Mesh.UpdateVertexColors();
-        Mesh.UpdateBoneColors();
-    }
-
-    public void HandleBoneMovement()
-    {
-        Vector3 move = GetMovement();
-        foreach (var bone in SelectedBones)
-        {
-            bone.Position += move;
-        }
-        Mesh.UpdateBonePositions();
+        */
     }
 
     public Vector3 GetMovement()

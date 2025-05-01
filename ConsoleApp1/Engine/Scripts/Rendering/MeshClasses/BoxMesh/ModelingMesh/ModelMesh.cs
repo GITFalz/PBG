@@ -4,9 +4,12 @@ using OpenTK.Mathematics;
 
 public class ModelMesh : Meshes
 {
+    public static ShaderProgram RigShader = new ShaderProgram("Model/ModelRig.vert", "Model/ModelRig.frag");
+    public Model Model;
+
     // Mesh
     private VAO _vao = new VAO();
-    private IBO _ibo = new IBO([]);
+    private IBO _ibo = new IBO();
     private VBO<Vector3> _vertVbo = new(new List<Vector3>());
     private VBO<Vector2> _uvVbo = new(new List<Vector2>());
     private VBO<int> _textureVbo = new(new List<int>());
@@ -42,6 +45,94 @@ public class ModelMesh : Meshes
     public List<Edge> EdgeList = new List<Edge>();
     public List<Triangle> TriangleList = new List<Triangle>();
 
+
+    // Bone
+    public VAO _boneVao = new VAO();
+    public IBO BoneIBO;
+
+    public VBO<Vector3> BoneVertexVBO;
+    public VBO<Matrix4> BoneDataVBO = new();
+
+
+    public int BoneCount = 0;
+
+    
+    public ModelMesh(Model model) 
+    {
+        Model = model;
+
+        Vector3 firstScale = new Vector3(0.75f, 0.75f, 0.75f);
+        Vector3 firstOffset = new Vector3(0, 0, 0);
+
+        Vector3 secondScale = new Vector3(0.5f, 0.5f, 0.5f);    
+        Vector3 secondOffset = new Vector3(0, 2, 0);
+
+        Vector3 thirdScale = new Vector3(0.25f, 1.25f, 0.25f);   
+        Vector3 thirdOffset = new Vector3(0, 1.0625f, 0);
+
+        Vector3[] vertices = [
+            // positions       
+            new Vector3(-0.5f, -0.5f, -0.5f) * firstScale + firstOffset,
+            new Vector3( 0.5f, -0.5f, -0.5f) * firstScale + firstOffset,
+            new Vector3( 0.5f,  0.5f, -0.5f) * firstScale + firstOffset,
+            new Vector3(-0.5f,  0.5f, -0.5f) * firstScale + firstOffset,
+            new Vector3(-0.5f, -0.5f,  0.5f) * firstScale + firstOffset,
+            new Vector3( 0.5f, -0.5f,  0.5f) * firstScale + firstOffset,
+            new Vector3( 0.5f,  0.5f,  0.5f) * firstScale + firstOffset,
+            new Vector3(-0.5f,  0.5f,  0.5f) * firstScale + firstOffset,
+
+            new Vector3(-0.5f, -0.5f, -0.5f) * secondScale + secondOffset,
+            new Vector3( 0.5f, -0.5f, -0.5f) * secondScale + secondOffset,
+            new Vector3( 0.5f,  0.5f, -0.5f) * secondScale + secondOffset,
+            new Vector3(-0.5f,  0.5f, -0.5f) * secondScale + secondOffset,
+            new Vector3(-0.5f, -0.5f,  0.5f) * secondScale + secondOffset,
+            new Vector3( 0.5f, -0.5f,  0.5f) * secondScale + secondOffset,
+            new Vector3( 0.5f,  0.5f,  0.5f) * secondScale + secondOffset,
+            new Vector3(-0.5f,  0.5f,  0.5f) * secondScale + secondOffset,
+
+            new Vector3(-0.5f, -0.5f, -0.5f) * thirdScale + thirdOffset,
+            new Vector3( 0.5f, -0.5f, -0.5f) * thirdScale + thirdOffset,
+            new Vector3( 0.5f,  0.5f, -0.5f) * thirdScale + thirdOffset,
+            new Vector3(-0.5f,  0.5f, -0.5f) * thirdScale + thirdOffset,
+            new Vector3(-0.5f, -0.5f,  0.5f) * thirdScale + thirdOffset,
+            new Vector3( 0.5f, -0.5f,  0.5f) * thirdScale + thirdOffset,
+            new Vector3( 0.5f,  0.5f,  0.5f) * thirdScale + thirdOffset,
+            new Vector3(-0.5f,  0.5f,  0.5f) * thirdScale + thirdOffset,
+        ];
+
+        uint[] indices = {
+            0, 1, 2, 2, 3, 0,
+            6, 5, 4, 4, 7, 6,
+            4, 5, 1, 1, 0, 4,
+            2, 6, 7, 7, 3, 2,
+            4, 0, 3, 3, 7, 4,
+            1, 5, 6, 6, 2, 1,
+
+            8, 9, 10, 10, 11, 8,
+            14, 13, 12, 12, 15, 14,
+            12, 13, 9, 9, 8, 12,
+            10, 14, 15, 15, 11, 10,
+            12, 8, 11, 11, 15, 12,
+            9, 13, 14, 14, 10, 9,
+
+            16, 17, 18, 18, 19, 16,
+            22, 21, 20, 20, 23, 22,
+            20, 21, 17, 17, 16, 20,
+            18, 22, 23, 23, 19, 18,
+            20, 16, 19, 19, 23, 20,
+            17, 21, 22, 22, 18, 17,
+        };
+        
+        BoneIBO = new(indices);
+        BoneVertexVBO = new(vertices); 
+
+        _boneVao.Bind();
+
+        _boneVao.LinkToVAO(0, 3, VertexAttribPointerType.Float, 3 * sizeof(float), 0, BoneVertexVBO);
+
+        _boneVao.Unbind();
+    }
+
     
     public void Init()
     {
@@ -73,6 +164,45 @@ public class ModelMesh : Meshes
         {
             _transformedVerts.AddRange(t.GetVerticesPosition());
             Uvs.AddRange(t.GetUvs());
+        }
+    }
+
+    public void InitRig()
+    {
+        Model.RootBone.UpdateLocalTransformPropagate();
+        Model.RootBone.UpdateGlobalTransform();
+
+        List<Bone> bones = Model.Bones;
+        Model.RootBone.GetBones(bones);
+        List<Matrix4> boneMatrices = [];
+
+        foreach (var bone in bones)
+        {
+            Matrix4 matrix = bone.GlobalTransform;
+            boneMatrices.Add(matrix);
+        }
+
+        BoneCount = boneMatrices.Count;
+
+        BoneDataVBO.Renew(boneMatrices);
+
+        _boneVao.Bind();
+
+        BoneDataVBO.Bind();
+
+        int vec4Size = sizeof(float) * 4;
+        for (int i = 0; i < 4; i++)
+        {
+            _boneVao.InstanceLink(1 + i, 4, VertexAttribPointerType.Float, 64, i * vec4Size, 1);
+        }
+
+        BoneDataVBO.Unbind();
+
+        _boneVao.Unbind();
+
+        foreach (var bone in bones)
+        {
+            Console.WriteLine(bone.GlobalTransform);
         }
     }
 
@@ -726,6 +856,10 @@ public class ModelMesh : Meshes
         _edgeColorVbo.DeleteBuffer();
         _vertexVao.DeleteBuffer();
         _edgeVao.DeleteBuffer();
+        _boneVao.DeleteBuffer();
+        BoneVertexVBO.DeleteBuffer();
+        BoneDataVBO.DeleteBuffer();
+        BoneIBO.DeleteBuffer();
     }
     
     public void GenerateBuffers()
@@ -805,5 +939,32 @@ public class ModelMesh : Meshes
         GL.DrawArrays(PrimitiveType.Lines, 0, EdgeVertices.Count);
 
         _edgeVao.Unbind();
+    }
+
+    public void RenderBones()
+    {
+        if (BoneCount == 0)
+            return;
+            
+        RigShader.Bind();
+
+        Matrix4 view = Game.camera.GetViewMatrix();
+        Matrix4 projection = Game.camera.GetProjectionMatrix();
+
+        int viewLocation = RigShader.GetLocation("view");
+        int projectionLocation = RigShader.GetLocation("projection");   
+
+        GL.UniformMatrix4(viewLocation, false, ref view);
+        GL.UniformMatrix4(projectionLocation, false, ref projection);
+
+        _boneVao.Bind();
+        BoneIBO.Bind();
+
+        GL.DrawElementsInstanced(PrimitiveType.Triangles, 108, DrawElementsType.UnsignedInt, IntPtr.Zero, BoneCount);
+
+        BoneIBO.Unbind();
+        _boneVao.Unbind();
+
+        RigShader.Unbind();
     }
 }

@@ -6,9 +6,11 @@ public class IBO : BufferBase
 
     private static int _bufferCount = 0;
     
-    public IBO(List<uint> data) : base()
+    public IBO() : this(Array.Empty<uint>()) { }
+    public IBO(List<uint> data) : this(data.ToArray()) {}
+    public IBO(uint[] data) : base()
     {
-        Create(data.ToArray());
+        Create(data);
         _bufferCount++;
     }
 

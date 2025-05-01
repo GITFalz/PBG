@@ -14,8 +14,6 @@ public class ModelingEditor : BaseEditor
     public ModelingSelectionMode SelectionMode;
     public ModelingEditingMode EditingMode;
 
-    public Model? Model => ModelManager.SelectedModel;
-
     public Vector2 oldMousePos = Vector2.Zero;
     public bool renderSelection = false;
 
@@ -27,6 +25,12 @@ public class ModelingEditor : BaseEditor
     public bool CanGenerateBuffers = true;
 
 
+    public UIController ModeController;
+    public bool ModeClicked = false;
+
+    public UIVerticalCollection ModeCollection;
+
+
     public ModelingEditor(GeneralModelingEditor editor) : base(editor)
     {
         Editor = editor;
@@ -35,6 +39,57 @@ public class ModelingEditor : BaseEditor
         EditingMode = new ModelingEditingMode(this);
 
         CurrentMode = EditingMode;
+
+        ModeController = new UIController();
+
+        UIVerticalCollection collection = new("ModeCollection", ModeController, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (200, 30), (5, 60, 0, 0), (0, 0, 0, 0), 5f, 0f);
+
+        UICollection modeCollection = new("TypeCollection", ModeController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (200, 30), (0, 0, 0, 0), 0f);
+
+        UIButton background = new("Background", ModeController, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (200, 30), (0, 0, 0, 0), 0f, 1, (10f, 0.05f), UIState.Interactable);
+        background.SetOnClick(() => 
+        {
+            ModeCollection?.SetVisibility(!ModeCollection.Visible);
+            ModeClicked = true;
+        });
+
+        UIText editModeText = new("EditModeText", ModeController, AnchorType.MiddleCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (200, 30), (0, 0, 0, 0), 0);
+        editModeText.SetTextCharCount("Edit", 1f);
+
+        UIText selectText = new("SelectText", ModeController, AnchorType.MiddleCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (200, 30), (0, 0, 0, 0), 0f);
+        selectText.SetTextCharCount("Select", 1f);
+        selectText.SetVisibility(false);
+
+        modeCollection.AddElements(background, editModeText, selectText);
+
+        ModeCollection = new UIVerticalCollection("ModeCollection", ModeController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (200, 30), (0, 0, 0, 0), (0, 0, 0, 0), 5f, 0f);
+
+        UITextButton editButton = new("EditButton", ModeController, AnchorType.TopCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (200, 30), (0, 0, 0, 0), 0f, 0, (10f, 0.05f), UIState.Interactable);
+        editButton.SetTextCharCount("Edit", 1f);
+        editButton.SetOnClick(() =>
+        {
+            ModeCollection.SetVisibility(false);
+            SwitchMode(EditingMode);
+            editModeText.SetVisibility(true);
+            selectText.SetVisibility(false);
+        });
+
+        UITextButton selectButton = new("SelectButton", ModeController, AnchorType.TopCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (200, 30), (0, 0, 0, 0), 0f, 0, (10f, 0.05f), UIState.Interactable);
+        selectButton.SetTextCharCount("Select", 1f);
+        selectButton.SetOnClick(() =>
+        {
+            ModeCollection.SetVisibility(false);
+            SwitchMode(SelectionMode);
+            editModeText.SetVisibility(false);
+            selectText.SetVisibility(true);
+        });
+
+        ModeCollection.AddElements(editButton, selectButton);
+        ModeCollection.SetVisibility(false);
+
+        collection.AddElements(modeCollection, ModeCollection);
+
+        ModeController.AddElements(collection);
 
         ModelManager.LoadModel("cube");
     }
@@ -66,13 +121,11 @@ public class ModelingEditor : BaseEditor
 
     public override void Resize(GeneralModelingEditor editor)
     {
-        
+        ModeController.Resize();
     }
 
     public override void Awake(GeneralModelingEditor editor)
     {
-        editor.model.SwitchState("Modeling");
-
         Editor.LoadAction = Editor.LoadModel;
         Editor.SaveAction = Editor.SaveModel;
 
@@ -81,6 +134,13 @@ public class ModelingEditor : BaseEditor
     
     public override void Update(GeneralModelingEditor editor)
     {
+        ModeController.Update();
+
+        if (Input.IsMousePressed(MouseButton.Left) && !ModeClicked)
+        {
+            ModeCollection.SetVisibility(false);
+        }
+
         if (Model == null)
             return;
 
@@ -150,6 +210,8 @@ public class ModelingEditor : BaseEditor
                     Model.GenerateVertexColor();
             }
         }
+
+        ModeClicked = false;
     }
 
     public override void Render(GeneralModelingEditor editor)
@@ -185,6 +247,8 @@ public class ModelingEditor : BaseEditor
 
             selectionShader.Unbind();
         }
+
+        ModeController.RenderDepthTest();
     }
 
     public override void Exit(GeneralModelingEditor editor)

@@ -29,9 +29,11 @@ public class VBOBase : BufferBase
 
 public class VBO<T> : VBOBase where T : struct
 {
-    public VBO(List<T> data) : base()
+    public VBO() : this(Array.Empty<T>()) { }
+    public VBO(List<T> data) : this(data.ToArray()) { }
+    public VBO(T[] data) : base()
     {
-        Create(data.ToArray());
+        Create(data);
     }
 
     public void Renew(List<T> data) => Renew(data.ToArray());

@@ -8,10 +8,11 @@ public class UIListPrefab : UIPrefab
 
     public Vector2 Scale;
 
-    public UIListPrefab(string name, UIController controller, Vector2 scale, Vector4 offset) : base(name, controller, offset)
+    public UIListPrefab(string name, UIController controller, AnchorType anchorType, Vector2 scale, Vector4 offset) : base(name, controller, offset)
     {
         Scale = scale;
 
+        Collection = new($"{name}Collection", controller, anchorType, PositionType.Relative, (0, 0, 0), scale, offset, 0f);
         Collection.SetScale(scale);
         Background = new("ListPrefabBackground", controller, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (0, 0), (0, 0, 0, 0), 0f, 11, (10f, 0.05f));
 

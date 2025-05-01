@@ -5,6 +5,7 @@ public abstract class BaseEditor
     public bool Started = false;
     public GeneralModelingEditor Editor;
     public string FileName => GeneralModelingEditor.FileName.Text;
+    public Model? Model => ModelManager.SelectedModel;
 
     public bool blocked = false;
 

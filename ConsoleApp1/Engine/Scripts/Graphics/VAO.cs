@@ -43,14 +43,14 @@ public class VAO : BufferBase
 
     public void Link(int location, int size, VertexAttribPointerType type, int stride, int offset)
     {
-        GL.EnableVertexAttribArray(location);
         GL.VertexAttribPointer(location, size, type, false, stride, offset);
+        GL.EnableVertexAttribArray(location);
     }
 
     public void IntLink(int location, int size, VertexAttribIntegerType type, int stride, int offset)
     {
-        GL.EnableVertexAttribArray(location);
         GL.VertexAttribIPointer(location, size, type, stride, offset);
+        GL.EnableVertexAttribArray(location);
     }
 
     public void InstanceLink(int location, int size, VertexAttribPointerType type, int stride, int offset, int divisor = 1)

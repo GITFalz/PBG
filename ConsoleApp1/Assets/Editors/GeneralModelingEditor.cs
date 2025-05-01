@@ -12,7 +12,6 @@ public class GeneralModelingEditor : ScriptingNode
 
     public UIController MainUi;
     public UIController UIScrollViewTest;
-    public OldModel model = new OldModel();
 
     public string currentModelName = "cube";
     public List<string> MeshSaveNames = new List<string>();
@@ -144,7 +143,6 @@ public class GeneralModelingEditor : ScriptingNode
         
         Game.camera = new Camera(Game.Width, Game.Height, new Vector3(0, 0, 5));
         ModelSettings.Camera = Game.camera;
-        ModelSettings.Model = model;
         
         Transform.Position = new Vector3(0, 0, 0);
 
@@ -267,8 +265,6 @@ public class GeneralModelingEditor : ScriptingNode
 
         MainUi.AddElement(stateCollection);
 
-        model.Init();
-
 
         Camera camera = Game.camera;
 
@@ -314,7 +310,6 @@ public class GeneralModelingEditor : ScriptingNode
         UIScrollViewTest.Update();
 
         CurrentEditor.Update(this);
-        model.Update();
         base.Update();
     }
 
@@ -364,21 +359,6 @@ public class GeneralModelingEditor : ScriptingNode
         ModelManager.SaveModel(fileName);
     }
 
-    public void SaveAndLoad(string fileName)
-    {
-        model.CurrentMesh.SaveModel(currentModelName);
-        Load(fileName);
-    }
-
-    public void Load(string fileName)
-    {
-        if (model.CurrentMesh.LoadModel(fileName))
-        {
-            currentModelName = fileName;
-            MeshSaveNames.Clear();
-        }
-    }
-
     public void SwitchScene(string editor)
     {
         switch (editor)
@@ -396,27 +376,6 @@ public class GeneralModelingEditor : ScriptingNode
                 DoSwitchScene(textureEditor);
                 break;
         }
-    }
-
-    public void RenderAnimation()
-    {
-        GL.Enable(EnableCap.CullFace);
-        GL.Enable(EnableCap.DepthTest);
-        GL.Enable(EnableCap.Blend);
-        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-
-        model.Render();
-    }
-
-    public void RenderRigging()
-    {
-        GL.Enable(EnableCap.CullFace);
-        GL.Enable(EnableCap.DepthTest);
-        GL.Enable(EnableCap.Blend);
-        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-
-        MeshAlpha = 1f;
-        model.Render();
     }
 
     public void RenderModel()
@@ -443,44 +402,5 @@ public class GeneralModelingEditor : ScriptingNode
         SnappingText.SetText(SnappingFactor.ToString() + (SnappingText.Text.EndsWith('.') ? "." : "")).UpdateCharacters();
         Snapping = SnappingFactor != 0.0f;
     }
-    
-    public void SetBonePivot(string axis)
-    {
-        if (_selectedBone == null)
-            return;
-        
-        switch (axis)
-        {
-            case "X":
-                _selectedBone.Pivot.Position.X = float.Parse(BonePivotX.Text);
-                break;
-            case "Y":
-                _selectedBone.Pivot.Position.Y = float.Parse(BonePivotY.Text);
-                break;
-            case "Z":
-                _selectedBone.Pivot.Position.Z = float.Parse(BonePivotZ.Text);
-                break;
-        }
-    }
-    
-    public void SetBoneEnd(string axis)
-    {
-        if (_selectedBone == null)
-            return;
-        
-        switch (axis)
-        {
-            case "X":
-                _selectedBone.End.Position.X = float.Parse(BoneEndX.Text);
-                break;
-            case "Y":
-                _selectedBone.End.Position.Y = float.Parse(BoneEndY.Text);
-                break;
-            case "Z":
-                _selectedBone.End.Position.Z = float.Parse(BoneEndZ.Text);
-                break;
-        }
-    }
-
     #endregion
 }

@@ -5,10 +5,10 @@ public class SkyboxMesh
 {
     private VAO _vao = new VAO();
 
-    private IBO _ibo = new IBO([]);
-    private VBO<Vector3> _vertVbo = new VBO<Vector3>([]);
-    private VBO<Vector2> _uvVbo = new VBO<Vector2>([]);
-    private VBO<int> _textureVbo = new VBO<int>([]);
+    private IBO _ibo = new();
+    private VBO<Vector3> _vertVbo = new();
+    private VBO<Vector2> _uvVbo = new();
+    private VBO<int> _textureVbo = new();
 
     public List<Vector2> Uvs = new List<Vector2>();
     public List<uint> Indices = new List<uint>();

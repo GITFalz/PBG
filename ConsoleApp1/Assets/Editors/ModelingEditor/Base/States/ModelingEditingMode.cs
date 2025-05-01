@@ -163,51 +163,7 @@ public class ModelingEditingMode : ModelingBase
         });
 
         gridStackingCollection.AddElements(GridAlignedText, gridAlignedButton);
-
-
-
-        // Texture Apply panel collection
-        UIVerticalCollection textureApplyStackingCollection = new("TextureApplyStacking", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 30), (0, 0, 0, 0), (0, 0, 0, 0), 5, 0);
-
-        UICollection textureFileNameStacking = new UICollection("TextureFileNameStacking", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 30), (0, 0, 0, 0), 0);
-
-        UIImage textureFileNamePanel = new("TextureFileNameTextLabelPanel", ModelingUi, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (45, 30), (0, 0, 0, 0), 0, 1, (10, 0.05f));
-
-        UIInputField textureFileNameField = new("TextureFileNameText", ModelingUi, AnchorType.MiddleCenter, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (10, 0, 0, 0), 0, 0, (10, 0.05f));
-
-        textureFileNameField.SetMaxCharCount(24).SetText("cube", 0.92f).SetTextType(TextType.Alphanumeric);
-        textureFileNameField.OnTextChange = new SerializableEvent(() => {  });
-
-        textureFileNamePanel.SetScale((textureFileNameField.newScale.X + 20, 30f));
-
-        textureFileNameStacking.AddElements(textureFileNamePanel, textureFileNameField);
-
-        UIHorizontalCollection textureApplyButtonStacking = new("TextureApplyButtonStacking", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 30), (0, 0, 0, 0), (0, 0, 0, 0), 5, 0);
-
-        UITextButton textureApplyButton = new("TextureApplyButton", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (110, 30), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
-        textureApplyButton.SetTextCharCount("Apply", 1.2f);
-        textureApplyButton.SetOnClick(() => {
-            string fileName = textureFileNameField.Text;
-            if (fileName.Length == 0 || ModelManager.SelectedModel == null)
-                return;
-            
-            fileName += ".png";
-            string filePath = Path.Combine(Game.customTexturesPath, fileName);
-            if (!File.Exists(filePath))
-                ModelManager.SelectedModel.Renew("empty.png", TextureLocation.NormalTexture);
-            else
-                ModelManager.SelectedModel.Renew(fileName, TextureLocation.CustumTexture);
-        });
-
-        UITextButton textureReloadButton = new("TextureReloadButton", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (110, 30), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
-        textureReloadButton.SetTextCharCount("Reload", 1.2f);
-        textureReloadButton.SetOnClick(() => {
-            ModelManager.SelectedModel?.Reload();
-        });
-
-        textureApplyButtonStacking.AddElements(textureApplyButton, textureReloadButton);
-
-        textureApplyStackingCollection.AddElements(textureFileNameStacking, textureApplyButtonStacking);
+        
 
 
         // Camera speed panel collection
@@ -232,7 +188,7 @@ public class ModelingEditingMode : ModelingBase
         cameraSpeedStacking.AddElements(CameraSpeedTextLabel, speedStacking);
 
 
-        mainPanelStacking.AddElements(cullingCollection, alphaCollection, wireframeCollection, mirrorStackingCollection, axisStackingCollection, gridStackingCollection, textureApplyStackingCollection);
+        mainPanelStacking.AddElements(cullingCollection, alphaCollection, wireframeCollection, mirrorStackingCollection, axisStackingCollection, gridStackingCollection);
 
         mainPanelCollection.AddElements(mainPanel, mainPanelStacking, cameraSpeedStacking);
 
@@ -334,7 +290,7 @@ public class ModelingEditingMode : ModelingBase
 
     public override void Start()
     {
-        
+        ModelSettings.WireframeVisible = true;
     }
 
     public override void Resize()
@@ -689,7 +645,7 @@ public class ModelingEditingMode : ModelingBase
 
         for (int i = 0; i < triangles.Count; i++) { triangles[i].ID = i.ToString(); trianglesDict.Add(i.ToString(), triangles[i]); }
 
-        ModelMesh tempMesh = new();
+        ModelMesh tempMesh = new(Model);
 
         Vector3 offset = (0, 0, 0);
 

@@ -85,7 +85,7 @@ public class Game : GameWindow
         try
         {
             UIController.OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, Width, Height, 0, -2, 2);
-            ModelSettings.Camera?.UpdateProjectionMatrix(Width, Height);
+            ModelSettings.Camera?.UpdateProjectionMatrix(Width, Height);  
         }
         catch (Exception ex)
         {
