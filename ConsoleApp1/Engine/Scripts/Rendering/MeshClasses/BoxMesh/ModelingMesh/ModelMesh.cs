@@ -169,8 +169,7 @@ public class ModelMesh : Meshes
 
     public void InitRig()
     {
-        Model.RootBone.UpdateLocalTransformPropagate();
-        Model.RootBone.UpdateGlobalTransform();
+        Model.RootBone.CalculateLocalTransformPropagate();
 
         List<Bone> bones = Model.Bones;
         Model.RootBone.GetBones(bones);
@@ -178,7 +177,7 @@ public class ModelMesh : Meshes
 
         foreach (var bone in bones)
         {
-            Matrix4 matrix = bone.GlobalTransform;
+            Matrix4 matrix = bone.LocalTransform;
             boneMatrices.Add(matrix);
         }
 
@@ -199,11 +198,6 @@ public class ModelMesh : Meshes
         BoneDataVBO.Unbind();
 
         _boneVao.Unbind();
-
-        foreach (var bone in bones)
-        {
-            Console.WriteLine(bone.GlobalTransform);
-        }
     }
 
     public void ApplyMirror()

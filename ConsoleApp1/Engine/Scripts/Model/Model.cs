@@ -48,7 +48,26 @@ public class Model
         ChildBone childBone21 = new ChildBone(RootBone, childBone2, "ChildBone21");
         ChildBone childBone22 = new ChildBone(RootBone, childBone2, "ChildBone22");
 
-        childBone1.Rotation = new Quaternion()
+        Bones.Clear();
+        RootBone.GetBones(Bones);
+
+        childBone1.Move((0, 2, 0));
+        childBone1.SetDirection((1, 1, 0));
+
+        childBone11.Move((1.414f, 3.414f, 0));
+        childBone11.SetDirection((0, 1, 1));
+
+        childBone12.Move((1.414f, 3.414f, 0));
+        childBone12.SetDirection((0, 1, -1));
+
+        childBone2.Move((0, 2, 0));
+        childBone2.SetDirection((-1, 1, 0));
+
+        childBone21.Move((-1.414f, 3.414f, 0));
+        childBone21.SetDirection((0, 1, 1));
+
+        childBone22.Move((-1.414f, 3.414f, 0));
+        childBone22.SetDirection((0, 1, -1));
 
         Mesh.InitRig();
     }
