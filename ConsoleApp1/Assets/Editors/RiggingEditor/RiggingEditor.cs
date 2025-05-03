@@ -153,6 +153,8 @@ public class RiggingEditor : BaseEditor
                 Model?.UpdateVertexPosition();
             }
         }
+
+        ModelManager.Update();
     }
 
     public override void Exit(GeneralModelingEditor editor)

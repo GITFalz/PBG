@@ -11,12 +11,12 @@ public class Model
     public string TextureName = "empty.png";
     public TextureLocation TextureLocation = TextureLocation.NormalTexture;
     
-    
 
     public ModelMesh Mesh;
 
 
     private static ShaderProgram _shaderProgram = new ShaderProgram("Model/Model.vert", "Model/Model.frag");
+    private static ShaderProgram _animationShader = new ShaderProgram("Model/ModelAnimation.vert", "Model/Model.frag");
     public Texture Texture = new Texture("empty.png", TextureLocation.NormalTexture);
 
 
@@ -30,6 +30,10 @@ public class Model
     public Dictionary<Vertex, Vector2> Vertices = new Dictionary<Vertex, Vector2>();
 
 
+    public SSBO<Matrix4> BoneMatrices = new SSBO<Matrix4>();
+    public List<Matrix4> BoneMatricesList = [];
+
+
     public bool HasRig = true; // A root bone will always be created, even if the model has no rig.
     public RootBone RootBone = new RootBone("RootBone");
     public List<Bone> Bones = [];
@@ -41,33 +45,26 @@ public class Model
     {
         Mesh = new ModelMesh(this);
 
-        ChildBone childBone1 = new ChildBone(RootBone, RootBone, "ChildBone1"); 
-        ChildBone childBone11 = new ChildBone(RootBone, childBone1, "ChildBone11");
-        ChildBone childBone12 = new ChildBone(RootBone, childBone1, "ChildBone12");
-        ChildBone childBone2 = new ChildBone(RootBone, RootBone, "ChildBone2");
-        ChildBone childBone21 = new ChildBone(RootBone, childBone2, "ChildBone21");
-        ChildBone childBone22 = new ChildBone(RootBone, childBone2, "ChildBone22");
+        ChildBone childBone1 = new ChildBone("ChildBone1", RootBone); 
+
+        RootBone.Position = (0, 0, 0);
+        childBone1.Position = (0, 2, 0);
+
+        RootBone.UpdateGlobalTransformation();
+        RootBone.SetBindPose();
+        childBone1.SetBindPose();
+
+        RootBone.UpdateGlobalTransformation();
 
         Bones.Clear();
         RootBone.GetBones(Bones);
 
-        childBone1.Move((0, 2, 0));
-        childBone1.SetDirection((1, 1, 0));
-
-        childBone11.Move((1.414f, 3.414f, 0));
-        childBone11.SetDirection((0, 1, 1));
-
-        childBone12.Move((1.414f, 3.414f, 0));
-        childBone12.SetDirection((0, 1, -1));
-
-        childBone2.Move((0, 2, 0));
-        childBone2.SetDirection((-1, 1, 0));
-
-        childBone21.Move((-1.414f, 3.414f, 0));
-        childBone21.SetDirection((0, 1, 1));
-
-        childBone22.Move((-1.414f, 3.414f, 0));
-        childBone22.SetDirection((0, 1, -1));
+        BoneMatricesList.Clear();
+        foreach (var bone in Bones)
+        {
+            BoneMatricesList.Add(bone.FinalMatrix);
+        }
+        BoneMatrices.Renew(BoneMatricesList);
 
         Mesh.InitRig();
     }
@@ -84,6 +81,14 @@ public class Model
         Texture.Renew(TextureName, TextureLocation);
     }
 
+    public void Update()
+    {
+        Bones[1].Rotation *= Quaternion.FromAxisAngle(Vector3.UnitZ, MathHelper.DegreesToRadians(GameTime.DeltaTime * 10f));
+        Bones[1].Rotation *= Quaternion.FromAxisAngle(Vector3.UnitY, MathHelper.DegreesToRadians(GameTime.DeltaTime * 10f));
+        RootBone.UpdateGlobalTransformation();
+        BoneMatricesList[1] = Bones[1].FinalMatrix; 
+        BoneMatrices.Renew(BoneMatricesList);
+    }
 
     public void Render()
     {
@@ -91,7 +96,7 @@ public class Model
         if (camera == null)
             return;
 
-        _shaderProgram.Bind();
+        _animationShader.Bind();
 
         GL.Enable(EnableCap.DepthTest);
         GL.DepthFunc(DepthFunction.Lequal);
@@ -109,26 +114,30 @@ public class Model
         { 
             Model = Matrix4.CreateScale(flip);
 
-            modelLocation = GL.GetUniformLocation(_shaderProgram.ID, "model");
-            viewLocation = GL.GetUniformLocation(_shaderProgram.ID, "view");
-            projectionLocation = GL.GetUniformLocation(_shaderProgram.ID, "projection");
-            colorAlphaLocation = GL.GetUniformLocation(_shaderProgram.ID, "colorAlpha");
+            modelLocation = GL.GetUniformLocation(_animationShader.ID, "model");
+            viewLocation = GL.GetUniformLocation(_animationShader.ID, "view");
+            projectionLocation = GL.GetUniformLocation(_animationShader.ID, "projection");
+            colorAlphaLocation = GL.GetUniformLocation(_animationShader.ID, "colorAlpha");
             
-            GL.UniformMatrix4(modelLocation, true, ref Model);
-            GL.UniformMatrix4(viewLocation, true, ref view);
-            GL.UniformMatrix4(projectionLocation, true, ref projection);
+            GL.UniformMatrix4(modelLocation, false, ref Model);
+            GL.UniformMatrix4(viewLocation, false, ref view);
+            GL.UniformMatrix4(projectionLocation, false, ref projection);
             GL.Uniform1(colorAlphaLocation, ModelSettings.MeshAlpha);
 
             Texture.Bind();
+
+            BoneMatrices.Bind(0);
             
             Mesh.Render();
+
+            BoneMatrices.Unbind();
 
             Texture.Unbind();
         }
 
-        _shaderProgram.Unbind();
+        _animationShader.Unbind();
 
-        if (ModelSettings.WireframeVisible)
+        if (ModelSettings.WireframeVisible && false)
         {
             GL.Enable(EnableCap.DepthTest);
             GL.DepthFunc(DepthFunction.Always);

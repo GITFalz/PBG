@@ -12,12 +12,12 @@ public class ModelMesh : Meshes
     private IBO _ibo = new IBO();
     private VBO<Vector3> _vertVbo = new(new List<Vector3>());
     private VBO<Vector2> _uvVbo = new(new List<Vector2>());
-    private VBO<int> _textureVbo = new(new List<int>());
+    private VBO<Vector2i> _textureVbo = new(new List<Vector2i>());
     private VBO<Vector3> _normalVbo = new(new List<Vector3>());
 
     public List<Vector2> Uvs = new List<Vector2>();
     public List<uint> Indices = new List<uint>();
-    public List<int> TextureIndices = new List<int>();
+    public List<Vector2i> TextureIndices = new List<Vector2i>();
     public List<Vector3> Normals = new List<Vector3>();
     public List<Vector3> _transformedVerts = new List<Vector3>();
 
@@ -156,6 +156,7 @@ public class ModelMesh : Meshes
 
         _transformedVerts.Clear();
         Uvs.Clear();
+        TextureIndices.Clear();
 
         if (TriangleList.Count == 0)
             return;
@@ -164,21 +165,19 @@ public class ModelMesh : Meshes
         {
             _transformedVerts.AddRange(t.GetVerticesPosition());
             Uvs.AddRange(t.GetUvs());
+            TextureIndices.AddRange([(0, 1), (0, 1), (0, 1)]);
         }
     }
 
     public void InitRig()
     {
-        Model.RootBone.CalculateLocalTransformPropagate();
-
         List<Bone> bones = Model.Bones;
-        Model.RootBone.GetBones(bones);
+        Model.RootBone.GetBones(bones); 
         List<Matrix4> boneMatrices = [];
 
         foreach (var bone in bones)
         {
-            Matrix4 matrix = bone.LocalTransform;
-            boneMatrices.Add(matrix);
+            boneMatrices.Add(bone.BindPoseMatrix);
         }
 
         BoneCount = boneMatrices.Count;
@@ -358,9 +357,9 @@ public class ModelMesh : Meshes
         Normals.Add(triangle.Normal);
         Normals.Add(triangle.Normal);
 
-        TextureIndices.Add(0);
-        TextureIndices.Add(0);
-        TextureIndices.Add(0);
+        TextureIndices.Add((0, 1));
+        TextureIndices.Add((0, 1));
+        TextureIndices.Add((0, 1));
 
         return true;
     }
@@ -685,7 +684,7 @@ public class ModelMesh : Meshes
         newLines.Add(VertexList.Count.ToString());
         foreach (var vertex in VertexList)
         {
-            newLines.Add($"v {Float.Str(vertex.X)} {Float.Str(vertex.Y)} {Float.Str(vertex.Z)} {vertex.Index}");
+            newLines.Add($"v {Float.Str(vertex.X)} {Float.Str(vertex.Y)} {Float.Str(vertex.Z)} {vertex.Index} {vertex.BoneIndex}");
         }
 
         newLines.Add(EdgeList.Count.ToString());
@@ -752,6 +751,9 @@ public class ModelMesh : Meshes
             Vertex vertex = new Vertex(new Vector3(Float.Parse(values[1]), Float.Parse(values[2]), Float.Parse(values[3])));
             vertex.Name = "Vertex " + i;
             vertex.Index = int.Parse(values[4]);
+            if (values.Length > 5)
+                vertex.BoneIndex = int.Parse(values[5]);
+            
             VertexList.Add(vertex);
         }
 
@@ -874,7 +876,7 @@ public class ModelMesh : Meshes
         
         _vao.LinkToVAO(0, 3, VertexAttribPointerType.Float, 0, 0, _vertVbo);
         _vao.LinkToVAO(1, 2, VertexAttribPointerType.Float, 0, 0, _uvVbo);
-        _vao.IntLinkToVAO(2, 1, VertexAttribIntegerType.Int, 0, 0, _textureVbo);
+        _vao.IntLinkToVAO(2, 2, VertexAttribIntegerType.Int, 0, 0, _textureVbo);
         _vao.LinkToVAO(3, 3, VertexAttribPointerType.Float, 0, 0, _normalVbo); 
 
         _vao.Unbind();  

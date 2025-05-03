@@ -4,70 +4,38 @@ public abstract class Bone
 {
     public readonly string Name;
     public List<Bone> Children = [];
+
+
+    public Vector3 Position = Vector3.Zero;
+    public Quaternion Rotation = Quaternion.Identity;
+    public Vector3 Scale = Vector3.One;
+
+    // Computed at bind time (static)
+    public Matrix4 BindPoseMatrix;
+    public Matrix4 InverseBindMatrix;
+
+    // Computed at runtime (updated each frame)
+    public Matrix4 LocalAnimatedMatrix => Matrix4.CreateTranslation(-Position) * Matrix4.CreateScale(Scale) * Matrix4.CreateFromQuaternion(Rotation) * Matrix4.CreateTranslation(Position);   
+
+    public Matrix4 GlobalAnimatedMatrix;
+
+    public Matrix4 FinalMatrix => InverseBindMatrix * GlobalAnimatedMatrix;
+
+    public Bone(string name) { Name = name; }
     
-    // Base values
-    public BoneVertex Pivot;
-    public BoneVertex End;
+    public abstract void UpdateGlobalTransformation();
 
-    public Matrix4 LocalTransform = Matrix4.Identity;
-    public Matrix4 GlobalTransform = Matrix4.Identity;
-
-    public Vector3 OriginalPosition = Vector3.Zero;
-    public Vector3 OriginalDirection = Vector3.UnitY;
-    public float OriginalLength = 1f;
-
-    public Bone(string name)
+    public void SetBindPose()
     {
-        Pivot = new(this, (0, 0, 0));
-        End = new(this, (0, 1, 0));
-        
-        Name = name;
-    }
-    
-    public abstract void CalculateLocalTransformPropagate();
-    public abstract void CalculateGlobalTransform();
-
-    public void CalculateLocalTransform()
-    {
-        Matrix4 scale = Matrix4.CreateScale(GetDistance());
-        Matrix4 rotation = Mathf.GetRotationMatrix((0, 1, 0), GetDirection());
-        Matrix4 translation = Matrix4.CreateTranslation(Pivot.Position);
-        LocalTransform = scale * rotation * translation;
+        BindPoseMatrix = GlobalAnimatedMatrix;
+        InverseBindMatrix = Matrix4.Invert(BindPoseMatrix);
     }
 
     public void GetBones(List<Bone> bones)
     {
         bones.Add(this);
-        foreach (var child in Children) {
+        foreach (var child in Children)
             child.GetBones(bones);
-        }
-    }
-
-    public void Move(Vector3 offset)
-    {
-        Pivot.Position += offset;
-        End.Position += offset;
-    }
-
-    public void SetDirection(Vector3 direction)
-    {
-        End.Position = Pivot.Position + direction.Normalized() * GetDistance();
-    }
-
-    public void SetLength(float length)
-    {
-        Vector3 direction = GetDirection();
-        End.Position = Pivot.Position + direction.Normalized() * length;
-    }
-
-    private float GetDistance()
-    {
-        return (End.Position - Pivot.Position).Length;
-    }
-
-    private Vector3 GetDirection()
-    {
-        return (End.Position - Pivot.Position).Normalized();
     }
 }
 
@@ -75,77 +43,29 @@ public class RootBone : Bone
 {
     public RootBone(string name) : base(name) {}
 
-    public override void CalculateLocalTransformPropagate()
+    public override void UpdateGlobalTransformation()
     {
-        CalculateLocalTransform();
-        foreach (var child in Children) {
-            child.CalculateLocalTransformPropagate();
-        }
-    }
-
-    public override void CalculateGlobalTransform()
-    {
-        GlobalTransform = LocalTransform;
-        foreach (var child in Children) {
-            child.CalculateGlobalTransform();
-        }
+        GlobalAnimatedMatrix = LocalAnimatedMatrix;
+        foreach (var child in Children)
+            child.UpdateGlobalTransformation();
     }
 }
 
 public class ChildBone : Bone
 {
-    public RootBone RootBone;
     public Bone Parent;
 
-    /// <summary>
-    /// Constructor for the root bone
-    /// </summary>
-    /// <param name="name"></param>
-    public ChildBone(RootBone rootBone, Bone parentBone, string name) : base(name)
+    public ChildBone(string name, Bone parent) : base(name)
     {
-        RootBone = rootBone;
-        Parent = parentBone;
-
+        Parent = parent;
         Parent.Children.Add(this);
     }
 
-    public override void CalculateLocalTransformPropagate()
-    {
-        CalculateLocalTransform();
+    public override void UpdateGlobalTransformation() {
+        GlobalAnimatedMatrix = Parent.GlobalAnimatedMatrix * LocalAnimatedMatrix;
+        
         foreach (var child in Children) {
-            child.CalculateLocalTransformPropagate();
+            child.UpdateGlobalTransformation();
         }
-    }
-
-    public override void CalculateGlobalTransform()
-    {
-        GlobalTransform = LocalTransform * Parent.GlobalTransform;
-        foreach (var child in Children) {
-            child.CalculateGlobalTransform();
-        }
-    }
-}
-
-public class BoneVertex
-{
-    public Bone Parent;
-    public Vector3 Position;
-    public bool Selected;
-
-    public BoneVertex(Bone parent, Vector3 position)
-    {
-        Parent = parent;
-        Position = position;
-        Selected = false;
-    }
-
-    public bool IsEnd()
-    {
-        return Parent.End == this;
-    }
-
-    public bool IsPivot()
-    {
-        return Parent.Pivot == this;
     }
 }

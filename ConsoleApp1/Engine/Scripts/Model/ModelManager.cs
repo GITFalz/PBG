@@ -21,6 +21,14 @@ public static class ModelManager
                 
             }
         }
+
+        foreach (var (name, model) in Models)
+        {
+            if (model.IsShown)
+            {
+                model.Update(); 
+            }
+        }
     }
 
     public static void Render()
