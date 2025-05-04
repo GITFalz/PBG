@@ -5,6 +5,8 @@ using Vortice.Mathematics;
 
 public class Chunk
 {
+    public static List<Chunk> Chunks = [];
+
     public const int WIDTH = 32;
     public const int HEIGHT = 32;
     public const int DEPTH = 32;
@@ -17,7 +19,6 @@ public class Chunk
 
     public Vector3i position = (0, 0, 0);
     public BlockStorage blockStorage;
-    public int[] FullBlockMap = new int[32 * 32]; // every full block in the chunk represented by a single bit
     public BoundingBox boundingBox = new(new System.Numerics.Vector3(0, 0, 0), new System.Numerics.Vector3(0, 0, 0));
 
     public List<Vector3> Wireframe = [];
@@ -45,30 +46,44 @@ public class Chunk
     public bool Loaded = false;
 
     public Action Render = () => { };
-    public Action CreateChunk = () => { };
+    public Func<bool> CreateChunk = () => { return false;};
 
     public bool IsDisabled = true;
     public bool HasBlocks = false;
-    public int VertexCount = 0;
+    public bool BlockRendering = false;
+
+    public bool IsGeneratingBuffers = false;
+
+    public bool IsBeingGenerated = false;
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct VertexData
     {
         public Vector3 Position;
-        public uint TextureIndex;
+        public Vector2i TextureIndex;
+
+        public override string ToString()
+        {
+            return $"Position: {Position}, TextureIndex: {TextureIndex}";
+        }
     }
 
     private VAO _chunkVao = new VAO();
-    private IBO _ibo = new([]);
-    private VBO<VertexData> VertexVBO = new([]);
+    public IBO _ibo = new([]);
+    public VBO<VertexData> VertexVBO = new([]);
 
-    public int IndexCount = 0;
-    private List<uint> _indices = [];
+    public int IndicesCount = 0;
+    public int VertexCount = 0;
+
+    public List<uint> _indices = [];
     public List<VertexData> VertexDataList = [];
+
+    public object Lock = new object();
 
     public Chunk()
     { 
         blockStorage = CornerBlockStorage.Empty; 
+        Chunks.Add(this);
     }
 
     public Chunk(RenderType renderType, Vector3i position)
@@ -84,6 +99,7 @@ public class Chunk
 
         Render = renderType == RenderType.Solid ? RenderChunk : RenderWireframe;
         CreateChunk = renderType == RenderType.Solid ? CreateChunkSolid : CreateChunkWireframe;
+        Chunks.Add(this);
     }
 
     public void SetPosition(Vector3i position)
@@ -93,14 +109,17 @@ public class Chunk
         boundingBox.Max = boundingBox.Min + new System.Numerics.Vector3(ChunkGenerator.WIDTH, ChunkGenerator.HEIGHT, ChunkGenerator.DEPTH);
     }
 
-    public void AddFace(Vector3 position, int width, int height, int side, int textureIndex)
+    public void AddFace(Vector3i position, int width, int height, int side, int textureIndex, Vector4i ambientOcclusion)
     {
+        if (IsGeneratingBuffers) 
+            Console.WriteLine("Chunk is generating buffers, cannot add face.");
+
         var vertices = VoxelData.GetSideOffsets[side](width, height);
 
-        AddVertex(position + vertices[0], 0, width, height, (uint)side, (uint)textureIndex);
-        AddVertex(position + vertices[1], 1, width, height, (uint)side, (uint)textureIndex);
-        AddVertex(position + vertices[2], 2, width, height, (uint)side, (uint)textureIndex);
-        AddVertex(position + vertices[3], 3, width, height, (uint)side, (uint)textureIndex);
+        AddVertex(position + vertices[0], 0, width, height, side, textureIndex, ambientOcclusion[0]);
+        AddVertex(position + vertices[1], 1, width, height, side, textureIndex, ambientOcclusion[1]);
+        AddVertex(position + vertices[2], 2, width, height, side, textureIndex, ambientOcclusion[2]);
+        AddVertex(position + vertices[3], 3, width, height, side, textureIndex, ambientOcclusion[3]);
 
         _indices.Add((uint)VertexCount + 0);
         _indices.Add((uint)VertexCount + 1);
@@ -112,26 +131,32 @@ public class Chunk
         VertexCount += 4;
     }
     
-    public void AddVertex(Vector3 position, uint uvIndex, int width, int height, uint side, uint textureIndex)
+    public void AddVertex(Vector3 position, int uvIndex, int width, int height, int side, int textureIndex, int ambientOcclusion)
     {
         VertexData vertexData = new()
         {
             Position = position,
-            TextureIndex = (uvIndex << 29) | (side << 26) | ((uint)(width - 1) << 21) | ((uint)(height - 1) << 16) | textureIndex
+            TextureIndex = ((uvIndex << 29) | (side << 26) | ((width - 1) << 21) | ((height - 1) << 16) | textureIndex, ambientOcclusion)
         };
         VertexDataList.Add(vertexData);
     }
 
     public Block this[int index]
     {
-        get
-        {
-            return blockStorage[index];
-        }
-        set
-        {
-            blockStorage[index] = value;
-        }
+        get => blockStorage[index];
+        set => blockStorage[index] = value;
+    }
+
+    public Block this[int x, int y, int z]
+    {
+        get => this[x + (z * 32) + (y * 1024)];
+        set => this[x + (z * 32) + (y * 1024)] = value;
+    }
+
+    public Block this[Vector3i position]
+    {
+        get => this[position.X, position.Y, position.Z];
+        set => this[position.X, position.Y, position.Z] = value;
     }
 
     public void SetRenderType(RenderType type)
@@ -186,6 +211,14 @@ public class Chunk
         Save = true;
     }
 
+    public void ClearMeshData()
+    {
+        VertexDataList.Clear();
+        _indices.Clear();
+        Wireframe.Clear();
+        VertexCount = 0;
+    }
+
     public void Delete()
     {
         Clear();
@@ -194,38 +227,81 @@ public class Chunk
         _chunkVao.DeleteBuffer();
         VertexVBO.DeleteBuffer();
         _ibo.DeleteBuffer();
+        Chunks.Remove(this);
     }
 
     
-    public void CreateChunkSolid()
+    public bool CreateChunkSolid()
     {   
-        lock(this)
+        lock(Lock)
         {
+            IsGeneratingBuffers = true;
+            _chunkVao.Renew();
+            _chunkVao.Bind();
+
             try
             {
                 _ibo.Renew(_indices);
-                VertexVBO.Renew(VertexDataList);
+                Shader.Error("Creating the IBO for chunk: " + position);
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                return;
+                Console.WriteLine("Failed to create IBO for chunk: " + position);
+                Console.WriteLine(IsBeingGenerated);
+                for (int i = 0; i < _indices.Count; i++)
+                {
+                    if (_indices[i] >= VertexDataList.Count)
+                    {
+                        Console.WriteLine("Index out of range: " + _indices[i] + " >= " + VertexDataList.Count);
+                    }
+                }
+                _indices.Clear();
+                VertexDataList.Clear();
+                BlockRendering = true;
+                IsGeneratingBuffers = false;
+                return false;
+            }
+            
+            try
+            {
+                VertexVBO.Renew(VertexDataList);
+                Shader.Error("Creating the VBO for chunk: " + position);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                Console.WriteLine("Failed to create VBO for chunk: " + position);
+                Console.WriteLine(IsBeingGenerated);
+                _indices.Clear();
+                VertexDataList.Clear();
+                BlockRendering = true;
+                IsGeneratingBuffers = false;
+                return false;
             }
 
             int stride = Marshal.SizeOf(typeof(VertexData));
-            _chunkVao.Bind();
             VertexVBO.Bind();
 
             _chunkVao.Link(0, 3, VertexAttribPointerType.Float, stride, 0);
-            _chunkVao.IntLink(1, 1, VertexAttribIntegerType.UnsignedInt, stride, 3 * sizeof(float));
+            Shader.Error("Linking position attribute for chunk: " + position);
+            _chunkVao.IntLink(1, 2, VertexAttribIntegerType.Int, stride, 3 * sizeof(float));
+            Shader.Error("Linking texture index attribute for chunk: " + position);
 
-            VertexVBO.Unbind();
             _chunkVao.Unbind();
+            VertexVBO.Unbind();
+
+            IndicesCount = _indices.Count;
+
+            _indices.Clear();
+            VertexDataList.Clear();
 
             GL.Finish();
-
-            IndexCount = _indices.Count;
+            IsGeneratingBuffers = false;
         }
+
+        BlockRendering = false;
+        return true;
     }
 
     public void Reload()
@@ -235,12 +311,13 @@ public class Chunk
         VertexCount = 0;
     }
 
-    public void CreateChunkWireframe()
+    public bool CreateChunkWireframe()
     {
         _edgeVao.Renew();
         _edgeVbo.Renew(Wireframe.ToArray());
         
         _edgeVao.LinkToVAO(0, 3, VertexAttribPointerType.Float, 0, 0, _edgeVbo);
+        return true;
     }
 
 
@@ -249,10 +326,23 @@ public class Chunk
         _chunkVao.Bind();
         _ibo.Bind();
 
-        GL.DrawElements(PrimitiveType.Triangles, IndexCount, DrawElementsType.UnsignedInt, 0);
+        GL.DrawElements(PrimitiveType.Triangles, IndicesCount, DrawElementsType.UnsignedInt, 0);
         
         _ibo.Unbind();
         _chunkVao.Unbind();
+    }
+
+    private static void DebugCallback(
+        DebugSource source,
+        DebugType type,
+        int id,
+        DebugSeverity severity,
+        int length,
+        IntPtr message,
+        IntPtr userParam)
+    {
+        string msg = Marshal.PtrToStringAnsi(message, length);
+        Console.WriteLine($"[OpenGL DEBUG] {type} - {severity}: {msg}");
     }
 
     public void RenderWireframe()
@@ -287,6 +377,9 @@ public class Chunk
         {
             lock (chunk)
             {
+                NeighbourCunks[index1]?.Delete();
+                chunk.NeighbourCunks[index2]?.Delete();
+
                 NeighbourCunks[index1] = chunk;
                 chunk.NeighbourCunks[index2] = this;
 
@@ -319,9 +412,10 @@ public class Chunk
 
     public void RemoveChunkFromAll()
     {
-        foreach (var chunk in NeighbourCunks)
+        for (int i = 0; i < NeighbourCunks.Length; i++)
         {
-            chunk?.RemoveChunk(this);
+            NeighbourCunks[i]?.RemoveChunk(this);
+            NeighbourCunks[i] = null;
         }
     }
 

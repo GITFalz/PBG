@@ -59,4 +59,9 @@ public static class ChunkPool
         Chunks.Clear();
         FreeChunks.Clear();
     }
+
+    public static void Print()
+    {
+        Console.WriteLine($"Chunk Pool: {Chunks.Count} chunks, {FreeChunks.Count} free chunks.");
+    }
 }

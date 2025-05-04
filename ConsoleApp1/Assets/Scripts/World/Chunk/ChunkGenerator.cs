@@ -192,11 +192,12 @@ public class ChunkGenerator
         
     }
     
-    public static int GenerateMesh(Chunk chunkData)
+    public static int GenerateGreedyMesh(Chunk chunkData)
     {
         byte[] _checks = new byte[WIDTH * HEIGHT * DEPTH];
         int[] blockMap = new int[WIDTH * DEPTH];
         int index = 0;
+        chunkData.ClearMeshData();
         
         for (int y = 0; y < 32; y++)
         {
@@ -291,13 +292,13 @@ public class ChunkGenerator
                                     loop--;
                                 }
 
-                                Vector3 position = (x, y, z);
+                                Vector3i position = (x, y, z);
 
                                 int id = ids[side];
                             
                                 chunkData.HasBlocks = true;
 
-                                chunkData.AddFace(position, width, height, side, id);
+                                chunkData.AddFace(position, width, height, side, id, (0, 0, 0, 0));
                             }
                         }
                     }
@@ -307,8 +308,97 @@ public class ChunkGenerator
             }
         }
 
-        chunkData.FullBlockMap = blockMap;
         return 1;
+    }
+
+    public static int GenerateMesh(Chunk chunkData)
+    {
+        if (chunkData.Stage == ChunkStage.Empty)
+            return -1;
+
+        chunkData.IsBeingGenerated = true;
+
+        lock (chunkData)
+        {
+            Vector3i chunkWorldPosition = chunkData.GetWorldPosition();
+            chunkData.ClearMeshData();
+
+            int index = 0;
+            for (int y = 0; y < 32; y++)
+            {
+                for (int z = 0; z < 32; z++)
+                {
+                    for (int x = 0; x < 32; x++)
+                    {
+                        Block block = chunkData[index];
+                        
+                        if (block.IsSolid() && !block.FullyOccluded())
+                        {
+                            int[] ids;
+
+                            try
+                            {
+                                ids = BlockManager.GetBlock(block.ID).GetIndices();
+                            }
+                            catch (Exception)
+                            {
+                                chunkData.IsBeingGenerated = false;
+                                return -1;
+                            }
+                            
+                            for (int side = 0; side < 6; side++)
+                            {
+                                if (block.Occluded(side))
+                                    continue;
+
+                                int id = ids[side];
+                                Vector3i position = (x, y, z);
+                                Vector3i worldBlockPosition = position + chunkWorldPosition;
+                                chunkData.HasBlocks = true;
+
+                                Vector4i ao = (0, 0, 0, 0);
+                                for (int i = 0; i < 4; i++)
+                                {
+                                    var corners = VoxelData.AoOffset[side][i];
+
+                                    Vector3i offset1 = corners[0];
+                                    Vector3i offset2 = corners[1];
+                                    Vector3i offset3 = corners[2];
+
+                                    bool isOffset1 = HasBlock(worldBlockPosition + offset1, chunkData);
+                                    bool isOffset2 = HasBlock(worldBlockPosition + offset2, chunkData);
+                                    bool isOffset3 = HasBlock(worldBlockPosition + offset3, chunkData);
+
+                                    if (isOffset1 && isOffset3)
+                                        ao[i] = 3;
+                                    else if (isOffset2 && (isOffset1 || isOffset3))
+                                        ao[i] = 2;
+                                    else if (isOffset1 || isOffset2 || isOffset3)
+                                        ao[i] = 1;
+                                    else
+                                        ao[i] = 0;
+                                }
+
+                                chunkData.AddFace(position, 1, 1, side, id, ao);
+                            }
+                        }
+
+                        index++;
+                    }
+                }
+            }
+        }
+
+        chunkData.IsBeingGenerated = false;
+        return 1;
+    }
+
+    public static bool HasBlock(Vector3i position, Chunk chunkData)
+    {
+        if (position.X < 0 || position.X >= WIDTH || position.Y < 0 || position.Y >= HEIGHT || position.Z < 0 || position.Z >= DEPTH)
+            return WorldManager.GetBlock(position);
+
+        return chunkData[position].IsSolid();
     }
 
     public static void GenerateBox(ref Chunk chunkData, Vector3i chunkPosition, Vector3i origin, Vector3i size)

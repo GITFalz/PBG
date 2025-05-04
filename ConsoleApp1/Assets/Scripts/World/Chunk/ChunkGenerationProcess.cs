@@ -18,22 +18,8 @@ public class ChunkGenerationProcess : ThreadProcess
             if (GenerateChunk(ref ChunkData, ChunkData.GetWorldPosition(), ThreadIndex) == -1)
                 return;
 
-            ChunkData.Stage = ChunkStage.Generated;
-            
-            if (ChunkData.AllNeighbourChunkStageSuperiorOrEqual(ChunkStage.Generated))
-            {
-                ChunkManager.PopulateChunkQueue.Enqueue(ChunkData);
-                ChunkData.Save = true;
-            }
-
-            foreach (var c in ChunkData.GetNeighbourChunks())
-            {
-                if (c.Stage == ChunkStage.Generated && c.AllNeighbourChunkStageSuperiorOrEqual(ChunkStage.Generated))
-                {
-                    ChunkManager.PopulateChunkQueue.Enqueue(c);
-                    c.Save = true;
-                }
-            }
+            ChunkData.Stage = ChunkStage.Generated; 
+            ChunkManager.WaitingToPopulateQueue.Enqueue(ChunkData);
         } 
         else
         {

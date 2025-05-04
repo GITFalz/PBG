@@ -28,7 +28,7 @@ public struct Block
 
     public short BlockId()
     {
-        return (short)(blockData & 0xFFFF);
+        return (short)(blockData & 0x0000FFFF);
     }
 
     public void SetBlockId(short id)
@@ -59,6 +59,11 @@ public struct Block
     public bool Occluded(int side)
     {
         return (Occlusion() & (1 << side)) != 0;
+    }
+
+    public bool FullyOccluded()
+    {
+        return (blockData & 0x3F0000) == 0x3F0000; // binary: 0011 1111 0000 0000 0000 0000
     }
 
     public void SetOcclusion(int side)

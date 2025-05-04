@@ -78,6 +78,47 @@ public static class VoxelData
         (width, height) => [(0, 0, height), (0, 0, 0), (width, 0, 0), (width, 0, height)],
         (width, height) => [(width, 0, 1), (width, height, 1), (0, height, 1), (0, 0, 1)],
     ];
+    
+    // based on side offsets
+    public static readonly Vector3i[][][] AoOffset =
+    [
+        [ // Front
+            [   SideNormal[0] + (0, -1, 0),    SideNormal[0] + (-1, -1, 0),    SideNormal[0] + (-1, 0, 0)  ],
+            [   SideNormal[0] + (-1, 0, 0),    SideNormal[0] + (-1, 1, 0),     SideNormal[0] + (0, 1, 0)   ],
+            [   SideNormal[0] + (0, 1, 0),     SideNormal[0] + (1, 1, 0),      SideNormal[0] + (1, 0, 0)   ],
+            [   SideNormal[0] + (1, 0, 0),     SideNormal[0] + (1, -1, 0),     SideNormal[0] + (0, -1, 0)  ]
+        ],
+        [ // Right
+            [   SideNormal[1] + (0, -1, 0),    SideNormal[1] + (0, -1, -1),    SideNormal[1] + (0, 0, -1)  ],
+            [   SideNormal[1] + (0, 0, -1),    SideNormal[1] + (0, 1, -1),     SideNormal[1] + (0, 1, 0)   ],
+            [   SideNormal[1] + (0, 1, 0),     SideNormal[1] +  (0, 1, 1),     SideNormal[1] + (0, 0, 1)   ],
+            [   SideNormal[1] + (0, 0, 1),     SideNormal[1] +  (0, -1, 1),    SideNormal[1] + (0, -1, 0)  ]
+        ],
+        [ // Top
+            [   SideNormal[2] + (0, 0, -1),    SideNormal[2] + (-1, 0, -1),    SideNormal[2] + (-1, 0, 0)  ],
+            [   SideNormal[2] + (-1, 0, 0),    SideNormal[2] + (-1, 0, 1),     SideNormal[2] + (0, 0, 1)   ],
+            [   SideNormal[2] + (0, 0, 1),     SideNormal[2] + (1, 0, 1),      SideNormal[2] + (1, 0, 0)   ],
+            [   SideNormal[2] + (1, 0, 0),     SideNormal[2] + (1, 0, -1),     SideNormal[2] +  (0, 0, -1) ]
+        ],
+        [ // Left
+            [   SideNormal[3] + (0, -1, 0),    SideNormal[3] + (0, -1, 1),     SideNormal[3] + (0, 0, 1)   ],
+            [   SideNormal[3] + (0, 0, 1),     SideNormal[3] + (0, 1, 1),      SideNormal[3] + (0, 1, 0)   ],
+            [   SideNormal[3] + (0, 1, 0),     SideNormal[3] + (0, 1, -1),     SideNormal[3] + (0, 0, -1)  ],
+            [   SideNormal[3] + (0, 0, -1),    SideNormal[3] + (0, -1, -1),    SideNormal[3] + (0, -1, 0)  ]
+        ],
+        [ // Bottom
+            [   SideNormal[4] + (-1, 0, 0),    SideNormal[4] + (-1, 0, 1),     SideNormal[4] + (0, 0, 1)   ],
+            [   SideNormal[4] + (-1, 0, 0),    SideNormal[4] + (-1, 0, -1),    SideNormal[4] + (0, 0, -1)  ],
+            [   SideNormal[4] + (0, 0, -1),    SideNormal[4] + (1, 0, -1),     SideNormal[4] + (1, 0, 0)   ],
+            [   SideNormal[4] + (0, 0, 1),     SideNormal[4] + (1, 0, 1),      SideNormal[4] + (1, 0, 0)   ]
+        ],
+        [ // Back
+            [   SideNormal[5] + (0, -1, 0),    SideNormal[5] + (1, -1, 0),     SideNormal[5] + (1, 0, 0)   ],
+            [   SideNormal[5] + (1, 0, 0),     SideNormal[5] + (1, 1, 0),      SideNormal[5] + (0, 1, 0)   ],
+            [   SideNormal[5] + (0, 1, 0),     SideNormal[5] + (-1, 1, 0),     SideNormal[5] + (-1, 0, 0)  ],
+            [   SideNormal[5] + (-1, 0, 0),    SideNormal[5] + (-1, -1, 0),    SideNormal[5] + (0, -1, 0)  ]
+        ]
+    ];
 
     public static void GenerateStandardMeshBox(OldAnimationMesh mesh, Vector3 size, Vector3 position, Vector3 rotation, int color)
     {

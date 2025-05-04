@@ -3,22 +3,32 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class Info
 {
     private static UIController _infoController = new();
 
     public static UIText FpsText = new("FpsTest", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
+
     public static UIText GPUText = new("Gpu", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
-    public static UIText XPosText = new("XPos", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
-    public static UIText YPosText = new("YPos", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
-    public static UIText ZPosText = new("ZPos", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
-    public static UIText ChunkRenderingText = new("ChunkRendering", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
-    public static UIText VertexCountText = new("VertexCount", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
+
+    public static UIText PositionText = new("Position", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
+
+    public static UIText GlobalChunkCount = new("GlobalChunkCount", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
+    public static UIText GlobalChunkVertexCount = new("GlobalChunkVertexCount", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
+    
+    public static UIText SelectedChunkPosition = new("SelectedChunkPosition", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
+    public static UIText SelectedChunkVertexCount = new("SelectedChunkVertexCount", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
+    public static UIText SelectedChunkIndexCount = new("SelectedChunkIndexCount", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
+    
     public static UIText RamUsageText = new("RamUsage", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
 
     private static int _oldVertexCount = 0;
     public static int VertexCount = 0;
+
+    private static int _oldChunkCount = 0;
+    public static int ChunkCount = 0;
 
 
     private static int frameCount = 0;
@@ -33,37 +43,78 @@ public class Info
     private static ShaderProgram _blockShader = new ShaderProgram("Info/InfoBlock.vert", "Info/InfoBlock.frag");
 
     private static Action _updateBlocks = () => { };
+    private static Action _toggleAction = () => { };
 
     private static ArrayIDBO indirectBuffer = new([]);
     private static List<DrawArraysIndirectCommand> _indirectCommands = [];
 
     private static object lockObj = new object();
 
-    public static bool RenderInfo = true;
+    public static bool RenderInfo = false;
+
+
+    private static Vector3 _oldPosition = Vector3.Zero;
 
 
     public Info()
     {
         UIVerticalCollection infoCollection = new("FpsCollection", _infoController, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (100, 1000), (5, 5, 5, 5), (0, 0, 0, 0), 5, 0);
-        UIHorizontalCollection positionCollection = new("PositionCollection", _infoController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (1000, 100), (5, 5, 5, 5), (0, 0, 0, 0), 5, 0);
+
+        // General info
+        UIVerticalCollection generalInfo = new("GeneralInfo", _infoController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (1000, 100), (5, 5, 5, 5), (0, 0, 0, 20), 5, 0);
+
+        UIText GeneralInfo = new("GeneralInfo", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
+        GeneralInfo.SetTextCharCount("--General--", 1.2f);
 
         FpsText.SetMaxCharCount(9).SetText("Fps: 9999", 1.2f);
         GPUText.SetMaxCharCount(40).SetText("GPU: None", 1.2f);
-        XPosText.SetMaxCharCount(15).SetText("X: 0", 1.2f);
-        YPosText.SetMaxCharCount(15).SetText("Y: 0", 1.2f);
-        ZPosText.SetMaxCharCount(15).SetText("Z: 0", 1.2f);
-        ChunkRenderingText.SetMaxCharCount(20).SetText("Chunks: 0", 1.2f);
-        VertexCountText.SetMaxCharCount(20).SetText("Vertices: 0", 1.2f);
         RamUsageText.SetMaxCharCount(20).SetText("Ram: 0", 1.2f);
 
-        positionCollection.SetScale((positionCollection.Scale.X, FpsText.Scale.Y));
+        generalInfo.AddElements(GeneralInfo, FpsText, GPUText, RamUsageText);
 
-        positionCollection.AddElements(XPosText, YPosText, ZPosText);
-        infoCollection.AddElements(FpsText, GPUText, positionCollection, ChunkRenderingText, VertexCountText, RamUsageText);
+        // Player info
+        UIVerticalCollection playerInfo = new("PlayerInfo", _infoController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (1000, 100), (5, 5, 5, 5), (0, 0, 0, 20), 5, 0);
+
+        UIText PlayerInfo = new("PlayerInfo", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
+        PlayerInfo.SetTextCharCount("--Player--", 1.2f);
+
+        PositionText.SetMaxCharCount(100).SetText("Position: X: 0, Y: 0, Z: 0", 1.2f);
+
+        playerInfo.AddElements(PlayerInfo, PositionText);
+
+        // Global chunk info
+        UIVerticalCollection globalChunkInfo = new("GlobalChunkInfo", _infoController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (1000, 100), (5, 5, 5, 5), (0, 0, 0, 20), 5, 0);
+
+        UIText GlobalChunkInfo = new("GlobalChunkInfo", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
+        GlobalChunkInfo.SetTextCharCount("--Total--", 1.2f);
+
+        GlobalChunkCount.SetMaxCharCount(50).SetText("Chunks: 0", 1.2f);
+        GlobalChunkVertexCount.SetMaxCharCount(50).SetText("Vertices: 0", 1.2f);
+
+        globalChunkInfo.AddElements(GlobalChunkInfo, GlobalChunkCount, GlobalChunkVertexCount);
+
+
+        // Selected chunk info
+        UIVerticalCollection selectedChunkInfo = new("SelectedChunkInfo", _infoController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (1000, 100), (5, 5, 5, 5), (0, 0, 0, 20), 5, 0);
+
+        UIText SelectedChunkInfo = new("SelectedChunkInfo", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
+        SelectedChunkInfo.SetTextCharCount("--Selected--", 1.2f);
+
+        SelectedChunkPosition.SetMaxCharCount(50).SetText("X: 0, Y: 0, Z: 0", 1.2f);
+        SelectedChunkVertexCount.SetMaxCharCount(20).SetText("Vertices: 0", 1.2f);
+        SelectedChunkIndexCount.SetMaxCharCount(20).SetText("Indices: 0", 1.2f);
+
+        selectedChunkInfo.AddElements(SelectedChunkInfo, SelectedChunkPosition, SelectedChunkVertexCount, SelectedChunkIndexCount);
+
+
+        infoCollection.AddElements(generalInfo, playerInfo, globalChunkInfo, selectedChunkInfo);
 
         GenerateBlocks();
 
         _infoController.AddElements(infoCollection);
+
+
+        _toggleAction = () => ToggleOn();
     }
 
     public static void Resize()
@@ -89,10 +140,12 @@ public class Info
 
     public static void Render()
     {
+        if (Input.IsKeyPressed(Keys.F3))
+            _toggleAction.Invoke();
+
         if (!RenderInfo)
             return;
 
-        UpdateVertexCount();
         RenderBlocks();
         _infoController.RenderDepthTest();
     }
@@ -186,36 +239,32 @@ public class Info
         GL.Enable(EnableCap.DepthTest);
     }
 
-
-    private static void UpdateVertexCount()
+    public static void SetGlobalChunkInfo(int chunkCount, int vertexCount)
     {
-        if (_oldVertexCount != VertexCount)
+        if (_oldVertexCount != vertexCount)
         {
-            VertexCountText.SetText("Vertices: " + VertexCount, 1.2f).UpdateCharacters();
-            _oldVertexCount = VertexCount;
+            GlobalChunkVertexCount.SetText($"Vertices: {vertexCount}", 1.2f).UpdateCharacters();
+            _oldVertexCount = vertexCount;
+        }
+
+        if (_oldChunkCount != chunkCount)
+        {
+            GlobalChunkCount.SetText($"Chunks: {chunkCount}", 1.2f).UpdateCharacters();
+            _oldChunkCount = chunkCount;
         }
     }
 
-    public static void SetPositionText(Vector3 oldPos, Vector3 position)
+    public static void SetSelectedChunkInfo(Vector3i position, int vertexCount, int indexCount)
     {
-        bool update = false;
 
-        if (oldPos.X != position.X)
-        {
-            XPosText.SetText($"X: {position.X}", 1.2f).UpdateCharacters();
-            update = true;
-        }
+    }
 
-        if (oldPos.Y != position.Y)
+    public static void SetPositionText(Vector3 position)
+    {
+        if (_oldPosition != position)
         {
-            YPosText.SetText($"Y: {position.Y}", 1.2f).UpdateCharacters();
-            update = true;
-        }
-
-        if (oldPos.Z != position.Z)
-        {
-            ZPosText.SetText($"Z: {position.Z}", 1.2f).UpdateCharacters();
-            update = true;
+            PositionText.SetText($"Position: X: {position.X}, Y: {position.Y}, Z: {position.Z}", 1.2f).UpdateCharacters();
+            _oldPosition = position;
         }
     }
 
@@ -237,6 +286,19 @@ public class Info
         }
         
         return false;
+    }
+
+
+    private void ToggleOn()
+    {
+        RenderInfo = true;
+        _toggleAction = () => ToggleOff();
+    }
+
+    private void ToggleOff()
+    {
+        RenderInfo = false;
+        _toggleAction = () => ToggleOn();
     }
 }
 

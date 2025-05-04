@@ -139,7 +139,7 @@ public class PlayerStateMachine : ScriptingNode
         
         if (physicsBody.Velocity != Vector3.Zero)
         {
-            Info.SetPositionText(_oldPosition, Transform.Position - (0f, 0.875f, 0f));
+            Info.SetPositionText(Transform.Position - (0f, 0.875f, 0f));
         }
         
         forward = Mathf.YAngleToDirection(-yaw);

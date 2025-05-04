@@ -59,4 +59,14 @@ public class VBO<T> : VBOBase where T : struct
         GL.BufferData(BufferTarget.ArrayBuffer, data.Length * Marshal.SizeOf(typeof(T)), data, BufferUsageHint.DynamicDraw);
         Unbind();
     }
+
+    public void ReadData()
+    {
+        Bind();
+        T[] data = new T[GetBufferCount()];
+        GL.GetBufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, data.Length * Marshal.SizeOf(typeof(T)), data);
+        Unbind();
+        string dataString = string.Join(", ", data);
+        Console.WriteLine($"Buffer ID: {ID}, Data: [{dataString}]");
+    }
 }

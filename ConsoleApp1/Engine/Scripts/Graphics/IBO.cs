@@ -46,4 +46,14 @@ public class IBO : BufferBase
     {
         return "IBO";
     }
+
+    public void ReadData()
+    {
+        Bind();
+        uint[] data = new uint[GetBufferCount()];
+        GL.GetBufferSubData(BufferTarget.ElementArrayBuffer, IntPtr.Zero, data.Length * sizeof(uint), data);
+        Unbind();
+        string dataString = string.Join(", ", data);
+        Console.WriteLine($"Buffer ID: {ID}, Data: [{dataString}]");
+    }
 }

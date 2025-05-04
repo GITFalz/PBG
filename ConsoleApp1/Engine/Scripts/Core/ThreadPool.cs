@@ -81,11 +81,13 @@ public static class ThreadPool
 
     private class PriorityQueue 
     {
-        private readonly ConcurrentQueue<ThreadProcess> _urgentPriorityActions = [];
-        private readonly ConcurrentQueue<ThreadProcess> _highPriorityActions = [];
-        private readonly ConcurrentQueue<ThreadProcess> _normalPriorityActions = [];
-        private readonly ConcurrentQueue<ThreadProcess> _lowPriorityActions = [];
-        private readonly ConcurrentQueue<ThreadProcess> _backgroundPriorityActions = [];
+        public int Count => _urgentPriorityActions.Count + _highPriorityActions.Count + _normalPriorityActions.Count + _lowPriorityActions.Count + _backgroundPriorityActions.Count;
+        
+        public readonly ConcurrentQueue<ThreadProcess> _urgentPriorityActions = [];
+        public readonly ConcurrentQueue<ThreadProcess> _highPriorityActions = [];
+        public readonly ConcurrentQueue<ThreadProcess> _normalPriorityActions = [];
+        public readonly ConcurrentQueue<ThreadProcess> _lowPriorityActions = [];
+        public readonly ConcurrentQueue<ThreadProcess> _backgroundPriorityActions = [];
 
         public void Enqueue(ThreadProcess process, TaskPriority priority = TaskPriority.Normal)
         {
@@ -123,6 +125,12 @@ public static class ThreadPool
             }
             return false;
         }
+    }
+
+    public static void Print()
+    {
+        Console.WriteLine($"ThreadPool: {ThreadCount} threads, {_actions.Count} actions queued.");
+        Console.WriteLine($"Urgent: {_actions._urgentPriorityActions.Count}, High: {_actions._highPriorityActions.Count}, Normal: {_actions._normalPriorityActions.Count}, Low: {_actions._lowPriorityActions.Count}, Background: {_actions._backgroundPriorityActions.Count}");
     }
 }
 

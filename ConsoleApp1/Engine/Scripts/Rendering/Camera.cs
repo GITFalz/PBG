@@ -312,7 +312,7 @@ public class Camera
         }
 
         if (GetCameraMode() == CameraMode.Free)
-            Info.SetPositionText(_lastPosition, Position);
+            Info.SetPositionText(Position);
 
         FirstMove.Invoke();
 
