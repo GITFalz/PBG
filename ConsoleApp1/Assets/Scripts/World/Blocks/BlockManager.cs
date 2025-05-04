@@ -3,16 +3,16 @@ using System.Text;
 
 public static class BlockManager
 {
-    public static Dictionary<int, CWorldBlock> Blocks = new Dictionary<int, CWorldBlock>();
+    public static Dictionary<uint, CWorldBlock> Blocks = new Dictionary<uint, CWorldBlock>();
 
-    public static CWorldBlock GetBlock(int index)
+    public static CWorldBlock GetBlock(uint index)
     {
         if (Blocks.TryGetValue(index, out var block))
             return block;
         return CWorldBlock.Base;
     }
 
-    public static bool GetBlock(int index, [NotNullWhen(true)] out CWorldBlock? block)
+    public static bool GetBlock(uint index, [NotNullWhen(true)] out CWorldBlock? block)
     {
         if (Blocks.TryGetValue(index, out block))
             return true;
@@ -26,7 +26,7 @@ public static class BlockManager
         return Blocks.ContainsKey(block.index);
     }
     
-    public static bool Exists(int index)
+    public static bool Exists(uint index)
     {
         return Blocks.ContainsKey(index);
     }
@@ -39,12 +39,12 @@ public static class BlockManager
         return Blocks.TryAdd(block.index, block);
     }
     
-    public static bool Add(int index)
+    public static bool Add(uint index)
     {
         return Blocks.TryAdd(index, new CWorldBlock(index));
     }
 
-    public static bool SetIndices(int index, int uv, int value)
+    public static bool SetIndices(uint index, int uv, int value)
     {
         if (uv >= 6 || !Blocks.TryGetValue(index, out var block))
             return false;
@@ -53,7 +53,7 @@ public static class BlockManager
         return true;
     }
 
-    public static bool SetPriority(int index, int priority)
+    public static bool SetPriority(uint index, int priority)
     {
         if (!Blocks.TryGetValue(index, out var block))
             return false;
@@ -64,12 +64,12 @@ public static class BlockManager
 
     public static List<CWorldBlock> GetSortedPriorityList()
     {
-        List<int> sortedKeys = [.. Blocks.Keys];
+        List<uint> sortedKeys = [.. Blocks.Keys];
         sortedKeys.Sort();
 
         Console.WriteLine("Sorted Array:");
         List<CWorldBlock> sortedValues = [];
-        foreach (int key in sortedKeys)
+        foreach (uint key in sortedKeys)
         {
             sortedValues.Add(Blocks[key]);
             Console.WriteLine(Blocks[key]);
@@ -84,8 +84,9 @@ public class CWorldBlock
     public static CWorldBlock Base = new();
 
     public string blockName;
-    public int index;
+    public uint index;
     public int priority;
+    public BlockState state;
     public UVmaps blockUVs = UVmaps.DefaultIndexUVmap;
     public BlockChecker BlockChecker;
 
@@ -95,27 +96,26 @@ public class CWorldBlock
         index = 0;
         BlockChecker = new();
     }
-    public CWorldBlock(int index)
+    public CWorldBlock(uint index)
     {
         blockName = "";
         this.index = index;
         BlockChecker = new();
     }
     
-    public CWorldBlock(string name, int index, int priority, UVmaps blockUVs, BlockChecker blockChecker)
+    public CWorldBlock(string name, uint index, int priority, BlockState blockState, UVmaps blockUVs, BlockChecker blockChecker)
     {
         blockName = name;
         this.index = index;
         this.priority = priority;
+        this.state = blockState;
         this.blockUVs = blockUVs;
         BlockChecker = blockChecker;
     }
 
     public Block GetBlock()
     {
-        Block block = new Block(index);
-        block.SetSolid();
-        return block;
+        return new Block(state, index);
     }
 
     public void SetIndices(int index, int value)

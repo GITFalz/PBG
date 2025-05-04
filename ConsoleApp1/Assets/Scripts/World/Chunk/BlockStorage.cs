@@ -145,7 +145,7 @@ public class CornerBlockStorage : BlockStorage
             if (Blocks[arrayIndex] == null)
             {
                 Blocks[arrayIndex] = new Block[4096];
-                Array.Fill(Blocks[arrayIndex], new Block(false, 0));
+                Array.Fill(Blocks[arrayIndex], new Block(BlockState.Air, 0));
             }
             
             Blocks[arrayIndex][blockIndex] = block;
@@ -167,7 +167,7 @@ public class CornerBlockStorage : BlockStorage
         Block[]? blocks = arrayIndex >= Blocks.Length ? null : Blocks[arrayIndex];
         
         if (blocks == null)
-            return new Block(false, 0);
+            return new Block(BlockState.Air, 0);
         
         return blocks[blockIndex];
     }

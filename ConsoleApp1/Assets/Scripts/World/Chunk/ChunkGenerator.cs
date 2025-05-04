@@ -40,8 +40,9 @@ public class ChunkGenerator
                         return -1;
 
                     Vector3i position = (x, y, z);
+                    Block currentBlock = chunkData[index];
 
-                    if (chunkData[index].IsSolid())
+                    if (currentBlock.IsSolid())
                     {
                         foreach (var cBlock in BlockPriorityList)
                         {
@@ -70,7 +71,41 @@ public class ChunkGenerator
 
                             if (isValid)
                             {
-                                chunkData.blockStorage.SetBlock(position, new Block(true, cBlock.index));
+                                chunkData[position] = new Block(BlockState.Solid, (uint)cBlock.index);
+                                break;
+                            }
+                        }
+                    }
+                    else if (currentBlock.IsLiquid())
+                    {
+                        foreach (var cBlock in BlockPriorityList)
+                        {
+                            bool isValid = true;
+
+                            foreach (var mask in cBlock.BlockChecker.BlockMasks)
+                            {
+                                Vector3i offset = position + mask.Offset;
+                                Block block;
+                                if (offset.X < 0 || offset.X > 31 || offset.Y < 0 || offset.Y > 31 || offset.Z < 0 || offset.Z > 31)
+                                {
+                                    WorldManager.GetBlock(chunkWorldPosition + offset, out block);
+                                } 
+                                else
+                                {
+                                    int i = offset.X + offset.Z * WIDTH + offset.Y * WIDTH * HEIGHT;
+                                    block = chunkData[i];
+                                }
+                                
+                                if (!mask.IsValid(block))
+                                {
+                                    isValid = false;
+                                    break;
+                                }    
+                            }
+
+                            if (isValid)
+                            {
+                                chunkData[position] = new Block(BlockState.Liquid, (uint)cBlock.index);
                                 break;
                             }
                         }
@@ -176,6 +211,31 @@ public class ChunkGenerator
                             }
                         }
                     }
+                    else if (block.IsLiquid())
+                    {
+                        block.ResetOcclusion();
+                        
+                        for (int i = 0; i < 6; i++)
+                        {
+                            if (!VoxelData.InBounds(x, y, z, i, width))
+                            {
+                                Vector3i newPosition = position + VoxelData.SideNormal[i] + chunkData.GetWorldPosition();
+                                if (WorldManager.GetBlock(newPosition, out var b) == 0 && (b.IsSolid() || b.IsLiquid()))
+                                {
+                                    block.SetOcclusion(i);
+                                }
+                            }
+                            else
+                            {
+                                Vector3i offset = position + VoxelData.SideNormal[i];
+                                int newIndex = offset.X + (offset.Z << 5) + (offset.Y << 10);
+                                
+                                var b = chunkData[newIndex];
+                                if (b.IsSolid() || b.IsLiquid())
+                                    block.SetOcclusion(i);      
+                            }
+                        }
+                    }
 
                     chunkData[index] = block;
                         
@@ -218,7 +278,7 @@ public class ChunkGenerator
                         blockMap[blockMapIndex] = blockPillar;
 
                         int[] ids;
-                        int blockId = block.blockData & 15;
+                        uint blockId = block.ID;
                         try
                         {
                             ids = BlockManager.GetBlock(blockId).GetIndices();
@@ -331,14 +391,20 @@ public class ChunkGenerator
                     for (int x = 0; x < 32; x++)
                     {
                         Block block = chunkData[index];
+
+                        if (block.FullyOccluded())
+                        {
+                            index++;
+                            continue;
+                        }
                         
-                        if (block.IsSolid() && !block.FullyOccluded())
+                        if (block.IsSolid() || block.IsLiquid())
                         {
                             int[] ids;
 
                             try
                             {
-                                ids = BlockManager.GetBlock(block.ID).GetIndices();
+                                ids = BlockManager.GetBlock(block.ID).GetIndices(); 
                             }
                             catch (Exception)
                             {
@@ -379,7 +445,14 @@ public class ChunkGenerator
                                         ao[i] = 0;
                                 }
 
-                                chunkData.AddFace(position, 1, 1, side, id, ao);
+                                if (block.IsLiquid())
+                                {
+                                    chunkData.AddTransparentFace(position, 1, 1, side, id, ao);
+                                }
+                                else if (block.IsSolid())
+                                {
+                                    chunkData.AddFace(position, 1, 1, side, id, ao);
+                                }
                             }
                         }
 
@@ -436,7 +509,7 @@ public class ChunkGenerator
                     {
                         for (int z = startZ; z < sizeZ; z++)
                         {
-                            chunkData.blockStorage.SetBlock(x, y, z, new Block(true, 1));
+                            chunkData.blockStorage.SetBlock(x, y, z, new Block(BlockState.Solid, 1));
                         }
                     }
                 }
@@ -472,10 +545,10 @@ public class ChunkGenerator
     private static Block GetBlockAtHeight(float terrainHeight, int currentHeight)
     {
         if (terrainHeight > currentHeight + 3)
-            return new Block(true, 2);
+            return new Block(BlockState.Solid, 2);
         if (terrainHeight > currentHeight + 1)
-            return new Block(true, 1);
-        return new Block(true, 0);
+            return new Block(BlockState.Solid, 1);
+        return new Block(BlockState.Solid, 0);
     }
 
     public static Vector3i RegionPosition(Vector3i position)

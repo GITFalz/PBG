@@ -72,11 +72,23 @@ public class Chunk
     public IBO _ibo = new([]);
     public VBO<VertexData> VertexVBO = new([]);
 
+    private VAO _transparentVao = new VAO();
+    public IBO _transparentIbo = new([]);
+    private VBO<VertexData> _transparentVbo = new([]);
+
     public int IndicesCount = 0;
     public int VertexCount = 0;
+    private int _vertexCount = 0; // used when rendering
+
+    public int TransparentIndicesCount = 0;
+    public int TransparentVertexCount = 0;
+    private int _transparentVertexCount = 0; // used when rendering
 
     public List<uint> _indices = [];
     public List<VertexData> VertexDataList = [];
+
+    public List<uint> TransparentIndices = [];
+    public List<VertexData> TransparentVertexDataList = [];
 
     public object Lock = new object();
 
@@ -118,14 +130,23 @@ public class Chunk
         AddVertex(position + vertices[2], 2, width, height, side, textureIndex, ambientOcclusion[2]);
         AddVertex(position + vertices[3], 3, width, height, side, textureIndex, ambientOcclusion[3]);
 
-        _indices.Add((uint)VertexCount + 0);
-        _indices.Add((uint)VertexCount + 1);
-        _indices.Add((uint)VertexCount + 2);
-        _indices.Add((uint)VertexCount + 2);
-        _indices.Add((uint)VertexCount + 3);
-        _indices.Add((uint)VertexCount + 0);
-
+        uint v = (uint)VertexCount;
+        _indices.AddRange(v,v+1,v+2,v+2,v+3,v);
         VertexCount += 4;
+    }
+
+    public void AddTransparentFace(Vector3i position, int width, int height, int side, int textureIndex, Vector4i ambientOcclusion)
+    {
+        var vertices = VoxelData.GetSideOffsets[side](width, height);
+
+        AddTransparentVertex(position + vertices[0], 0, width, height, side, textureIndex, ambientOcclusion[0]);
+        AddTransparentVertex(position + vertices[1], 1, width, height, side, textureIndex, ambientOcclusion[1]);
+        AddTransparentVertex(position + vertices[2], 2, width, height, side, textureIndex, ambientOcclusion[2]);
+        AddTransparentVertex(position + vertices[3], 3, width, height, side, textureIndex, ambientOcclusion[3]);
+
+        uint v = (uint)TransparentVertexCount;
+        TransparentIndices.AddRange(v,v+1,v+2,v+2,v+3,v);
+        TransparentVertexCount += 4;
     }
     
     public void AddVertex(Vector3 position, int uvIndex, int width, int height, int side, int textureIndex, int ambientOcclusion)
@@ -136,6 +157,16 @@ public class Chunk
             TextureIndex = ((uvIndex << 29) | (side << 26) | ((width - 1) << 21) | ((height - 1) << 16) | textureIndex, ambientOcclusion)
         };
         VertexDataList.Add(vertexData);
+    }
+
+    public void AddTransparentVertex(Vector3 position, int uvIndex, int width, int height, int side, int textureIndex, int ambientOcclusion)
+    {
+        VertexData vertexData = new()
+        {
+            Position = position,
+            TextureIndex = ((uvIndex << 29) | (side << 26) | ((width - 1) << 21) | ((height - 1) << 16) | textureIndex, ambientOcclusion)
+        };
+        TransparentVertexDataList.Add(vertexData);
     }
 
     public Block this[int index]
@@ -213,8 +244,15 @@ public class Chunk
     {
         VertexDataList = new List<VertexData>();
         _indices = new List<uint>();
+
+        TransparentVertexDataList = new List<VertexData>();
+        TransparentIndices = new List<uint>();
+
         VertexCount = 0;
         IndicesCount = 0;
+
+        TransparentVertexCount = 0;
+        TransparentIndicesCount = 0;
     }
 
     public void Delete()
@@ -232,7 +270,8 @@ public class Chunk
     public bool CreateChunkSolid()
     {   
         lock(Lock)
-        {
+        {  
+            // Opaque chunk
             IsGeneratingBuffers = true;
             _chunkVao.Renew();
             _chunkVao.Bind();
@@ -291,13 +330,74 @@ public class Chunk
             _chunkVao.Unbind();
             VertexVBO.Unbind();
 
+
+            // Transparent chunk
+            _transparentVao.Renew();
+            _transparentVao.Bind();
+
+            try
+            {
+                _transparentIbo.Renew(TransparentIndices);
+                Shader.Error("Creating the IBO for transparent chunk: " + position);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                Console.WriteLine("Failed to create IBO for transparent chunk: " + position);
+                Console.WriteLine(IsBeingGenerated);
+
+                ClearMeshData();
+
+                BlockRendering = true;
+                IsGeneratingBuffers = false;
+                return false;
+            }
+
+            try
+            {
+                _transparentVbo.Renew(TransparentVertexDataList);
+                Shader.Error("Creating the VBO for transparent chunk: " + position);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                Console.WriteLine("Failed to create VBO for transparent chunk: " + position);
+                Console.WriteLine(IsBeingGenerated);
+
+                ClearMeshData();
+
+                BlockRendering = true;
+                IsGeneratingBuffers = false;
+                return false;
+            }
+
+            stride = Marshal.SizeOf(typeof(VertexData));
+            _transparentVbo.Bind();
+
+            _transparentVao.Link(0, 3, VertexAttribPointerType.Float, stride, 0);
+            Shader.Error("Linking position attribute for transparent chunk: " + position);
+            _transparentVao.IntLink(1, 2, VertexAttribIntegerType.Int, stride, 3 * sizeof(float));
+            Shader.Error("Linking texture index attribute for transparent chunk: " + position);
+
+            _transparentVao.Unbind();
+            _transparentVbo.Unbind();
+
+
+            // Setting values
             int indicesCount = _indices.Count;
             int vertexCount = VertexDataList.Count;
+            int transparentIndicesCount = TransparentIndices.Count;
+            int transparentVertexCount = TransparentVertexDataList.Count;
 
             ClearMeshData();
 
             IndicesCount = indicesCount;
             VertexCount = vertexCount;
+            _vertexCount = IndicesCount;
+
+            TransparentIndicesCount = transparentIndicesCount;
+            TransparentVertexCount = transparentVertexCount;
+            _transparentVertexCount = TransparentIndicesCount;
 
             GL.Finish();
 
@@ -328,10 +428,21 @@ public class Chunk
         _chunkVao.Bind();
         _ibo.Bind();
 
-        GL.DrawElements(PrimitiveType.Triangles, IndicesCount, DrawElementsType.UnsignedInt, 0);
+        GL.DrawElements(PrimitiveType.Triangles, _vertexCount, DrawElementsType.UnsignedInt, 0);
         
         _ibo.Unbind();
         _chunkVao.Unbind();
+    }
+
+    public void RenderChunkTransparent()
+    {
+        _transparentVao.Bind();
+        _transparentIbo.Bind();
+
+        GL.DrawElements(PrimitiveType.Triangles, _transparentVertexCount, DrawElementsType.UnsignedInt, 0);
+
+        _transparentIbo.Unbind();
+        _transparentVao.Unbind();
     }
 
     private static void DebugCallback(

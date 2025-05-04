@@ -4,7 +4,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class BlockItemData : ItemData
 {
-    public int BlockIndex;
+    public uint BlockIndex;
     public Block Block;
 
     public BlockItemData(CWorldBlock block)

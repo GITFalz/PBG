@@ -2,38 +2,52 @@
 
 public struct Block
 {
-    // Structure of block data: |0000|00   0   0|00   00|0000  |0000|0000|0000|0000|
-    //                          ^-------^ ^-^ ^----^ ^-------^ ^-------------------^
-    // 6 bits, unused
-    // 1 bit, state (0 = air, 1 = solid) (to be expanded)
+    // Structure of block data: |0000|0   00   0|00   00|0000  |0000|0000|0000|0000|
+    //                          ^------^ ^--^ ^----^ ^-------^ ^-------------------^
+    // 5 bits, unused
+    // 2 bit, state (0 = air, 1 = solid, 2 = liquid) (to be expanded)
     // 3 bits, rotation
     // 6 bits, occlusion
     // 16 bits, block id       
 
-    public int blockData = 0;
-    public short ID => BlockId();
+    public const uint ID_MASK = 0x0000FFFF;         // binary: 0000 0000 0000 0000 1111 1111 1111 1111
+    public const uint OCCLUSION_MASK = 0x003F0000;  // binary: 0000 0000 0011 1111 0000 0000 0000 0000
+    public const uint ROTATION_MASK = 0x01C00000;   // binary: 0000 0001 1100 0000 0000 0000 0000 0000
+    public const uint STATE_MASK = 0x06000000;      // binary: 0000 0110 0000 0000 0000 0000 0000 0000
 
-    public static Block Air = new Block(false, 0);
-    public static Block Solid = new Block(true, 0);
+    public static Block Air = new Block(BlockState.Air, 0);
+    public static Block Solid = new Block(BlockState.Solid, 0);
+    public static Block Liquid = new Block(BlockState.Liquid, 0);
 
-    public Block(int blockData) : this(false, blockData) { }
-    public Block(bool isSolid, int blockData)
+    public uint blockData = 0;
+    public uint ID => BlockId();
+
+    public Block(uint blockData) : this(BlockState.Air, blockData) { }
+    public Block(BlockState blockState, uint blockData)
     {
         this.blockData = blockData;
-        if (isSolid)
-            SetSolid();
-        else
-            SetAir();
+        switch (blockState)
+        {
+            case BlockState.Air:
+                SetAir();
+                break;
+            case BlockState.Solid:
+                SetSolid();
+                break;
+            case BlockState.Liquid:
+                SetLiquid();
+                break;
+        }
     }
 
-    public short BlockId()
+    public uint BlockId()
     {
-        return (short)(blockData & 0x0000FFFF);
+        return blockData & ID_MASK; // 0b 0000 0000 0000 0000 1111 1111 1111 1111
     }
 
-    public void SetBlockId(short id)
+    public void SetBlockId(ushort id)
     {
-        blockData |= (int)id;
+        blockData = (blockData & ~ID_MASK) | id; // 0b 0000 0000 0000 0000 1111 1111 1111 1111
     }
 
     public bool Equal(Block block)
@@ -48,12 +62,12 @@ public struct Block
 
     public byte Occlusion()
     {
-        return (byte)((blockData >> 16) & 0x3F); // binary: 0000 0000 0011 1111
+        return (byte)((blockData & OCCLUSION_MASK) >> 16);
     }
 
     public void ResetOcclusion()
     {
-        blockData &= ~0x3F0000;
+        blockData &= ~OCCLUSION_MASK;
     }
 
     public bool Occluded(int side)
@@ -63,57 +77,63 @@ public struct Block
 
     public bool FullyOccluded()
     {
-        return (blockData & 0x3F0000) == 0x3F0000; // binary: 0011 1111 0000 0000 0000 0000
+        return (blockData & OCCLUSION_MASK) == OCCLUSION_MASK;
     }
 
     public void SetOcclusion(int side)
     {
-        blockData |= 1 << (16 + side);
+        blockData |= 1u << (16 + side);
     }
 
     public byte Rotation()
     {
-        return (byte)((blockData >> 22) & 0x07); // binary: 0000 0111
+        return (byte)((blockData & ROTATION_MASK) >> 22);
+    }
+
+    public uint State()
+    {
+        return (blockData & STATE_MASK) >> 25;
     }
     
     public bool IsAir()
     {
-        return (blockData & 0x02000000) == 0; // binary: 0000 0010 0000 0000 0000 0000 0000 0000
+        return State() == 0;
     }
 
     public bool IsSolid()
     {
-        return !IsAir();
+        return State() == 1;
     }
 
-    public byte State()
+    public bool IsLiquid()
     {
-        return (byte)((blockData >> 25) & 7);
+        return State() == 2;
     }
 
     public void SetAir()
     {
-        blockData &= ~0x02000000; // binary: 0000 0010 0000 0000 0000 0000 0000 0000 (inverted)
+        blockData = blockData & ~STATE_MASK; // 0b 0000 0000 0000 0000 0000 0000 0000 0000
     }
 
     public void SetSolid()
     {
-        blockData |= 0x02000000; // binary: 0000 0010 0000 0000 0000 0000 0000 0000
+        blockData = (blockData & ~STATE_MASK) | 0x02000000; // 0b 0000 0010 0000 0000 0000 0000 0000 0000
     }
 
-    // When generating mesh
-    public bool IsInvalid(Block block, int side)
+    public void SetLiquid()
     {
-        return !IsSolid() || Occluded(side) || !Equal(block);
-    }
-
-    public string ToBits()
-    {
-        return Convert.ToString(blockData, 2).PadLeft(32, '0');
+        blockData = (blockData & ~STATE_MASK) | 0x04000000; // 0b 0000 0100 0000 0000 0000 0000 0000 0000
     }
 
     public override string ToString()
     {
-        return $"State: {IsSolid()}, ID: {BlockId()}, Rotation: {Rotation()}, Occlusion: {Occlusion()}";
+        return $"Block: {BlockId()}, State: {State()}, Occlusion: {Occlusion()}, Rotation: {Rotation()}";
     }
+}
+
+public enum BlockState
+{
+    Air = 0,
+    Solid = 1,
+    Liquid = 2,
 }

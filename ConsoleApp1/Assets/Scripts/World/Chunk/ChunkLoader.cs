@@ -67,8 +67,8 @@ public static class ChunkLoader
             {
                 for (int x = 0; x < 16; x++)
                 {
-                    int data = reader.ReadInt32();
-                    Block block = data == 0 ? new Block(false, 0) : new Block(true, data);
+                    uint data = reader.ReadUInt32();
+                    Block block = data == 0 ? new Block(BlockState.Air, 0) : new Block(BlockState.Solid, data);
                     chunkData.blockStorage.SetBlock(x, y, z, block);
                 }
             }

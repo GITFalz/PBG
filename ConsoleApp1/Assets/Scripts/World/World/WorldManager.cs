@@ -155,6 +155,12 @@ public class WorldManager : ScriptingNode
             }
         }
 
+        GenerateMeshChunks();
+        RegenerateChunks();
+        PopulateChunks();
+        GenerateChunks();
+        CheckRenderDistance();
+
         if (ChunkManager.CreateQueue.TryDequeue(out var chunk) && ChunkManager.HasChunk(chunk))
         {
             if (chunk.CreateChunkSolid())
@@ -162,12 +168,6 @@ public class WorldManager : ScriptingNode
             else
                 ChunkManager.RegenerateMeshQueue.Enqueue(chunk);
         }
-
-        GenerateMeshChunks();
-        //RegenerateChunks();
-        PopulateChunks();
-        GenerateChunks();
-        CheckRenderDistance();
 
         CheckFrustum();
     }
@@ -252,16 +252,25 @@ public class WorldManager : ScriptingNode
 
         WorldShader.Textures.Bind(TextureUnit.Texture0);
 
+        GL.DepthMask(true);
+        GL.Disable(EnableCap.Blend);
+
         foreach (var chunk in RenderedChunks)
         {   
-            if (chunk.IsDisabled)
-                continue;
-
             model = Matrix4.CreateTranslation(chunk.GetWorldPosition());
             GL.UniformMatrix4(modelLocation, false, ref model);
             chunk.RenderChunk(); 
+        }
 
-            Shader.Error("Rendering chunk " + chunk.GetWorldPosition() + " " + chunk.VertexCount + ": ");
+        GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+        GL.DepthMask(false);
+
+        foreach (var chunk in RenderedChunks)
+        {   
+            model = Matrix4.CreateTranslation(chunk.GetWorldPosition());
+            GL.UniformMatrix4(modelLocation, false, ref model);
+            chunk.RenderChunkTransparent(); 
         }
 
         WorldShader.Textures.Unbind();

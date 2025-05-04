@@ -32,7 +32,7 @@ public class ChunkGenerationProcess : ThreadProcess
 
     private static int GenerateChunk(ref Chunk chunkData, Vector3i position, int threadIndex)
     {
-        if (!CWorldMultithreadNodeManager.GetNodeManager(threadIndex, out var nodeManager))
+        if (!CWorldMultithreadNodeManager.GetNodeManager(threadIndex, out var nodeManager) || chunkData.Stage == ChunkStage.Empty)
             return -1;
 
         nodeManager.IsBeingUsed = true;
@@ -54,13 +54,19 @@ public class ChunkGenerationProcess : ThreadProcess
                 int height = Mathf.FloorToInt(Mathf.Lerp(20, 100, splineVector));
 
                 int terrainHeight = Mathf.Min(Mathf.Max((height - position.Y), 0), 32);
+                int waterHeight = Mathf.Min(Mathf.Max((45 - position.Y), 0), 32);
 
                 for (int y = 0; y < terrainHeight; y++)
                 {
-                    if (chunkData.Stage == ChunkStage.Empty)
-                        return -1;
-
-                    chunkData.blockStorage.SetBlock(x, y, z, new Block(true, 2));
+                    chunkData[x, y, z] = new Block(BlockState.Solid, 0);
+                }
+                
+                if (height <= 45)
+                {
+                    for (int y = terrainHeight; y < waterHeight; y++)
+                    {
+                        chunkData[x, y, z] = new Block(BlockState.Liquid, 0);
+                    }
                 }
             }
         }

@@ -193,21 +193,31 @@ public class Game : GameWindow
             new BlockMask((0, 3, 0), new BlockTest(Block.Air, MaskType.State))
         );
 
-        
-        CWorldBlock grass = new("grass_block", 0, 1, new([ 0, 0, 1, 0, 2, 0]), grassMask);
-        CWorldBlock dirt = new("dirt_block", 1, 2, new([2, 2, 2, 2, 2, 2]), dirtMask);
-        CWorldBlock stone = new("stone_block", 2, 3, new([3, 3, 3, 3, 3, 3]), new());
+        BlockChecker waterMask = new BlockChecker(
+            new BlockMask((0, 0, 0), new BlockTest(Block.Liquid, MaskType.State))
+        );
+
+        BlockChecker sandMask = new BlockChecker(
+            new BlockMask((0, 0, 0), new BlockTest(Block.Solid, MaskType.State)),
+            new BlockMask((0, 1, 0), new BlockTest(Block.Liquid, MaskType.State))
+        );
+
+        CWorldBlock grass = new("grass_block", 0, 1, BlockState.Solid, new([0, 0, 1, 0, 2, 0]), grassMask);
+        CWorldBlock dirt = new("dirt_block", 1, 2, BlockState.Solid, new([2, 2, 2, 2, 2, 2]), dirtMask);
+        CWorldBlock sand = new("sand_block", 2, 3, BlockState.Solid, new([4, 4, 4, 4, 4, 4]), sandMask);
+        CWorldBlock water = new("water_block", 3, 4, BlockState.Liquid, new([5, 5, 5, 5, 5, 5]), new());
+        CWorldBlock stone = new("stone_block", 4, 5, BlockState.Solid, new([3, 3, 3, 3, 3, 3]), new());
         
         BlockManager.Add(grass);
         BlockManager.Add(dirt);
+        BlockManager.Add(sand);
+        BlockManager.Add(water);
         BlockManager.Add(stone);
-
-        Block grassBlock = grass.GetBlock();
-        Block dirtBlock = dirt.GetBlock();
-        Block stoneBlock = stone.GetBlock();
 
         var grassBlockData = new BlockItemData(grass);
         var dirtBlockData = new BlockItemData(dirt);
+        var sandBlockData = new BlockItemData(sand);
+        var waterBlockData = new BlockItemData(water);
         var stoneBlockData = new BlockItemData(stone);
 
         ItemDataManager.GenerateIcons();
