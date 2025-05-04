@@ -70,6 +70,6 @@ public abstract class ItemData
 
     public static bool RemoveBlock(Vector3i position, out Block swappedBlock)
     {
-        return WorldManager.GetBlock(position, out swappedBlock) == 0 && WorldManager.SetBlock(position, Block.Air, out _);  
+        return WorldManager.GetBlockState(position, out swappedBlock) == 0 && WorldManager.SetBlock(position, Block.Air, out _);  
     }
 }

@@ -54,7 +54,7 @@ public class ChunkGenerator
                                 Block block;
                                 if (offset.X < 0 || offset.X > 31 || offset.Y < 0 || offset.Y > 31 || offset.Z < 0 || offset.Z > 31)
                                 {
-                                    WorldManager.GetBlock(chunkWorldPosition + offset, out block);
+                                    WorldManager.GetBlockState(chunkWorldPosition + offset, out block);
                                 } 
                                 else
                                 {
@@ -88,7 +88,7 @@ public class ChunkGenerator
                                 Block block;
                                 if (offset.X < 0 || offset.X > 31 || offset.Y < 0 || offset.Y > 31 || offset.Z < 0 || offset.Z > 31)
                                 {
-                                    WorldManager.GetBlock(chunkWorldPosition + offset, out block);
+                                    WorldManager.GetBlockState(chunkWorldPosition + offset, out block);
                                 } 
                                 else
                                 {
@@ -196,7 +196,7 @@ public class ChunkGenerator
                             if (!VoxelData.InBounds(x, y, z, i, width))
                             {
                                 Vector3i newPosition = position + VoxelData.SideNormal[i] + chunkData.GetWorldPosition();
-                                if (WorldManager.GetBlock(newPosition, out var b) == 0 && b.IsSolid())
+                                if (WorldManager.GetBlockState(newPosition, out var b) == 0 && b.IsSolid())
                                 {
                                     block.SetOcclusion(i);
                                 }
@@ -220,7 +220,7 @@ public class ChunkGenerator
                             if (!VoxelData.InBounds(x, y, z, i, width))
                             {
                                 Vector3i newPosition = position + VoxelData.SideNormal[i] + chunkData.GetWorldPosition();
-                                if (WorldManager.GetBlock(newPosition, out var b) == 0 && (b.IsSolid() || b.IsLiquid()))
+                                if (WorldManager.GetBlockState(newPosition, out var b) == 0 && (b.IsSolid() || b.IsLiquid()))
                                 {
                                     block.SetOcclusion(i);
                                 }

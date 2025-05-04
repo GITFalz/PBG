@@ -508,7 +508,19 @@ public class WorldManager : ScriptingNode
         return block.IsAir() ? 1 : 0;
     }
 
-    public static int GetBlock(Vector3i blockPosition, out Block block)
+    public static bool GetBlock(Vector3i blockPosition, out Block block)
+    {
+        block = Block.Air;
+        Vector3i chunkPosition = VoxelData.BlockToChunkPosition(blockPosition);
+
+        if (!ChunkManager.ActiveChunks.TryGetValue(chunkPosition, out var chunk)) 
+            return false;
+        
+        block = chunk[VoxelData.BlockToRelativePosition(blockPosition)];
+        return true;
+    }
+
+    public static int GetBlockState(Vector3i blockPosition, out Block block)
     {
         block = Block.Air;
         Vector3i chunkPosition = VoxelData.BlockToChunkPosition(blockPosition);
@@ -522,7 +534,7 @@ public class WorldManager : ScriptingNode
 
     public static bool GetBlock(Vector3i blockPosition)
     {
-        GetBlock(blockPosition, out var block);
+        GetBlockState(blockPosition, out var block);
         return block.IsSolid();
     }
 
@@ -538,7 +550,7 @@ public class WorldManager : ScriptingNode
                 for (int z = min.Z; z <= max.Z; z++)
                 {
                     position = (x, y, z);
-                    int result = GetBlock(position, out var block);
+                    int result = GetBlockState(position, out var block);
                     if (result == 0)
                         blocks.Add((position, block));
                 }
@@ -680,7 +692,7 @@ public class WorldManager : ScriptingNode
 
         foreach (var position in positions)
         {
-            int result = GetBlock(position, out block);
+            int result = GetBlockState(position, out block);
 
             if (result == 0 || result == 2)
                 return true;
@@ -693,7 +705,7 @@ public class WorldManager : ScriptingNode
     {
         Block block;
         
-        int result = GetBlock(position, out block);
+        int result = GetBlockState(position, out block);
 
         if (result == 0 || result == 2)
             return true;

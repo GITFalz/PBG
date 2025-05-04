@@ -377,7 +377,7 @@ public static class VoxelData
 
             if (totalDistance > maxDistance) break;
 
-            if (WorldManager.GetBlock(blockPos, out var block) == 0)
+            if (WorldManager.GetBlock(blockPos, out var block) && block.IsSolid())
             {
                 hit.Distance = totalDistance;
                 hit.Normal = normal;
