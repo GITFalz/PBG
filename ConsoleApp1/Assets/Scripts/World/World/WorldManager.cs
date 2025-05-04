@@ -27,7 +27,7 @@ public class WorldManager : ScriptingNode
     public static bool DoAmbientOcclusion = true;
     public static bool DoRealtimeShadows = false;
 
-    public HashSet<Chunk> RenderedChunks = new HashSet<Chunk>();
+    public static HashSet<Chunk> RenderedChunks = new HashSet<Chunk>();
 
     public Matrix4 GetViewMatrix()
     {
@@ -164,7 +164,7 @@ public class WorldManager : ScriptingNode
         }
 
         GenerateMeshChunks();
-        RegenerateChunks();
+        //RegenerateChunks();
         PopulateChunks();
         GenerateChunks();
         CheckRenderDistance();
@@ -259,7 +259,7 @@ public class WorldManager : ScriptingNode
 
             model = Matrix4.CreateTranslation(chunk.GetWorldPosition());
             GL.UniformMatrix4(modelLocation, false, ref model);
-            chunk.RenderChunk();
+            chunk.RenderChunk(); 
 
             Shader.Error("Rendering chunk " + chunk.GetWorldPosition() + " " + chunk.VertexCount + ": ");
         }
@@ -692,11 +692,21 @@ public class WorldManager : ScriptingNode
         return false;
     }
     
-    public void Delete()
+    public static void Delete()
     {
         ChunkManager.Unload();
-        ChunkPool.Clear();
         CWorldMultithreadNodeManager.Clear();
+        HashSet<Chunk> chunks = [.. Chunk.Chunks];
+        foreach (var chunk in chunks)
+        {
+            chunk.Delete();
+            chunk.Clear();
+        }
+        Chunk.Chunks.Clear();
+        RenderedChunks.Clear(); 
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
     }
 }
 

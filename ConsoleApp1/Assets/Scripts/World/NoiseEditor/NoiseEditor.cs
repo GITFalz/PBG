@@ -448,9 +448,9 @@ public class NoiseEditor : ScriptingNode
          NoiseGlslNodeManager.Compile([]);
     }
 
-   void Awake()
+    void Awake()
     {
-    
+        WorldManager.Delete();
     }
 
     void Resize()

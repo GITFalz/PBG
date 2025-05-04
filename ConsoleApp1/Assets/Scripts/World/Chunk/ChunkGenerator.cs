@@ -388,7 +388,7 @@ public class ChunkGenerator
                 }
             }
         }
-
+        
         chunkData.IsBeingGenerated = false;
         return 1;
     }

@@ -111,9 +111,6 @@ public class Chunk
 
     public void AddFace(Vector3i position, int width, int height, int side, int textureIndex, Vector4i ambientOcclusion)
     {
-        if (IsGeneratingBuffers) 
-            Console.WriteLine("Chunk is generating buffers, cannot add face.");
-
         var vertices = VoxelData.GetSideOffsets[side](width, height);
 
         AddVertex(position + vertices[0], 0, width, height, side, textureIndex, ambientOcclusion[0]);
@@ -199,10 +196,11 @@ public class Chunk
 
     public void Clear()
     {
+        ClearMeshData();
+
         blockStorage.Clear();
-        VertexDataList.Clear();
-        _indices.Clear();
-        Wireframe.Clear();
+        Wireframe = [];
+
         RemoveChunkFromAll();
         VertexCount = 0;
         Stage = ChunkStage.Empty;
@@ -213,10 +211,10 @@ public class Chunk
 
     public void ClearMeshData()
     {
-        VertexDataList.Clear();
-        _indices.Clear();
-        Wireframe.Clear();
+        VertexDataList = new List<VertexData>();
+        _indices = new List<uint>();
         VertexCount = 0;
+        IndicesCount = 0;
     }
 
     public void Delete()
@@ -256,8 +254,9 @@ public class Chunk
                         Console.WriteLine("Index out of range: " + _indices[i] + " >= " + VertexDataList.Count);
                     }
                 }
-                _indices.Clear();
-                VertexDataList.Clear();
+
+                ClearMeshData();
+
                 BlockRendering = true;
                 IsGeneratingBuffers = false;
                 return false;
@@ -273,8 +272,9 @@ public class Chunk
                 Console.WriteLine(e);
                 Console.WriteLine("Failed to create VBO for chunk: " + position);
                 Console.WriteLine(IsBeingGenerated);
-                _indices.Clear();
-                VertexDataList.Clear();
+                
+                ClearMeshData();
+
                 BlockRendering = true;
                 IsGeneratingBuffers = false;
                 return false;
@@ -291,12 +291,16 @@ public class Chunk
             _chunkVao.Unbind();
             VertexVBO.Unbind();
 
-            IndicesCount = _indices.Count;
+            int indicesCount = _indices.Count;
+            int vertexCount = VertexDataList.Count;
 
-            _indices.Clear();
-            VertexDataList.Clear();
+            ClearMeshData();
+
+            IndicesCount = indicesCount;
+            VertexCount = vertexCount;
 
             GL.Finish();
+
             IsGeneratingBuffers = false;
         }
 
@@ -306,9 +310,7 @@ public class Chunk
 
     public void Reload()
     {
-        _indices.Clear();
-        VertexDataList.Clear();
-        VertexCount = 0;
+        ClearMeshData();
     }
 
     public bool CreateChunkWireframe()
