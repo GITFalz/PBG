@@ -74,6 +74,7 @@ public class Game : GameWindow
         Camera = new Camera(width, height, new Vector3(0, 0, 0));
 
         CenterWindow(new Vector2i(width, height));
+        //this.VSync = VSyncMode.On;
 
         _ = new Info();
         _popUp = new PopUp();
@@ -199,7 +200,7 @@ public class Game : GameWindow
 
         BlockChecker sandMask = new BlockChecker(
             new BlockMask((0, 0, 0), new BlockTest(Block.Solid, MaskType.State)),
-            new BlockMask((0, 1, 0), new BlockTest(Block.Liquid, MaskType.State))
+            new BlockMask((0, 1, 0), new BlockTest(Block.Liquid, MaskType.State)) 
         );
     
         BlockChecker stoneMask = new BlockChecker(

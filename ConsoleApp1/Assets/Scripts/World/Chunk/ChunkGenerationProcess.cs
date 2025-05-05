@@ -13,6 +13,9 @@ public class ChunkGenerationProcess : ThreadProcess
 
     protected override void Function()
     {
+        if (ChunkData.Stage >= ChunkStage.Generated)
+            return;
+            
         if (!Loaded)
         {
             if (GenerateChunk(ref ChunkData, ChunkData.GetWorldPosition(), ThreadIndex) == -1)

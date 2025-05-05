@@ -195,13 +195,13 @@ public static class ChunkManager
     
     public static void Clear()
     {
-        ActiveChunks.Clear();
-        GenerateChunkQueue.Clear();
-        PopulateChunkQueue.Clear();
-        GenerateMeshQueue.Clear();
-        RegenerateMeshQueue.Clear();
-        CreateQueue.Clear();
-        IgnoreList.Clear();
+        ActiveChunks = [];
+        GenerateChunkQueue = [];
+        PopulateChunkQueue = [];
+        GenerateMeshQueue = [];
+        RegenerateMeshQueue = [];
+        CreateQueue = [];
+        IgnoreList = [];
     }
 
 

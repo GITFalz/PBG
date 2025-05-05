@@ -376,12 +376,13 @@ public class ChunkGenerator
         if (chunkData.Stage == ChunkStage.Empty)
             return -1;
 
-        chunkData.IsBeingGenerated = true;
-
         lock (chunkData)
         {
             Vector3i chunkWorldPosition = chunkData.GetWorldPosition();
             chunkData.ClearMeshData();
+
+            chunkData.HasBlocks = false;
+            chunkData.HasTransparentBlocks = false;
 
             int index = 0;
             for (int y = 0; y < 32; y++)
@@ -408,7 +409,6 @@ public class ChunkGenerator
                             }
                             catch (Exception)
                             {
-                                chunkData.IsBeingGenerated = false;
                                 return -1;
                             }
                             
@@ -420,7 +420,6 @@ public class ChunkGenerator
                                 int id = ids[side];
                                 Vector3i position = (x, y, z);
                                 Vector3i worldBlockPosition = position + chunkWorldPosition;
-                                chunkData.HasBlocks = true;
 
                                 Vector4i ao = (0, 0, 0, 0);
                                 for (int i = 0; i < 4; i++)
@@ -447,10 +446,12 @@ public class ChunkGenerator
 
                                 if (block.IsLiquid())
                                 {
+                                    chunkData.HasTransparentBlocks = true;
                                     chunkData.AddTransparentFace(position, 1, 1, side, id, ao);
                                 }
                                 else if (block.IsSolid())
                                 {
+                                    chunkData.HasBlocks = true;
                                     chunkData.AddFace(position, 1, 1, side, id, ao);
                                 }
                             }
@@ -462,7 +463,6 @@ public class ChunkGenerator
             }
         }
         
-        chunkData.IsBeingGenerated = false;
         return 1;
     }
 

@@ -13,8 +13,15 @@ public class Chunk
     
     public static Chunk Empty = new();
 
-    public ChunkStage Stage = ChunkStage.Empty;
-    public ChunkStatus Status = ChunkStatus.Empty;
+    public ChunkStage Stage {
+        get => _stage;
+        set {
+            //Console.WriteLine($"Chunk {GetWorldPosition()} stage changed from {_stage} to {value}");
+            _stage = value;
+        }
+    }
+    private ChunkStage _stage = ChunkStage.Empty;
+    public ChunkStatus Status = ChunkStatus.Empty;    
     private ChunkStatus _lastStatus = ChunkStatus.Empty;
 
     public Vector3i position = (0, 0, 0);
@@ -52,9 +59,9 @@ public class Chunk
     public bool HasBlocks = false;
     public bool BlockRendering = false;
 
-    public bool IsGeneratingBuffers = false;
+    public bool IsTransparentDisabled = true;
+    public bool HasTransparentBlocks = false;
 
-    public bool IsBeingGenerated = false;
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct VertexData
@@ -257,12 +264,16 @@ public class Chunk
 
     public void Delete()
     {
+        //Console.WriteLine("Cleared when deleting");
         Clear();
         _edgeVao.DeleteBuffer();
         _edgeVbo.DeleteBuffer();
         _chunkVao.DeleteBuffer();
         VertexVBO.DeleteBuffer();
         _ibo.DeleteBuffer();
+        _transparentVao.DeleteBuffer();
+        _transparentVbo.DeleteBuffer();
+        _transparentIbo.DeleteBuffer();
         Chunks.Remove(this);
     }
 
@@ -272,7 +283,6 @@ public class Chunk
         lock(Lock)
         {  
             // Opaque chunk
-            IsGeneratingBuffers = true;
             _chunkVao.Renew();
             _chunkVao.Bind();
 
@@ -285,7 +295,6 @@ public class Chunk
             {
                 Console.WriteLine(e);
                 Console.WriteLine("Failed to create IBO for chunk: " + position);
-                Console.WriteLine(IsBeingGenerated);
                 for (int i = 0; i < _indices.Count; i++)
                 {
                     if (_indices[i] >= VertexDataList.Count)
@@ -297,7 +306,6 @@ public class Chunk
                 ClearMeshData();
 
                 BlockRendering = true;
-                IsGeneratingBuffers = false;
                 return false;
             }
             
@@ -310,12 +318,10 @@ public class Chunk
             {
                 Console.WriteLine(e);
                 Console.WriteLine("Failed to create VBO for chunk: " + position);
-                Console.WriteLine(IsBeingGenerated);
                 
                 ClearMeshData();
 
                 BlockRendering = true;
-                IsGeneratingBuffers = false;
                 return false;
             }
 
@@ -343,13 +349,10 @@ public class Chunk
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                Console.WriteLine("Failed to create IBO for transparent chunk: " + position);
-                Console.WriteLine(IsBeingGenerated);
 
                 ClearMeshData();
 
                 BlockRendering = true;
-                IsGeneratingBuffers = false;
                 return false;
             }
 
@@ -362,12 +365,10 @@ public class Chunk
             {
                 Console.WriteLine(e);
                 Console.WriteLine("Failed to create VBO for transparent chunk: " + position);
-                Console.WriteLine(IsBeingGenerated);
 
                 ClearMeshData();
 
                 BlockRendering = true;
-                IsGeneratingBuffers = false;
                 return false;
             }
 
@@ -400,8 +401,6 @@ public class Chunk
             _transparentVertexCount = TransparentIndicesCount;
 
             GL.Finish();
-
-            IsGeneratingBuffers = false;
         }
 
         BlockRendering = false;
@@ -490,9 +489,6 @@ public class Chunk
         {
             lock (chunk)
             {
-                NeighbourCunks[index1]?.Delete();
-                chunk.NeighbourCunks[index2]?.Delete();
-
                 NeighbourCunks[index1] = chunk;
                 chunk.NeighbourCunks[index2] = this;
 

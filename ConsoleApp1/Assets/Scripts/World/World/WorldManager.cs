@@ -27,7 +27,8 @@ public class WorldManager : ScriptingNode
     public static bool DoAmbientOcclusion = true;
     public static bool DoRealtimeShadows = false;
 
-    public static HashSet<Chunk> RenderedChunks = new HashSet<Chunk>();
+    public static Dictionary<Vector3i, Chunk> OpaqueChunks = new Dictionary<Vector3i, Chunk>();
+    public static Dictionary<Vector3i, Chunk> TransparentChunks = new Dictionary<Vector3i, Chunk>();
 
     public Matrix4 GetViewMatrix()
     {
@@ -255,9 +256,9 @@ public class WorldManager : ScriptingNode
         GL.DepthMask(true);
         GL.Disable(EnableCap.Blend);
 
-        foreach (var chunk in RenderedChunks)
+        foreach (var (key, chunk) in OpaqueChunks)
         {   
-            model = Matrix4.CreateTranslation(chunk.GetWorldPosition());
+            model = Matrix4.CreateTranslation(key);
             GL.UniformMatrix4(modelLocation, false, ref model);
             chunk.RenderChunk(); 
         }
@@ -266,9 +267,9 @@ public class WorldManager : ScriptingNode
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         GL.DepthMask(false);
 
-        foreach (var chunk in RenderedChunks)
+        foreach (var (key, chunk) in TransparentChunks)
         {   
-            model = Matrix4.CreateTranslation(chunk.GetWorldPosition());
+            model = Matrix4.CreateTranslation(key);
             GL.UniformMatrix4(modelLocation, false, ref model);
             chunk.RenderChunkTransparent(); 
         }
@@ -298,22 +299,35 @@ public class WorldManager : ScriptingNode
         
         foreach (var (_, chunk) in ChunkManager.ActiveChunks)
         {
+            bool frustum = camera.FrustumIntersects(chunk.boundingBox);
+            bool baseDisabled = chunk.Stage != ChunkStage.Rendered || !frustum || chunk.BlockRendering;
+
             bool isDisabled = chunk.IsDisabled;
-            chunk.IsDisabled = chunk.Stage != ChunkStage.Rendered || !chunk.HasBlocks || !camera.FrustumIntersects(chunk.boundingBox) || chunk.BlockRendering;// || chunk.IsIndependent(); // testing
+            chunk.IsDisabled = baseDisabled || !chunk.HasBlocks;
 
             if (!isDisabled && chunk.IsDisabled)
             {
-                RenderedChunks.Remove(chunk);
-                continue;
+                OpaqueChunks.Remove(chunk.GetWorldPosition());
             }
             else if (isDisabled && !chunk.IsDisabled)
             {
-                RenderedChunks.Add(chunk);
+                OpaqueChunks.TryAdd(chunk.GetWorldPosition(), chunk);
             }
-            else if (chunk.IsDisabled)
+
+            bool isTransparentDisabled = chunk.IsTransparentDisabled;
+            chunk.IsTransparentDisabled = baseDisabled || !chunk.HasTransparentBlocks;
+
+            if (!isTransparentDisabled && chunk.IsTransparentDisabled)
             {
-                continue;
+                TransparentChunks.Remove(chunk.GetWorldPosition());
             }
+            else if (isTransparentDisabled && !chunk.IsTransparentDisabled)
+            {
+                TransparentChunks.TryAdd(chunk.GetWorldPosition(), chunk);
+            }
+
+            if (chunk.IsDisabled && chunk.IsTransparentDisabled)
+                continue;
 
             renderCount++;
             Info.VertexCount += chunk.VertexCount;
@@ -460,30 +474,34 @@ public class WorldManager : ScriptingNode
         // Chunks in world position
         var chunks = SetChunks();
         int render = World.renderDistance;
+
+        //ChunkManager.GenerateChunkQueue = [];
         
-        HashSet<Vector3i> chunksToRemove = new HashSet<Vector3i>();
-        
+        HashSet<Vector3i> chunksToRemove = [];
         foreach (var chunk in ChunkManager.ActiveChunks)
         {
             chunksToRemove.Add(chunk.Key);
         }
 
-        List<Vector3i> chunksToAdd = new List<Vector3i>();
-        
+        HashSet<Vector3i> chunksToAdd = [];
         foreach (var chunk in chunks)
         {
-            chunksToRemove.Remove(chunk);
             chunksToAdd.Add(chunk);
+            chunksToRemove.Remove(chunk);
         }
 
         foreach (var chunk in chunksToRemove)
         {
-            ChunkManager.RemoveChunk(chunk, out var oldChunk);
+            if (ChunkManager.RemoveChunk(chunk, out var oldChunk))
+            {
+                OpaqueChunks.Remove(oldChunk.GetWorldPosition());
+                TransparentChunks.Remove(oldChunk.GetWorldPosition());
+            }
         }
 
         foreach (var chunk in chunksToAdd)
         {
-            if (ChunkManager.TryAddActiveChunk(chunk, out var newChunk))
+            if (ChunkManager.TryAddActiveChunk(chunk, out var newChunk) && newChunk.Stage == ChunkStage.Empty)
             {
                 newChunk.Stage = ChunkStage.Instance;
                 ChunkManager.GenerateChunkQueue.Enqueue(newChunk);
@@ -609,6 +627,9 @@ public class WorldManager : ScriptingNode
             bool loaded = ChunkLoader.IsChunkStored(chunk);
             chunk.Save = !loaded;
 
+            if ((int)chunk.Stage >= (int)ChunkStage.Generated)
+                continue;
+
             ChunkGenerationProcess chunkGenerationProcess = new ChunkGenerationProcess(chunk, loaded);
             ThreadPool.QueueAction(chunkGenerationProcess, TaskPriority.Low);
         }
@@ -616,63 +637,70 @@ public class WorldManager : ScriptingNode
 
     private void RegenerateChunks()
     {
-        while (ChunkManager.RegenerateMeshQueue.TryDequeue(out var chunkData))
+        while (ChunkManager.RegenerateMeshQueue.TryDequeue(out var chunk))
         {
-            Vector3i position = chunkData.GetWorldPosition();
+            Vector3i position = chunk.GetWorldPosition();
             if (!ChunkManager.ActiveChunks.ContainsKey(position))// || ChunkManager.IgnoreList.Contains(position)) 
                 return;
 
-            ThreadPool.QueueAction(() => GenerateMeshChunk(chunkData), TaskPriority.Urgent);
+            ThreadPool.QueueAction(() => GenerateMeshChunk(chunk), TaskPriority.Urgent);
         }
     }
 
     private void PopulateChunks()
     {
-        while (ChunkManager.WaitingToPopulateQueue.TryDequeue(out var chunkData))
+        while (ChunkManager.WaitingToPopulateQueue.TryDequeue(out var chunk))
         {
-            ChunkManager.PopulateChunk(chunkData);
+            ChunkManager.PopulateChunk(chunk);
 
-            foreach (var c in chunkData.GetNeighbourChunks())
+            foreach (var c in chunk.GetNeighbourChunks())
             {
                 ChunkManager.PopulateChunk(c);
             }
         }
 
-        while (ChunkManager.PopulateChunkQueue.TryDequeue(out var chunkData))
+        while (ChunkManager.PopulateChunkQueue.TryDequeue(out var chunk))
         {
-            Vector3i position = chunkData.GetWorldPosition();
+            Vector3i position = chunk.GetWorldPosition();
             if (!ChunkManager.ActiveChunks.ContainsKey(position) || ChunkManager.IgnoreList.Contains(position)) 
             {
-                chunkData.Delete();
+                Console.WriteLine($"Deleting chunf from populate");
+                chunk.Delete();
                 return;
             }
 
-            ThreadPool.QueueAction(() => PopulateChunk(chunkData), TaskPriority.Normal);
+            if (chunk.Stage >= ChunkStage.Populated)
+                continue;
+
+            ThreadPool.QueueAction(() => PopulateChunk(chunk), TaskPriority.Normal);
         }
     }
 
     private void GenerateMeshChunks()
     {
-        while (ChunkManager.GenerateMeshQueue.TryDequeue(out var chunkData))
+        while (ChunkManager.GenerateMeshQueue.TryDequeue(out var chunk))
         {
-            Vector3i position = chunkData.GetWorldPosition();
+            Vector3i position = chunk.GetWorldPosition();
             if (!ChunkManager.ActiveChunks.ContainsKey(position)) 
                 return;
 
-            ThreadPool.QueueAction(() => GenerateMeshChunk(chunkData), TaskPriority.High);
+            if (chunk.Stage >= ChunkStage.Rendered)
+                continue;
+
+            ThreadPool.QueueAction(() => GenerateMeshChunk(chunk), TaskPriority.High);
         }
     }
 
-    private static void PopulateChunk(Chunk chunkData)
+    private static void PopulateChunk(Chunk chunk)
     {
-        if (ChunkGenerator.PopulateChunk(ref chunkData) == -1)
+        if (ChunkGenerator.PopulateChunk(ref chunk) == -1)
             return;
 
-        chunkData.Stage = ChunkStage.Populated;
-        ChunkManager.GenerateMeshQueue.Enqueue(chunkData);
+        chunk.Stage = ChunkStage.Populated;
+        ChunkManager.GenerateMeshQueue.Enqueue(chunk);
         //chunkData.SaveChunk();
-        chunkData.Save = false;
-        ChunkManager.RemoveBeingPopulated(chunkData);
+        chunk.Save = false;
+        ChunkManager.RemoveBeingPopulated(chunk);
     }
 
     private static void GenerateMeshChunk(Chunk chunkData)
@@ -717,14 +745,11 @@ public class WorldManager : ScriptingNode
     {
         ChunkManager.Unload();
         CWorldMultithreadNodeManager.Clear();
-        HashSet<Chunk> chunks = [.. Chunk.Chunks];
-        foreach (var chunk in chunks)
-        {
-            chunk.Delete();
-            chunk.Clear();
-        }
-        Chunk.Chunks.Clear();
-        RenderedChunks.Clear(); 
+        Chunk.Chunks = [];
+
+        OpaqueChunks = [];
+        TransparentChunks = [];
+
         GC.Collect();
         GC.WaitForPendingFinalizers();
         GC.Collect();

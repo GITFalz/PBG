@@ -45,6 +45,7 @@ public static class ChunkPool
     public static void FreeChunk(Chunk chunk)
     {
         FreeChunks.Add(chunk);
+        Console.WriteLine("Cleared when freeing chunk");
         chunk.Clear();
     }
 
@@ -53,11 +54,10 @@ public static class ChunkPool
         foreach (var chunk in Chunks)
         {
             chunk.Delete();
-            chunk.Clear();
         }
         
-        Chunks.Clear();
-        FreeChunks.Clear();
+        Chunks = [];
+        FreeChunks = [];
     }
 
     public static void Print()
