@@ -9,9 +9,11 @@ public static class ThreadPool
 {
     private static readonly int MAX_THREAD_COUNT = Environment.ProcessorCount;
     public static int ThreadCount { get; private set; } = 4;
+    public static int CurrentProcessingThreads = 0;
+    public static int AvailableProcesses => ThreadCount - CurrentProcessingThreads;
+    public static int QueueCount => _actions.Count;
 
     private static PriorityQueue _actions = new PriorityQueue();
-    private static int _currentTaskCount = 0;
 
     private static List<Task?> Pool = [];
 
@@ -58,9 +60,11 @@ public static class ThreadPool
                     var task = process.ExecuteAsync().ContinueWith(t =>
                     {
                         Pool[i] = null;
+                        Interlocked.Decrement(ref CurrentProcessingThreads);
                     });
 
                     Pool[i] = task;
+                    Interlocked.Increment(ref CurrentProcessingThreads);
                 }
             }
         }

@@ -13,14 +13,6 @@ public class Chunk
     
     public static Chunk Empty = new();
 
-    public ChunkStage Stage {
-        get => _stage;
-        set {
-            //Console.WriteLine($"Chunk {GetWorldPosition()} stage changed from {_stage} to {value}");
-            _stage = value;
-        }
-    }
-    private ChunkStage _stage = ChunkStage.Empty;
     public ChunkStatus Status = ChunkStatus.Empty;    
     private ChunkStatus _lastStatus = ChunkStatus.Empty;
 
@@ -217,11 +209,6 @@ public class Chunk
         return position * 32;
     }
 
-    public Vector3i GetCenterPosition()
-    {
-        return GetWorldPosition() + (16, 16, 16);
-    }
-
     public Vector3i GetRelativePosition()
     {
         return position;
@@ -239,9 +226,7 @@ public class Chunk
         blockStorage.Clear();
         Wireframe = [];
 
-        RemoveChunkFromAll();
         VertexCount = 0;
-        Stage = ChunkStage.Empty;
         Status = ChunkStatus.Empty;
         Loaded = false;
         Save = true;
@@ -264,7 +249,6 @@ public class Chunk
 
     public void Delete()
     {
-        //Console.WriteLine("Cleared when deleting");
         Clear();
         _edgeVao.DeleteBuffer();
         _edgeVbo.DeleteBuffer();
@@ -444,19 +428,6 @@ public class Chunk
         _transparentVao.Unbind();
     }
 
-    private static void DebugCallback(
-        DebugSource source,
-        DebugType type,
-        int id,
-        DebugSeverity severity,
-        int length,
-        IntPtr message,
-        IntPtr userParam)
-    {
-        string msg = Marshal.PtrToStringAnsi(message, length);
-        Console.WriteLine($"[OpenGL DEBUG] {type} - {severity}: {msg}");
-    }
-
     public void RenderWireframe()
     {
         _edgeVao.Bind();
@@ -479,161 +450,20 @@ public class Chunk
         return Loaded;
     }
 
-    public bool AddChunk(Chunk chunk)
+    public void UpdateNeighbours()
     {
-        Vector3i sidePosition = GetRelativePosition() - chunk.GetRelativePosition();
-        if (!ChunkData.SideChunkIndices.TryGetValue(sidePosition, out int index1) || !ChunkData.SideChunkIndices.TryGetValue(-sidePosition, out int index2))
-            return false;
-
-        lock (this)
+        foreach (var (side, index) in ChunkData.SideChunkIndices)
         {
-            lock (chunk)
+            Vector3i position = (GetRelativePosition() + side) * 32;
+            if (ChunkManager.GetChunk(position, out var chunk) && chunk != this)
             {
-                NeighbourCunks[index1] = chunk;
-                chunk.NeighbourCunks[index2] = this;
-
-                Interlocked.Increment(ref ChunkCount);
-                Interlocked.Increment(ref chunk.ChunkCount);
+                NeighbourCunks[index] = chunk;
+            }
+            else
+            {
+                NeighbourCunks[index] = null;
             }
         }
-        return true;
-    } 
-
-    public bool RemoveChunk(Chunk chunk)
-    {
-        Vector3i sidePosition = GetRelativePosition() - chunk.GetRelativePosition();
-        if (!ChunkData.SideChunkIndices.TryGetValue(sidePosition, out int index1) || !ChunkData.SideChunkIndices.TryGetValue(-sidePosition, out int index2))
-            return false;
-
-        lock (this)
-        {
-            lock (chunk)
-            {
-                NeighbourCunks[index1] = null;
-                chunk.NeighbourCunks[index2] = null;
-
-                Interlocked.Decrement(ref ChunkCount);
-                Interlocked.Decrement(ref chunk.ChunkCount);
-            }
-        }
-        return true;
-    } 
-
-    public void RemoveChunkFromAll()
-    {
-        for (int i = 0; i < NeighbourCunks.Length; i++)
-        {
-            NeighbourCunks[i]?.RemoveChunk(this);
-            NeighbourCunks[i] = null;
-        }
-    }
-
-    public bool GetSideChunk(int side, out Chunk chunk)
-    {
-        chunk = Empty;
-        if (side >= 0 && side <= 5)
-        {   
-            Chunk? sideChunk = NeighbourCunks[SideIndices[side]];
-            if (sideChunk == null)
-                return false;
-
-            chunk = sideChunk;
-            return true;
-        }
-        return false;
-    }
-
-    public bool AllNeighbourChunkStageSuperiorOrEqual(ChunkStage stage)
-    {
-        lock (this)
-        {
-            foreach (var chunk in NeighbourCunks)
-            {
-                if (chunk == null || (int)chunk.Stage < (int)stage)
-                    return false;
-            }
-            return true;
-        }   
-    }
-
-    public bool AllNeighbourChunkStageEqual(ChunkStage stage)
-    {
-        lock (this)
-        {
-            foreach (var chunk in NeighbourCunks)
-            {
-                if (chunk == null || (int)chunk.Stage != (int)stage)
-                    return false;
-            }
-            return true;
-        }   
-    }
-
-    public Vector3i[] GetSideChunkPositions()
-    {
-        Vector3i[] coords = new Vector3i[ChunkData.SidePositions.Length];
-        for (int i = 0; i < ChunkData.SidePositions.Length; i++)
-        {
-            coords[i] = (GetRelativePosition() + ChunkData.SidePositions[i]) * 32;
-        }
-        return coords;
-    }
-
-    public List<Chunk> GetNeighbourChunks()
-    {
-        lock (this)
-        {
-            List<Chunk> chunks = [];
-            foreach (var chunk in NeighbourCunks)
-            {
-                if (chunk != null)
-                    chunks.Add(chunk);
-            }
-            return chunks;
-        }
-    }
-
-    public bool HasAllNeighbourChunks()
-    {
-        lock (this)
-        {
-            foreach (var chunk in NeighbourCunks)
-            {
-                if (chunk == null)
-                    return false;
-            }
-            return true;
-        }
-    }
-
-    public bool IsActive()
-    {
-        return Status == ChunkStatus.Active;
-    }
-
-    public bool IsInactive()
-    {
-        return Status == ChunkStatus.Inactive;
-    }
-
-    public bool IsIndependent()
-    {
-        return Status == ChunkStatus.Independent;
-    }
-
-    public bool WasActive()
-    {
-        return _lastStatus == ChunkStatus.Active;
-    }
-
-    public bool WasInactive()
-    {
-        return _lastStatus == ChunkStatus.Inactive;
-    }
-
-    public bool WasIndependent()
-    {
-        return _lastStatus == ChunkStatus.Independent;
     }
 
     private static readonly int[] SideIndices = [

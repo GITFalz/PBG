@@ -42,11 +42,14 @@ public static class ChunkPool
         }
     }
 
-    public static void FreeChunk(Chunk chunk)
+    public static bool FreeChunk(Chunk chunk)
     {
+        if (FreeChunks.Contains(chunk))
+            return false;
+
         FreeChunks.Add(chunk);
-        Console.WriteLine("Cleared when freeing chunk");
         chunk.Clear();
+        return true;
     }
 
     public static void Clear()

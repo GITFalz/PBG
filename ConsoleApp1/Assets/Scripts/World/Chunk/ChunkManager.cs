@@ -7,45 +7,129 @@ public static class ChunkManager
     /// <summary>
     /// All the chunks in the world
     /// </summary>
-    public static ConcurrentDictionary<Vector3i, Chunk> ActiveChunks = [];
-    public static ConcurrentQueue<Chunk> GenerateChunkQueue = [];
-    public static ConcurrentQueue<Chunk> WaitingToPopulateQueue = [];
-
-    public static ConcurrentQueue<Chunk> PopulateChunkQueue = [];
-    public static ConcurrentDictionary<Vector3i, Chunk> ChunksBeingPopulated = [];
-
-    public static ConcurrentQueue<Chunk> GenerateMeshQueue = [];
-    public static ConcurrentQueue<Chunk> RegenerateMeshQueue = [];
-    public static ConcurrentQueue<Chunk> CreateQueue = [];
-    public static ConcurrentBag<Vector3i> IgnoreList = [];
-
+    public static ConcurrentDictionary<Vector3i, ChunkEntry> ActiveChunks = [];
     private static readonly object _chunkLock = new object();
 
-    // Make sure the position is in world coordinates
-    public static bool TryAddActiveChunk(Vector3i position, out Chunk newChunk)
-    {
-        newChunk = Chunk.Empty;
-        if (ActiveChunks.ContainsKey(position))
-            return false;
+    private static Vector3i _lastPlayerPosition = new Vector3i(0, 0, 0);
+    private static Vector3i _currentPlayerChunk = new Vector3i(0, 0, 0);
 
-        newChunk = ChunkPool.GetChunk(position / 32);
-        AddNeighbourChunk(newChunk);
-        return ActiveChunks.TryAdd(position, newChunk);
+    public static void HandleRenderDistance()
+    {
+        _currentPlayerChunk = VoxelData.ChunkToRelativePosition(VoxelData.BlockToChunkPosition(Mathf.FloorToInt(PlayerData.Position)));
+        _currentPlayerChunk.Y = 0;
+
+        if (_currentPlayerChunk == _lastPlayerPosition) 
+            return;
+
+        var chunks = SetChunks();
+        foreach (var (key, entry) in ActiveChunks)
+        {
+            if (!chunks.Contains(key))
+            {
+                RemoveChunk(key);
+            }
+            chunks.Remove(key);
+        }
+        foreach (var chunk in chunks)
+        {
+            AddChunk(chunk);
+        }
+
+        _lastPlayerPosition = _currentPlayerChunk;
+    }
+
+    public static void AddChunk(Vector3i position)
+    {
+        if (ActiveChunks.TryGetValue(position, out var chunkEntry))
+        {
+            chunkEntry.Stage = ChunkStage.Loading;
+            return;
+        }
+
+        Chunk chunk = ChunkPool.GetChunk(position);
+        chunkEntry = new ChunkEntry(chunk) { Stage = ChunkStage.Loading };
+        ActiveChunks.TryAdd(position, chunkEntry);
+    }
+
+    public static void RemoveChunk(Vector3i position)
+    {
+        if (ActiveChunks.TryRemove(position, out var chunkEntry) && ChunkPool.FreeChunk(chunkEntry.Chunk))
+        {
+            chunkEntry.Chunk = Chunk.Empty;
+            chunkEntry.Stage = ChunkStage.Free;
+        }
+    }
+
+    private static readonly Vector2i[] _moves = [(1, 0), (0, 1), (-1, 0), (0, -1)];
+    private static HashSet<Vector3i> SetChunks()
+    {
+        Vector2i startPosition = (-1, -1);
+        HashSet<Vector3i> chunkPositions = [];
+        
+        for (int x = 1; x < World.renderDistance*2+1; x+=2)
+        {
+            for (int k = 0; k < 4; k++)
+            {
+                for (int i = 0; i < x; i++)
+                {
+                    startPosition += _moves[k];
+                    for (int y = -1; y < World.yChunkCount; y++)
+                    {
+                        chunkPositions.Add(new Vector3i(startPosition.X, y, startPosition.Y) + _currentPlayerChunk);
+                    }
+                }   
+            }
+
+            startPosition -= (1, 1);
+        }
+        
+        return chunkPositions;
+    }
+
+    /// <summary>
+    /// Generates all the chunk entries in the world. This should only be called once at the start of the game or when changing the render distance.
+    /// </summary>
+    public static void GenerateChunkEntries(Vector3i playerChunkPosition)
+    {
+        ActiveChunks = new ConcurrentDictionary<Vector3i, ChunkEntry>();
+
+        int renderDistance = World.renderDistance;
+        int height = World.yChunkCount;
+
+        for (int x = -renderDistance; x <= renderDistance; x++)
+        {
+            for (int y = 0; y <= height; y++)
+            {
+                for (int z = -renderDistance; z <= renderDistance; z++)
+                {
+                    Vector3i chunkPosition = (x, y, z) + playerChunkPosition;
+                    ActiveChunks.TryAdd(chunkPosition, new ChunkEntry(Chunk.Empty) { Stage = ChunkStage.Loading });
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Loops trough all the chunk entries and advances their stages.
+    /// </summary>
+    public static void Update()
+    {
+
     }
 
     public static bool GetChunk(Vector3i position, out Chunk chunk)
     {
         chunk = Chunk.Empty;
-        if (!ActiveChunks.TryGetValue(position, out var c))
+        if (!ActiveChunks.TryGetValue(position, out var chunkEntry))
             return false;
 
-        chunk = c;
+        chunk = chunkEntry.Chunk;
         return true;
     }
 
     public static bool HasChunk(Chunk chunk)
     {
-        return HasChunk(chunk.GetWorldPosition());
+        return HasChunk(chunk.GetRelativePosition());
     }
 
     public static bool HasChunk(Vector3i position)
@@ -53,138 +137,12 @@ public static class ChunkManager
         return ActiveChunks.ContainsKey(position);
     }
 
-    public static bool RemoveChunk(Vector3i position, out Chunk chunk)
+    public static void UpdateChunkNeighbours()
     {
-        chunk = Chunk.Empty;
-        if (!ActiveChunks.TryRemove(position, out var c))
-            return false;
-
-        chunk = c;
-        RemoveNeighbourChunk(chunk);
-        ChunkPool.FreeChunk(chunk);
-        return true;
-    }
-
-    public static void ReloadChunks()
-    {
-        RegenerateMeshQueue.Clear();
-
-        foreach (var chunk in ActiveChunks.Values)
+        foreach (var (_, chunkEntry) in ActiveChunks)
         {
-            ReloadChunk(chunk);
+            chunkEntry.Chunk.UpdateNeighbours();
         }
-    }
-
-    public static void ReloadChunk(Chunk chunk)
-    {
-        if (chunk.Stage != ChunkStage.Rendered || PopulateChunkQueue.Contains(chunk))
-            return;
-
-        chunk.Reload();
-        RegenerateMeshQueue.Enqueue(chunk);
-    }
-
-    public static void DisplayChunkBorders()
-    {
-        Info.ClearBlocks();
-        foreach (var chunk in ActiveChunks.Values)
-        {
-            Vector3 position = chunk.GetWorldPosition();
-            InfoBlockData blockData = new InfoBlockData(
-                position,
-                (32, 32, 32),
-                (0, 1, 0, 0.1f)
-            );
-            Info.AddBlock(blockData);
-        }
-        Info.UpdateBlocks();
-    }
-
-    public static void DisplayChunkBordersNotAllNeighbours()
-    {
-        Info.ClearBlocks();
-        foreach (var chunk in ActiveChunks.Values)
-        {
-            if (chunk.HasAllNeighbourChunks())
-                continue;
-
-            Vector3 position = chunk.GetWorldPosition();
-            InfoBlockData blockData = new InfoBlockData(
-                position,
-                (32, 32, 32),
-                (0, 1, 0, 0.1f)
-            );
-            Info.AddBlock(blockData);
-        }
-        Info.UpdateBlocks();
-    }
-
-    public static void ChunkNeighbourChecks()
-    {
-        foreach (var chunk in ActiveChunks.Values)
-        {
-            AddNeighbourChunk(chunk);
-        }
-    }
-
-    public static void AddNeighbourChunk(Chunk chunk)
-    {
-        lock (_chunkLock)
-        {
-            foreach (var pos in chunk.GetSideChunkPositions())
-            {
-                if (ActiveChunks.TryGetValue(pos, out var sideChunk))
-                {
-                    chunk.AddChunk(sideChunk);
-                }
-            }
-        }
-    }
-
-    public static void RemoveNeighbourChunk(Chunk chunk)
-    {
-        lock (_chunkLock)
-        {
-            foreach (var pos in chunk.GetSideChunkPositions())
-            {
-                if (ActiveChunks.TryGetValue(pos, out var sideChunk))
-                {
-                    chunk.RemoveChunk(sideChunk);
-                }
-            }
-        }
-    }
-
-    /// <summary>
-    /// Check if all the neighbours of a chunk have a stage supperior to the given stage.
-    /// </summary>
-    /// <param name="chunk"></param>
-    /// <param name="stage"></param>
-    /// <returns></returns>
-    public static bool ChunkHasAllNeighbourSupOrEqual(Chunk chunk, ChunkStage stage)
-    {
-        lock (_chunkLock)
-        {
-            foreach (var pos in chunk.GetSideChunkPositions())
-            {
-                if (GetChunk(pos, out var sideChunk) && sideChunk.Stage >= stage)
-                    continue;
-
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public static List<Chunk> GetChunkNeighbours(Chunk chunk)
-    {
-        List<Chunk> neighbours = [];
-        foreach (var pos in chunk.GetSideChunkPositions())
-        {
-            if (GetChunk(pos, out var sideChunk))
-                neighbours.Add(sideChunk);
-        }
-        return neighbours;
     }
 
     public static void Unload()
@@ -196,50 +154,40 @@ public static class ChunkManager
     public static void Clear()
     {
         ActiveChunks = [];
-        GenerateChunkQueue = [];
-        PopulateChunkQueue = [];
-        GenerateMeshQueue = [];
-        RegenerateMeshQueue = [];
-        CreateQueue = [];
-        IgnoreList = [];
-    }
-
-
-    public static void PopulateChunk(Chunk chunk)
-    {
-        if (chunk.Stage == ChunkStage.Generated && chunk.AllNeighbourChunkStageSuperiorOrEqual(ChunkStage.Generated) && !IsBeingPopulated(chunk) && ChunksBeingPopulated.TryAdd(chunk.GetWorldPosition(), chunk))
-        {   
-            PopulateChunkQueue.Enqueue(chunk);
-            chunk.Save = true;
-        }    
-    }
-
-    public static bool IsBeingPopulated(Chunk chunk)
-    {
-        return ChunksBeingPopulated.ContainsKey(chunk.GetWorldPosition()) || PopulateChunkQueue.Contains(chunk);
-    }
-
-    public static bool RemoveBeingPopulated(Chunk chunk)
-    {
-        return ChunksBeingPopulated.TryRemove(chunk.GetWorldPosition(), out var c) && c == chunk;
     }
 
     public static void Print()
     {
         Console.WriteLine("Active Chunks: " + ActiveChunks.Count);
-        Console.WriteLine("Generate Chunk Queue: " + GenerateChunkQueue.Count);
-        Console.WriteLine("Waiting To Populate Queue: " + WaitingToPopulateQueue.Count);
-        Console.WriteLine("Populate Chunk Queue: " + PopulateChunkQueue.Count);
-        Console.WriteLine("Chunks Being Populated: " + ChunksBeingPopulated.Count);
-        Console.WriteLine("Generate Mesh Queue: " + GenerateMeshQueue.Count);
-        Console.WriteLine("Regenerate Mesh Queue: " + RegenerateMeshQueue.Count);
-        Console.WriteLine("Create Queue: " + CreateQueue.Count);
-        Console.WriteLine("Ignore List: " + IgnoreList.Count);
     }
 }
 
-public struct ModelUniform
+public class ChunkEntry
 {
-    public Matrix4 model;
-    public int offset;
+    public ChunkStage Stage = ChunkStage.Empty;
+    public Chunk Chunk = Chunk.Empty;
+    public object Lock = new object();
+
+    public Action<ChunkEntry> UpdateAction = (entry) => { };
+
+    public ChunkEntry(Chunk chunk)
+    {
+        Chunk = chunk;
+    }
+
+    public void SetStage(ChunkStage stage)
+    {
+        lock (Lock)
+        {
+            Stage = stage;
+        }
+    }
+
+    public void SetUpdateAction(Action<ChunkEntry> action)
+    {
+        lock (Lock)
+        {
+            UpdateAction = action;
+        }
+    }
 }

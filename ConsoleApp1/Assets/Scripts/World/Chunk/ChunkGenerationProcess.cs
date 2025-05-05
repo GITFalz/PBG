@@ -2,40 +2,39 @@ using OpenTK.Mathematics;
 
 public class ChunkGenerationProcess : ThreadProcess
 {
-    public Chunk ChunkData;
+    public ChunkEntry Entry;
     public bool Loaded = false;
 
-    public ChunkGenerationProcess(Chunk chunkData, bool loaded = false)
+    public ChunkGenerationProcess(ChunkEntry entry, bool loaded = false)
     {
-        ChunkData = chunkData;
+        Entry = entry;
         Loaded = loaded;
     }
 
     protected override void Function()
     {
-        if (ChunkData.Stage >= ChunkStage.Generated)
+        Chunk chunk = Entry.Chunk;
+        ChunkStage stage = Entry.Stage;
+
+        if (stage >= ChunkStage.Generated)
             return;
-            
+
         if (!Loaded)
         {
-            if (GenerateChunk(ref ChunkData, ChunkData.GetWorldPosition(), ThreadIndex) == -1)
+            if (GenerateChunk(ref chunk, chunk.GetWorldPosition(), ThreadIndex) == -1)
                 return;
 
-            ChunkData.Stage = ChunkStage.Generated; 
-            ChunkManager.WaitingToPopulateQueue.Enqueue(ChunkData);
+            Entry.SetStage(ChunkStage.Generated);
         } 
         else
         {
-            ChunkData.LoadChunk();
-            ChunkData.Stage = ChunkStage.Populated;
-            ChunkManager.GenerateMeshQueue.Enqueue(ChunkData);
-            ChunkData.Save = false;
+            Entry.SetStage(ChunkStage.Populated);
         }
     }
 
     private static int GenerateChunk(ref Chunk chunkData, Vector3i position, int threadIndex)
     {
-        if (!CWorldMultithreadNodeManager.GetNodeManager(threadIndex, out var nodeManager) || chunkData.Stage == ChunkStage.Empty)
+        if (!CWorldMultithreadNodeManager.GetNodeManager(threadIndex, out var nodeManager))
             return -1;
 
         nodeManager.IsBeingUsed = true;

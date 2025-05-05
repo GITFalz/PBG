@@ -93,18 +93,6 @@ public static class ChunkData
     ];
 }
 
-public enum ChunkStage
-{
-    Empty = -1,
-    Instance = 0,
-    Generated = 1,
-    WaitingToBePopulated = 2,
-    Populated = 3,
-    WaitingToBeRendered = 4,
-    Rendered = 5,
-    WaitingToBeCreated = 6,
-}
-
 public enum ChunkStatus
 {
     Empty = -1,
