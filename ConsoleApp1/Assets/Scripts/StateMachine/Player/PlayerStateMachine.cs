@@ -144,7 +144,7 @@ public class PlayerStateMachine : ScriptingNode
 
         Camera camera = Game.Camera;
 
-        camera.SetCameraMode(CameraMode.Follow);
+        camera.SetCameraMode(cameraMode);
         
         camera.Position = _lastCameraPosition;
         camera.Yaw = _lastCameraYaw;
@@ -345,7 +345,8 @@ public class PlayerStateMachine : ScriptingNode
     public void ToggleView()
     {
         Game.Camera.SetCameraMode(Game.Camera.GetCameraMode() == CameraMode.Centered ? CameraMode.Follow : CameraMode.Centered);
-        _renderPlayer = Game.Camera.GetCameraMode() == CameraMode.Follow;
+        cameraMode = Game.Camera.GetCameraMode();
+        _renderPlayer = cameraMode == CameraMode.Follow;
     }
 
     public bool IsHuggingWall()

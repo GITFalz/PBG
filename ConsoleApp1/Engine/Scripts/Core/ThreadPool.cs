@@ -35,12 +35,27 @@ public static class ThreadPool
     public static void QueueAction(Action action, TaskPriority priority = TaskPriority.Normal)
     {
         ActionProcess actionProcess = new ActionProcess(action);
-        _actions.Enqueue(actionProcess, priority);
+        actionProcess.SetPriority(priority);
+        _actions.Enqueue(actionProcess);
+    }
+
+    public static void QueueAction(Action action, out ThreadProcess threadProcess, TaskPriority priority = TaskPriority.Normal)
+    {
+        ActionProcess actionProcess = new ActionProcess(action);
+        threadProcess = actionProcess;
+        actionProcess.SetPriority(priority);
+        _actions.Enqueue(actionProcess);
     }
 
     public static void QueueAction(ThreadProcess process, TaskPriority priority = TaskPriority.Normal)
     {
-        _actions.Enqueue(process, priority);
+        process.SetPriority(priority);
+        _actions.Enqueue(process);
+    }
+
+    public static bool TryRemoveProcess(ThreadProcess process)
+    {
+        return _actions.TryRemoveProcess(process);
     }
 
     public static void Update()
@@ -88,30 +103,30 @@ public static class ThreadPool
     {
         public int Count => _urgentPriorityActions.Count + _highPriorityActions.Count + _normalPriorityActions.Count + _lowPriorityActions.Count + _backgroundPriorityActions.Count;
         
-        public readonly ConcurrentQueue<ThreadProcess> _urgentPriorityActions = [];
-        public readonly ConcurrentQueue<ThreadProcess> _highPriorityActions = [];
-        public readonly ConcurrentQueue<ThreadProcess> _normalPriorityActions = [];
-        public readonly ConcurrentQueue<ThreadProcess> _lowPriorityActions = [];
-        public readonly ConcurrentQueue<ThreadProcess> _backgroundPriorityActions = [];
+        public readonly List<ThreadProcess> _urgentPriorityActions = [];
+        public readonly List<ThreadProcess> _highPriorityActions = [];
+        public readonly List<ThreadProcess> _normalPriorityActions = [];
+        public readonly List<ThreadProcess> _lowPriorityActions = [];
+        public readonly List<ThreadProcess> _backgroundPriorityActions = [];
 
-        public void Enqueue(ThreadProcess process, TaskPriority priority = TaskPriority.Normal)
+        public void Enqueue(ThreadProcess process)
         {
-            switch (priority)
+            switch (process.Priority)
             {
                 case TaskPriority.Background:
-                    _backgroundPriorityActions.Enqueue(process);
+                    _backgroundPriorityActions.Add(process);
                     break;
                 case TaskPriority.Low:
-                    _lowPriorityActions.Enqueue(process);
+                    _lowPriorityActions.Add(process);
                     break;
                 case TaskPriority.Normal:
-                    _normalPriorityActions.Enqueue(process);
+                    _normalPriorityActions.Add(process);
                     break;
                 case TaskPriority.High:
-                    _highPriorityActions.Enqueue(process);
+                    _highPriorityActions.Add(process);
                     break;
                 case TaskPriority.Urgent:
-                    _urgentPriorityActions.Enqueue(process);
+                    _urgentPriorityActions.Add(process);
                     break;
             }
         }
@@ -119,14 +134,54 @@ public static class ThreadPool
         public bool TryDequeue([NotNullWhen(true)] out ThreadProcess? process)
         {
             process = null;
-            if (_urgentPriorityActions.TryDequeue(out var a) ||
-                _highPriorityActions.TryDequeue(out a) ||
-                _normalPriorityActions.TryDequeue(out a) ||
-                _lowPriorityActions.TryDequeue(out a) ||
-                _backgroundPriorityActions.TryDequeue(out a))
+            if (_urgentPriorityActions.Count > 0)
             {
-                process = a;
+                process = _urgentPriorityActions[0];
+                _urgentPriorityActions.RemoveAt(0);
                 return true;
+            }
+            else if (_highPriorityActions.Count > 0)
+            {
+                process = _highPriorityActions[0];
+                _highPriorityActions.RemoveAt(0);
+                return true;
+            }
+            else if (_normalPriorityActions.Count > 0)
+            {
+                process = _normalPriorityActions[0];
+                _normalPriorityActions.RemoveAt(0);
+                return true;
+            }
+            else if (_lowPriorityActions.Count > 0)
+            {
+                process = _lowPriorityActions[0];
+                _lowPriorityActions.RemoveAt(0);
+                return true;
+            }
+            else if (_backgroundPriorityActions.Count > 0)
+            {
+                process = _backgroundPriorityActions[0];
+                _backgroundPriorityActions.RemoveAt(0);
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool TryRemoveProcess(ThreadProcess process)
+        {
+            switch (process.Priority)
+            {
+                case TaskPriority.Background:
+                    return _backgroundPriorityActions.Remove(process);
+                case TaskPriority.Low:
+                    return _lowPriorityActions.Remove(process);
+                case TaskPriority.Normal:
+                    return _normalPriorityActions.Remove(process);
+                case TaskPriority.High:
+                    return _highPriorityActions.Remove(process);
+                case TaskPriority.Urgent:
+                    return _urgentPriorityActions.Remove(process);
             }
             return false;
         }
@@ -158,14 +213,21 @@ public class CustomProcess
 public class ThreadProcess : CustomProcess
 {
     public int ThreadIndex { get; private set; } = -1;
+    public TaskPriority Priority { get; private set; } = TaskPriority.Normal;
 
     public ThreadProcess() : base() { }
 
     public void SetThreadIndex(int index) => ThreadIndex = index;
+    public void SetPriority(TaskPriority priority) => Priority = priority;
 
     public Task ExecuteAsync()
     {
         return Task.Run(Function);
+    }
+
+    public bool TryRemoveProcess()
+    {
+        return ThreadPool.TryRemoveProcess(this);
     }
 }
 

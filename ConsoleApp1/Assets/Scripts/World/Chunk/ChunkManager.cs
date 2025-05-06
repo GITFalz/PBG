@@ -172,9 +172,19 @@ public static class ChunkManager
             chunkEntry.Blocked = true;
             chunkEntry.SetWantedStage = true;
             chunkEntry.WantedStage = ChunkStage.ToBeFreed;
+            chunkEntry.Chunk.HasBlocks = false;
+            chunkEntry.Chunk.HasTransparentBlocks = false;
             if (chunkEntry.Process != null)
             {
-                chunkEntry.Process.SetOnCompleteAction(() => { FreeChunk(chunkEntry); Console.WriteLine("Chunk freed: " + chunkEntry.Chunk.GetRelativePosition()); });
+                if (chunkEntry.Process.TryRemoveProcess())
+                {
+                    chunkEntry.Process = null;
+                    chunkEntry.SetStage(ChunkStage.ToBeFreed);
+                }
+                else
+                {
+                    chunkEntry.Process.SetOnCompleteAction(() => { FreeChunk(chunkEntry); Console.WriteLine("Chunk freed: " + chunkEntry.Chunk.GetRelativePosition()); });
+                }
             }
             else
             {
@@ -319,7 +329,7 @@ public class ChunkEntry
     public bool FreeChunk = false;
     public bool Blocked = false;
 
-    public CustomProcess? Process = null;
+    public ThreadProcess? Process = null;
 
     public ChunkEntry(Chunk chunk)
     {

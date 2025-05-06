@@ -5,8 +5,10 @@ public static class Parse
 {
     public static Vector4 Vec4(string str)
     {
-        str = str.Trim(['(',')']);
-        string[] parts = str.Split([',','.'], StringSplitOptions.RemoveEmptyEntries);
+        str = str.Trim(['(',')',' ']);
+        Console.WriteLine(str);
+        string[] parts = str.Split([',',';'], StringSplitOptions.RemoveEmptyEntries);
+        Console.WriteLine("Is valid vec4: " + (parts.Length == 4) + " it is: " + parts.Length + " with: " + string.Join('-', parts));
         if (parts.Length != 4)
             return Vector4.Zero;
 
@@ -21,7 +23,7 @@ public static class Parse
     public static Vector3 Vec3(string str)
     {
         str = str.Trim(['(',')']);
-        string[] parts = str.Split(',');
+        string[] parts = str.Split([',',';'], StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length != 3)
             return Vector3.Zero;
 
@@ -35,7 +37,7 @@ public static class Parse
     public static Vector2 Vec2(string str)
     {
         str = str.Trim(['(',')']);
-        string[] parts = str.Split(',');
+        string[] parts = str.Split([',',';'], StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length != 2)
             return Vector2.Zero;
 
@@ -48,6 +50,6 @@ public static class Parse
     public static float Float(string str)
     {
         str = str.Trim(['(',')']);
-        return Float(str);
+        return float.Parse(str, CultureInfo.InvariantCulture);
     }
 }
