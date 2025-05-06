@@ -560,9 +560,9 @@ public class NoiseEditor : ScriptingNode
         if (SelectionCollection.Visible)
             SelectionController.RenderDepthTest();
 
-        /*
         _colorPicker.RenderTexture();
 
+        /*
         Matrix4 model = Matrix4.CreateTranslation(100, 100, 0);
         Matrix4 projection = UIController.OrthographicProjection;
 
