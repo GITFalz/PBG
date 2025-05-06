@@ -126,7 +126,7 @@ public static class NoiseNodeManager
 
     public static void GenerateLines()
     {
-        _connectorLineVertices.Clear();
+        _connectorLineVertices = [];
 
         int index = 0;
         foreach (var (input, output) in GetConnections())
@@ -643,10 +643,10 @@ public static class NoiseNodeManager
             RemoveNode(node, false);
         }
 
-        NoiseNodes.Clear();
-        ConnectedNodeList.Clear();
-        OutputGateConnectors.Clear();
-        InputGateConnectors.Clear();
+        NoiseNodes = [];
+        ConnectedNodeList = [];
+        OutputGateConnectors = [];
+        InputGateConnectors = [];
 
         GenerateLines();
         Compile();
@@ -660,10 +660,11 @@ public static class NoiseNodeManager
             RemoveNode(node, false);
         }
 
-        NoiseNodes.Clear();
-        ConnectedNodeList.Clear();
-        OutputGateConnectors.Clear();
-        InputGateConnectors.Clear();
+        NoiseNodes = [];
+        ConnectedNodeList = [];
+        OutputGateConnectors = [];
+        InputGateConnectors = [];
+        _connectorLineVertices = [];
 
         DisplayNode = null;
     }

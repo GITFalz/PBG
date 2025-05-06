@@ -24,10 +24,7 @@ public static class CWorldMultithreadNodeManager
 
     public static void Copy(int count)
     {
-        foreach (var nodeManager in NodeManagers)
-            nodeManager.Delete();
-
-        NodeManagers.Clear();
+        Clear();
 
         for (int i = 0; i < count; i++)
         {
@@ -53,7 +50,7 @@ public static class CWorldMultithreadNodeManager
         foreach (var nodeManager in NodeManagers)
             nodeManager.Delete();
 
-        NodeManagers.Clear();
+        NodeManagers = [];
     }
 }
 
@@ -177,8 +174,8 @@ public class CWorldNodeManager
         {
             node.Delete();
         }
-        CWorldNodes.Clear();
-        CWorldInitNodes.Clear();
+        CWorldNodes = [];
+        CWorldInitNodes = [];
         CWorldOutputNode.Delete();
     }
 }

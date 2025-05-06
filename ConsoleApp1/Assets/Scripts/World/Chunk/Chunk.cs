@@ -22,20 +22,21 @@ public class Chunk
 
     public List<Vector3> Wireframe = [];
 
-    public Chunk?[] NeighbourCunks = 
-    [
-        null, null, null, 
-        null, null, null, 
-        null, null, null,
+    public Dictionary<Vector3i, ChunkEntry?> NeighbourCunks = new Dictionary<Vector3i, ChunkEntry?>
+    {
+        { (-1, -1, -1), null }, { (-1, -1,  0), null }, { (-1, -1,  1), null },
+        { (-1,  0, -1), null }, { (-1,  0,  0), null }, { (-1,  0,  1), null },
+        { (-1,  1, -1), null }, { (-1,  1,  0), null }, { (-1,  1,  1), null },
 
-        null, null, null, 
-        null,       null, 
-        null, null, null,
+        { ( 0, -1, -1), null }, { ( 0, -1,  0), null }, { ( 0, -1,  1), null },
+        { ( 0,  0, -1), null },                         { ( 0,  0,  1), null },
+        { ( 0,  1, -1), null }, { ( 0,  1,  0), null }, { ( 0,  1,  1), null },
 
-        null, null, null, 
-        null, null, null, 
-        null, null, null,  
-    ];
+        { ( 1, -1, -1), null }, { ( 1, -1,  0), null }, { ( 1, -1,  1), null },
+        { ( 1,  0, -1), null }, { ( 1,  0,  0), null }, { ( 1,  0,  1), null },
+        { ( 1,  1, -1), null }, { ( 1,  1,  0), null }, { ( 1,  1,  1), null },
+    };
+    
     public int ChunkCount = 0;
 
     private VAO _edgeVao = new VAO();
@@ -452,18 +453,33 @@ public class Chunk
 
     public void UpdateNeighbours()
     {
-        foreach (var (side, index) in ChunkData.SideChunkIndices)
+        ChunkCount = 0;
+        foreach (var (side, _) in ChunkData.SideChunkIndices)
         {
-            Vector3i position = (GetRelativePosition() + side) * 32;
-            if (ChunkManager.GetChunk(position, out var chunk) && chunk != this)
+            Vector3i position = GetRelativePosition() + side;
+            if (ChunkManager.GetChunk(position, out ChunkEntry? chunk))
             {
-                NeighbourCunks[index] = chunk;
+                ChunkCount++;
+                NeighbourCunks[side] = chunk;
             }
             else
             {
-                NeighbourCunks[index] = null;
+                NeighbourCunks[side] = null;
             }
         }
+    }
+
+    public bool AllChunksStageBetween(ChunkStage stage1, ChunkStage stage2)
+    {
+        foreach (var (_, chunk) in NeighbourCunks)
+        {
+            if (chunk == null || chunk.Stage < stage1 || chunk.Stage > stage2)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static readonly int[] SideIndices = [

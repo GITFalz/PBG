@@ -222,6 +222,8 @@ public class Game : GameWindow
         BlockManager.Add(water);
         BlockManager.Add(stone);
 
+        BlockManager.GetSortedPriorityList();
+
         var grassBlockData = new BlockItemData(grass);
         var dirtBlockData = new BlockItemData(dirt);
         var sandBlockData = new BlockItemData(sand);

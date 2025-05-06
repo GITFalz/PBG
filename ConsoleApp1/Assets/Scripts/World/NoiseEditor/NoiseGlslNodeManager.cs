@@ -61,8 +61,13 @@ public static class NoiseGlslNodeManager
             lines.Insert(lineIndex, newLine);
             lineIndex++;
         }
-
+        
         _valueSSBO.Renew(values);
+        Console.WriteLine($"Values: {values.Count}");
+        foreach (var value in values)
+        {
+            Console.WriteLine(value);
+        }
 
         File.WriteAllLines(NoiseFragmentPathCopy, lines);
 

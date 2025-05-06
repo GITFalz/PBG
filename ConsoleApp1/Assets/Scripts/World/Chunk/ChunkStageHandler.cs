@@ -2,111 +2,109 @@ public static class ChunkStageHandler
 {
     public static void ExecuteStage(ChunkEntry entry)
     {
-        
-    }
+        switch (entry.Stage)
+        {
+            case ChunkStage.ToBeGenerated:
+                entry.SetStage(ChunkStage.Generating);
+                entry.SetWantedStage = false;
+                ChunkGenerationProcess generationProcess = new ChunkGenerationProcess(entry, false);
+                ThreadPool.QueueAction(generationProcess, TaskPriority.Low);
+                break;
 
-    public static void SetStage(ChunkEntry entry, ChunkStage stage)
-    {
-        entry.SetStage(stage);
-        entry.SetUpdateAction(_stageActions[stage]);
-    }
+            case ChunkStage.Generated:
+                entry.SetStage(ChunkStage.ToBePopulated);
+                break;
 
-    public static void Handle_Empty(ChunkEntry entry)
-    {
-        
-    }
+            case ChunkStage.ToBePopulated:
+                if (!entry.Chunk.AllChunksStageBetween(ChunkStage.Generated, ChunkStage.Created))
+                {
+                    entry.SetTimer(0.5f);
+                    break;
+                }
 
-    public static void Handle_Free(ChunkEntry entry)
-    {
-        
-    }
+                entry.SetStage(ChunkStage.Populating);
+                entry.SetWantedStage = false;
+                ChunkPopulationProcess populationProcess = new ChunkPopulationProcess(entry);
+                ThreadPool.QueueAction(populationProcess, TaskPriority.Normal);
+                break;
 
-    public static void Handle_Loading(ChunkEntry entry)
-    {
-        
-    }
+            case ChunkStage.Populated:
+                entry.SetStage(ChunkStage.ToBeRendered);
+                break;
 
-    public static void Handle_Generated(ChunkEntry entry)
-    {
-        
-    }
+            case ChunkStage.ToBeRendered:
+                entry.SetStage(ChunkStage.Rendering);
+                entry.SetWantedStage = false;
+                ChunkRenderingProcess renderingProcess = new ChunkRenderingProcess(entry);
+                ThreadPool.QueueAction(renderingProcess, TaskPriority.High);
+                break;
 
-    public static void Handle_ReadyToBePopulated(ChunkEntry entry)
-    {
-        
-    }
+            case ChunkStage.Rendered:
+                entry.SetStage(ChunkStage.ToBeCreated);
+                break;
 
-    public static void Handle_Populated(ChunkEntry entry)
-    {
-        
-    }
+            case ChunkStage.ToBeCreated:
+                entry.SetStage(ChunkStage.Creating);
+                if (entry.Chunk.CreateChunkSolid())
+                {
+                    entry.SetStage(ChunkStage.Created);
+                }
+                else
+                {
+                    entry.SetStage(ChunkStage.ToBeGenerated);
+                }     
+                break;
 
-    public static void Handle_ReadyToBeRendered(ChunkEntry entry)
-    {
-        
-    }
+            case ChunkStage.Created:
+                break;
 
-    public static void Handle_Rendered(ChunkEntry entry)
-    {
-        
-    }
+            case ChunkStage.ToBeReloaded:
+                entry.SetStage(ChunkStage.Reloading);
+                break;
 
-    public static void Handle_ReadyToBeCreated(ChunkEntry entry)
-    {
-        
-    }
+            case ChunkStage.Reloaded:
+                break;
 
-    public static void Handle_Created(ChunkEntry entry)
-    {
-        
-    }
+            case ChunkStage.ToBeFreed:
+                entry.SetStage(ChunkStage.Free);
+                break;
 
-    public static void Handle_ReadyToBeReloaded(ChunkEntry entry)
-    {
-        
-    }
+            case ChunkStage.ToBeDeleted:
+                entry.SetStage(ChunkStage.Deleting);
+                break;
 
-    public static void Handle_ToBeFreed(ChunkEntry entry)
-    {
-        
-    }
+            case ChunkStage.Deleted:
+                entry.SetStage(ChunkStage.Empty);
+                break;
 
-    public static void Handle_ToBeDeleted(ChunkEntry entry)
-    {
-        
+            default:
+                break;
+        }
     }
-
-    private static readonly Dictionary<ChunkStage, Action<ChunkEntry>> _stageActions = new()
-    {
-        { ChunkStage.Empty, Handle_Empty },
-        { ChunkStage.Free, Handle_Free },
-        { ChunkStage.Loading, Handle_Loading },
-        { ChunkStage.Generated, Handle_Generated },
-        { ChunkStage.ReadyToBePopulated, Handle_ReadyToBePopulated },
-        { ChunkStage.Populated, Handle_Populated },
-        { ChunkStage.ReadyToBeRendered, Handle_ReadyToBeRendered },
-        { ChunkStage.Rendered, Handle_Rendered },
-        { ChunkStage.ReadyToBeCreated, Handle_ReadyToBeCreated },
-        { ChunkStage.Created, Handle_Created },
-        { ChunkStage.ReadyToBeReloaded, Handle_ReadyToBeReloaded },
-        { ChunkStage.ToBeFreed, Handle_ToBeFreed },
-        { ChunkStage.ToBeDeleted, Handle_ToBeDeleted }
-    };
 }
 
 public enum ChunkStage
 {
     Empty = -1,
     Free = 0,
-    Loading = 1,
-    Generated = 2,
-    ReadyToBePopulated = 3,
-    Populated = 4,
-    ReadyToBeRendered = 5,
-    Rendered = 6,
-    ReadyToBeCreated = 7,
-    Created = 8,
-    ReadyToBeReloaded = 9,
-    ToBeFreed = 8,
-    ToBeDeleted = 9,
+    ToBeGenerated = 1,
+    Generating = 2,
+    Generated = 3,
+    ToBePopulated = 4,
+    Populating = 5,
+    Populated = 6,
+    ToBeRendered = 7,
+    Rendering = 8,
+    Rendered = 9,
+    ToBeCreated = 10,
+    Creating = 11,
+    Created = 12,
+    ToBeReloaded = 13,
+    Reloading = 14,
+    Reloaded = 15,
+    ToBeFreed = 16,
+    Freeing = 17,
+    ToBeDeleted = 18,
+    Deleting = 19,
+    Deleted = 20,
 }

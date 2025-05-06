@@ -4,6 +4,7 @@ using System.Text;
 public static class BlockManager
 {
     public static Dictionary<uint, CWorldBlock> Blocks = new Dictionary<uint, CWorldBlock>();
+    public static List<CWorldBlock> BlockPriorityList = new List<CWorldBlock>();
 
     public static CWorldBlock GetBlock(uint index)
     {
@@ -65,16 +66,15 @@ public static class BlockManager
     public static List<CWorldBlock> GetSortedPriorityList()
     {
         List<uint> sortedKeys = [.. Blocks.Keys];
-        sortedKeys.Sort();
+        sortedKeys.Sort((a, b) => Blocks[a].priority.CompareTo(Blocks[b].priority));
 
-        Console.WriteLine("Sorted Array:");
         List<CWorldBlock> sortedValues = [];
         foreach (uint key in sortedKeys)
         {
             sortedValues.Add(Blocks[key]);
-            Console.WriteLine(Blocks[key]);
         }
 
+        BlockPriorityList = sortedValues;
         return sortedValues;
     }
 }

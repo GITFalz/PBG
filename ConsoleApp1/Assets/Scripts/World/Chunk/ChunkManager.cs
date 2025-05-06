@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
@@ -8,10 +9,12 @@ public static class ChunkManager
     /// All the chunks in the world
     /// </summary>
     public static ConcurrentDictionary<Vector3i, ChunkEntry> ActiveChunks = [];
-    private static readonly object _chunkLock = new object();
+    public static HashSet<Vector3i> Chunks = [];
 
     private static Vector3i _lastPlayerPosition = new Vector3i(0, 0, 0);
     private static Vector3i _currentPlayerChunk = new Vector3i(0, 0, 0);
+
+    private static double _renderDistanceTimer = 0;
 
     public static void HandleRenderDistance()
     {
@@ -21,42 +24,53 @@ public static class ChunkManager
         if (_currentPlayerChunk == _lastPlayerPosition) 
             return;
 
-        var chunks = SetChunks();
-        foreach (var (key, entry) in ActiveChunks)
-        {
-            if (!chunks.Contains(key))
-            {
-                RemoveChunk(key);
-            }
-            chunks.Remove(key);
-        }
-        foreach (var chunk in chunks)
-        {
-            AddChunk(chunk);
-        }
+        CheckChunks();
+        UpdateChunkNeighbours();
 
         _lastPlayerPosition = _currentPlayerChunk;
     }
 
-    public static void AddChunk(Vector3i position)
+    public static void CheckChunks()
     {
-        if (ActiveChunks.TryGetValue(position, out var chunkEntry))
+        Chunks = SetChunks();
+        foreach (var (key, entry) in ActiveChunks)
         {
-            chunkEntry.Stage = ChunkStage.Loading;
-            return;
+            if (Chunks.Contains(key))
+                continue;
+
+            RemoveChunk(key);
+        }
+        foreach (var chunk in Chunks)
+        {
+            if (ActiveChunks.ContainsKey(chunk))
+                continue;
+
+            AddChunk(chunk);
         }
 
+        _renderDistanceTimer = 5;
+    }
+
+    public static bool AddChunk(Vector3i position)
+    {
+        if (ActiveChunks.TryGetValue(position, out var _))
+            return false;
+
         Chunk chunk = ChunkPool.GetChunk(position);
-        chunkEntry = new ChunkEntry(chunk) { Stage = ChunkStage.Loading };
-        ActiveChunks.TryAdd(position, chunkEntry);
+        return ActiveChunks.TryAdd(position, new ChunkEntry(chunk) { 
+            Stage = ChunkStage.ToBeGenerated,
+            SetWantedStage = true
+        });
     }
 
     public static void RemoveChunk(Vector3i position)
     {
-        if (ActiveChunks.TryRemove(position, out var chunkEntry) && ChunkPool.FreeChunk(chunkEntry.Chunk))
+        if (ActiveChunks.TryRemove(position, out var chunkEntry))
         {
-            chunkEntry.Chunk = Chunk.Empty;
-            chunkEntry.Stage = ChunkStage.Free;
+            chunkEntry.FreeChunk = true;
+            chunkEntry.Blocked = true;
+            chunkEntry.SetWantedStage = true;
+            ChunkPool.FreeChunk(chunkEntry.Chunk);
         }
     }
 
@@ -73,7 +87,7 @@ public static class ChunkManager
                 for (int i = 0; i < x; i++)
                 {
                     startPosition += _moves[k];
-                    for (int y = -1; y < World.yChunkCount; y++)
+                    for (int y = -1; y <= World.yChunkCount; y++)
                     {
                         chunkPositions.Add(new Vector3i(startPosition.X, y, startPosition.Y) + _currentPlayerChunk);
                     }
@@ -87,39 +101,45 @@ public static class ChunkManager
     }
 
     /// <summary>
-    /// Generates all the chunk entries in the world. This should only be called once at the start of the game or when changing the render distance.
-    /// </summary>
-    public static void GenerateChunkEntries(Vector3i playerChunkPosition)
-    {
-        ActiveChunks = new ConcurrentDictionary<Vector3i, ChunkEntry>();
-
-        int renderDistance = World.renderDistance;
-        int height = World.yChunkCount;
-
-        for (int x = -renderDistance; x <= renderDistance; x++)
-        {
-            for (int y = 0; y <= height; y++)
-            {
-                for (int z = -renderDistance; z <= renderDistance; z++)
-                {
-                    Vector3i chunkPosition = (x, y, z) + playerChunkPosition;
-                    ActiveChunks.TryAdd(chunkPosition, new ChunkEntry(Chunk.Empty) { Stage = ChunkStage.Loading });
-                }
-            }
-        }
-    }
-
-    /// <summary>
     /// Loops trough all the chunk entries and advances their stages.
     /// </summary>
     public static void Update()
     {
-
+        foreach (var (_, chunkEntry) in ActiveChunks)
+        {
+            if (chunkEntry.IsReady())
+            {
+                ChunkStageHandler.ExecuteStage(chunkEntry);
+            }
+        }
     }
 
-    public static bool GetChunk(Vector3i position, out Chunk chunk)
+    public static void Reload()
     {
-        chunk = Chunk.Empty;
+        var chunks = SetChunks();
+        foreach (var (_, chunkEntry) in ActiveChunks)
+        {
+            if (!chunks.Contains(chunkEntry.Chunk.GetRelativePosition()))
+                Console.WriteLine("Chunk not found: " + chunkEntry.Chunk.GetRelativePosition());
+                
+            chunkEntry.SetStage(ChunkStage.ToBeRendered);
+            chunkEntry.SetWantedStage = false;
+        }
+    }
+
+    public static bool GetChunk(Vector3i position, [NotNullWhen(true)] out ChunkEntry? entry)
+    {
+        entry = null;
+        if (!ActiveChunks.TryGetValue(position, out var chunkEntry))
+            return false;
+
+        entry = chunkEntry;
+        return true;
+    }
+
+    public static bool GetChunk(Vector3i position, [NotNullWhen(true)] out Chunk? chunk)
+    {
+        chunk = null;
         if (!ActiveChunks.TryGetValue(position, out var chunkEntry))
             return false;
 
@@ -154,6 +174,7 @@ public static class ChunkManager
     public static void Clear()
     {
         ActiveChunks = [];
+        Chunks = [];
     }
 
     public static void Print()
@@ -167,8 +188,13 @@ public class ChunkEntry
     public ChunkStage Stage = ChunkStage.Empty;
     public Chunk Chunk = Chunk.Empty;
     public object Lock = new object();
+    public double WaitTimer = 0;
 
-    public Action<ChunkEntry> UpdateAction = (entry) => { };
+    public ChunkStage WantedStage = ChunkStage.Empty;
+    public bool SetWantedStage = false;
+    
+    public bool FreeChunk = false;
+    public bool Blocked = false;
 
     public ChunkEntry(Chunk chunk)
     {
@@ -183,11 +209,40 @@ public class ChunkEntry
         }
     }
 
-    public void SetUpdateAction(Action<ChunkEntry> action)
+    public void TrySetStage(ChunkStage stage)
     {
         lock (Lock)
         {
-            UpdateAction = action;
+            Stage = SetWantedStage ? WantedStage : stage;
         }
+    }
+
+    public void SetTimer(double timer)
+    {
+        lock (Lock)
+        {
+            WaitTimer = timer;
+        }
+    }
+
+    public bool IsReady()
+    {
+        lock (Lock)
+        {
+            if (WaitTimer <= 0)
+                return true;
+
+            WaitTimer -= GameTime.DeltaTime;
+        }
+        return false;
+    }
+
+    public bool CheckDelete()
+    {
+        lock (Lock)
+        {
+            if (FreeChunk) SetStage(ChunkStage.ToBeFreed);
+        }
+        return FreeChunk;
     }
 }
