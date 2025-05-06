@@ -747,10 +747,13 @@ public class ModelMesh : Meshes
 
         for (int i = 1; i <= vertexCount; i++)
         {
-            string[] values = lines[i].Split(' ');
+            string[] values = lines[i].Trim().Trim().Split(' ');
+            //Console.WriteLine($"Loading vertex {lines[i]} lenght: {values.Length}");
             Vertex vertex = new Vertex(new Vector3(Float.Parse(values[1]), Float.Parse(values[2]), Float.Parse(values[3])));
             vertex.Name = "Vertex " + i;
-            vertex.Index = int.Parse(values[4]);
+            if (values.Length > 4)
+                vertex.Index = int.Parse(values[4]);
+
             if (values.Length > 5)
                 vertex.BoneIndex = int.Parse(values[5]);
             
@@ -759,20 +762,20 @@ public class ModelMesh : Meshes
 
         for (int i = vertexCount + 2; i <= vertexCount + edgeCount + 1; i++)
         {
-            string[] values = lines[i].Split(' ');
+            string[] values = lines[i].Trim().Split(' ');
             EdgeList.Add(new Edge(VertexList[int.Parse(values[1])], VertexList[int.Parse(values[2])]));
         }
 
         for (int i = vertexCount + edgeCount + 3; i <= vertexCount + edgeCount + uvCount + 2; i++)
         {
-            string[] values = lines[i].Split(' ');
+            string[] values = lines[i].Trim().Split(' ');
             Uvs.Add(new Vector2(Float.Parse(values[1]), Float.Parse(values[2])));
         }
 
         int index = 0;
         for (int i = vertexCount + edgeCount + uvCount + 4; i <= vertexCount + edgeCount + uvCount + triangleCount + 3; i++)
         {
-            string[] values = lines[i].Split(' ');
+            string[] values = lines[i].Trim().Split(' ');
             
             Vertex a, b, c;
         
