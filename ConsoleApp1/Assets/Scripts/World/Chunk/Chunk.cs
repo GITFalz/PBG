@@ -215,6 +215,11 @@ public class Chunk
         return position;
     }
 
+    public Vector3 GetCenterPosition()
+    {
+        return GetWorldPosition() + new Vector3(16, 16, 16);
+    }
+
     public Matrix4 GetModel()
     {
         return Matrix4.CreateTranslation(GetWorldPosition());
@@ -380,10 +385,12 @@ public class Chunk
             IndicesCount = indicesCount;
             VertexCount = vertexCount;
             _vertexCount = IndicesCount;
+            HasBlocks = vertexCount > 0;
 
             TransparentIndicesCount = transparentIndicesCount;
             TransparentVertexCount = transparentVertexCount;
             _transparentVertexCount = TransparentIndicesCount;
+            HasTransparentBlocks = transparentVertexCount > 0;
 
             GL.Finish();
         }

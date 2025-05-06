@@ -422,6 +422,32 @@ public static class VoxelData
         return blocks;
     }
 
+    public static bool BlockOnBorder(Vector3i blockPosition, out List<Vector3i> offsets)
+    {
+        offsets = [];
+        blockPosition = BlockToRelativePosition(blockPosition);
+
+        if (blockPosition.X == 0) offsets.Add((-1, 0, 0));
+        else if (blockPosition.X == 31) offsets.Add((1, 0, 0));
+
+        if (blockPosition.Y == 0) offsets.Add((0, -1, 0));
+        else if (blockPosition.Y == 31) offsets.Add((0, 1, 0));
+
+        if (blockPosition.Z == 0) offsets.Add((0, 0, -1));
+        else if (blockPosition.Z == 31) offsets.Add((0, 0, 1));
+        
+        if (offsets.Count >= 2) // if the block is on 2 or more sides of the chunk, add the chunks that is on the corner
+        {
+            Vector3i offset = (0, 0, 0);
+            foreach (var o in offsets)
+            {
+                offset += o;
+            }
+            offsets.Add(offset);
+        }
+        return offsets.Count > 0;
+    }
+
 
     public static void AddVertToBoxMesh(OldAnimationMesh mesh, Vector3 scale, Quaternion rotation, Vector3 position)
     {

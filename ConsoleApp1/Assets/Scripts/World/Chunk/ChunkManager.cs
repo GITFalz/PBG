@@ -10,11 +10,16 @@ public static class ChunkManager
     /// </summary>
     public static ConcurrentDictionary<Vector3i, ChunkEntry> ActiveChunks = [];
     public static HashSet<Vector3i> Chunks = [];
+    public static List<Vector3i> ChunkProcessDirection = [];
+
+    public static Dictionary<Vector3i, Chunk> OpaqueChunks = new Dictionary<Vector3i, Chunk>();
+    public static Dictionary<Vector3i, Chunk> TransparentChunks = new Dictionary<Vector3i, Chunk>();
 
     private static Vector3i _lastPlayerPosition = new Vector3i(0, 0, 0);
     private static Vector3i _currentPlayerChunk = new Vector3i(0, 0, 0);
 
     private static double _renderDistanceTimer = 0;
+    private static int _oldRenderedChunks = 0;
 
     public static void HandleRenderDistance()
     {
@@ -36,7 +41,9 @@ public static class ChunkManager
         foreach (var (key, entry) in ActiveChunks)
         {
             if (Chunks.Contains(key))
+            {
                 continue;
+            }
 
             RemoveChunk(key);
         }
@@ -51,16 +58,110 @@ public static class ChunkManager
         _renderDistanceTimer = 5;
     }
 
+    public static void CheckFrustum()
+    {
+        Camera camera = Game.Camera;
+        camera.CalculateFrustumPlanes();
+        
+        int renderCount = 0;
+        Info.VertexCount = 0;
+        
+        foreach (var (_, chunkEntry) in ActiveChunks)
+        {
+            var chunk = chunkEntry.Chunk;
+
+            bool frustum = camera.FrustumIntersects(chunk.boundingBox);
+            bool baseDisabled = !chunkEntry.ShouldRender() || !frustum || chunk.BlockRendering || Vector2.Distance(PlayerData.Position.Xz, chunk.GetWorldPosition().Xz) > World.renderDistance * 32;
+
+            bool isDisabled = chunk.IsDisabled;
+            chunk.IsDisabled = baseDisabled || !chunk.HasBlocks;
+
+            if (!isDisabled && chunk.IsDisabled)
+            {
+                OpaqueChunks.Remove(chunk.GetWorldPosition());
+            }
+            else if (isDisabled && !chunk.IsDisabled)
+            {
+                OpaqueChunks.TryAdd(chunk.GetWorldPosition(), chunk);
+            }
+
+            bool isTransparentDisabled = chunk.IsTransparentDisabled;
+            chunk.IsTransparentDisabled = baseDisabled || !chunk.HasTransparentBlocks;
+
+            if (!isTransparentDisabled && chunk.IsTransparentDisabled)
+            {
+                TransparentChunks.Remove(chunk.GetWorldPosition());
+            }
+            else if (isTransparentDisabled && !chunk.IsTransparentDisabled)
+            {
+                TransparentChunks.TryAdd(chunk.GetWorldPosition(), chunk);
+            }
+
+            if (chunk.IsDisabled && chunk.IsTransparentDisabled)
+                continue;
+
+            renderCount++;
+            Info.VertexCount += chunk.VertexCount;
+        }
+
+        if (renderCount != _oldRenderedChunks)
+        {
+            Info.SetGlobalChunkInfo(renderCount, Info.VertexCount);
+            _oldRenderedChunks = renderCount;
+        }
+    }
+
+    public static void GenerateNearbyPositions()
+    {
+        ChunkProcessDirection = [];
+
+        Vector3i center = (0, 0, 0);
+        int renderDistance = World.renderDistance;
+        int maxY = World.yChunkCount;
+
+        var result = new List<(Vector3i pos, int distanceSquared)>();
+
+        for (int y = -1; y <= maxY; y++)
+        {
+            for (int x = -renderDistance; x <= renderDistance; x++)
+            {
+                for (int z = -renderDistance; z <= renderDistance; z++)
+                {
+                    Vector3i pos = new Vector3i(center.X + x, y, center.Z + z);
+
+                    int dx = x;
+                    int dy = center.Y - y;
+                    int dz = z;
+
+                    int distSq = dx * dx + dy * dy + dz * dz;
+
+                    if (distSq <= renderDistance * renderDistance)
+                    {
+                        result.Add((pos, distSq));
+                    }
+                }
+            }
+        }
+
+        // Sort by distance
+        result.Sort((a, b) => a.distanceSquared.CompareTo(b.distanceSquared));
+
+        // Return just the positions
+        ChunkProcessDirection = result.Select(r => r.pos).ToList();
+    }
+
     public static bool AddChunk(Vector3i position)
     {
         if (ActiveChunks.TryGetValue(position, out var _))
             return false;
 
         Chunk chunk = ChunkPool.GetChunk(position);
-        return ActiveChunks.TryAdd(position, new ChunkEntry(chunk) { 
+        ChunkEntry chunkEntry = new ChunkEntry(chunk) { 
             Stage = ChunkStage.ToBeGenerated,
             SetWantedStage = true
-        });
+        };
+
+        return ActiveChunks.TryAdd(position, chunkEntry);
     }
 
     public static void RemoveChunk(Vector3i position)
@@ -70,8 +171,29 @@ public static class ChunkManager
             chunkEntry.FreeChunk = true;
             chunkEntry.Blocked = true;
             chunkEntry.SetWantedStage = true;
-            ChunkPool.FreeChunk(chunkEntry.Chunk);
+            chunkEntry.WantedStage = ChunkStage.ToBeFreed;
+            if (chunkEntry.Process != null)
+            {
+                chunkEntry.Process.SetOnCompleteAction(() => { FreeChunk(chunkEntry); Console.WriteLine("Chunk freed: " + chunkEntry.Chunk.GetRelativePosition()); });
+            }
+            else
+            {
+                FreeChunk(chunkEntry);
+            }
         }
+    }
+
+    public static void FreeChunk(ChunkEntry chunkEntry)
+    {
+        OpaqueChunks.Remove(chunkEntry.Chunk.GetWorldPosition());
+        TransparentChunks.Remove(chunkEntry.Chunk.GetWorldPosition());
+        ChunkPool.FreeChunk(chunkEntry.Chunk);
+        chunkEntry.SetStage(ChunkStage.Free);
+        chunkEntry.SetWantedStage = false;
+        chunkEntry.FreeChunk = false;
+        chunkEntry.Blocked = false;
+        chunkEntry.Chunk = Chunk.Empty;
+        chunkEntry.Process = null;
     }
 
     private static readonly Vector2i[] _moves = [(1, 0), (0, 1), (-1, 0), (0, -1)];
@@ -105,9 +227,10 @@ public static class ChunkManager
     /// </summary>
     public static void Update()
     {
-        foreach (var (_, chunkEntry) in ActiveChunks)
+        for (int i = 0; i < ChunkProcessDirection.Count; i++)
         {
-            if (chunkEntry.IsReady())
+            var position = ChunkProcessDirection[i] + _currentPlayerChunk;
+            if (ActiveChunks.TryGetValue(position, out var chunkEntry) && chunkEntry.IsReady())
             {
                 ChunkStageHandler.ExecuteStage(chunkEntry);
             }
@@ -196,6 +319,8 @@ public class ChunkEntry
     public bool FreeChunk = false;
     public bool Blocked = false;
 
+    public CustomProcess? Process = null;
+
     public ChunkEntry(Chunk chunk)
     {
         Chunk = chunk;
@@ -233,16 +358,28 @@ public class ChunkEntry
                 return true;
 
             WaitTimer -= GameTime.DeltaTime;
+            return false;
         }
-        return false;
     }
 
     public bool CheckDelete()
     {
         lock (Lock)
         {
-            if (FreeChunk) SetStage(ChunkStage.ToBeFreed);
+            if (FreeChunk) 
+            {
+                SetStage(ChunkStage.ToBeFreed);
+                Process = null;
+            }
         }
         return FreeChunk;
+    }
+
+    public bool ShouldRender()
+    {
+        lock (Lock)
+        {
+            return Stage >= ChunkStage.ToBeRendered && Stage <= ChunkStage.Created;
+        }
     }
 }

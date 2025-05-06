@@ -96,7 +96,6 @@ public static class ChunkData
 public enum ChunkStatus
 {
     Empty = -1,
-    Active = 0, // chunks that the player is in and nearby
-    Inactive = 1, // Chunks that were active but have gone out of range
-    Independent = 2, // Chunks that have merged and are not dependent on the player anymore
+    Active = 0,
+    Hidden = 1,
 }

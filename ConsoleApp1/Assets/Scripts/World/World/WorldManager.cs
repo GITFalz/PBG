@@ -12,8 +12,6 @@ public class WorldManager : ScriptingNode
     private static RenderType _renderType = RenderType.Solid;
     private Action _render = () => { };
 
-    private int _oldRenderedChunks = 0;
-
     public ShaderProgram DepthPrePassShader = new ShaderProgram("World/Pulling.vert");
     public WorldShader WorldShader = new WorldShader();
 
@@ -26,9 +24,6 @@ public class WorldManager : ScriptingNode
 
     public static bool DoAmbientOcclusion = true;
     public static bool DoRealtimeShadows = false;
-
-    public static Dictionary<Vector3i, Chunk> OpaqueChunks = new Dictionary<Vector3i, Chunk>();
-    public static Dictionary<Vector3i, Chunk> TransparentChunks = new Dictionary<Vector3i, Chunk>();
 
     public Matrix4 GetViewMatrix()
     {
@@ -75,6 +70,8 @@ public class WorldManager : ScriptingNode
 
         CWorldMultithreadNodeManager.AddNode(sampleNode);
         CWorldMultithreadNodeManager.Copy(ThreadPool.ThreadCount);
+
+        ChunkManager.GenerateNearbyPositions();
     }
     
     void Awake()
@@ -92,8 +89,8 @@ public class WorldManager : ScriptingNode
         {
             BufferBase.PrintBufferCount();
             Console.WriteLine("There are: " + Chunk.Chunks.Count + " chunks.");
-            Console.WriteLine("There are: " + OpaqueChunks.Count + " opaque chunks.");
-            Console.WriteLine("There are: " + TransparentChunks.Count + " transparent chunks.");
+            Console.WriteLine("There are: " + ChunkManager.OpaqueChunks.Count + " opaque chunks.");
+            Console.WriteLine("There are: " + ChunkManager.TransparentChunks.Count + " transparent chunks.");
             ChunkPool.Print();
             ChunkManager.Print();
             ThreadPool.Print();
@@ -104,10 +101,23 @@ public class WorldManager : ScriptingNode
             ChunkManager.Reload();
         }
 
+        if (Input.IsKeyAndControlPressed(Keys.C))
+        {
+            Info.ClearBlocks();
+            foreach (var (_, chunk) in ChunkManager.ActiveChunks)
+            {
+                Info.AddBlock(new InfoBlockData() {
+                    Position = chunk.Chunk.GetWorldPosition() + (11, 11, 11),
+                    Size = (10, 10, 10),
+                    Color = (1, 0, 0, 0.5f)
+                });
+            }
+            Info.UpdateBlocks();
+        }
+
         ChunkManager.HandleRenderDistance();
         ChunkManager.Update();
-
-        CheckFrustum();
+        ChunkManager.CheckFrustum();
     }
 
     void Render()
@@ -193,7 +203,7 @@ public class WorldManager : ScriptingNode
         GL.DepthMask(true);
         GL.Disable(EnableCap.Blend);
 
-        foreach (var (key, chunk) in OpaqueChunks)
+        foreach (var (key, chunk) in ChunkManager.OpaqueChunks)
         {   
             model = Matrix4.CreateTranslation(key);
             GL.UniformMatrix4(modelLocation, false, ref model);
@@ -204,7 +214,7 @@ public class WorldManager : ScriptingNode
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         GL.DepthMask(false);
 
-        foreach (var (key, chunk) in TransparentChunks)
+        foreach (var (key, chunk) in ChunkManager.TransparentChunks)
         {   
             model = Matrix4.CreateTranslation(key);
             GL.UniformMatrix4(modelLocation, false, ref model);
@@ -226,58 +236,6 @@ public class WorldManager : ScriptingNode
 
     }
 
-    public void CheckFrustum()
-    {
-        Camera camera = Game.Camera;
-        camera.CalculateFrustumPlanes();
-        
-        int renderCount = 0;
-        Info.VertexCount = 0;
-        
-        foreach (var (_, chunkEntry) in ChunkManager.ActiveChunks)
-        {
-            var chunk = chunkEntry.Chunk;
-
-            bool frustum = camera.FrustumIntersects(chunk.boundingBox);
-            bool baseDisabled = chunkEntry.Stage != ChunkStage.Created || !frustum || chunk.BlockRendering;
-
-            bool isDisabled = chunk.IsDisabled;
-            chunk.IsDisabled = baseDisabled || !chunk.HasBlocks;
-
-            if (!isDisabled && chunk.IsDisabled)
-            {
-                OpaqueChunks.Remove(chunk.GetWorldPosition());
-            }
-            else if (isDisabled && !chunk.IsDisabled)
-            {
-                OpaqueChunks.TryAdd(chunk.GetWorldPosition(), chunk);
-            }
-
-            bool isTransparentDisabled = chunk.IsTransparentDisabled;
-            chunk.IsTransparentDisabled = baseDisabled || !chunk.HasTransparentBlocks;
-
-            if (!isTransparentDisabled && chunk.IsTransparentDisabled)
-            {
-                TransparentChunks.Remove(chunk.GetWorldPosition());
-            }
-            else if (isTransparentDisabled && !chunk.IsTransparentDisabled)
-            {
-                TransparentChunks.TryAdd(chunk.GetWorldPosition(), chunk);
-            }
-
-            if (chunk.IsDisabled && chunk.IsTransparentDisabled)
-                continue;
-
-            renderCount++;
-            Info.VertexCount += chunk.VertexCount;
-        }
-
-        if (renderCount != _oldRenderedChunks)
-        {
-            Info.SetGlobalChunkInfo(renderCount, Info.VertexCount);
-            _oldRenderedChunks = renderCount;
-        }
-    }
 
     public void RenderWireframe()
     {
@@ -357,7 +315,7 @@ public class WorldManager : ScriptingNode
         block = Block.Air;
         stage = ChunkStage.Empty;
 
-        Vector3i chunkPosition = VoxelData.BlockToChunkPosition(blockPosition);
+        Vector3i chunkPosition = VoxelData.ChunkToRelativePosition(VoxelData.BlockToChunkPosition(blockPosition));
 
         if (!ChunkManager.GetChunk(chunkPosition, out ChunkEntry? entry)) 
             return -1;
@@ -370,7 +328,7 @@ public class WorldManager : ScriptingNode
     public static bool GetBlock(Vector3i blockPosition, out Block block)
     {
         block = Block.Air;
-        Vector3i chunkPosition = VoxelData.BlockToChunkPosition(blockPosition);
+        Vector3i chunkPosition = VoxelData.ChunkToRelativePosition(VoxelData.BlockToChunkPosition(blockPosition));
 
         if (!ChunkManager.GetChunk(chunkPosition, out Chunk? chunk)) 
             return false;
@@ -435,12 +393,24 @@ public class WorldManager : ScriptingNode
     {
         chunkData = Chunk.Empty;
 
-        Vector3i chunkPosition = VoxelData.BlockToChunkPosition(blockPosition);
+        Vector3i chunkPosition = VoxelData.ChunkToRelativePosition(VoxelData.BlockToChunkPosition(blockPosition));
 
-        if (!ChunkManager.GetChunk(chunkPosition, out Chunk? chunk))
+        if (!ChunkManager.GetChunk(chunkPosition, out ChunkEntry? entry))
             return false;
 
-        chunk.blockStorage.SetBlock(VoxelData.BlockToRelativePosition(blockPosition), block);
+        entry.Chunk.blockStorage.SetBlock(VoxelData.BlockToRelativePosition(blockPosition), block);
+        entry.SetStage(ChunkStage.ToBeRendered);
+        if (VoxelData.BlockOnBorder(blockPosition, out var offsets))
+        {
+            foreach (var offset in offsets)
+            {
+                if (ChunkManager.GetChunk(chunkPosition + offset, out ChunkEntry? newEntry))
+                {
+                    newEntry.SetStage(ChunkStage.ToBeRendered);
+                }
+            }
+        }
+        chunkData = entry.Chunk;
         return true;
     }
 
@@ -449,12 +419,24 @@ public class WorldManager : ScriptingNode
         chunkData = Chunk.Empty;
         swapped = Block.Air;
 
-        Vector3i chunkPosition = VoxelData.BlockToChunkPosition(blockPosition);
+        Vector3i chunkPosition = VoxelData.ChunkToRelativePosition(VoxelData.BlockToChunkPosition(blockPosition));
 
-        if (!ChunkManager.GetChunk(chunkPosition, out Chunk? chunk))
+        if (!ChunkManager.GetChunk(chunkPosition, out ChunkEntry? entry))
             return false;
         
-        swapped = chunk.blockStorage.GetRemoveBlock(VoxelData.BlockToRelativePosition(blockPosition), block);
+        swapped = entry.Chunk.blockStorage.GetRemoveBlock(VoxelData.BlockToRelativePosition(blockPosition), block);
+        entry.SetStage(ChunkStage.ToBeRendered);
+        if (VoxelData.BlockOnBorder(blockPosition, out var offsets))
+        {
+            foreach (var offset in offsets)
+            {
+                if (ChunkManager.GetChunk(chunkPosition + offset, out ChunkEntry? newEntry))
+                {
+                    newEntry.SetStage(ChunkStage.ToBeRendered);
+                }
+            }
+        }
+        chunkData = entry.Chunk;
         return true;
     }
     
@@ -464,8 +446,8 @@ public class WorldManager : ScriptingNode
         CWorldMultithreadNodeManager.Clear();
         Chunk.Chunks = [];
 
-        OpaqueChunks = [];
-        TransparentChunks = [];
+        ChunkManager.OpaqueChunks = [];
+        ChunkManager.TransparentChunks = [];
 
         GC.Collect();
         GC.WaitForPendingFinalizers();

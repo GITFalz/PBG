@@ -51,7 +51,7 @@ public static class ChunkStageHandler
                 }
                 else
                 {
-                    entry.SetStage(ChunkStage.ToBeGenerated);
+                    entry.SetStage(ChunkStage.ToBeFreed);
                 }     
                 break;
 
@@ -66,6 +66,8 @@ public static class ChunkStageHandler
                 break;
 
             case ChunkStage.ToBeFreed:
+                entry.Chunk.Status = ChunkStatus.Hidden;
+                ChunkManager.FreeChunk(entry);
                 entry.SetStage(ChunkStage.Free);
                 break;
 

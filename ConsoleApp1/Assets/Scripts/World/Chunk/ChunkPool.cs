@@ -36,6 +36,7 @@ public static class ChunkPool
         else
         {
             Chunk chunk = FreeChunks[0];
+            chunk.Clear();
             FreeChunks.RemoveAt(0);
             chunk.SetPosition(position);
             return chunk;

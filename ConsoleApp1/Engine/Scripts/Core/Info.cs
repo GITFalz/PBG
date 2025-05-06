@@ -45,9 +45,6 @@ public class Info
     private static Action _updateBlocks = () => { };
     private static Action _toggleAction = () => { };
 
-    private static ArrayIDBO indirectBuffer = new([]);
-    private static List<DrawArraysIndirectCommand> _indirectCommands = [];
-
     private static object lockObj = new object();
 
     public static bool RenderInfo = false;
@@ -130,7 +127,7 @@ public class Info
         if (FpsUpdate())
         {
             FpsText.SetText($"Fps: {GameTime.Fps}", 1.2f).UpdateCharacters();
-            long memoryBytes = Process.GetCurrentProcess().WorkingSet64; 
+            long memoryBytes = Process.GetCurrentProcess().WorkingSet64;  
             RamUsageText.SetText($"Ram: {memoryBytes / (1024 * 1024)} Mb", 1.2f).UpdateCharacters();
         }  
         
@@ -183,19 +180,6 @@ public class Info
             {
                 _blockData = [.. _blocks];
                 GenerateBlocks();
-                List<DrawArraysIndirectCommand> commands = new List<DrawArraysIndirectCommand>();
-                for (int i = 0; i < _blockData.Count; i++)
-                {
-                    DrawArraysIndirectCommand command = new DrawArraysIndirectCommand
-                    {
-                        count = 36,
-                        instanceCount = 1,
-                        first = i * 36,
-                        baseInstance = 0
-                    };
-                    commands.Add(command);
-                }
-                indirectBuffer.Renew(commands);
                 _updateBlocks = () => { };
             };
         } 
@@ -225,13 +209,13 @@ public class Info
 
         _blockVao.Bind();
         _blockSSBO.Bind(1);
-        indirectBuffer.Bind();
 
-        GL.MultiDrawArraysIndirect(PrimitiveType.Triangles, IntPtr.Zero, indirectBuffer.GetBufferCount(), 0);
+        GL.DrawArrays(PrimitiveType.Triangles, 0, _blockData.Count * 36);
+
+        Shader.Error("Error rendering info blocks");
         
         _blockSSBO.Unbind();
         _blockVao.Unbind();
-        indirectBuffer.Unbind();
 
         _blockShader.Unbind();
 

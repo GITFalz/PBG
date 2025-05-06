@@ -8,37 +8,37 @@ public class ChunkRenderingProcess : ThreadProcess
 
     public ChunkEntry Entry;
     public Chunk chunk => Entry.Chunk;
-    public bool Loaded = false;
 
-    public ChunkRenderingProcess(ChunkEntry entry, bool loaded = false)
+    private bool GenerationSuccess = false;
+    private bool OcclusionSuccess = false;
+    private bool Success = false;
+
+    public ChunkRenderingProcess(ChunkEntry entry) : base()
     {
         Entry = entry;
-        Loaded = loaded;
     }
 
-    protected override void Function()
+    public override void Function()
     {
+        OcclusionSuccess = GenerateOcclusion(Entry) != -1;
+        if (!OcclusionSuccess) return;
+        GenerationSuccess = GenerateMesh(Entry) != -1;
+        Success = OcclusionSuccess && GenerationSuccess;
+    }
+
+    protected override void OnCompleteBase()
+    {
+        if (!Success)   
+            Console.WriteLine($"Chunk Rendering Process completed for chunk {Entry.Chunk.GetWorldPosition()} with success false and free chunk: {Entry.FreeChunk}");
+
+        Entry.Process = null;
         if (Entry.CheckDelete()) return;
 
-        if (GenerateOcclusion(Entry) == -1)
-        {
-            if (Entry.CheckDelete()) return;
-
-            Entry.SetTimer(1f);
-            Entry.TrySetStage(ChunkStage.ToBeGenerated);
+        if (!Success)
+        { 
+            Entry.TrySetStage(ChunkStage.ToBeFreed);
             return;
         }
-
-        if (GenerateMesh(Entry) == -1)
-        {
-            if (Entry.CheckDelete()) return;
-
-            Entry.SetTimer(1f);
-            Entry.TrySetStage(ChunkStage.ToBeGenerated);
-            return;
-        }
-
-        if (Entry.CheckDelete()) return;
         
         Entry.TrySetStage(ChunkStage.Rendered);
     }
@@ -228,8 +228,6 @@ public class ChunkRenderingProcess : ThreadProcess
                                 Vector3i position = (x, y, z);
 
                                 int id = ids[side];
-                            
-                                chunkData.HasBlocks = true;
 
                                 chunkData.AddFace(position, width, height, side, id, (0, 0, 0, 0));
                             }
@@ -251,9 +249,6 @@ public class ChunkRenderingProcess : ThreadProcess
         {
             Vector3i chunkWorldPosition = chunkData.GetWorldPosition();
             chunkData.ClearMeshData();
-
-            chunkData.HasBlocks = false;
-            chunkData.HasTransparentBlocks = false;
 
             int index = 0;
             for (int y = 0; y < 32; y++)
@@ -323,12 +318,10 @@ public class ChunkRenderingProcess : ThreadProcess
 
                                 if (block.IsLiquid())
                                 {
-                                    chunkData.HasTransparentBlocks = true;
                                     chunkData.AddTransparentFace(position, 1, 1, side, id, ao);
                                 }
                                 else if (block.IsSolid())
                                 {
-                                    chunkData.HasBlocks = true;
                                     chunkData.AddFace(position, 1, 1, side, id, ao);
                                 }
                             }

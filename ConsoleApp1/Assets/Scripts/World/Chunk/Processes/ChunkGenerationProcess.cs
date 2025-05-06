@@ -3,39 +3,47 @@ using OpenTK.Mathematics;
 public class ChunkGenerationProcess : ThreadProcess
 {
     public ChunkEntry Entry;
+    public Chunk? chunk => Entry.Chunk;
     public bool Loaded = false;
+    public bool GenerationSuccess = false;
 
-    public ChunkGenerationProcess(ChunkEntry entry, bool loaded = false)
+    public ChunkGenerationProcess(ChunkEntry entry, bool loaded = false) : base()
     {
         Entry = entry;
         Loaded = loaded;
     }
 
-    protected override void Function()
+    public override void Function()
     {
-        Chunk chunk = Entry.Chunk;
+        if (!Loaded)
+        {
+            GenerationSuccess = GenerateChunk(ref Entry, chunk.GetWorldPosition(), ThreadIndex) != -1;
+        }
+    }
+
+    /// <summary>
+    /// The basic function that is called when the process is completed.
+    /// </summary>
+    protected override void OnCompleteBase() 
+    {
+        if (!GenerationSuccess)
+            Console.WriteLine($"Chunk Generation Process completed for chunk {Entry.Chunk.GetWorldPosition()} with success false and free chunk: {Entry.FreeChunk}");
+
+        Entry.Process = null;
+        if (Entry.CheckDelete()) return;
 
         if (!Loaded)
         {
-            if (Entry.CheckDelete()) return;
-            
-            if (GenerateChunk(ref Entry, chunk.GetWorldPosition(), ThreadIndex) == -1)
+            if (!GenerationSuccess)
             {
-                if (Entry.CheckDelete()) return;
-
-                Entry.SetTimer(1f);
-                Entry.TrySetStage(ChunkStage.ToBeGenerated);
+                Entry.TrySetStage(ChunkStage.ToBeFreed);
                 return;
             }
-
-            if (Entry.CheckDelete()) return;
 
             Entry.TrySetStage(ChunkStage.Generated);
         } 
         else
         {   
-            if (Entry.CheckDelete()) return;
-
             Entry.TrySetStage(ChunkStage.Populated);
         }
     }

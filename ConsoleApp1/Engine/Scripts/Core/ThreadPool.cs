@@ -59,6 +59,7 @@ public static class ThreadPool
                     process.SetThreadIndex(i);
                     var task = process.ExecuteAsync().ContinueWith(t =>
                     {
+                        process.OnComplete();
                         Pool[i] = null;
                         Interlocked.Decrement(ref CurrentProcessingThreads);
                     });
@@ -77,7 +78,7 @@ public static class ThreadPool
         {
             _action = action;
         }
-        protected override void Function()
+        public override void Function()
         {
             _action.Invoke();
         }
@@ -138,9 +139,27 @@ public static class ThreadPool
     }
 }
 
-public class ThreadProcess
+public class CustomProcess
+{
+    protected Action OnCompleteAction;
+
+    public CustomProcess()
+    {
+        OnCompleteAction = OnCompleteBase;
+    }
+
+    public virtual void Function() { }
+    protected virtual void OnCompleteBase() { }
+
+    public void OnComplete() { OnCompleteAction.Invoke(); }
+    public void SetOnCompleteAction(Action action) { OnCompleteAction = action; }
+}
+
+public class ThreadProcess : CustomProcess
 {
     public int ThreadIndex { get; private set; } = -1;
+
+    public ThreadProcess() : base() { }
 
     public void SetThreadIndex(int index) => ThreadIndex = index;
 
@@ -148,8 +167,6 @@ public class ThreadProcess
     {
         return Task.Run(Function);
     }
-
-    protected virtual void Function() { }
 }
 
 public enum TaskPriority

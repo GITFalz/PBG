@@ -108,6 +108,7 @@ public static class Mathf
     public static int SignNo0(float value) => value < 0 ? -1 : 1;
     
     public static float Abs(float value) => value < 0 ? -value : value;
+    public static int Abs(int value) => value < 0 ? -value : value;
     public static Vector3 Abs(Vector3 value) => new Vector3(Abs(value.X), Abs(value.Y), Abs(value.Z));
     public static Vector2 Abs(Vector2 value) => new Vector2(Abs(value.X), Abs(value.Y));
 

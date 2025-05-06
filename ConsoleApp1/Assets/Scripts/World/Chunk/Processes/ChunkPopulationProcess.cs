@@ -8,28 +8,31 @@ public class ChunkPopulationProcess : ThreadProcess
 
     public ChunkEntry Entry;
     public Chunk chunk => Entry.Chunk;
-    public bool Loaded = false;
+    public bool PopulationSuccess = false;
 
-    public ChunkPopulationProcess(ChunkEntry entry, bool loaded = false)
+    public ChunkPopulationProcess(ChunkEntry entry) : base()
     {
         Entry = entry;
-        Loaded = loaded;
     }
 
-    protected override void Function()
+    public override void Function()
     {
+        PopulationSuccess = PopulateChunk(Entry) != -1;
+    }
+
+    protected override void OnCompleteBase()
+    {
+        if (!PopulationSuccess)
+            Console.WriteLine($"Chunk Population Process completed for chunk {Entry.Chunk.GetWorldPosition()} with success false and free chunk: {Entry.FreeChunk}");
+
+        Entry.Process = null;
         if (Entry.CheckDelete()) return;
 
-        if (PopulateChunk(Entry) == -1)
+        if (!PopulationSuccess)
         {
-            if (Entry.CheckDelete()) return;
-
-            Entry.SetTimer(1f);
-            Entry.TrySetStage(ChunkStage.ToBeGenerated);
+            Entry.TrySetStage(ChunkStage.ToBeFreed);
             return;
         }
-
-        if (Entry.CheckDelete()) return;
         
         Entry.TrySetStage(ChunkStage.Populated);
     }
