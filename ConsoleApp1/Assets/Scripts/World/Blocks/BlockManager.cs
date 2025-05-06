@@ -88,7 +88,7 @@ public class CWorldBlock
     public int priority;
     public BlockState state;
     public UVmaps blockUVs = UVmaps.DefaultIndexUVmap;
-    public BlockChecker BlockChecker;
+    public BlockChecker? BlockChecker;
 
     public CWorldBlock()
     {
@@ -103,7 +103,7 @@ public class CWorldBlock
         BlockChecker = new();
     }
     
-    public CWorldBlock(string name, uint index, int priority, BlockState blockState, UVmaps blockUVs, BlockChecker blockChecker)
+    public CWorldBlock(string name, uint index, int priority, BlockState blockState, UVmaps blockUVs, BlockChecker? blockChecker)
     {
         blockName = name;
         this.index = index;

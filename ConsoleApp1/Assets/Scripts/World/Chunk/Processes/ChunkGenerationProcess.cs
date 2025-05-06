@@ -26,9 +26,6 @@ public class ChunkGenerationProcess : ThreadProcess
     /// </summary>
     protected override void OnCompleteBase() 
     {
-        if (!GenerationSuccess)
-            Console.WriteLine($"Chunk Generation Process completed for chunk {Entry.Chunk.GetWorldPosition()} with success false and free chunk: {Entry.FreeChunk}");
-
         Entry.Process = null;
         if (Entry.CheckDelete()) return;
 
@@ -83,7 +80,7 @@ public class ChunkGenerationProcess : ThreadProcess
                     if (entry.Blocked)
                         return -1;
 
-                    chunkData[x, y, z] = new Block(BlockState.Solid, 0);
+                    chunkData[x, y, z] = new Block(BlockState.Solid, 4);
                 }
                 
                 if (height <= 45)

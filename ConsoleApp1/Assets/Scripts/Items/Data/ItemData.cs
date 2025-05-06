@@ -65,11 +65,11 @@ public abstract class ItemData
 
     public static bool PlaceBlock(Vector3i position, Block block)
     {
-        return !BlockCollision.IsColliding(PlayerData.PhysicsBody.GetCollider(), position, 1) && WorldManager.SetBlock(PlayerData.LookingAtBlockPlacementPosition, block, out Chunk chunkData);
+        return PlayerData.LookingAtBlock && !BlockCollision.IsColliding(PlayerData.PhysicsBody.GetCollider(), position, 1) && WorldManager.SetBlock(PlayerData.LookingAtBlockPlacementPosition, block, out Chunk chunkData);
     }
 
     public static bool RemoveBlock(Vector3i position, out Block swappedBlock)
     {
-        return WorldManager.GetBlockState(position, out swappedBlock) == 0 && WorldManager.SetBlock(position, Block.Air, out _);  
+        return WorldManager.GetBlockState(position, out swappedBlock) == 0 && PlayerData.LookingAtBlock && WorldManager.SetBlock(position, Block.Air, out _);  
     }
 }

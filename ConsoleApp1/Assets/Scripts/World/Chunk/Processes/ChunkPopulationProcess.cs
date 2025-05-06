@@ -63,7 +63,9 @@ public class ChunkPopulationProcess : ThreadProcess
                         foreach (var cBlock in BlockManager.BlockPriorityList)
                         {
                             bool isValid = true;
-
+                            if (cBlock.BlockChecker == null)
+                                continue;   
+                                
                             foreach (var mask in cBlock.BlockChecker.BlockMasks)
                             {
                                 if (entry.Blocked)

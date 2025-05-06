@@ -19,8 +19,23 @@ public class PlayerStateMachine : ScriptingNode
     
     public static Vector3 ModifiedBlockPosition = (0, 0, 0);
 
+    private ShaderProgram _shaderProgram = new ShaderProgram("Entity/Entity.vert", "Entity/Entity.frag");
+    int playerModelLocation;
+    int playerViewLocation;
+    int playerProjectionLocation;
+    
     private ShaderProgram _hitShader = new ShaderProgram("Info/Hit.vert", "Info/Hit.frag");
     private VAO _hitVao = new VAO();
+    int hitModelLocation;
+    int hitViewLocation;
+    int hitProjectionLocation;
+    int hitFaceDataLocation;
+
+    private ShaderProgram _crosshairShader = new ShaderProgram("Utils/Rectangle.vert", "Inventory/Player/Crosshair.frag");
+    private VAO _crosshairVao = new VAO();
+    int crosshairModelLocation;
+    int crosshairProjectionLocation;
+    int crosshairSizeLocation;
     
     public static readonly Dictionary<PlayerMovementSpeed, float> Speeds = new Dictionary<PlayerMovementSpeed, float>()
     {
@@ -40,8 +55,6 @@ public class PlayerStateMachine : ScriptingNode
     // Animation
     private OldAnimationMesh _playerMesh;
     public PhysicsBody physicsBody;
-
-    private ShaderProgram _shaderProgram;
     
     public float yaw;
     
@@ -53,6 +66,8 @@ public class PlayerStateMachine : ScriptingNode
     private Vector3 _lastCameraPosition;
     private float _lastCameraYaw;
     private float _lastCameraPitch;
+    
+    private bool _renderPlayer = true;
 
     private Action _renderHit = () => {};
 
@@ -77,8 +92,6 @@ public class PlayerStateMachine : ScriptingNode
         _currentState = _gameState;
         _currentState.Enter(this);
         
-        _shaderProgram = new ShaderProgram("Entity/Entity.vert", "Entity/Entity.frag");
-        
         Transform.Position = new Vector3(0, 200, 0);
         physicsBody.SetPosition(Transform.Position);
         
@@ -92,6 +105,31 @@ public class PlayerStateMachine : ScriptingNode
         
         _playerMesh.GenerateBuffers();
         _playerMesh.UpdateMesh();
+
+        _shaderProgram.Bind();
+
+        playerModelLocation = _shaderProgram.GetLocation("model");
+        playerViewLocation = _shaderProgram.GetLocation("view");
+        playerProjectionLocation = _shaderProgram.GetLocation("projection");
+
+        _shaderProgram.Unbind();
+
+        _hitShader.Bind();
+
+        hitModelLocation = _hitShader.GetLocation("model");
+        hitViewLocation = _hitShader.GetLocation("view");
+        hitProjectionLocation = _hitShader.GetLocation("projection");
+        hitFaceDataLocation = _hitShader.GetLocation("faceData");
+
+        _hitShader.Unbind();
+
+        _crosshairShader.Bind();
+
+        crosshairModelLocation = _crosshairShader.GetLocation("model");
+        crosshairProjectionLocation = _crosshairShader.GetLocation("projection");
+        crosshairSizeLocation = _crosshairShader.GetLocation("size");
+
+        _crosshairShader.Unbind();
     }
 
     void Resize()
@@ -182,27 +220,51 @@ public class PlayerStateMachine : ScriptingNode
         GL.Enable(EnableCap.CullFace);
         GL.CullFace(TriangleFace.Back);
 
-        Camera camera = Game.Camera;
+        Matrix4 model;
+        Matrix4 projection;
 
-        _shaderProgram.Bind();
-        
-        Matrix4 model = Matrix4.CreateTranslation(Transform.Position);
-        Matrix4 view = camera.GetViewMatrix();
-        Matrix4 projection = camera.GetProjectionMatrix();
+        if (_renderPlayer)
+        {
+            Camera camera = Game.Camera;
 
-        int modelLocation = GL.GetUniformLocation(_shaderProgram.ID, "model");
-        int viewLocation = GL.GetUniformLocation(_shaderProgram.ID, "view");
-        int projectionLocation = GL.GetUniformLocation(_shaderProgram.ID, "projection");
-        
-        GL.UniformMatrix4(modelLocation, true, ref model);
-        GL.UniformMatrix4(viewLocation, true, ref view);
-        GL.UniformMatrix4(projectionLocation, true, ref projection);
+            _shaderProgram.Bind();
+            
+            model = Matrix4.CreateTranslation(Transform.Position);
+            Matrix4 view = camera.GetViewMatrix();
+            projection = camera.GetProjectionMatrix();
+            
+            GL.UniformMatrix4(playerModelLocation, true, ref model);
+            GL.UniformMatrix4(playerViewLocation, true, ref view);
+            GL.UniformMatrix4(playerProjectionLocation, true, ref projection);
 
-        _playerMesh.RenderMesh();
-        
-        _shaderProgram.Unbind();
+            _playerMesh.RenderMesh();
+            
+            _shaderProgram.Unbind();
+        }
 
         _renderHit();
+        
+        GL.DepthFunc(DepthFunction.Always);
+        GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+        
+        model = Matrix4.CreateTranslation(Game.CenterX - 5, Game.CenterY - 5, 0);
+        projection = Matrix4.CreateOrthographicOffCenter(0, Game.Width, Game.Height, 0, -1, 1);
+
+        _crosshairShader.Bind();
+
+        GL.UniformMatrix4(crosshairModelLocation, true, ref model);
+        GL.UniformMatrix4(crosshairProjectionLocation, true, ref projection);
+        GL.Uniform2(crosshairSizeLocation, new Vector2(10, 10));
+
+        _crosshairVao.Bind();
+
+        GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
+
+        _crosshairVao.Unbind();
+        _crosshairShader.Unbind();
+
+        GL.DepthFunc(DepthFunction.Less);
     }
 
     private void RenderHit(Vector4i data)
@@ -213,15 +275,10 @@ public class PlayerStateMachine : ScriptingNode
         Matrix4 view = Game.Camera.ViewMatrix;
         Matrix4 projection = Game.Camera.ProjectionMatrix;
 
-        int modelLocationA = GL.GetUniformLocation(_hitShader.ID, "model");
-        int viewLocationA = GL.GetUniformLocation(_hitShader.ID, "view");
-        int projectionLocationA = GL.GetUniformLocation(_hitShader.ID, "projection");
-        int faceDataLocationA = GL.GetUniformLocation(_hitShader.ID, "faceData");
-
-        GL.UniformMatrix4(viewLocationA, true, ref view);
-        GL.UniformMatrix4(projectionLocationA, true, ref projection);
-        GL.UniformMatrix4(modelLocationA, true, ref model);
-        GL.Uniform4(faceDataLocationA, data);
+        GL.UniformMatrix4(hitModelLocation, true, ref model);
+        GL.UniformMatrix4(hitViewLocation, true, ref view);
+        GL.UniformMatrix4(hitProjectionLocation, true, ref projection);
+        GL.Uniform4(hitFaceDataLocation, data);
 
         _hitVao.Bind();
 
@@ -288,6 +345,7 @@ public class PlayerStateMachine : ScriptingNode
     public void ToggleView()
     {
         Game.Camera.SetCameraMode(Game.Camera.GetCameraMode() == CameraMode.Centered ? CameraMode.Follow : CameraMode.Centered);
+        _renderPlayer = Game.Camera.GetCameraMode() == CameraMode.Follow;
     }
 
     public bool IsHuggingWall()

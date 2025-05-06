@@ -58,6 +58,7 @@ public class BlockItemData : ItemData
     { 
         if (RemoveBlock(PlayerData.LookingAtBlockPosition, out Block swappedBlock) && BlockManager.GetBlock(swappedBlock.BlockId(), out var block))
         {
+            Console.WriteLine($"Swapped {block}");
             PlayerInventoryManager.AddBlock(block);
         }
     }

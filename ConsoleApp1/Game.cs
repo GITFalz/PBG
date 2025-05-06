@@ -202,19 +202,12 @@ public class Game : GameWindow
             new BlockMask((0, 0, 0), new BlockTest(Block.Solid, MaskType.State)),
             new BlockMask((0, 1, 0), new BlockTest(Block.Liquid, MaskType.State)) 
         );
-    
-        BlockChecker stoneMask = new BlockChecker(
-            new BlockMask((0, 0, 0), new BlockTest(Block.Solid, MaskType.State)),
-            new BlockMask((0, 1, 0), new BlockTest(Block.Solid, MaskType.State)),
-            new BlockMask((0, 2, 0), new BlockTest(Block.Solid, MaskType.State)),
-            new BlockMask((0, 3, 0), new BlockTest(Block.Air, MaskType.State))
-        );
 
         CWorldBlock grass = new("grass_block", 0, 1, BlockState.Solid, new([0, 0, 1, 0, 2, 0]), grassMask);
         CWorldBlock dirt = new("dirt_block", 1, 2, BlockState.Solid, new([2, 2, 2, 2, 2, 2]), dirtMask);
         CWorldBlock sand = new("sand_block", 2, 3, BlockState.Solid, new([4, 4, 4, 4, 4, 4]), sandMask);
         CWorldBlock water = new("water_block", 3, 4, BlockState.Liquid, new([5, 5, 5, 5, 5, 5]), waterMask);
-        CWorldBlock stone = new("stone_block", 4, 5, BlockState.Solid, new([3, 3, 3, 3, 3, 3]), stoneMask);
+        CWorldBlock stone = new("stone_block", 4, 5, BlockState.Solid, new([3, 3, 3, 3, 3, 3]), null);
         
         BlockManager.Add(grass);
         BlockManager.Add(dirt);
