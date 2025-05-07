@@ -1,3 +1,5 @@
+using OpenTK.Mathematics;
+
 public class CWorldMinMaxNode : CWorldGetterNode
 {
     public float Min = 0;
@@ -12,6 +14,11 @@ public class CWorldMinMaxNode : CWorldGetterNode
     {
         Operation = MinMaxInputOperations.GetOperation(type);
         Type = type;
+    }
+
+    public override void Init(Vector2 position)
+    {
+        InputNode.Init(position);
     }
 
     public override float GetValue()

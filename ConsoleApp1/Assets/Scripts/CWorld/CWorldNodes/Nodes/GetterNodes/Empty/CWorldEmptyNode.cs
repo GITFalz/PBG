@@ -1,3 +1,5 @@
+using OpenTK.Mathematics;
+
 public class CWorldEmptyNode : CWorldGetterNode
 {
     public float Value = 0f;
@@ -9,6 +11,11 @@ public class CWorldEmptyNode : CWorldGetterNode
     public override void SetValue(float value)
     {
         Value = value;
+    }
+
+    public override void Init(Vector2 position)
+    {
+        // Do nothing
     }
 
     public override float GetValue()

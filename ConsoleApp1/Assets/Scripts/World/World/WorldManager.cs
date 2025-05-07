@@ -66,7 +66,7 @@ public class WorldManager : ScriptingNode
         {
             Scale = (0.01f, 0.01f),
         };
-        outputNode.InputNode = sampleNode;
+        outputNode.InputNode = sampleNode; 
 
         CWorldMultithreadNodeManager.AddNode(sampleNode);
         CWorldMultithreadNodeManager.Copy(ThreadPool.ThreadCount);

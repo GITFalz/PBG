@@ -1,3 +1,5 @@
+using OpenTK.Mathematics;
+
 public class CWorldDoubleInputNode : CWorldGetterNode
 {
     public float Value1 
@@ -24,7 +26,13 @@ public class CWorldDoubleInputNode : CWorldGetterNode
         Type = type;
     }
 
-    public override float GetValue()
+    public override void Init(Vector2 position)
+    {
+        InputNode1.Init(position);
+        InputNode2.Init(position);
+    }
+
+    public override float GetValue() 
     {
         return Operation.GetValue(InputNode1.GetValue(), InputNode2.GetValue());
     }

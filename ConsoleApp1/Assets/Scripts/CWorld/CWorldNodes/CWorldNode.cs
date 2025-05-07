@@ -1,3 +1,5 @@
+using OpenTK.Mathematics;
+
 public abstract class CWorldNode
 {
     public string Name = "CWorldNode";
@@ -10,7 +12,8 @@ public abstract class CWorldNode
         
     }
 
+    public abstract void Init(Vector2 position);
     public abstract CWorldNode Copy();
-    public bool IsEmpty() => Name == "Empty";
-    public bool IsntEmpty() => Name != "Empty";
+    public bool IsEmpty() => this is CWorldEmptyNode;
+    public bool IsntEmpty() => this is not CWorldEmptyNode;
 }

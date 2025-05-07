@@ -17,11 +17,13 @@ public struct Block
 
     public static Block Air = new Block(BlockState.Air, 0);
     public static Block Solid = new Block(BlockState.Solid, 0);
+    public static Block Stone = new Block(BlockState.Solid, 4);
     public static Block Liquid = new Block(BlockState.Liquid, 0);
 
     public uint blockData = 0;
     public uint ID => BlockId();
 
+    public Block() {}
     public Block(uint blockData) : this(BlockState.Air, blockData) { }
     public Block(BlockState blockState, uint blockData)
     {
@@ -128,6 +130,20 @@ public struct Block
     public override string ToString()
     {
         return $"Block: {BlockId()}, State: {State()}, Occlusion: {Occlusion()}, Rotation: {Rotation()}";
+    }
+}
+
+public static class BlockHelper
+{
+    public static Block GetDefault(BlockState blockState)
+    {
+        return blockState switch
+        {
+            BlockState.Air => Block.Air,
+            BlockState.Solid => Block.Solid,
+            BlockState.Liquid => Block.Liquid,
+            _ => Block.Air,
+        };
     }
 }
 

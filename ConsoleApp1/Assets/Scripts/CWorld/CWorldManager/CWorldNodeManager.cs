@@ -57,9 +57,8 @@ public static class CWorldMultithreadNodeManager
 public class CWorldNodeManager
 {
     public bool IsBeingUsed = false;
-
+ 
     public List<CWorldNode> CWorldNodes = [];
-    public List<CWorldInitNode> CWorldInitNodes = [];
     public CWorldOutputNode CWorldOutputNode = new();
 
     public Dictionary<string, CWorldNode> GetNodeDictionary()
@@ -79,32 +78,26 @@ public class CWorldNodeManager
     {
         CWorldNodes.Add(node);
         node.Name = $"Node{CWorldNodes.Count}";
-        if (node is CWorldInitNode initNode)
-        {
-            CWorldInitNodes.Add(initNode);
-        }
     }
 
     public void RemoveNode(CWorldNode node)
     {
         CWorldNodes.Remove(node);
-        if (node is CWorldInitNode initNode)
-        {
-            CWorldInitNodes.Remove(initNode);
-        }
     }
 
     public void Init(Vector2 position)
     {
-        foreach (var node in CWorldInitNodes)
-        {
-            node.Init(position);
-        }
+        CWorldOutputNode.Init(position);
     }
 
     public float GetValue()
     {
         return CWorldOutputNode.GetValue();
+    }
+
+    public Block GetState(int x, int y, int z)
+    {
+        return Block.Air;
     }
 
     public CWorldNodeManager Copy()
@@ -125,7 +118,6 @@ public class CWorldNodeManager
 
         if (CWorldOutputNode.InputNode.IsntEmpty()) 
         {
-            Console.WriteLine("Type: " + CWorldOutputNode.InputNode.GetType().Name);
             string outputName = nodeNameMap[CWorldOutputNode.InputNode];
             copy.CWorldOutputNode.InputNode = (CWorldGetterNode)copiedNodes[outputName];
         }
@@ -175,7 +167,6 @@ public class CWorldNodeManager
             node.Delete();
         }
         CWorldNodes = [];
-        CWorldInitNodes = [];
         CWorldOutputNode.Delete();
     }
 }

@@ -12,7 +12,8 @@
 
 - [x] Change the player movement part of the physics engine
 - [x] Change the way the text is rendered on the screen
+- [x] Change chunk generation system
 
 ## Bugs
 
-- [ ] Fix holes in chunks 
+- [x] Fix holes in chunks 

@@ -1,19 +1,38 @@
 using OpenTK.Mathematics;
 
-public class CWorldBiomeNode : CWorldInitNode
+public class CWorldBiomeNode : CWorldGetterNode
 {
+    /// <summary>
+    /// the height of the biome in blocks, /!\ make sure the value is the height in blocks and not a noise value between 0 and 1
+    /// </summary>
+    public int Height {
+        get => (int)HeightMap.GetValue();
+        set => HeightMap.SetValue(value);
+    }
+
+    public CWorldGetterNode HeightMap = new CWorldEmptyNode("HeightMap");
+
     public override void Init(Vector2 position)
     {
-        throw new NotImplementedException();
+        HeightMap.Init(position);
     }
 
     public override float GetValue()
     {
-        throw new NotImplementedException();
+        return HeightMap.GetValue();
+    }
+
+    public override Block GetBlock(int y)
+    {
+        return HeightMap.GetBlock(y);
     }
 
     public override CWorldNode Copy()
     {
-        throw new NotImplementedException();
+        return new CWorldBiomeNode()
+        {
+            Name = Name,
+            Height = Height,
+        };
     }
 }

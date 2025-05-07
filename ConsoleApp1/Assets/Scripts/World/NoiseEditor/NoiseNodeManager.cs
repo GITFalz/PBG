@@ -224,6 +224,7 @@ public static class NoiseNodeManager
         GetConnectedNodes(DisplayNode, ConnectedNodeList);
 
         Dictionary<ConnectorNode, CWorldNode> nodeMap = [];
+        
         for (int i = 0; i < ConnectedNodeList.Count; i++)
         {
             ConnectorNode node = ConnectedNodeList[i];

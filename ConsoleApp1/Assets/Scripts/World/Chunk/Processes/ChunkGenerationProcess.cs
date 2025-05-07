@@ -62,11 +62,18 @@ public class ChunkGenerationProcess : ThreadProcess
                     return -1;
 
                 nodeManager.Init(new Vector2(x, z) + chunkWorldPosition2D);
-                float value = nodeManager.GetValue();
 
                 //float specNoise = GetSpecNoise(new Vector3(x, 0, z) + position, 200);
+
+                /*
+                for (int y = 0; y < Chunk.HEIGHT; y++)
+                {
+                    Block block = nodeManager.GetState(x, y, z);
+                }
+                */
+
                 
-                float splineVector = value;//GetSplineVector(specNoise);
+                float splineVector = nodeManager.GetValue();//GetSplineVector(specNoise);
                 
                 //float noise = NoiseLib.Noise(4, ((float)x + position.X + 0.001f) / 20f, ((float)z + position.Z + 0.001f) / 20f);
                 //int height = Mathf.FloorToInt(Mathf.Lerp(20, 100, (float)(noise * 0.05 + splineVector)));
@@ -83,6 +90,7 @@ public class ChunkGenerationProcess : ThreadProcess
                     chunkData[x, y, z] = new Block(BlockState.Solid, 4);
                 }
                 
+                 // temp
                 if (height <= 45)
                 {
                     for (int y = terrainHeight; y < waterHeight; y++)
