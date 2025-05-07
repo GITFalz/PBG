@@ -18,7 +18,7 @@ public class DoubleInputOperationConnectorNode : ConnectorNode
             return _value1; 
         } set {
             _value1 = value;
-            DoubleInputNodePrefab.Value1InputField.SetText(_value1.ToString());
+            DoubleInputNodePrefab.Value1InputField.SetText(NoSpace(_value1));
         }
     }
     public float Value2 {
@@ -26,7 +26,7 @@ public class DoubleInputOperationConnectorNode : ConnectorNode
             return _value2; 
         } set {
             _value2 = value;
-            DoubleInputNodePrefab.Value2InputField.SetText(_value2.ToString());
+            DoubleInputNodePrefab.Value2InputField.SetText(NoSpace(_value2));
         }
     }
 
@@ -71,11 +71,11 @@ public class DoubleInputOperationConnectorNode : ConnectorNode
 
         string value1 = InputGateConnector1.IsConnected && InputGateConnector1.OutputGateConnector != null
             ? InputGateConnector1.OutputGateConnector.Node.VariableName
-            : ( _value1Index != -1 ? $"values[{_value1Index}]" : Value1.ToString() );
+            : ( _value1Index != -1 ? $"values[{_value1Index}]" : NoSpace(Value1));
         
         string value2 = InputGateConnector2.IsConnected && InputGateConnector2.OutputGateConnector != null
             ? InputGateConnector2.OutputGateConnector.Node.VariableName
-            : ( _value2Index != -1 ? $"values[{_value2Index}]" : Value2.ToString() );
+            : ( _value2Index != -1 ? $"values[{_value2Index}]" : NoSpace(Value2));
 
         line += $"{Operation.GetFunction(value1, value2)};";
         return line;

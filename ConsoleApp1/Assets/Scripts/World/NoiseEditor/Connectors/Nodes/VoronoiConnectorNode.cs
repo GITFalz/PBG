@@ -17,7 +17,7 @@ public class VoronoiConnectorNode : ConnectorNode
             return _scale; 
         } set {
             _scale = value;
-            VoronoiNodePrefab.ScaleInputField.SetText(_scale.ToString());
+            VoronoiNodePrefab.ScaleInputField.SetText(NoSpace(_scale));
         }
     }
     public Vector2 Offset
@@ -26,8 +26,8 @@ public class VoronoiConnectorNode : ConnectorNode
             return _offset; 
         } set {
             _offset = value;
-            VoronoiNodePrefab.OffsetXInputField.SetText(_offset.X.ToString());
-            VoronoiNodePrefab.OffsetYInputField.SetText(_offset.Y.ToString());
+            VoronoiNodePrefab.OffsetXInputField.SetText(NoSpace(_offset.X));
+            VoronoiNodePrefab.OffsetYInputField.SetText(NoSpace(_offset.Y));
         }
     }
 

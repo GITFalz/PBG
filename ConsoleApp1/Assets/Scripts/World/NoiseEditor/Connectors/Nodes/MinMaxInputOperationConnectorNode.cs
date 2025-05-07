@@ -16,7 +16,7 @@ public class MinMaxInputOperationConnectorNode : ConnectorNode
             return _min; 
         } set {
             _min = value;
-            MinMaxInputNodePrefab.MinInputField.SetText(_min.ToString());
+            MinMaxInputNodePrefab.MinInputField.SetText(NoSpace(_min));
         }
     }
     public float Max {
@@ -24,7 +24,7 @@ public class MinMaxInputOperationConnectorNode : ConnectorNode
             return _max; 
         } set {
             _max = value;
-            MinMaxInputNodePrefab.MaxInputField.SetText(_max.ToString());
+            MinMaxInputNodePrefab.MaxInputField.SetText(NoSpace(_max));
         }
     }
 
@@ -67,8 +67,8 @@ public class MinMaxInputOperationConnectorNode : ConnectorNode
 
     public override string GetLine()
     {
-        string minValue = _minIndex != -1 ? $"values[{_minIndex}]" : Min.ToString();
-        string maxValue = _maxIndex != -1 ? $"values[{_maxIndex}]" : Max.ToString();
+        string minValue = _minIndex != -1 ? $"values[{_minIndex}]" : NoSpace(Min);
+        string maxValue = _maxIndex != -1 ? $"values[{_maxIndex}]" : NoSpace(Max);
 
         string line = $"    float {VariableName} = ";
         if (InputGateConnector.IsConnected && InputGateConnector.OutputGateConnector != null)

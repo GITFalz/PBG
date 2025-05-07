@@ -151,7 +151,7 @@ public abstract class ConnectorNode
 
     public static string NoSpace(float value)
     {
-        return NoSpace(value.ToString());
+        return NoSpace(String.Print.Float(value));
     }
 
     public static string NoSpace(int value)
@@ -161,17 +161,17 @@ public abstract class ConnectorNode
 
     public static string NoSpace(Vector4 value) 
     {
-        return NoSpace(value.ToString());
+        return NoSpace(String.Print.Vec4(value));
     }
 
     public static string NoSpace(Vector3 value)
     {
-        return NoSpace(value.ToString());
+        return NoSpace(String.Print.Vec3(value));
     }
 
     public static string NoSpace(Vector2 value)
     {
-        return NoSpace(value.ToString());
+        return NoSpace(String.Print.Vec2(value));
     }
 
     public static string NoSpace(string str)

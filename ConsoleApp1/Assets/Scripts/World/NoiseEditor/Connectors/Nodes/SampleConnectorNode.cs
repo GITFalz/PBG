@@ -14,7 +14,7 @@ public class SampleConnectorNode : ConnectorNode
             return _scale; 
         } set {
             _scale = value;
-            SampleNodePrefab.ScaleInputField.SetText(_scale.ToString());
+            SampleNodePrefab.ScaleInputField.SetText(NoSpace(_scale));
         }
     }
     public Vector2 Offset
@@ -23,8 +23,8 @@ public class SampleConnectorNode : ConnectorNode
             return _offset; 
         } set {
             _offset = value;
-            SampleNodePrefab.OffsetXInputField.SetText(_offset.X.ToString());
-            SampleNodePrefab.OffsetYInputField.SetText(_offset.Y.ToString());
+            SampleNodePrefab.OffsetXInputField.SetText(NoSpace(_offset.X));
+            SampleNodePrefab.OffsetYInputField.SetText(NoSpace(_offset.Y));
         }
     }
 
@@ -62,9 +62,9 @@ public class SampleConnectorNode : ConnectorNode
 
     public override string GetLine()
     {
-        string scaleValue = _scaleIndex != -1 ? $"values[{_scaleIndex}]" : Scale.ToString();
-        string offsetXValue = _offsetXIndex != -1 ? $"values[{_offsetXIndex}]" : Offset.X.ToString();
-        string offsetYValue = _offsetYIndex != -1 ? $"values[{_offsetYIndex}]" : Offset.Y.ToString();
+        string scaleValue = _scaleIndex != -1 ? $"values[{_scaleIndex}]" : NoSpace(Scale);
+        string offsetXValue = _offsetXIndex != -1 ? $"values[{_offsetXIndex}]" : NoSpace(Offset.X);
+        string offsetYValue = _offsetYIndex != -1 ? $"values[{_offsetYIndex}]" : NoSpace(Offset.Y);
 
         string scale = $"vec2({VariableName}Scale, {VariableName}Scale)";
         string offset = $"vec2({offsetXValue}, {offsetYValue})";

@@ -455,7 +455,7 @@ public static class NoiseNodeManager
 
                 string name = values[5];
 
-                Vector4 offset = Parse.Vec4(values[6]);
+                Vector4 offset = String.Parse.Vec4(values[6]);
 
                 UIDisplayNodePrefab displayNodePrefab = new UIDisplayNodePrefab(name, NodeController, offset);
 
@@ -475,8 +475,8 @@ public static class NoiseNodeManager
 
                 string outputName = values[10];
 
-                string name = values[12];
-                Vector4 offset = Parse.Vec4(values[13]);
+                string name = values[12]; 
+                Vector4 offset = String.Parse.Vec4(values[13]);
 
                 UIDoubleInputNodePrefab doubleInputNodePrefab = new UIDoubleInputNodePrefab(name, NodeController, offset, (DoubleInputOperationType)type);
 
@@ -501,7 +501,7 @@ public static class NoiseNodeManager
                 string outputName = values[9];
 
                 string name = values[11];
-                Vector4 offset = Parse.Vec4(values[12]);
+                Vector4 offset = String.Parse.Vec4(values[12]);
 
                 UIMinMaxInputNodePrefab minMaxInputNodePrefab = new UIMinMaxInputNodePrefab(name, NodeController, offset, (MinMaxInputOperationType)type);
 
@@ -522,7 +522,7 @@ public static class NoiseNodeManager
                 string outputName = values[6];
 
                 string name = values[8];
-                Vector4 offset = Parse.Vec4(values[9]);
+                Vector4 offset = String.Parse.Vec4(values[9]);
 
                 UISampleNodePrefab sampleNodePrefab = new UISampleNodePrefab(name, NodeController, offset);
 
@@ -531,7 +531,7 @@ public static class NoiseNodeManager
                     sampleNode.OutputGateConnector.Name = outputName;
 
                     sampleNode.Scale = Float.Parse(scale);
-                    sampleNode.Offset = Parse.Vec2(noiseOffset);
+                    sampleNode.Offset = String.Parse.Vec2(noiseOffset);
                 }
             }
             else if (nodeType == "Voronoi")
@@ -543,7 +543,7 @@ public static class NoiseNodeManager
                 string outputName = values[7];
 
                 string name = values[9];
-                Vector4 offset = Parse.Vec4(values[10]);
+                Vector4 offset = String.Parse.Vec4(values[10]);
 
                 UIVoronoiPrefab voronoiNodePrefab = new UIVoronoiPrefab(name, NodeController, offset, (VoronoiOperationType)type);
 
@@ -552,7 +552,7 @@ public static class NoiseNodeManager
                     voronoiNode.OutputGateConnector.Name = outputName;
 
                     voronoiNode.Scale = Float.Parse(scale);
-                    voronoiNode.Offset = Parse.Vec2(noiseOffset);
+                    voronoiNode.Offset = String.Parse.Vec2(noiseOffset);
                 }
             }
         }
