@@ -27,9 +27,23 @@ public abstract class ConnectorNode
         NoiseGlslNodeManager.UpdateValue(index, value);
     }
 
+    public void SetSlideValue(ref int value, UIInputField inputField, float speed, int index)
+    {
+        float delta = Input.GetMouseDelta().X * speed * GameTime.DeltaTime;
+        value += (int)delta;
+        inputField.SetText(value.ToString()).UpdateCharacters();
+        NoiseGlslNodeManager.UpdateValue(index, value);
+    }
+
     public void SetValue(ref float value, UIInputField inputField, float replacement, int index)
     {
         value = inputField.ParseFloat(replacement);
+        NoiseGlslNodeManager.UpdateValue(index, value);
+    }
+
+    public void SetValue(ref int value, UIInputField inputField, int replacement, int index)
+    {
+        value = inputField.ParseInt(replacement);
         NoiseGlslNodeManager.UpdateValue(index, value);
     }
 

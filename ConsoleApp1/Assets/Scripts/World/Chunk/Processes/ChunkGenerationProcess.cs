@@ -3,7 +3,7 @@ using OpenTK.Mathematics;
 public class ChunkGenerationProcess : ThreadProcess
 {
     public ChunkEntry Entry;
-    public Chunk? chunk => Entry.Chunk;
+    public Chunk chunk => Entry.Chunk;
     public bool Loaded = false;
     public bool GenerationSuccess = false;
 
@@ -65,14 +65,12 @@ public class ChunkGenerationProcess : ThreadProcess
 
                 //float specNoise = GetSpecNoise(new Vector3(x, 0, z) + position, 200);
 
-                /*
                 for (int y = 0; y < Chunk.HEIGHT; y++)
                 {
-                    Block block = nodeManager.GetState(x, y, z);
+                    chunkData[x, y, z] = nodeManager.GetBlock(y + position.Y);
                 }
-                */
 
-                
+                /*
                 float splineVector = nodeManager.GetValue();//GetSplineVector(specNoise);
                 
                 //float noise = NoiseLib.Noise(4, ((float)x + position.X + 0.001f) / 20f, ((float)z + position.Z + 0.001f) / 20f);
@@ -98,6 +96,7 @@ public class ChunkGenerationProcess : ThreadProcess
                         chunkData[x, y, z] = new Block(BlockState.Liquid, 0);
                     }
                 }
+                */
             }
         }
 

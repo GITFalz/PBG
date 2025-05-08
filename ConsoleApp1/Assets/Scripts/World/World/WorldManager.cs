@@ -62,13 +62,7 @@ public class WorldManager : ScriptingNode
         DepthPrepassFBO = new FBO(Game.Width, Game.Height);
 
         CWorldOutputNode outputNode = CWorldMultithreadNodeManager.CWorldOutputNode; 
-        CWorldSampleNode sampleNode = new CWorldSampleNode()
-        {
-            Scale = (0.01f, 0.01f),
-        };
-        outputNode.InputNode = sampleNode; 
-
-        CWorldMultithreadNodeManager.AddNode(sampleNode);
+        
         CWorldMultithreadNodeManager.Copy(ThreadPool.ThreadCount);
 
         ChunkManager.GenerateNearbyPositions();

@@ -23,6 +23,11 @@ public class CWorldEmptyNode : CWorldGetterNode
         return Value;
     }
 
+    public override Block GetBlock(int y)
+    {
+        return Block.Air;
+    }
+
     public override CWorldNode Copy()
     {
         return new CWorldEmptyNode()

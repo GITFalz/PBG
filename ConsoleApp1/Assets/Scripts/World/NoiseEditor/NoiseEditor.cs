@@ -208,6 +208,12 @@ public class NoiseEditor : ScriptingNode
         addMinMaxInputButton.SetTextCharCount("Add Min Max Input", 1.2f);
         UITextButton addDoubleInputButton = new("AddDoubleInputButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
         addDoubleInputButton.SetTextCharCount("Add Double Input", 1.2f);
+        UITextButton addRangeButton = new("AddRangeButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addRangeButton.SetTextCharCount("Add Range", 1.2f);
+        UITextButton addCombineButton = new("AddCombineButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addCombineButton.SetTextCharCount("Add Combine", 1.2f);
+        UITextButton addInitMaskButton = new("AddInitMaskButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addInitMaskButton.SetTextCharCount("Add Init Mask", 1.2f);
 
         // -- Embedded Collection --
         EmbeddedCollection = new("EmbeddedCollection", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (300, 0, 0, 0), 0);
@@ -262,6 +268,42 @@ public class NoiseEditor : ScriptingNode
             };
 
             NoiseNodeManager.AddNode(sampleNodePrefab);
+            SelectionCollection.SetVisibility(false);
+        });
+
+        addRangeButton.SetOnClick(() =>
+        {
+            Vector2 mousePosition = Input.GetMousePosition();
+            UIRangeNodePrefab rangeNodePrefab = new("RangeNodePrefab", NodeController, (mousePosition.X, mousePosition.Y, 0, 0))
+            {
+                Depth = 1f
+            };
+
+            NoiseNodeManager.AddNode(rangeNodePrefab);
+            SelectionCollection.SetVisibility(false);
+        });
+
+        addCombineButton.SetOnClick(() =>
+        {
+            Vector2 mousePosition = Input.GetMousePosition();
+            UICombineNodePrefab combineNodePrefab = new("CombineNodePrefab", NodeController, (mousePosition.X, mousePosition.Y, 0, 0))
+            {
+                Depth = 1f
+            };
+
+            NoiseNodeManager.AddNode(combineNodePrefab);
+            SelectionCollection.SetVisibility(false);
+        });
+
+        addInitMaskButton.SetOnClick(() =>
+        {
+            Vector2 mousePosition = Input.GetMousePosition();
+            UIInitMaskNodePrefab initMaskNodePrefab = new("InitMaskNodePrefab", NodeController, (mousePosition.X, mousePosition.Y, 0, 0))
+            {
+                Depth = 1f
+            };
+
+            NoiseNodeManager.AddNode(initMaskNodePrefab);
             SelectionCollection.SetVisibility(false);
         });
 
@@ -376,7 +418,7 @@ public class NoiseEditor : ScriptingNode
         addDoubleInputTypeCollection.AddElements(addAddButton, addSubButton, addMulButton, addDivButton, addMinButton, addMaxButton);
 
         EmbeddedCollection.AddElements(addVoronoiNodeCollection, addMinMaxInputTypeCollection, addDoubleInputTypeCollection);
-        selectionVerticalCollection.AddElements(addSampleButton, addVoronoiButton, addMinMaxInputButton, addDoubleInputButton);
+        selectionVerticalCollection.AddElements(addSampleButton, addVoronoiButton, addMinMaxInputButton, addDoubleInputButton, addRangeButton, addCombineButton, addInitMaskButton);
 
         SelectionCollection.AddElements(selectionVerticalCollection, EmbeddedCollection);
 

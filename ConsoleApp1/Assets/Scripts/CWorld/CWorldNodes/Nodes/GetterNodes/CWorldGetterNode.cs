@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using OpenTK.Mathematics;
 
 public abstract class CWorldGetterNode : CWorldNode
@@ -15,5 +16,11 @@ public abstract class CWorldGetterNode : CWorldNode
     public virtual Block GetBlock(int y)
     {
         return y <= Mathf.Lerp(0, 120, GetValue()) ? Block.Stone : Block.Air;
+    }
+
+    public virtual bool GetBlock(int y, [NotNullWhen(true)] out Block block)
+    {
+        block = GetBlock(y);
+        return true;
     }
 } 

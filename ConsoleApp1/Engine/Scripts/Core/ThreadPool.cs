@@ -60,7 +60,14 @@ public static class ThreadPool
 
     public static void Update()
     {
-        ProcessTasks();
+        try 
+        {
+            ProcessTasks();
+        }
+        catch (NullReferenceException e) 
+        {
+            Console.WriteLine($"ThreadPool Update Error: {e.Message}");
+        }
     }
 
     private static void ProcessTasks()

@@ -14,3 +14,18 @@ public static class Float
         }
     }
 }
+
+public static class Int
+{
+    public static int Parse(string value, int replacement = 1)
+    {
+        try 
+        {
+            return int.Parse(value, CultureInfo.InvariantCulture);
+        }
+        catch (Exception)
+        {
+            return replacement;
+        }
+    }
+}

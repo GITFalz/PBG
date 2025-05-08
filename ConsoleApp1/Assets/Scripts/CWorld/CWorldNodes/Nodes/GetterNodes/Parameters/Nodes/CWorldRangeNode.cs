@@ -1,6 +1,7 @@
+using System.Diagnostics.CodeAnalysis;
 using OpenTK.Mathematics;
 
-public class CWorldRangeNode : CWorldGetterNode
+public class CWorldRangeNode : CWorldParameterNode
 {
     /// <summary>
     /// the start position on the y axis, /!\ make sure the value is the position in blocks and not a noise value between 0 and 1
@@ -71,7 +72,23 @@ public class CWorldRangeNode : CWorldGetterNode
 
     public override Block GetBlock(int y)
     {
-        return (!Flipped) ? (y >= Start && y < Start + Height ? _trueBlock : _falseBlock) : (y >= Start - Height && y < Start ? _trueBlock : _falseBlock);
+        return IsInRange(y) ? _trueBlock : _falseBlock;
+    }
+
+    public override bool GetBlock(int y, [NotNullWhen(true)] out Block block)
+    {
+        block = _falseBlock;
+        if (!IsInRange(y)) 
+            return false;
+
+        block = _trueBlock;
+        return true;
+    }
+
+    public bool IsInRange(int y)
+    {
+        int start = Start; int height = Height;
+        return (!Flipped) ? (y >= Start && y < start + height) : (y >= start - height && y < start);
     }
 
     public override CWorldNode Copy()
@@ -82,5 +99,20 @@ public class CWorldRangeNode : CWorldGetterNode
             Start = Start,
             Height = Height,
         };
+    }
+
+    public override void Copy(CWorldNode copiedNode, Dictionary<string, CWorldNode> copiedNodes, Dictionary<CWorldNode, string> nodeNameMap)
+    {
+        if (StartNode.IsntEmpty())
+        {
+            string startName = nodeNameMap[StartNode];
+            ((CWorldRangeNode)copiedNode).StartNode = (CWorldGetterNode)copiedNodes[startName];
+        }
+        if (HeightNode.IsntEmpty())
+        {
+            string heightName = nodeNameMap[HeightNode];
+            ((CWorldRangeNode)copiedNode).HeightNode = (CWorldGetterNode)copiedNodes[heightName];
+        }
+        ((CWorldRangeNode)copiedNode).Flipped = Flipped;
     }
 }

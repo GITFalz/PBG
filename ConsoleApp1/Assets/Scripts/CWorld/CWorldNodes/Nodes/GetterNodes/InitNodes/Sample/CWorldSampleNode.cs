@@ -1,6 +1,6 @@
 using OpenTK.Mathematics;
 
-public class CWorldSampleNode : CWorldGetterNode
+public class CWorldSampleNode : CWorldGetterNode 
 {
     public Vector2 Offset = (0, 0);
     public Vector2 Scale = (1, 1);
@@ -18,7 +18,7 @@ public class CWorldSampleNode : CWorldGetterNode
     {
         if (position == _initPosition) 
             return;
-
+            
         NoiseValue = SampleNoise(position);
         
         if (Invert) 

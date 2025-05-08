@@ -2,6 +2,10 @@ using OpenTK.Mathematics;
 
 public class CWorldVoronoiNode : CWorldGetterNode
 {
+    public static CWorldVoronoiNode Basic => new CWorldVoronoiNode(VoronoiOperationType.Basic);
+    public static CWorldVoronoiNode Edge => new CWorldVoronoiNode(VoronoiOperationType.Edge);
+    public static CWorldVoronoiNode Distance => new CWorldVoronoiNode(VoronoiOperationType.Distance);
+
     public Vector2 Offset = (0, 0);
     public Vector2 Scale = (1, 1);
     public float Amplitude = 1.0f;

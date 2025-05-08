@@ -76,6 +76,9 @@ public class CWorldNodeManager
 
     public void AddNode(CWorldNode node)
     {
+        if (node is CWorldOutputNode)
+            return;
+
         CWorldNodes.Add(node);
         node.Name = $"Node{CWorldNodes.Count}";
     }
@@ -95,9 +98,9 @@ public class CWorldNodeManager
         return CWorldOutputNode.GetValue();
     }
 
-    public Block GetState(int x, int y, int z)
+    public Block GetBlock(int y)
     {
-        return Block.Air;
+        return CWorldOutputNode.GetBlock(y);
     }
 
     public CWorldNodeManager Copy()
@@ -127,28 +130,8 @@ public class CWorldNodeManager
             CWorldNode node = CWorldNodes[i];
             string name = nodeNameMap[node];
             CWorldNode copiedNode = copiedNodes[name];
-
-            if (node is CWorldMinMaxNode minMaxNode)
-            {
-                if (minMaxNode.InputNode.IsEmpty())
-                    continue;
-
-                string inputName = nodeNameMap[minMaxNode.InputNode];
-                ((CWorldMinMaxNode)copiedNode).InputNode = (CWorldGetterNode)copiedNodes[inputName];
-            }
-            if (node is CWorldDoubleInputNode doubleInputNode)
-            {
-                if (doubleInputNode.InputNode1.IsntEmpty())
-                {
-                    string inputName1 = nodeNameMap[doubleInputNode.InputNode1];
-                    ((CWorldDoubleInputNode)copiedNode).InputNode1 = (CWorldGetterNode)copiedNodes[inputName1];
-                }
-                if (doubleInputNode.InputNode2.IsntEmpty())
-                {
-                    string inputName2 = nodeNameMap[doubleInputNode.InputNode2];
-                    ((CWorldDoubleInputNode)copiedNode).InputNode2 = (CWorldGetterNode)copiedNodes[inputName2];
-                }
-            }
+            if (node is CWorldParameterNode parameterNode)
+                parameterNode.Copy(copiedNode, copiedNodes, nodeNameMap);
         }
 
         foreach (var node in copiedNodes.Values)

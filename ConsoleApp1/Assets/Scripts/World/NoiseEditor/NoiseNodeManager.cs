@@ -83,6 +83,40 @@ public static class NoiseNodeManager
             OutputGateConnectors.Add(node.OutputGateConnector);
             doubleInputNode.AddedMoveAction = UpdateLines;
         }
+        else if (nodePrefab is UICombineNodePrefab combineNodePrefab)
+        {
+            var node = new CombineConnectorNode(combineNodePrefab);
+            connectorNode = node;
+            NoiseNodes.Add(nodePrefab, node);
+            InputGateConnectors.Add(node.InputGateConnector1);
+            InputGateConnectors.Add(node.InputGateConnector2);
+            OutputGateConnectors.Add(node.OutputGateConnector);
+            combineNodePrefab.AddedMoveAction = UpdateLines;
+        }
+        else if (nodePrefab is UIRangeNodePrefab rangeNodePrefab)
+        {
+            var node = new RangeConnectorNode(rangeNodePrefab);
+            connectorNode = node;
+            NoiseNodes.Add(nodePrefab, node);
+            InputGateConnectors.Add(node.StartGateConnector);
+            InputGateConnectors.Add(node.HeightGateConnector);
+            OutputGateConnectors.Add(node.OutputGateConnector);
+            rangeNodePrefab.AddedMoveAction = UpdateLines;
+        }
+        else if (nodePrefab is UIInitMaskNodePrefab initMaskNodePrefab)
+        {
+            var node = new InitMaskConnectorNode(initMaskNodePrefab);
+            connectorNode = node;
+            NoiseNodes.Add(nodePrefab, node);
+            InputGateConnectors.Add(node.ChildGateConnector);
+            InputGateConnectors.Add(node.MaskGateConnector);
+            OutputGateConnectors.Add(node.OutputGateConnector);
+            initMaskNodePrefab.AddedMoveAction = UpdateLines;
+        }
+        else
+        {
+            return false;
+        }
 
         return true;
     }
@@ -276,6 +310,39 @@ public static class NoiseNodeManager
                 nodeMap.Add(node, cWorldDoubleInputNode);
                 nodeManager.AddNode(cWorldDoubleInputNode);
             }
+            else if (node is CombineConnectorNode combineNode)
+            {
+                CWorldCombineNode cWorldCombineNode = new CWorldCombineNode()
+                {
+                    Name = node.VariableName,
+                    First = combineNode.Value1,
+                    Second = combineNode.Value2,
+                };
+                nodeMap.Add(node, cWorldCombineNode);
+                nodeManager.AddNode(cWorldCombineNode);
+            }
+            else if (node is RangeConnectorNode rangeNode)
+            {
+                CWorldRangeNode cWorldRangeNode = new CWorldRangeNode()
+                {
+                    Name = node.VariableName,
+                    Start = rangeNode.Start,
+                    Height = rangeNode.Height,
+                    Flipped = rangeNode.Flipped,
+                };
+                nodeMap.Add(node, cWorldRangeNode);
+                nodeManager.AddNode(cWorldRangeNode);
+            }
+            else if (node is InitMaskConnectorNode initMaskNode)
+            {
+                CWorldInitMaskNode cWorldInitMaskNode = new CWorldInitMaskNode()
+                {
+                    Name = node.VariableName,
+                    Threshold = initMaskNode.Threshold,
+                };
+                nodeMap.Add(node, cWorldInitMaskNode);
+                nodeManager.AddNode(cWorldInitMaskNode);
+            }
         }
 
         foreach (var (node, cWorldNode) in nodeMap)
@@ -303,6 +370,40 @@ public static class NoiseNodeManager
                 if (doubleInputNode.InputGateConnector2.GetConnectedNode(out connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode2))
                 {
                     ((CWorldDoubleInputNode)cWorldNode).InputNode2 = (CWorldGetterNode)inputNode2;
+                }
+            }
+            else if (node is CombineConnectorNode combineNode)
+            {
+                if (combineNode.InputGateConnector1.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode1))
+                {
+                    ((CWorldCombineNode)cWorldNode).FirstNode = (CWorldGetterNode)inputNode1;
+                }
+                if (combineNode.InputGateConnector2.GetConnectedNode(out connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode2))
+                {
+                    ((CWorldCombineNode)cWorldNode).SecondNode = (CWorldGetterNode)inputNode2;
+                }
+            }
+            else if (node is RangeConnectorNode rangeNode)
+            {
+                if (rangeNode.StartGateConnector.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var startNode))
+                {
+                    ((CWorldRangeNode)cWorldNode).StartNode = (CWorldGetterNode)startNode;
+                }
+                if (rangeNode.HeightGateConnector.GetConnectedNode(out connectedNode) && nodeMap.TryGetValue(connectedNode, out var heightNode))
+                {
+                    ((CWorldRangeNode)cWorldNode).HeightNode = (CWorldGetterNode)heightNode;
+                }
+                ((CWorldRangeNode)cWorldNode).Flipped = rangeNode.Flipped;
+            }
+            else if (node is InitMaskConnectorNode initMaskNode)
+            {
+                if (initMaskNode.ChildGateConnector.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var childNode))
+                {
+                    ((CWorldInitMaskNode)cWorldNode).ChildNode = (CWorldGetterNode)childNode;
+                }
+                if (initMaskNode.MaskGateConnector.GetConnectedNode(out connectedNode) && nodeMap.TryGetValue(connectedNode, out var maskNode))
+                {
+                    ((CWorldInitMaskNode)cWorldNode).MaskNode = (CWorldGetterNode)maskNode;
                 }
             }
         }
@@ -491,6 +592,31 @@ public static class NoiseNodeManager
                     doubleInputNode.Value2 = Float.Parse(value2);
                 }
             }
+            else if (nodeType == "Combine")
+            {
+                string value1 = values[3];
+                string value2 = values[4];
+
+                string inputName1 = values[6];
+                string inputName2 = values[7];
+
+                string outputName = values[9];
+
+                string name = values[11];
+                Vector4 offset = String.Parse.Vec4(values[12]);
+
+                UICombineNodePrefab combineNodePrefab = new UICombineNodePrefab(name, NodeController, offset);
+
+                if (AddNode(combineNodePrefab, out ConnectorNode node) && node is CombineConnectorNode combineNode)
+                {
+                    combineNode.InputGateConnector1.Name = inputName1;
+                    combineNode.InputGateConnector2.Name = inputName2;
+                    combineNode.OutputGateConnector.Name = outputName;
+
+                    combineNode.Value1 = Float.Parse(value1);
+                    combineNode.Value2 = Float.Parse(value2);
+                }
+            }
             else if (nodeType == "MinMaxInputOperation")
             {
                 string min = values[3];
@@ -554,6 +680,57 @@ public static class NoiseNodeManager
 
                     voronoiNode.Scale = Float.Parse(scale);
                     voronoiNode.Offset = String.Parse.Vec2(noiseOffset);
+                }
+            }
+            else if (nodeType == "Range")
+            {
+                string start = values[3];
+                string height = values[4];
+                string flipped = values[5];
+                bool isFlipped = flipped == "1";
+
+                string inputName1 = values[7];
+                string inputName2 = values[8];
+
+                string outputName = values[10];
+
+                string name = values[12];
+                Vector4 offset = String.Parse.Vec4(values[13]);
+
+                UIRangeNodePrefab rangeNodePrefab = new UIRangeNodePrefab(name, NodeController, offset);
+
+                if (AddNode(rangeNodePrefab, out ConnectorNode node) && node is RangeConnectorNode rangeNode)
+                {
+                    rangeNode.StartGateConnector.Name = inputName1;
+                    rangeNode.HeightGateConnector.Name = inputName2;
+                    rangeNode.OutputGateConnector.Name = outputName;
+
+                    rangeNode.Start = Int.Parse(start);
+                    rangeNode.Height = Int.Parse(height);
+                    rangeNode.Flipped = isFlipped;
+                }
+            }
+            else if (nodeType == "InitMask")
+            {
+                string threshold = values[3];
+
+                string childName = values[5];
+                string maskName = values[6];
+
+                string outputName = values[8];
+
+                string name = values[10];
+                Vector4 offset = String.Parse.Vec4(values[11]);
+
+                UIInitMaskNodePrefab initMaskNodePrefab = new UIInitMaskNodePrefab(name, NodeController, offset);
+
+                if (AddNode(initMaskNodePrefab, out ConnectorNode node) && node is InitMaskConnectorNode initMaskNode)
+                {
+                    initMaskNode.ChildGateConnector.Name = childName;
+                    initMaskNode.MaskGateConnector.Name = maskName;
+                    initMaskNode.OutputGateConnector.Name = outputName;
+
+                    initMaskNode.Threshold = Float.Parse(threshold);
                 }
             }
         }

@@ -24,10 +24,16 @@ public class UITextButton : UIPrefab
         Collection = new UICollection($"{name}Collection", controller, anchorType, positionType, pivot ?? (0, 0, 0), scale ?? (100, 100), Offset, rotation ?? 0);
         TextCollection = new UICollection($"{name}TextCollection", controller, AnchorType.MiddleCenter, PositionType.Relative, (0, 0, 0), scale ?? (100, 100), (0, 0, 0, 0), 0);
         Text = new UIText($"{name}Text", controller, AnchorType.MiddleCenter, PositionType.Relative, Vector4.One, (0, 0, 0), (0, 0), (0, 0, 0, 0), 0);
-        Button = new UIButton($"{name}Button", controller, AnchorType.MiddleCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), scale ?? (100, 100), (0, 0, 0, 0), 0, textureIndex ?? 0, slice ?? (10, 0.05f), state);
+        Button = new UIButton($"{name}Button", controller, AnchorType.ScaleFull, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), scale ?? (100, 100), (0, 0, 0, 0), 0, textureIndex ?? 0, slice ?? (10, 0.05f), state);
 
         TextCollection.AddElements(Button, Text);
         Collection.AddElements(TextCollection);
+    }
+
+    public void CorrectScale()
+    {
+        Collection.SetScale(Text.newScale + (14, 14));
+        TextCollection.SetScale(Text.newScale + (14, 14));
     }
 
     public override UIElement[] GetElements()

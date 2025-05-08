@@ -140,7 +140,7 @@ public static class BlockHelper
         return blockState switch
         {
             BlockState.Air => Block.Air,
-            BlockState.Solid => Block.Solid,
+            BlockState.Solid => Block.Stone,
             BlockState.Liquid => Block.Liquid,
             _ => Block.Air,
         };

@@ -60,11 +60,6 @@ public class MinMaxInputOperationConnectorNode : ConnectorNode
         Type = type;
     }
 
-    public float GetValue(float value)
-    {
-        return Operation.GetValue(Min, Max, value);
-    }
-
     public override string GetLine()
     {
         string minValue = _minIndex != -1 ? $"values[{_minIndex}]" : NoSpace(Min);
