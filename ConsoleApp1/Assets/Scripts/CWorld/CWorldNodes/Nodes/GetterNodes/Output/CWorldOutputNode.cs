@@ -10,11 +10,7 @@ public class CWorldOutputNode : CWorldGetterNode
     public override void Init(Vector2 position)
     {
         InputNode.Init(position);
-    }
-
-    public override float GetValue()
-    {
-        return InputNode.GetValue();
+        CachedValue = InputNode.CachedValue;
     }
 
     public override Block GetBlock(int y)

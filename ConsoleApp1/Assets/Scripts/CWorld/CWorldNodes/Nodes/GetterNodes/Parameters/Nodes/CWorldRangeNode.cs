@@ -7,7 +7,7 @@ public class CWorldRangeNode : CWorldParameterNode
     /// the start position on the y axis, /!\ make sure the value is the position in blocks and not a noise value between 0 and 1
     /// </summary>
     public int Start {
-        get => (int)StartNode.GetValue();
+        get => (int)StartNode.CachedValue;
         set => StartNode.SetValue(value);
     }
 
@@ -15,7 +15,7 @@ public class CWorldRangeNode : CWorldParameterNode
     /// the height on the y axis, /!\ make sure the value is the height in blocks and not a noise value between 0 and 1
     /// </summary>
     public int Height {
-        get => (int)HeightNode.GetValue();
+        get => (int)HeightNode.CachedValue;
         set => HeightNode.SetValue(value);
     }
 
@@ -65,11 +65,6 @@ public class CWorldRangeNode : CWorldParameterNode
         HeightNode.Init(position);
     }
 
-    public override float GetValue()
-    {
-        return (!Flipped) ? (Start + Height) : (Start - Height);
-    }
-
     public override Block GetBlock(int y)
     {
         return IsInRange(y) ? _trueBlock : _falseBlock;
@@ -87,8 +82,8 @@ public class CWorldRangeNode : CWorldParameterNode
 
     public bool IsInRange(int y)
     {
-        int start = Start; int height = Height;
-        return (!Flipped) ? (y >= Start && y < start + height) : (y >= start - height && y < start);
+        int start = (int)StartNode.CachedValue; int height = (int)HeightNode.CachedValue;
+        return height != 0 && ((!Flipped) ? (y >= Start && y < start + height) : (y >= start - height && y < start));
     }
 
     public override CWorldNode Copy()

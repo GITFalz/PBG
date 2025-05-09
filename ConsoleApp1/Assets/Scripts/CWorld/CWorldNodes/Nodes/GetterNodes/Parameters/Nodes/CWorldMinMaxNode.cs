@@ -26,14 +26,7 @@ public class CWorldMinMaxNode : CWorldParameterNode
     public override void Init(Vector2 position)
     {
         InputNode.Init(position);
-    }
-
-    public override float GetValue()
-    {
-        float min = Min;
-        float max = Max;
-        float value = InputNode.GetValue();
-        return Operation.GetValue(min, max, value);
+        CachedValue = Operation.GetValue(Min, Max, InputNode.CachedValue);
     }
 
     public string GetFunction(string valueName)

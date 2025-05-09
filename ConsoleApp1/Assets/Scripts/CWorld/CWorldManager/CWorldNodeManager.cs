@@ -93,11 +93,6 @@ public class CWorldNodeManager
         CWorldOutputNode.Init(position);
     }
 
-    public float GetValue()
-    {
-        return CWorldOutputNode.GetValue();
-    }
-
     public Block GetBlock(int y)
     {
         return CWorldOutputNode.GetBlock(y);

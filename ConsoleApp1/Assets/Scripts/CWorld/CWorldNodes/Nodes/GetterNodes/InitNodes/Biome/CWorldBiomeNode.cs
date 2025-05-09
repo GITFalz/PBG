@@ -6,7 +6,7 @@ public class CWorldBiomeNode : CWorldGetterNode
     /// the height of the biome in blocks, /!\ make sure the value is the height in blocks and not a noise value between 0 and 1
     /// </summary>
     public int Height {
-        get => (int)HeightMap.GetValue();
+        get => (int)HeightMap.CachedValue;
         set => HeightMap.SetValue(value);
     }
 
@@ -15,11 +15,7 @@ public class CWorldBiomeNode : CWorldGetterNode
     public override void Init(Vector2 position)
     {
         HeightMap.Init(position);
-    }
-
-    public override float GetValue()
-    {
-        return HeightMap.GetValue();
+        CachedValue = HeightMap.CachedValue;
     }
 
     public override Block GetBlock(int y)

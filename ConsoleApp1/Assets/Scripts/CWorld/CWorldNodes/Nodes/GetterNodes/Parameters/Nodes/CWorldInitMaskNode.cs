@@ -10,13 +10,15 @@ public class CWorldInitMaskNode : CWorldParameterNode
     public override void Init(Vector2 position)
     {
         MaskNode.Init(position);
-        if (MaskNode.GetValue() > Threshold)
+        if (MaskNode.CachedValue > Threshold)
+        {
             ChildNode.Init(position);
-    }
-
-    public override float GetValue()
-    {
-        return MaskNode.GetValue() > Threshold ? ChildNode.GetValue() : 0;
+            CachedValue = ChildNode.CachedValue;
+        }
+        else
+        {
+            CachedValue = 0;
+        }
     }
 
     public override CWorldNode Copy()

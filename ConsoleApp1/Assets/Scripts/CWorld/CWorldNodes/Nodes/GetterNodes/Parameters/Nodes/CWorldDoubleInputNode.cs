@@ -11,13 +11,13 @@ public class CWorldDoubleInputNode : CWorldParameterNode
 
     public float Value1 
     {
-        get => InputNode1.GetValue();
+        get => InputNode1.CachedValue;
         set => InputNode1.SetValue(value);
     }
 
     public float Value2 
     {
-        get => InputNode2.GetValue();
+        get => InputNode2.CachedValue;
         set => InputNode2.SetValue(value);
     }
 
@@ -37,11 +37,7 @@ public class CWorldDoubleInputNode : CWorldParameterNode
     {
         InputNode1.Init(position);
         InputNode2.Init(position);
-    }
-
-    public override float GetValue() 
-    {
-        return Operation.GetValue(InputNode1.GetValue(), InputNode2.GetValue());
+        CachedValue = Operation.GetValue(InputNode1.CachedValue, InputNode2.CachedValue);
     }
 
     public override CWorldNode Copy()

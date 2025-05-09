@@ -10,17 +10,12 @@ public class CWorldEmptyNode : CWorldGetterNode
 
     public override void SetValue(float value)
     {
-        Value = value;
+        Value = value; CachedValue = value;
     }
 
     public override void Init(Vector2 position)
     {
-        // Do nothing
-    }
-
-    public override float GetValue()
-    {
-        return Value;
+        CachedValue = Value;
     }
 
     public override Block GetBlock(int y)

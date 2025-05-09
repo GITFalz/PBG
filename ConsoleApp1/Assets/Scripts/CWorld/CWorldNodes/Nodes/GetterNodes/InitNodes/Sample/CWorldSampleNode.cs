@@ -25,12 +25,8 @@ public class CWorldSampleNode : CWorldGetterNode
             NoiseValue = 1 - NoiseValue;
 
         NoiseValue *= Amplitude;
+        CachedValue = NoiseValue;
         _initPosition = position;
-    }
-
-    public override float GetValue()
-    {
-        return NoiseValue;
     }
 
     private float SampleNoise(Vector2 position)

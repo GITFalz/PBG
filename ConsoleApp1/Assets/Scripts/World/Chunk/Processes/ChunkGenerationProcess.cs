@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using OpenTK.Mathematics;
 
 public class ChunkGenerationProcess : ThreadProcess
@@ -53,6 +54,8 @@ public class ChunkGenerationProcess : ThreadProcess
         Chunk chunkData = entry.Chunk;
         nodeManager.IsBeingUsed = true;
 
+        Stopwatch stopwatch = Stopwatch.StartNew();
+
         Vector2 chunkWorldPosition2D = new Vector2(position.X + 0.001f, position.Z + 0.001f);
         for (var x = 0; x < Chunk.WIDTH; x++) 
         {
@@ -99,6 +102,9 @@ public class ChunkGenerationProcess : ThreadProcess
                 */
             }
         }
+
+        stopwatch.Stop();
+        Console.WriteLine($"Chunk generation took {stopwatch.ElapsedMilliseconds} ms");
 
         nodeManager.IsBeingUsed = false;
 

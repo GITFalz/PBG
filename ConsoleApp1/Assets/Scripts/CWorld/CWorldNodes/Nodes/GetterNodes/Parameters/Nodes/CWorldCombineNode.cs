@@ -3,12 +3,12 @@ using OpenTK.Mathematics;
 public class CWorldCombineNode : CWorldParameterNode
 {
     public float First {
-        get => FirstNode.GetValue();
+        get => FirstNode.CachedValue;
         set => FirstNode.SetValue(value);
     }
 
     public float Second {
-        get => SecondNode.GetValue();
+        get => SecondNode.CachedValue;
         set => SecondNode.SetValue(value);
     }
 
@@ -19,11 +19,6 @@ public class CWorldCombineNode : CWorldParameterNode
     {
         FirstNode.Init(position);
         SecondNode.Init(position);
-    }
-
-    public override float GetValue()
-    {
-        return Mathf.Max(FirstNode.GetValue(), SecondNode.GetValue());
     }
 
     public override Block GetBlock(int y)
