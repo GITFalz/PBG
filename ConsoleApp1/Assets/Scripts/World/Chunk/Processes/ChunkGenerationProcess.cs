@@ -16,10 +16,13 @@ public class ChunkGenerationProcess : ThreadProcess
 
     public override void Function()
     {
+        Entry.generationTime.Reset();
+        Entry.generationTime.Start();
         if (!Loaded)
         {
             GenerationSuccess = GenerateChunk(ref Entry, chunk.GetWorldPosition(), ThreadIndex) != -1;
         }
+        Entry.generationTime.Stop();
     }
 
     /// <summary>
@@ -53,8 +56,6 @@ public class ChunkGenerationProcess : ThreadProcess
 
         Chunk chunkData = entry.Chunk;
         nodeManager.IsBeingUsed = true;
-
-        Stopwatch stopwatch = Stopwatch.StartNew();
 
         Vector2 chunkWorldPosition2D = new Vector2(position.X + 0.001f, position.Z + 0.001f);
         for (var x = 0; x < Chunk.WIDTH; x++) 
@@ -102,9 +103,6 @@ public class ChunkGenerationProcess : ThreadProcess
                 */
             }
         }
-
-        stopwatch.Stop();
-        Console.WriteLine($"Chunk generation took {stopwatch.ElapsedMilliseconds} ms");
 
         nodeManager.IsBeingUsed = false;
 

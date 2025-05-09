@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 public static class ChunkStageHandler
 {
     public static void ExecuteStage(ChunkEntry entry)
@@ -30,6 +32,9 @@ public static class ChunkStageHandler
 
             case ChunkStage.Populated:
                 entry.SetStage(ChunkStage.ToBeRendered);
+                Info.TotalGenTime += entry.generationTime.ElapsedMilliseconds;
+                Info.TotalGenCount++;
+                Info.AvgChunkGenTime = Info.TotalGenTime / Info.TotalGenCount;
                 break;
 
             case ChunkStage.ToBeRendered:

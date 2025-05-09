@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
@@ -320,6 +321,7 @@ public class ChunkEntry
 {
     public ChunkStage Stage = ChunkStage.Empty;
     public Chunk Chunk = Chunk.Empty;
+    public Stopwatch generationTime = new Stopwatch();
     public object Lock = new object();
     public double WaitTimer = 0;
 

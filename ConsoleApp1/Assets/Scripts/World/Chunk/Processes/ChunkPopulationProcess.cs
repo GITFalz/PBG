@@ -17,14 +17,13 @@ public class ChunkPopulationProcess : ThreadProcess
 
     public override void Function()
     {
+        Entry.generationTime.Start();
         PopulationSuccess = PopulateChunk(Entry) != -1;
+        Entry.generationTime.Stop();
     }
 
     protected override void OnCompleteBase()
     {
-        if (!PopulationSuccess)
-            Console.WriteLine($"Chunk Population Process completed for chunk {Entry.Chunk.GetWorldPosition()} with success false and free chunk: {Entry.FreeChunk}");
-
         Entry.Process = null;
         if (Entry.CheckDelete()) return;
 

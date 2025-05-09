@@ -9,26 +9,33 @@ public class Info
 {
     private static UIController _infoController = new();
 
+    // Global Info
     public static UIText FpsText = new("FpsTest", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
-
     public static UIText GPUText = new("Gpu", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
+    public static UIText RamUsageText = new("RamUsage", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
 
+    // Player Info
     public static UIText PositionText = new("Position", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
 
+    // Chunk Info
     public static UIText GlobalChunkCount = new("GlobalChunkCount", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
     public static UIText GlobalChunkVertexCount = new("GlobalChunkVertexCount", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
+    public static UIText AvgChunkGenerationTime = new("AvgChunkGenerationTime", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
     
+    // Selected Chunk Info
     public static UIText SelectedChunkPosition = new("SelectedChunkPosition", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
     public static UIText SelectedChunkVertexCount = new("SelectedChunkVertexCount", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
     public static UIText SelectedChunkIndexCount = new("SelectedChunkIndexCount", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
-    
-    public static UIText RamUsageText = new("RamUsage", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
 
     private static int _oldVertexCount = 0;
     public static int VertexCount = 0;
 
     private static int _oldChunkCount = 0;
     public static int ChunkCount = 0;
+
+    public static double TotalGenTime = 0;
+    public static double TotalGenCount = 1;
+    public static double AvgChunkGenTime = 0;
 
 
     private static int frameCount = 0;
@@ -83,12 +90,13 @@ public class Info
         UIVerticalCollection globalChunkInfo = new("GlobalChunkInfo", _infoController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (1000, 100), (5, 5, 5, 5), (0, 0, 0, 20), 5, 0);
 
         UIText GlobalChunkInfo = new("GlobalChunkInfo", _infoController, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (100, 20), (5, 5, 5, 5), 0);
-        GlobalChunkInfo.SetTextCharCount("--Total--", 1.2f);
+        GlobalChunkInfo.SetTextCharCount("--Global--", 1.2f);
 
         GlobalChunkCount.SetMaxCharCount(50).SetText("Chunks: 0", 1.2f);
         GlobalChunkVertexCount.SetMaxCharCount(50).SetText("Vertices: 0", 1.2f);
+        AvgChunkGenerationTime.SetMaxCharCount(50).SetText("Average gen time: 0ms", 1.2f);
 
-        globalChunkInfo.AddElements(GlobalChunkInfo, GlobalChunkCount, GlobalChunkVertexCount);
+        globalChunkInfo.AddElements(GlobalChunkInfo, GlobalChunkCount, GlobalChunkVertexCount, AvgChunkGenerationTime);
 
 
         // Selected chunk info
@@ -129,6 +137,7 @@ public class Info
             FpsText.SetText($"Fps: {GameTime.Fps}", 1.2f).UpdateCharacters();
             long memoryBytes = Process.GetCurrentProcess().WorkingSet64;  
             RamUsageText.SetText($"Ram: {memoryBytes / (1024 * 1024)} Mb", 1.2f).UpdateCharacters();
+            AvgChunkGenerationTime.SetText($"Average gen time: {AvgChunkGenTime.ToString("0.00")}ms", 1.2f).UpdateCharacters();
         }  
         
         _infoController.Update(); 

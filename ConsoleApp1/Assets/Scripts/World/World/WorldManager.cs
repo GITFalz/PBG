@@ -75,6 +75,9 @@ public class WorldManager : ScriptingNode
         ChunkManager.Clear();
         ChunkManager.CheckChunks();
         ChunkManager.UpdateChunkNeighbours();
+        Info.TotalGenTime = 0;
+        Info.TotalGenCount = 1;
+        Info.AvgChunkGenTime = 0;
     }
     
     void Update()
