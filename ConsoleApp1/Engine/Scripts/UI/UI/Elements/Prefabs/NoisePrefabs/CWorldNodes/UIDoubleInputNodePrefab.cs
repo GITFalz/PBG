@@ -19,7 +19,7 @@ public class UIDoubleInputNodePrefab : UINoiseNodePrefab
     public UIText Value2TextField;
 
     private PositionType _positionType = PositionType.Absolute;
-    private Vector4 _buttonColor = (0.6f, 0.6f, 0.6f, 1f);
+    private Vector4 _buttonColor = DOUBLE_INPUT_COLOR;
     private Vector4 _backgroundColor = (0.5f, 0.5f, 0.5f, 1f);
     private Vector3 _pivot = (0, 0, 0);
     private Vector2 _scale = (100, 100);

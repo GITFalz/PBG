@@ -16,7 +16,7 @@ public class UIController
     public static ShaderProgram _textShader = UIData.TextShader;
     public static Texture _textTexture = UIData.TextTexture;
 
-    public static Matrix4 OrthographicProjection = Matrix4.Identity;
+    public static Matrix4 OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, 1, 1, 0, -1, 1);
     public List<UIElement> Elements = [];
     public List<UIElement> AbsoluteElements = [];
     public List<UIScrollView> ScrollViews = [];

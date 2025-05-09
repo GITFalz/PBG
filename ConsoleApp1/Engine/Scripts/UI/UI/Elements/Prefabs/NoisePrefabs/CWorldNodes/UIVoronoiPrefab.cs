@@ -21,7 +21,7 @@ public class UIVoronoiPrefab : UINoiseNodePrefab
     public Vector3 OutputPosition => OutputButton.Center;
 
     public PositionType PositionType = PositionType.Absolute;
-    public Vector4 ButtonColor = (0.6f, 0.6f, 0.6f, 1f);
+    public Vector4 ButtonColor = VORONOI_NODE_COLOR;
     public Vector4 BackgroundColor = (0.5f, 0.5f, 0.5f, 1f);
     public Vector3 Pivot = (0, 0, 0);
     public Vector2 Scale = (100, 100);

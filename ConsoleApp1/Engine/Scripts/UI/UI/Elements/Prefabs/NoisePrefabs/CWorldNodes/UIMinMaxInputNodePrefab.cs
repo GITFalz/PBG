@@ -18,7 +18,7 @@ public class UIMinMaxInputNodePrefab : UINoiseNodePrefab
     public UIInputField MaxInputField;
 
     public PositionType PositionType = PositionType.Absolute;
-    public Vector4 ButtonColor = (0.6f, 0.6f, 0.6f, 1f);
+    public Vector4 ButtonColor = MIN_MAX_INPUT_COLOR;
     public Vector4 BackgroundColor = (0.5f, 0.5f, 0.5f, 1f);
     public Vector3 Pivot = (0, 0, 0);
     public Vector2 Scale = (100, 100);

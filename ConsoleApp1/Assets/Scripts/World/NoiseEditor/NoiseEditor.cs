@@ -55,6 +55,8 @@ public class NoiseEditor : ScriptingNode
 
     private Inventory _inventory = new Inventory(10, 10);
 
+    private CurvePanel _curvePanel = new CurvePanel();
+
     public NoiseEditor()
     {
         InternalNodeWindowPosition = new Vector2i(0, Game.Height - NodePanelHeight);
@@ -505,6 +507,7 @@ public class NoiseEditor : ScriptingNode
         SidePanelController.Resize();
         NodeController.Resize();
         SelectionController.Resize();
+        _curvePanel.ProjectionMatrix = UIController.OrthographicProjection;
     }
 
     void Update()
@@ -586,6 +589,7 @@ public class NoiseEditor : ScriptingNode
 
     void Render()
     {
+        /*
         MainWindowController.RenderDepthTest();
 
         GL.Viewport(InternalNodeWindowPosition.X + 7, InternalNodeWindowPosition.Y + 7, NodePanelWidth - 14, NodePanelHeight - 14);
@@ -603,6 +607,13 @@ public class NoiseEditor : ScriptingNode
             SelectionController.RenderDepthTest();
 
         _colorPicker.RenderTexture();
+        */
+
+        GL.DepthFunc(DepthFunction.Always);
+
+        _curvePanel.Render();
+
+        GL.DepthFunc(DepthFunction.Less);
 
         /*
         Matrix4 model = Matrix4.CreateTranslation(100, 100, 0);
