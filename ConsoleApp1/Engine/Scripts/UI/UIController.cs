@@ -42,8 +42,8 @@ public class UIController
 
     public Matrix4 ModelMatrix = Matrix4.Identity;
 
-    public Vector3 Position { get; private set; } = (0, 0, 0);
-    public float Scale { get; private set; } = 1f;
+    public Vector3 Position = (0, 0, 0);
+    public float Scale = 1f;
 
     public Vector3 _localPosition = (0, 0, 0);
 

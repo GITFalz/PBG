@@ -124,6 +124,11 @@ public abstract class ConnectorNode
         output.Connect(input);
     }
 
+    public void Disconnect()
+    {
+        Disconnect(this);
+    }
+
     public static void Disconnect(ConnectorNode node)
     {
         foreach (var input in node.GetInputGateConnectors())

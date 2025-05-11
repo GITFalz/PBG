@@ -20,6 +20,10 @@ public static class Mathf
     public static float Clamp01(float value) => value < 0 ? 0 : value > 1 ? 1 : value;
     public static int Clamp01(int value) => value < 0 ? 0 : value > 1 ? 1 : value;
 
+    public static Vector2 Clamp(Vector2 min, Vector2 max, Vector2 value) => new Vector2(Clamp(min.X, max.X, value.X), Clamp(min.Y, max.Y, value.Y));
+    public static Vector3 Clamp(Vector3 min, Vector3 max, Vector3 value) => new Vector3(Clamp(min.X, max.X, value.X), Clamp(min.Y, max.Y, value.Y), Clamp(min.Z, max.Z, value.Z));
+    public static Vector4 Clamp(Vector4 min, Vector4 max, Vector4 value) => new Vector4(Clamp(min.X, max.X, value.X), Clamp(min.Y, max.Y, value.Y), Clamp(min.Z, max.Z, value.Z), Clamp(min.W, max.W, value.W));
+
     public static float Pow(float value, float power) => (float)Math.Pow(value, power);
     public static double Pow(double value, double power) => Math.Pow(value, power);
     

@@ -53,9 +53,7 @@ public class NoiseEditor : ScriptingNode
 
     private float VoronoiSize = 10f;
 
-    private Inventory _inventory = new Inventory(10, 10);
-
-    private CurvePanel _curvePanel = new CurvePanel();
+    private List<CurveWindow> _curveWindows = new List<CurveWindow>();
 
     public NoiseEditor()
     {
@@ -216,6 +214,8 @@ public class NoiseEditor : ScriptingNode
         addCombineButton.SetTextCharCount("Add Combine", 1.2f);
         UITextButton addInitMaskButton = new("AddInitMaskButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
         addInitMaskButton.SetTextCharCount("Add Init Mask", 1.2f);
+        UITextButton addCurveButton = new("AddCurveButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addCurveButton.SetTextCharCount("Add Curve", 1.2f);
 
         // -- Embedded Collection --
         EmbeddedCollection = new("EmbeddedCollection", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (300, 0, 0, 0), 0);
@@ -306,6 +306,18 @@ public class NoiseEditor : ScriptingNode
             };
 
             NoiseNodeManager.AddNode(initMaskNodePrefab);
+            SelectionCollection.SetVisibility(false);
+        });
+
+        addCurveButton.SetOnClick(() =>
+        {
+            Vector2 mousePosition = Input.GetMousePosition();
+            UICurveNodePrefab curveNodePrefab = new("CurveNodePrefab", NodeController, (mousePosition.X, mousePosition.Y, 0, 0))
+            {
+                Depth = 1f
+            };
+
+            NoiseNodeManager.AddNode(curveNodePrefab);
             SelectionCollection.SetVisibility(false);
         });
 
@@ -420,7 +432,7 @@ public class NoiseEditor : ScriptingNode
         addDoubleInputTypeCollection.AddElements(addAddButton, addSubButton, addMulButton, addDivButton, addMinButton, addMaxButton);
 
         EmbeddedCollection.AddElements(addVoronoiNodeCollection, addMinMaxInputTypeCollection, addDoubleInputTypeCollection);
-        selectionVerticalCollection.AddElements(addSampleButton, addVoronoiButton, addMinMaxInputButton, addDoubleInputButton, addRangeButton, addCombineButton, addInitMaskButton);
+        selectionVerticalCollection.AddElements(addSampleButton, addVoronoiButton, addMinMaxInputButton, addDoubleInputButton, addRangeButton, addCombineButton, addInitMaskButton, addCurveButton);
 
         SelectionCollection.AddElements(selectionVerticalCollection, EmbeddedCollection);
 
@@ -468,7 +480,7 @@ public class NoiseEditor : ScriptingNode
     {
         UIMinMaxInputNodePrefab singleInputNodePrefab = new("SingleInputNodePrefab", NodeController, (NodePosition.X, NodePosition.Y, 0, 0), type)
         {
-            Depth = 1f
+            Depth = 1f 
         };
 
         NoiseNodeManager.AddNode(singleInputNodePrefab);
@@ -507,7 +519,6 @@ public class NoiseEditor : ScriptingNode
         SidePanelController.Resize();
         NodeController.Resize();
         SelectionController.Resize();
-        _curvePanel.ProjectionMatrix = UIController.OrthographicProjection;
     }
 
     void Update()
@@ -541,6 +552,8 @@ public class NoiseEditor : ScriptingNode
 
         _colorPicker.Update();
         NodeController.Test(NodeWindowPosition);
+        UICurveNodePrefab.Update();
+        
         DisplayController.Test();
         SidePanelController.Test();
         SelectionController.Test();
@@ -589,13 +602,17 @@ public class NoiseEditor : ScriptingNode
 
     void Render()
     {
-        /*
+        GL.DepthFunc(DepthFunction.Less);
+
         MainWindowController.RenderDepthTest();
 
         GL.Viewport(InternalNodeWindowPosition.X + 7, InternalNodeWindowPosition.Y + 7, NodePanelWidth - 14, NodePanelHeight - 14);
 
         NodeController.RenderDepthTest(NodePanelProjectionMatrix);
+        UICurveNodePrefab.Render(NodeController.ModelMatrix, NodePanelProjectionMatrix);
         NoiseNodeManager.RenderLine(NodePanelProjectionMatrix);
+
+        GL.Clear(ClearBufferMask.DepthBufferBit);
 
         GL.Viewport(0, 0, Game.Width, Game.Height);
         
@@ -607,13 +624,6 @@ public class NoiseEditor : ScriptingNode
             SelectionController.RenderDepthTest();
 
         _colorPicker.RenderTexture();
-        */
-
-        GL.DepthFunc(DepthFunction.Always);
-
-        _curvePanel.Render();
-
-        GL.DepthFunc(DepthFunction.Less);
 
         /*
         Matrix4 model = Matrix4.CreateTranslation(100, 100, 0);

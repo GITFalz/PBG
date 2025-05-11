@@ -161,30 +161,35 @@ public abstract class UIElement
     public abstract float GetXScale();
 
     # region Setters for Events
-    public void SetOnClick(Action action)
+    public UIElement SetOnClick(Action action)
     {
         OnClick = new SerializableEvent(action); 
         CanTest = true ;
+        return this;
     } 
-    public void SetOnHover(Action action)
+    public UIElement SetOnHover(Action action)
     {
         OnHover = new SerializableEvent(action); 
         CanTest = true;
+        return this;
     }
-    public void SetOnHold(Action action)
+    public UIElement SetOnHold(Action action)
     {
         OnHold = new SerializableEvent(action); 
         CanTest = true;
+        return this;
     }
-    public void SetOnRelease(Action action)
+    public UIElement SetOnRelease(Action action)
     {
         OnRelease = new SerializableEvent(action); 
         CanTest = true;
+        return this;
     }
-    public void SetOnHoverOut(Action action)
+    public UIElement SetOnHoverOut(Action action)
     {
         OnHoverOut = new SerializableEvent(action); 
         CanTest = true;
+        return this;
     }
     # endregion
 

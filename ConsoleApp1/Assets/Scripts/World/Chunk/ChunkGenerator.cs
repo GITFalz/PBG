@@ -29,7 +29,8 @@ public class ChunkGenerator
             if (noise >= spline[i].X && noise <= spline[i + 1].X)
             {
                 // Calculate t as the normalized position between spline[i].X and spline[i + 1].X
-                float t = (noise - spline[i].X) / (spline[i + 1].X - spline[i].X);
+                float x = spline[i + 1].X - spline[i].X; x = x == 0 ? 1 : x;
+                float t = (noise - spline[i].X) / x;
                 return Mathf.Lerp(spline[i].Y, spline[i + 1].Y, t);
             }
         }

@@ -113,6 +113,15 @@ public static class NoiseNodeManager
             OutputGateConnectors.Add(node.OutputGateConnector);
             initMaskNodePrefab.AddedMoveAction = UpdateLines;
         }
+        else if (nodePrefab is UICurveNodePrefab curveNodePrefab)
+        {
+            var node = new CurveConnectorNode(curveNodePrefab);
+            connectorNode = node;
+            NoiseNodes.Add(nodePrefab, node);
+            InputGateConnectors.Add(node.InputGateConnector);
+            OutputGateConnectors.Add(node.OutputGateConnector);
+            curveNodePrefab.AddedMoveAction = UpdateLines;
+        }
         else
         {
             return false;
@@ -154,7 +163,7 @@ public static class NoiseNodeManager
             OutputGateConnectors.Remove(output);
         }
 
-        ConnectorNode.Disconnect(node);
+        node.Disconnect();
         NoiseNodes.Remove(nodePrefab);
     }
 
@@ -343,6 +352,18 @@ public static class NoiseNodeManager
                 nodeMap.Add(node, cWorldInitMaskNode);
                 nodeManager.AddNode(cWorldInitMaskNode);
             }
+            else if (node is CurveConnectorNode curveNode)
+            {
+                CWorldCurveNode cWorldCurveNode = new CWorldCurveNode()
+                {
+                    Name = node.VariableName,
+                    Min = curveNode.Min,
+                    Max = curveNode.Max,
+                    Spline = curveNode.CurveWindow.Points.ToArray(),
+                };
+                nodeMap.Add(node, cWorldCurveNode);
+                nodeManager.AddNode(cWorldCurveNode);
+            }
         }
 
         foreach (var (node, cWorldNode) in nodeMap)
@@ -404,6 +425,13 @@ public static class NoiseNodeManager
                 if (initMaskNode.MaskGateConnector.GetConnectedNode(out connectedNode) && nodeMap.TryGetValue(connectedNode, out var maskNode))
                 {
                     ((CWorldInitMaskNode)cWorldNode).MaskNode = (CWorldGetterNode)maskNode;
+                }
+            }
+            else if (node is CurveConnectorNode curveNode)
+            {
+                if (curveNode.InputGateConnector.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode))
+                {
+                    ((CWorldCurveNode)cWorldNode).InputNode = (CWorldGetterNode)inputNode;
                 }
             }
         }

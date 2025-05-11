@@ -22,7 +22,7 @@ public static class NoiseGlslNodeManager
     private static string NoiseFragmentPath;
     private static string NoiseFragmentPathCopy;
 
-    private static int _lineInsert = 320; // The line where the new lines will be inserted in the shader file
+    private static int _lineInsert = 331; // The line where the new lines will be inserted in the shader file
 
     static NoiseGlslNodeManager()
     {
@@ -61,13 +61,14 @@ public static class NoiseGlslNodeManager
             lines.Insert(lineIndex, newLine);
             lineIndex++;
         }
-        
-        _valueSSBO.Renew(values);
-        Console.WriteLine($"Values: {values.Count}");
+
+        Console.WriteLine($"Shader lines: {lines.Count}");
         foreach (var value in values)
         {
             Console.WriteLine(value);
         }
+        
+        _valueSSBO.Renew(values);
 
         File.WriteAllLines(NoiseFragmentPathCopy, lines);
 
@@ -131,6 +132,8 @@ public static class NoiseGlslNodeManager
         _valueSSBO.Bind(0);
 
         GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
+
+        Shader.Error("Error rendering noise shader: ");
 
         _valueSSBO.Unbind();
         _displayVAO.Unbind();
