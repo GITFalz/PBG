@@ -152,9 +152,15 @@ public class CurveConnectorNode : ConnectorNode
 
     public override string ToStringList()
     {
+        string offsets = "";
+        for (int i = 0; i < CurveWindow.Buttons.Count - 2; i++)
+        {
+            UIButton button = CurveWindow.Buttons[i+1];
+            offsets += $"{NoSpace(button.Offset)} ";
+        }
         return 
-            $"NodeType: MinMaxInputOperation " +
-            $"Values: {NoSpace(Min)} {NoSpace(Max)} " +
+            $"NodeType: Curve " +
+            $"Values: {NoSpace(Min)} {NoSpace(Max)} {NoSpace(CurveWindow.Buttons.Count - 2)} {offsets}" +
             $"Inputs: {NoSpace(InputGateConnector.Name)} " +
             $"Outputs: {NoSpace(OutputGateConnector.Name)} " +
             $"Prefab: {NoSpace(Name)} {NoSpace(UICurveNodePrefab.Collection.Offset)}";

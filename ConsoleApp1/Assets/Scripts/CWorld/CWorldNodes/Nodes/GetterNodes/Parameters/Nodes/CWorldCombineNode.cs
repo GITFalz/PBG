@@ -32,6 +32,24 @@ public class CWorldCombineNode : CWorldParameterNode
         return Block.Air;
     }
 
+    public override bool GetBlock(int y, out Block block)
+    {
+        if (FirstNode.GetBlock(y, out Block firstBlock))
+        {
+            block = firstBlock;
+            return true;
+        }
+
+        if (SecondNode.GetBlock(y, out Block secondBlock))
+        {
+            block = secondBlock;
+            return true;
+        }
+        
+        block = Block.Air;
+        return false;
+    }
+
     public override CWorldNode Copy()
     {
         return new CWorldCombineNode()

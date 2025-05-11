@@ -570,8 +570,8 @@ public static class NoiseNodeManager
         Dictionary<string, OutputGateConnector> outputGateConnectors = [];
         Dictionary<string, InputGateConnector> inputGateConnectors = [];
 
-        int nodeCount = int.Parse(lines[0].Split(' ')[1]);
-        int connectionsCount = int.Parse(lines[nodeCount + 1].Split(' ')[1]);
+        int nodeCount = Int.Parse(lines[0].Split(' ')[1]);
+        int connectionsCount = Int.Parse(lines[nodeCount + 1].Split(' ')[1]);
 
         for (int i = 0; i < nodeCount; i++)
         {
@@ -759,6 +759,43 @@ public static class NoiseNodeManager
                     initMaskNode.OutputGateConnector.Name = outputName;
 
                     initMaskNode.Threshold = Float.Parse(threshold);
+                }
+            }
+            else if (nodeType == "Curve")
+            {
+                string min = values[3];
+                string max = values[4];
+                int count = Int.Parse(values[5], 0);
+
+                List<Vector4> offsets = [];
+                for (int j = 0; j < count; j++)
+                {
+                    offsets.Add(String.Parse.Vec4(values[j + 6]));
+                }
+
+                string inputName = values[count+7];
+
+                string outputName = values[count+9];
+
+                string name = values[count+11];
+                Vector4 offset = String.Parse.Vec4(values[count+12]);
+
+                UICurveNodePrefab curveNodePrefab = new UICurveNodePrefab(name, NodeController, offset);
+                for (int j = 0; j < count; j++)
+                {
+                    UIButton button = curveNodePrefab.CurveWindow.AddButton();
+                    button.Offset = offsets[j];
+                }
+                curveNodePrefab.CurveWindow.GenerateButtons();
+                curveNodePrefab.CurveWindow.UpdatePoints();
+
+                if (AddNode(curveNodePrefab, out ConnectorNode node) && node is CurveConnectorNode curveNode)
+                {
+                    curveNode.InputGateConnector.Name = inputName;
+                    curveNode.OutputGateConnector.Name = outputName;
+
+                    curveNode.Min = Float.Parse(min);
+                    curveNode.Max = Float.Parse(max);
                 }
             }
         }

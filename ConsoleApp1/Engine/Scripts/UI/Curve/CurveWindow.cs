@@ -227,7 +227,7 @@ public class CurveWindow
         CurveNode?.UpdateCurve(this);
     }
 
-    public void AddButton()
+    public UIButton AddButton()
     {
         UIButton button = new UIButton("Button", Controller, AnchorType.TopLeft, PositionType.Absolute, (0.7f, 0.7f, 0.7f, 1f), (0, 0, 0), (20, 20), (Size.X / 2 - 10, Size.Y / 2 - 10, 0, 0), 0, 10, (10, 0.05f), UIState.Interactable);
         int index = 1;
@@ -241,7 +241,11 @@ public class CurveWindow
         button.SetOnHold(() => UpdateButton(button));
         button.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
         ButtonCollection.AddElement(button);
-        Controller.AddElement(button);
+        return button;
+    }
+
+    public void UpdateButtons()
+    {
         GenerateButtons();
         NoiseNodeManager.Compile();
         UpdatePoints();
@@ -284,7 +288,10 @@ public class CurveWindow
             return;
 
         if (Input.IsKeyPressed(Keys.A))
-            AddButton();
+        {
+            Controller.AddElement(AddButton());
+            UpdateButtons();
+        }
 
         if (Input.IsKeyPressed(Keys.D) && SelectedButton != null)
         {
