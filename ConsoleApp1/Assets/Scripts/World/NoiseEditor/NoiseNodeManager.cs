@@ -564,6 +564,7 @@ public static class NoiseNodeManager
         }
 
         CurrentFileName = fileName;
+        NoiseEditor.NodeNameField.SetText(fileName, 1.2f).UpdateCharacters();
 
         string[] lines = File.ReadAllLines(Path.Combine(Game.worldNoiseNodeNodeEditorPath, fileName + ".cWorldNode"));
 

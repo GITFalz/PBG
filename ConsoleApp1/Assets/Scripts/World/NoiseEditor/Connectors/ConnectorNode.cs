@@ -1,4 +1,5 @@
 using OpenTK.Mathematics;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public abstract class ConnectorNode
 {
@@ -11,6 +12,7 @@ public abstract class ConnectorNode
     public abstract string GetLine();
     public abstract void Select();
     public abstract void Deselect();
+    public abstract void Move(Vector2 delta);
     public abstract List<ConnectorNode> GetConnectedNodes(); 
     public abstract List<ConnectorNode> GetInputNodes();
     public abstract List<ConnectorNode> GetOutputNodes();
@@ -20,6 +22,14 @@ public abstract class ConnectorNode
     public abstract UIController GetUIController();
     public abstract string ToStringList();
     public abstract void SetValueReferences(List<float> values, ref int index);
+
+    public void SelectNode(ConnectorNode node)
+    {
+        if (!Input.IsKeyDown(Keys.LeftShift))
+            NoiseEditor.DeselectNodes();
+
+        NoiseEditor.SelectNode(node);
+    }
 
     public void SetSlideValue(ref float value, UIInputField inputField, float speed, int index)
     {

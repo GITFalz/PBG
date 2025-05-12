@@ -1,3 +1,4 @@
+using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 
 public class CombineConnectorNode : ConnectorNode
@@ -56,7 +57,7 @@ public class CombineConnectorNode : ConnectorNode
         NodePrefab.Value1TextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
         NodePrefab.Value2TextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
 
-        NodePrefab.Collection.SetOnClick(() => { NoiseEditor.Selected = true; NoiseEditor.SelectedNode = this; });
+        NodePrefab.Collection.SetOnClick(() => SelectNode(this));
     }
 
     public override void Select()
@@ -67,6 +68,13 @@ public class CombineConnectorNode : ConnectorNode
     public override void Deselect()
     {
         NodePrefab.SelectionImage.SetVisibility(false);
+    }
+
+    public override void Move(Vector2 delta)
+    {
+        NodePrefab.Collection.SetOffset(NodePrefab.Collection.Offset + (delta.X, delta.Y, 0, 0));
+        NodePrefab.Collection.Align();
+        NodePrefab.Collection.UpdateTransformation();
     }
 
     public override string GetLine()

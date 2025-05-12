@@ -1,3 +1,4 @@
+using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 
 public class InitMaskConnectorNode : ConnectorNode
@@ -40,7 +41,7 @@ public class InitMaskConnectorNode : ConnectorNode
 
         NodePrefab.ThresholdText.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
         
-        NodePrefab.Collection.SetOnClick(() => { NoiseEditor.Selected = true; NoiseEditor.SelectedNode = this; });
+        NodePrefab.Collection.SetOnClick(() => SelectNode(this));
     }
 
     public override void Select()
@@ -51,6 +52,13 @@ public class InitMaskConnectorNode : ConnectorNode
     public override void Deselect()
     {
         NodePrefab.SelectionImage.SetVisibility(false);
+    }
+
+    public override void Move(Vector2 delta)
+    {
+        NodePrefab.Collection.SetOffset(NodePrefab.Collection.Offset + (delta.X, delta.Y, 0, 0));
+        NodePrefab.Collection.Align();
+        NodePrefab.Collection.UpdateTransformation();
     }
 
     public override string GetLine()

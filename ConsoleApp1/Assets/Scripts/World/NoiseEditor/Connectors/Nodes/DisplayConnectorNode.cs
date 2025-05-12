@@ -1,3 +1,5 @@
+using OpenTK.Mathematics;
+
 public class DisplayConnectorNode : ConnectorNode
 {
     public string Name => DisplayNodePrefab.Name;
@@ -18,6 +20,11 @@ public class DisplayConnectorNode : ConnectorNode
     }
 
     public override void Deselect()
+    {
+        
+    }
+
+    public override void Move(Vector2 delta)
     {
         
     }

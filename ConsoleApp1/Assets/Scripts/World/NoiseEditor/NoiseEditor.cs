@@ -24,20 +24,12 @@ public class NoiseEditor : ScriptingNode
     public static VAO VoronoiVAO = new VAO();
 
     public static bool Selected = false;
-    public static ConnectorNode? SelectedNode {
-        get => _selectedNode;
-        set
-        {
-            _selectedNode?.Deselect();
-            _selectedNode = value;
-            _selectedNode?.Select();
-        }
-    }
-    private static ConnectorNode? _selectedNode = null;
+    public static List<ConnectorNode> SelectedNodes = [];
 
     public UIController DisplayController;
     public UIController MainWindowController;
     public static UIController SidePanelController;
+    public static UIInputField NodeNameField;
     public UIController NodeController;
     public UIController SelectionController;
 
@@ -122,14 +114,14 @@ public class NoiseEditor : ScriptingNode
 
         UICollection nodeNameCollection = new("NodeNameCollection", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), 0f);
         UIImage nodeNameBackground = new("NodeNameBackground", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 11, (10f, 0.05f));
-        UIInputField nodeNameField = new("NodeNameField", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (1f, 1f, 1f, 1f), (0, 0, 0), (280, 30), (7, 7, 0, 0), 0f, 10, (10f, 0.05f));
-        nodeNameField.SetMaxCharCount(22).SetText("noise", 1.2f).SetTextType(TextType.Alphanumeric);
-        nodeNameField.SetOnTextChange(() => {
-            NoiseNodeManager.FileName = nodeNameField.Text.Trim();
-            NoiseNodeManager.updateFileNameAction = () => nodeNameField.SetText(NoiseNodeManager.FileName, 1.2f).UpdateCharacters();
+        NodeNameField = new("NodeNameField", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (1f, 1f, 1f, 1f), (0, 0, 0), (280, 30), (7, 7, 0, 0), 0f, 10, (10f, 0.05f));
+        NodeNameField.SetMaxCharCount(22).SetText("noise", 1.2f).SetTextType(TextType.Alphanumeric);
+        NodeNameField.SetOnTextChange(() => {
+            NoiseNodeManager.FileName = NodeNameField.Text.Trim();
+            NoiseNodeManager.updateFileNameAction = () => NodeNameField.SetText(NoiseNodeManager.FileName, 1.2f).UpdateCharacters();
         });
-        nodeNameBackground.SetScale((nodeNameField.Scale.X + 14, nodeNameBackground.Scale.Y));
-        nodeNameCollection.AddElements(nodeNameBackground, nodeNameField);
+        nodeNameBackground.SetScale((NodeNameField.Scale.X + 14, nodeNameBackground.Scale.Y));
+        nodeNameCollection.AddElements(nodeNameBackground, NodeNameField);
 
         UIHorizontalCollection saveLoadCollection = new("SaveLoadCollection", SidePanelController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 40), (0, 0, 0, 0), (0, 0, 0, 0), 10f, 0);
 
@@ -523,7 +515,7 @@ public class NoiseEditor : ScriptingNode
     {
         ResizeNodeWindow();
 
-        _colorPicker.Resize();
+        //_colorPicker.Resize();
         DisplayController.Resize();
         MainWindowController.Resize();
         SidePanelController.Resize();
@@ -533,6 +525,7 @@ public class NoiseEditor : ScriptingNode
 
     void Update()
     {
+        bool holdingShift = Input.IsKeyDown(Keys.LeftShift);
         // Save
         if (Input.IsKeyAndControlPressed(Keys.S))
         {
@@ -561,13 +554,31 @@ public class NoiseEditor : ScriptingNode
         }
 
         Selected = false;
-        _colorPicker.Update();
+        //_colorPicker.Update();
         NodeController.Test(NodeWindowPosition);
         UICurveNodePrefab.Update();
 
-        if (!Selected && Input.IsMousePressed(MouseButton.Left))
+        if (!Selected && Input.IsMousePressed(MouseButton.Left) && !holdingShift)
         {
-            SelectedNode = null;
+            DeselectNodes();
+        }
+
+        if (Input.IsKeyPressed(Keys.Delete))
+        {
+            DeleteNodes();
+        }
+
+        if (Input.IsKeyDown(Keys.G))
+        {
+            Vector2 mouseDelta = Input.GetMouseDelta();
+            if (mouseDelta == Vector2.Zero)
+                return;
+
+            Vector2 mousePosition = Input.GetMousePosition();
+            Vector2 delta = mouseDelta * (1 / NodeController.Scale);
+
+            MoveNodes(delta);
+            NoiseNodeManager.UpdateLines();
         }
         
         DisplayController.Test();
@@ -575,15 +586,6 @@ public class NoiseEditor : ScriptingNode
         SelectionController.Test();
 
         MainWindowController.Test();
-
-        if (SelectedNode != null)
-        {
-            if (Input.IsKeyPressed(Keys.Delete))
-            {
-                NoiseNodeManager.RemoveNode(SelectedNode, true);
-                SelectedNode = null;
-            }
-        }
 
         if (Input.IsKeyAndControlPressed(Keys.B))
         {
@@ -616,6 +618,42 @@ public class NoiseEditor : ScriptingNode
         //_inventory.Update();
     }
 
+    public static void SelectNode(ConnectorNode node)
+    {
+        if (SelectedNodes.Contains(node))
+            return;
+
+        node.Select();
+        SelectedNodes.Add(node);
+        Selected = true;
+    }
+
+    public static void MoveNodes(Vector2 delta)
+    {
+        foreach (var node in SelectedNodes)
+        {
+            node.Move(delta);
+        }
+    }
+
+    public static void DeselectNodes()
+    {
+        foreach (var node in SelectedNodes)
+        {
+            node.Deselect();
+        }
+        SelectedNodes = [];
+    }
+
+    public static void DeleteNodes()
+    {
+        foreach (var node in SelectedNodes)
+        {
+            NoiseNodeManager.RemoveNode(node, true);
+        }
+        SelectedNodes = [];
+    }
+
     void Render()
     {
         GL.DepthFunc(DepthFunction.Less);
@@ -639,7 +677,7 @@ public class NoiseEditor : ScriptingNode
         if (SelectionCollection.Visible)
             SelectionController.RenderDepthTest();
 
-        _colorPicker.RenderTexture();
+        //_colorPicker.RenderTexture();
 
         /*
         Matrix4 model = Matrix4.CreateTranslation(100, 100, 0);

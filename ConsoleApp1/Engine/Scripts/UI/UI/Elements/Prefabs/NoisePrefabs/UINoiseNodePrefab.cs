@@ -12,5 +12,25 @@ public abstract class UINoiseNodePrefab : UIPrefab
     public static Vector4 CURVE_NODE_COLOR      = new Vector4(0.855f, 0.388f, 0.725f, 1f); // #DA63B9
     public static Vector4 SELECTION_COLOR       = new Vector4(0.529f, 0.808f, 0.980f, 1.0f);
 
+    public Action AddedMoveAction = () => { };
+    private Vector2 _oldMouseButtonPosition = new Vector2(0, 0);
+
     public UINoiseNodePrefab(string name, UIController controller, Vector4 offset) : base(name, controller, offset) {}
+
+    public void SetOldMousePosition() => _oldMouseButtonPosition = Input.GetMousePosition();
+    public void MoveNode()
+    {
+        if (Input.GetMouseDelta() == Vector2.Zero)
+            return;
+
+        Vector2 mousePosition = Input.GetMousePosition();
+        Vector2 delta = (mousePosition - _oldMouseButtonPosition) * (1 / Collection.UIController.Scale);
+
+        Collection.SetOffset(Collection.Offset + new Vector4(delta.X, delta.Y, 0, 0));
+        Collection.Align();
+        Collection.UpdateTransformation();
+        SetOldMousePosition();
+
+        AddedMoveAction.Invoke();
+    }
 }

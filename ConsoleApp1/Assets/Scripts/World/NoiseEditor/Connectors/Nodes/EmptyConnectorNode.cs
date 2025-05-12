@@ -1,4 +1,6 @@
 
+using OpenTK.Mathematics;
+
 public class EmptyConnectorNode : ConnectorNode
 {
     public override string GetLine()
@@ -14,6 +16,11 @@ public class EmptyConnectorNode : ConnectorNode
     public override void Deselect()
     {
         
+    }
+
+    public override void Move(Vector2 delta)
+    {
+        throw new NotImplementedException();
     }
 
     public override List<ConnectorNode> GetConnectedNodes()

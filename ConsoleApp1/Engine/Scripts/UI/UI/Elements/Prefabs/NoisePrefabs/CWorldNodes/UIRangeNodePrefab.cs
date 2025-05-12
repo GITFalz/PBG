@@ -4,7 +4,6 @@ public class UIRangeNodePrefab : UINoiseNodePrefab
 {
     public UIImage SelectionImage;
     public UIButton MoveButton;
-    public Action AddedMoveAction = () => { };
     public UIImage Background;
 
     public UICollection ElementCollection;
@@ -35,8 +34,6 @@ public class UIRangeNodePrefab : UINoiseNodePrefab
         get => Collection.Depth;
         set => Collection.Depth = value;
     }
-
-    private Vector2 _oldMouseButtonPosition = new Vector2(0, 0);
 
     public UIRangeNodePrefab(
         string name, 
@@ -95,23 +92,5 @@ public class UIRangeNodePrefab : UINoiseNodePrefab
         SelectionImage.SetVisibility(false);
 
         Controller.AddElements(this);
-    }
-
-    private void SetOldMousePosition() => _oldMouseButtonPosition = Input.GetMousePosition();
-
-    private void MoveNode()
-    {
-        if (Input.GetMouseDelta() == Vector2.Zero)
-            return;
-
-        Vector2 mousePosition = Input.GetMousePosition();
-        Vector2 delta = (mousePosition - _oldMouseButtonPosition) * (1 / Collection.UIController.Scale);
-
-        Collection.SetOffset(Collection.Offset + new Vector4(delta.X, delta.Y, 0, 0));
-        Collection.Align();
-        Collection.UpdateTransformation();
-        SetOldMousePosition();
-
-        AddedMoveAction.Invoke();
     }
 }
