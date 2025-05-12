@@ -3,8 +3,8 @@ using OpenTK.Windowing.Common;
 
 public class CurveConnectorNode : ConnectorNode
 {
-    public string Name => UICurveNodePrefab.Name;
-    public UICurveNodePrefab UICurveNodePrefab;
+    public string Name => NodePrefab.Name;
+    public UICurveNodePrefab NodePrefab;
     public CurveWindow CurveWindow;
 
     public InputGateConnector InputGateConnector;
@@ -15,7 +15,7 @@ public class CurveConnectorNode : ConnectorNode
             return _min; 
         } set {
             _min = value;
-            UICurveNodePrefab.MinInputField.SetText(NoSpace(_min));
+            NodePrefab.MinInputField.SetText(NoSpace(_min));
         }
     }
     public float Max {
@@ -23,7 +23,7 @@ public class CurveConnectorNode : ConnectorNode
             return _max; 
         } set {
             _max = value;
-            UICurveNodePrefab.MaxInputField.SetText(NoSpace(_max));
+            NodePrefab.MaxInputField.SetText(NoSpace(_max));
         }
     }
 
@@ -37,29 +37,39 @@ public class CurveConnectorNode : ConnectorNode
 
     public CurveConnectorNode(UICurveNodePrefab uICurveNodePrefab)
     {
-        UICurveNodePrefab = uICurveNodePrefab;
-        UICurveNodePrefab.CurveWindow.CurveNode = this;
+        NodePrefab = uICurveNodePrefab;
+        NodePrefab.CurveWindow.CurveNode = this;
         CurveWindow = uICurveNodePrefab.CurveWindow;
 
-        InputGateConnector = new InputGateConnector(UICurveNodePrefab.InputButton, this);
-        OutputGateConnector = new OutputGateConnector(UICurveNodePrefab.OutputButton, this);
+        InputGateConnector = new InputGateConnector(NodePrefab.InputButton, this);
+        OutputGateConnector = new OutputGateConnector(NodePrefab.OutputButton, this);
 
-        UICurveNodePrefab.InputButton.SetOnClick(() => InputConnectionTest(InputGateConnector));
-        UICurveNodePrefab.OutputButton.SetOnClick(() => OutputConnectionTest(OutputGateConnector));
+        NodePrefab.InputButton.SetOnClick(() => InputConnectionTest(InputGateConnector));
+        NodePrefab.OutputButton.SetOnClick(() => OutputConnectionTest(OutputGateConnector));
 
-        UICurveNodePrefab.MinInputField.SetOnTextChange(() => SetValue(ref _min, UICurveNodePrefab.MinInputField, 0, _minIndex));
-        UICurveNodePrefab.MaxInputField.SetOnTextChange(() => SetValue(ref _max, UICurveNodePrefab.MaxInputField, 1, _maxIndex));
+        NodePrefab.MinInputField.SetOnTextChange(() => SetValue(ref _min, NodePrefab.MinInputField, 0, _minIndex));
+        NodePrefab.MaxInputField.SetOnTextChange(() => SetValue(ref _max, NodePrefab.MaxInputField, 1, _maxIndex));
 
-        UICurveNodePrefab.MinTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
-        UICurveNodePrefab.MaxTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        NodePrefab.MinTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        NodePrefab.MaxTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
 
-        UICurveNodePrefab.MinTextField.SetOnHold(() => SetSlideValue(ref _min, UICurveNodePrefab.MinInputField, 5f, _minIndex));
-        UICurveNodePrefab.MaxTextField.SetOnHold(() => SetSlideValue(ref _max, UICurveNodePrefab.MaxInputField, 5f, _maxIndex));
+        NodePrefab.MinTextField.SetOnHold(() => SetSlideValue(ref _min, NodePrefab.MinInputField, 5f, _minIndex));
+        NodePrefab.MaxTextField.SetOnHold(() => SetSlideValue(ref _max, NodePrefab.MaxInputField, 5f, _maxIndex));
 
-        UICurveNodePrefab.MinTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
-        UICurveNodePrefab.MaxTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
+        NodePrefab.MinTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
+        NodePrefab.MaxTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
         
-        UICurveNodePrefab.Collection.SetOnClick(() => NoiseEditor.SelectedNode = this);
+        NodePrefab.Collection.SetOnClick(() => { NoiseEditor.Selected = true; NoiseEditor.SelectedNode = this; });
+    }
+
+    public override void Select()
+    {
+        NodePrefab.SelectionImage.SetVisibility(true);
+    }
+
+    public override void Deselect()
+    {
+        NodePrefab.SelectionImage.SetVisibility(false);
     }
 
     public void UpdateCurve(CurveWindow curveWindow)
@@ -142,12 +152,12 @@ public class CurveConnectorNode : ConnectorNode
 
     public override UINoiseNodePrefab[] GetNodePrefabs()
     {
-        return [UICurveNodePrefab];
+        return [NodePrefab];
     }
 
     public override UIController GetUIController()
     {
-        return UICurveNodePrefab.Collection.UIController;
+        return NodePrefab.Collection.UIController;
     }
 
     public override string ToStringList()
@@ -163,7 +173,7 @@ public class CurveConnectorNode : ConnectorNode
             $"Values: {NoSpace(Min)} {NoSpace(Max)} {NoSpace(CurveWindow.Buttons.Count - 2)} {offsets}" +
             $"Inputs: {NoSpace(InputGateConnector.Name)} " +
             $"Outputs: {NoSpace(OutputGateConnector.Name)} " +
-            $"Prefab: {NoSpace(Name)} {NoSpace(UICurveNodePrefab.Collection.Offset)}";
+            $"Prefab: {NoSpace(Name)} {NoSpace(NodePrefab.Collection.Offset)}";
     }
 
     public override void SetValueReferences(List<float> values, ref int index)

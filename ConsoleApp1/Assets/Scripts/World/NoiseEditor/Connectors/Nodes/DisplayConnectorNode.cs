@@ -12,6 +12,16 @@ public class DisplayConnectorNode : ConnectorNode
         DisplayNodePrefab.InputButton.SetOnClick(() => InputConnectionTest(InputGateConnector));
     }
 
+    public override void Select()
+    {
+        
+    }
+
+    public override void Deselect()
+    {
+        
+    }
+
     public override string GetLine()
     {
         string line = $"    display = ";

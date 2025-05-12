@@ -2,8 +2,8 @@ using OpenTK.Windowing.Common;
 
 public class InitMaskConnectorNode : ConnectorNode
 {
-    public string Name => UIInitMaskNodePrefab.Name;
-    public UIInitMaskNodePrefab UIInitMaskNodePrefab;
+    public string Name => NodePrefab.Name;
+    public UIInitMaskNodePrefab NodePrefab;
 
     public InputGateConnector ChildGateConnector;
     public InputGateConnector MaskGateConnector;
@@ -14,7 +14,7 @@ public class InitMaskConnectorNode : ConnectorNode
             return _threshold; 
         } set {
             _threshold = value;
-            UIInitMaskNodePrefab.ThresholdInputField.SetText(NoSpace(_threshold));
+            NodePrefab.ThresholdInputField.SetText(NoSpace(_threshold));
         }
     }
     
@@ -24,23 +24,33 @@ public class InitMaskConnectorNode : ConnectorNode
 
     public InitMaskConnectorNode(UIInitMaskNodePrefab initMaskNodePrefab)
     {
-        UIInitMaskNodePrefab = initMaskNodePrefab;
-        ChildGateConnector = new InputGateConnector(UIInitMaskNodePrefab.ChildButton, this);
-        MaskGateConnector = new InputGateConnector(UIInitMaskNodePrefab.MaskButton, this);
-        OutputGateConnector = new OutputGateConnector(UIInitMaskNodePrefab.OutputButton, this);
-        UIInitMaskNodePrefab.ChildButton.SetOnClick(() => InputConnectionTest(ChildGateConnector));
-        UIInitMaskNodePrefab.MaskButton.SetOnClick(() => InputConnectionTest(MaskGateConnector));
-        UIInitMaskNodePrefab.OutputButton.SetOnClick(() => OutputConnectionTest(OutputGateConnector));
+        NodePrefab = initMaskNodePrefab;
+        ChildGateConnector = new InputGateConnector(NodePrefab.ChildButton, this);
+        MaskGateConnector = new InputGateConnector(NodePrefab.MaskButton, this);
+        OutputGateConnector = new OutputGateConnector(NodePrefab.OutputButton, this);
+        NodePrefab.ChildButton.SetOnClick(() => InputConnectionTest(ChildGateConnector));
+        NodePrefab.MaskButton.SetOnClick(() => InputConnectionTest(MaskGateConnector));
+        NodePrefab.OutputButton.SetOnClick(() => OutputConnectionTest(OutputGateConnector));
 
-        UIInitMaskNodePrefab.ThresholdInputField.SetOnTextChange(() => SetValue(ref _threshold, UIInitMaskNodePrefab.ThresholdInputField, 0.5f, _thresholdIndex));
+        NodePrefab.ThresholdInputField.SetOnTextChange(() => SetValue(ref _threshold, NodePrefab.ThresholdInputField, 0.5f, _thresholdIndex));
 
-        UIInitMaskNodePrefab.ThresholdText.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        NodePrefab.ThresholdText.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
 
-        UIInitMaskNodePrefab.ThresholdText.SetOnHold(() => SetSlideValue(ref _threshold, UIInitMaskNodePrefab.ThresholdInputField, 5f, _thresholdIndex));
+        NodePrefab.ThresholdText.SetOnHold(() => SetSlideValue(ref _threshold, NodePrefab.ThresholdInputField, 5f, _thresholdIndex));
 
-        UIInitMaskNodePrefab.ThresholdText.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
+        NodePrefab.ThresholdText.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
         
-        UIInitMaskNodePrefab.Collection.SetOnClick(() => NoiseEditor.SelectedNode = this);
+        NodePrefab.Collection.SetOnClick(() => { NoiseEditor.Selected = true; NoiseEditor.SelectedNode = this; });
+    }
+
+    public override void Select()
+    {
+        NodePrefab.SelectionImage.SetVisibility(true);
+    }
+
+    public override void Deselect()
+    {
+        NodePrefab.SelectionImage.SetVisibility(false);
     }
 
     public override string GetLine()
@@ -115,12 +125,12 @@ public class InitMaskConnectorNode : ConnectorNode
 
     public override UINoiseNodePrefab[] GetNodePrefabs()
     {
-        return [UIInitMaskNodePrefab];
+        return [NodePrefab];
     }
 
     public override UIController GetUIController()
     {
-        return UIInitMaskNodePrefab.Collection.UIController;
+        return NodePrefab.Collection.UIController;
     }
 
     public override string ToStringList()
@@ -130,7 +140,7 @@ public class InitMaskConnectorNode : ConnectorNode
             $"Values: {NoSpace(Threshold)} " +
             $"Inputs: {NoSpace(ChildGateConnector.Name)} {NoSpace(MaskGateConnector.Name)} " +
             $"Outputs: {NoSpace(OutputGateConnector.Name)} " +
-            $"Prefab: {NoSpace(Name)} {NoSpace(UIInitMaskNodePrefab.Collection.Offset)}";
+            $"Prefab: {NoSpace(Name)} {NoSpace(NodePrefab.Collection.Offset)}";
     }
 
     public override void SetValueReferences(List<float> values, ref int index)

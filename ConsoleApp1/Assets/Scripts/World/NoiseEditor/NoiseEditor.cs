@@ -23,7 +23,17 @@ public class NoiseEditor : ScriptingNode
     public static ShaderProgram VoronoiShader = new ShaderProgram("Painting/Rectangle.vert", "Noise/Voronoi.frag");
     public static VAO VoronoiVAO = new VAO();
 
-    public static ConnectorNode? SelectedNode = null;
+    public static bool Selected = false;
+    public static ConnectorNode? SelectedNode {
+        get => _selectedNode;
+        set
+        {
+            _selectedNode?.Deselect();
+            _selectedNode = value;
+            _selectedNode?.Select();
+        }
+    }
+    private static ConnectorNode? _selectedNode = null;
 
     public UIController DisplayController;
     public UIController MainWindowController;
@@ -550,9 +560,15 @@ public class NoiseEditor : ScriptingNode
             SelectionController.SetPosition(new Vector3(NodePosition.X, NodePosition.Y, 0f));
         }
 
+        Selected = false;
         _colorPicker.Update();
         NodeController.Test(NodeWindowPosition);
         UICurveNodePrefab.Update();
+
+        if (!Selected && Input.IsMousePressed(MouseButton.Left))
+        {
+            SelectedNode = null;
+        }
         
         DisplayController.Test();
         SidePanelController.Test();

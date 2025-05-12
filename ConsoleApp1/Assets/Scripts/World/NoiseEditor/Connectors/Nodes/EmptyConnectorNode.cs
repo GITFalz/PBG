@@ -6,6 +6,16 @@ public class EmptyConnectorNode : ConnectorNode
         throw new NotImplementedException();
     }
 
+    public override void Select()
+    {
+        
+    }
+
+    public override void Deselect()
+    {
+        
+    }
+
     public override List<ConnectorNode> GetConnectedNodes()
     {
         throw new NotImplementedException();

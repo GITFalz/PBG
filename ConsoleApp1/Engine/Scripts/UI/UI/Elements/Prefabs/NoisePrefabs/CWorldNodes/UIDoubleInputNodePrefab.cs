@@ -2,6 +2,7 @@ using OpenTK.Mathematics;
 
 public class UIDoubleInputNodePrefab : UINoiseNodePrefab
 {
+    public UIImage SelectionImage;
     public UIButton MoveButton;
     public Action AddedMoveAction = () => { };
     public UIImage Background;
@@ -71,13 +72,18 @@ public class UIDoubleInputNodePrefab : UINoiseNodePrefab
         ElementCollection.AddElements(NameField, InputButton1, InputButton2, OutputButton, value1Background, value2Background, Value1InputField, Value2InputField, Value1TextField, Value2TextField);
 
         Collection = new UICollection($"{name}Collection", Controller, AnchorType.TopLeft, _positionType, _pivot, _scale + (0, 14), Offset, _rotation);
+        SelectionImage = new UIImage($"{name}SelectionImage", controller, AnchorType.TopLeft, PositionType.Relative, SELECTION_COLOR, (0, 0, 0), _scale + (10, 24), (-5, -5, 0, 0), 0, 2, (10f, 0.05f));
+        UICollection mainElements = new UICollection ($"{name}MainElements", controller, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), _scale, (0, 0, 0, 0), 0);
         MoveButton = new UIButton($"{name}MoveButton", Controller, AnchorType.TopLeft, PositionType.Relative, _buttonColor, (0, 0, 0), (_scale.X, 14), (0, 0, 0, 0), 0, 10, (5f, 0.025f), UIState.Interactable);
         Background = new UIImage($"{name}Background", Controller, AnchorType.TopLeft, PositionType.Relative, _backgroundColor, (0, 0, 0), _scale, (0, 14, 0, 0), 0, 10, (10f, 0.05f));
 
         MoveButton.SetOnClick(SetOldMousePosition);
         MoveButton.SetOnHold(MoveNode);
 
-        Collection.AddElements(MoveButton, Background, ElementCollection);
+        mainElements.AddElements(MoveButton, Background, ElementCollection);
+        Collection.AddElements(SelectionImage, mainElements);
+
+        SelectionImage.SetVisibility(false);
 
         Controller.AddElements(this);
     }

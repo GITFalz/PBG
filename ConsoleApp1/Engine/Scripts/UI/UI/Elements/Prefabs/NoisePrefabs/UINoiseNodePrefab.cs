@@ -9,7 +9,8 @@ public abstract class UINoiseNodePrefab : UIPrefab
     public static Vector4 RANGE_NODE_COLOR      = new Vector4(0.494f, 0.827f, 0.129f, 1f); // #7ED321
     public static Vector4 COMBINE_NODE_COLOR    = new Vector4(0.565f, 0.075f, 0.996f, 1f); // #9013FE
     public static Vector4 INIT_MASK_NODE_COLOR  = new Vector4(0.816f, 0.008f, 0.106f, 1f); // #D0021B
-    public static Vector4 CURVE_NODE_COLOR = new Vector4(0.855f, 0.388f, 0.725f, 1f); // #DA63B9
+    public static Vector4 CURVE_NODE_COLOR      = new Vector4(0.855f, 0.388f, 0.725f, 1f); // #DA63B9
+    public static Vector4 SELECTION_COLOR       = new Vector4(0.529f, 0.808f, 0.980f, 1.0f);
 
     public UINoiseNodePrefab(string name, UIController controller, Vector4 offset) : base(name, controller, offset) {}
 }

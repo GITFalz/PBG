@@ -2,6 +2,7 @@ using OpenTK.Mathematics;
 
 public class UIMinMaxInputNodePrefab : UINoiseNodePrefab
 {
+    public UIImage SelectionImage;
     public UIButton MoveButton;
     public Action AddedMoveAction = () => { };
     public UIImage Background;
@@ -64,13 +65,18 @@ public class UIMinMaxInputNodePrefab : UINoiseNodePrefab
         ElementCollection.AddElements(NameField, InputButton, OutputButton, minBackground, maxBackground, MinTextField, MinInputField, MaxTextField, MaxInputField);
 
         Collection = new UICollection($"{name}Collection", controller, AnchorType.TopLeft, PositionType, Pivot, Scale + (0, 14), Offset, Rotation);
+        SelectionImage = new UIImage($"{name}SelectionImage", controller, AnchorType.TopLeft, PositionType.Relative, SELECTION_COLOR, (0, 0, 0), Scale + (10, 24), (-5, -5, 0, 0), 0, 2, (10f, 0.05f));
+        UICollection mainElements = new UICollection ($"{name}MainElements", controller, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), Scale, (0, 0, 0, 0), 0);
         MoveButton = new UIButton($"{name}MoveButton", controller, AnchorType.TopLeft, PositionType.Relative, ButtonColor, (0, 0, 0), (Scale.X, 14), (0, 0, 0, 0), 0, 10, (5f, 0.025f), UIState.Interactable);
         Background = new UIImage($"{name}Background", controller, AnchorType.TopLeft, PositionType.Relative, BackgroundColor, (0, 0, 0), Scale, (0, 14, 0, 0), 0, 10, (10f, 0.05f));
 
         MoveButton.SetOnClick(SetOldMousePosition);
         MoveButton.SetOnHold(MoveNode);
 
-        Collection.AddElements(MoveButton, Background, ElementCollection);
+        mainElements.AddElements(MoveButton, Background, ElementCollection);
+        Collection.AddElements(SelectionImage, mainElements);
+
+        SelectionImage.SetVisibility(false);
 
         Controller.AddElements(this);
     }

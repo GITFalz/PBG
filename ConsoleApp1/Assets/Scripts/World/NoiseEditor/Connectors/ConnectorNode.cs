@@ -9,6 +9,8 @@ public abstract class ConnectorNode
     public string VariableName = "variable0";
 
     public abstract string GetLine();
+    public abstract void Select();
+    public abstract void Deselect();
     public abstract List<ConnectorNode> GetConnectedNodes(); 
     public abstract List<ConnectorNode> GetInputNodes();
     public abstract List<ConnectorNode> GetOutputNodes();

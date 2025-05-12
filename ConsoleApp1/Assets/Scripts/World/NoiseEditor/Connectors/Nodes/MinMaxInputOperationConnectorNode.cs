@@ -2,8 +2,8 @@ using OpenTK.Windowing.Common;
 
 public class MinMaxInputOperationConnectorNode : ConnectorNode
 {
-    public string Name => MinMaxInputNodePrefab.Name;
-    public UIMinMaxInputNodePrefab MinMaxInputNodePrefab;
+    public string Name => NodePrefab.Name;
+    public UIMinMaxInputNodePrefab NodePrefab;
 
     public InputGateConnector InputGateConnector;
     public OutputGateConnector OutputGateConnector;
@@ -16,7 +16,7 @@ public class MinMaxInputOperationConnectorNode : ConnectorNode
             return _min; 
         } set {
             _min = value;
-            MinMaxInputNodePrefab.MinInputField.SetText(NoSpace(_min));
+            NodePrefab.MinInputField.SetText(NoSpace(_min));
         }
     }
     public float Max {
@@ -24,7 +24,7 @@ public class MinMaxInputOperationConnectorNode : ConnectorNode
             return _max; 
         } set {
             _max = value;
-            MinMaxInputNodePrefab.MaxInputField.SetText(NoSpace(_max));
+            NodePrefab.MaxInputField.SetText(NoSpace(_max));
         }
     }
 
@@ -36,28 +36,38 @@ public class MinMaxInputOperationConnectorNode : ConnectorNode
 
     public MinMaxInputOperationConnectorNode(UIMinMaxInputNodePrefab singleInputNodePrefab, MinMaxInputOperationType type)
     {
-        MinMaxInputNodePrefab = singleInputNodePrefab;
-        InputGateConnector = new InputGateConnector(MinMaxInputNodePrefab.InputButton, this);
-        OutputGateConnector = new OutputGateConnector(MinMaxInputNodePrefab.OutputButton, this);
-        MinMaxInputNodePrefab.InputButton.SetOnClick(() => InputConnectionTest(InputGateConnector));
-        MinMaxInputNodePrefab.OutputButton.SetOnClick(() => OutputConnectionTest(OutputGateConnector));
+        NodePrefab = singleInputNodePrefab;
+        InputGateConnector = new InputGateConnector(NodePrefab.InputButton, this);
+        OutputGateConnector = new OutputGateConnector(NodePrefab.OutputButton, this);
+        NodePrefab.InputButton.SetOnClick(() => InputConnectionTest(InputGateConnector));
+        NodePrefab.OutputButton.SetOnClick(() => OutputConnectionTest(OutputGateConnector));
 
-        MinMaxInputNodePrefab.MinInputField.SetOnTextChange(() => SetValue(ref _min, MinMaxInputNodePrefab.MinInputField, 0, _minIndex));
-        MinMaxInputNodePrefab.MaxInputField.SetOnTextChange(() => SetValue(ref _max, MinMaxInputNodePrefab.MaxInputField, 1, _maxIndex));
+        NodePrefab.MinInputField.SetOnTextChange(() => SetValue(ref _min, NodePrefab.MinInputField, 0, _minIndex));
+        NodePrefab.MaxInputField.SetOnTextChange(() => SetValue(ref _max, NodePrefab.MaxInputField, 1, _maxIndex));
 
-        MinMaxInputNodePrefab.MinTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
-        MinMaxInputNodePrefab.MaxTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        NodePrefab.MinTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        NodePrefab.MaxTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
 
-        MinMaxInputNodePrefab.MinTextField.SetOnHold(() => SetSlideValue(ref _min, MinMaxInputNodePrefab.MinInputField, 5f, _minIndex));
-        MinMaxInputNodePrefab.MaxTextField.SetOnHold(() => SetSlideValue(ref _max, MinMaxInputNodePrefab.MaxInputField, 5f, _maxIndex));
+        NodePrefab.MinTextField.SetOnHold(() => SetSlideValue(ref _min, NodePrefab.MinInputField, 5f, _minIndex));
+        NodePrefab.MaxTextField.SetOnHold(() => SetSlideValue(ref _max, NodePrefab.MaxInputField, 5f, _maxIndex));
 
-        MinMaxInputNodePrefab.MinTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
-        MinMaxInputNodePrefab.MaxTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
+        NodePrefab.MinTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
+        NodePrefab.MaxTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
         
-        MinMaxInputNodePrefab.Collection.SetOnClick(() => NoiseEditor.SelectedNode = this);
+        NodePrefab.Collection.SetOnClick(() => { NoiseEditor.Selected = true; NoiseEditor.SelectedNode = this; });
 
         Operation = MinMaxInputOperations.GetOperation(type);
         Type = type;
+    }
+
+    public override void Select()
+    {
+        NodePrefab.SelectionImage.SetVisibility(true);
+    }
+
+    public override void Deselect()
+    {
+        NodePrefab.SelectionImage.SetVisibility(false);
     }
 
     public override string GetLine()
@@ -124,12 +134,12 @@ public class MinMaxInputOperationConnectorNode : ConnectorNode
 
     public override UINoiseNodePrefab[] GetNodePrefabs()
     {
-        return [MinMaxInputNodePrefab];
+        return [NodePrefab];
     }
 
     public override UIController GetUIController()
     {
-        return MinMaxInputNodePrefab.Collection.UIController;
+        return NodePrefab.Collection.UIController;
     }
 
     public override string ToStringList()
@@ -139,7 +149,7 @@ public class MinMaxInputOperationConnectorNode : ConnectorNode
             $"Values: {NoSpace(Min)} {NoSpace(Max)} {NoSpace((int)Type)} " +
             $"Inputs: {NoSpace(InputGateConnector.Name)} " +
             $"Outputs: {NoSpace(OutputGateConnector.Name)} " +
-            $"Prefab: {NoSpace(Name)} {NoSpace(MinMaxInputNodePrefab.Collection.Offset)}";
+            $"Prefab: {NoSpace(Name)} {NoSpace(NodePrefab.Collection.Offset)}";
     }
 
     public override void SetValueReferences(List<float> values, ref int index)

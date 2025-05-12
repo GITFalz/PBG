@@ -2,8 +2,8 @@ using OpenTK.Windowing.Common;
 
 public class DoubleInputOperationConnectorNode : ConnectorNode
 {
-    public string Name => DoubleInputNodePrefab.Name;
-    public UIDoubleInputNodePrefab DoubleInputNodePrefab;
+    public string Name => NodePrefab.Name;
+    public UIDoubleInputNodePrefab NodePrefab;
 
     public InputGateConnector InputGateConnector1;
     public InputGateConnector InputGateConnector2;
@@ -18,7 +18,7 @@ public class DoubleInputOperationConnectorNode : ConnectorNode
             return _value1; 
         } set {
             _value1 = value;
-            DoubleInputNodePrefab.Value1InputField.SetText(NoSpace(_value1));
+            NodePrefab.Value1InputField.SetText(NoSpace(_value1));
         }
     }
     public float Value2 {
@@ -26,7 +26,7 @@ public class DoubleInputOperationConnectorNode : ConnectorNode
             return _value2; 
         } set {
             _value2 = value;
-            DoubleInputNodePrefab.Value2InputField.SetText(NoSpace(_value2));
+            NodePrefab.Value2InputField.SetText(NoSpace(_value2));
         }
     }
 
@@ -38,31 +38,41 @@ public class DoubleInputOperationConnectorNode : ConnectorNode
 
     public DoubleInputOperationConnectorNode(UIDoubleInputNodePrefab doubleInputNodePrefab, DoubleInputOperationType type)
     {
-        DoubleInputNodePrefab = doubleInputNodePrefab;
+        NodePrefab = doubleInputNodePrefab;
         InputGateConnector1 = new InputGateConnector(doubleInputNodePrefab.InputButton1, this);
         InputGateConnector2 = new InputGateConnector(doubleInputNodePrefab.InputButton2, this);
         OutputGateConnector = new OutputGateConnector(doubleInputNodePrefab.OutputButton, this);
 
-        DoubleInputNodePrefab.InputButton1.SetOnClick(() => InputConnectionTest(InputGateConnector1));
-        DoubleInputNodePrefab.InputButton2.SetOnClick(() => InputConnectionTest(InputGateConnector2));
-        DoubleInputNodePrefab.OutputButton.SetOnClick(() => OutputConnectionTest(OutputGateConnector));
+        NodePrefab.InputButton1.SetOnClick(() => InputConnectionTest(InputGateConnector1));
+        NodePrefab.InputButton2.SetOnClick(() => InputConnectionTest(InputGateConnector2));
+        NodePrefab.OutputButton.SetOnClick(() => OutputConnectionTest(OutputGateConnector));
 
-        DoubleInputNodePrefab.Value1InputField.SetOnTextChange(() => SetValue(ref _value1, DoubleInputNodePrefab.Value1InputField, 1.0f, _value1Index));
-        DoubleInputNodePrefab.Value2InputField.SetOnTextChange(() => SetValue(ref _value2, DoubleInputNodePrefab.Value2InputField, 1.0f, _value2Index));
+        NodePrefab.Value1InputField.SetOnTextChange(() => SetValue(ref _value1, NodePrefab.Value1InputField, 1.0f, _value1Index));
+        NodePrefab.Value2InputField.SetOnTextChange(() => SetValue(ref _value2, NodePrefab.Value2InputField, 1.0f, _value2Index));
 
-        DoubleInputNodePrefab.Value1TextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
-        DoubleInputNodePrefab.Value2TextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        NodePrefab.Value1TextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        NodePrefab.Value2TextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
 
-        DoubleInputNodePrefab.Value1TextField.SetOnHold(() => SetSlideValue(ref _value1, DoubleInputNodePrefab.Value1InputField, 5f, _value1Index));
-        DoubleInputNodePrefab.Value2TextField.SetOnHold(() => SetSlideValue(ref _value2, DoubleInputNodePrefab.Value2InputField, 5f, _value2Index));
+        NodePrefab.Value1TextField.SetOnHold(() => SetSlideValue(ref _value1, NodePrefab.Value1InputField, 5f, _value1Index));
+        NodePrefab.Value2TextField.SetOnHold(() => SetSlideValue(ref _value2, NodePrefab.Value2InputField, 5f, _value2Index));
 
-        DoubleInputNodePrefab.Value1TextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
-        DoubleInputNodePrefab.Value2TextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
+        NodePrefab.Value1TextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
+        NodePrefab.Value2TextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
 
-        DoubleInputNodePrefab.Collection.SetOnClick(() => NoiseEditor.SelectedNode = this);
+        NodePrefab.Collection.SetOnClick(() => { NoiseEditor.Selected = true; NoiseEditor.SelectedNode = this; });
 
         Operation = DoubleInputOperations.GetOperation(type);
         Type = type;
+    }
+
+    public override void Select()
+    {
+        NodePrefab.SelectionImage.SetVisibility(true);
+    }
+
+    public override void Deselect()
+    {
+        NodePrefab.SelectionImage.SetVisibility(false);
     }
 
     public override string GetLine()
@@ -136,12 +146,12 @@ public class DoubleInputOperationConnectorNode : ConnectorNode
 
     public override UINoiseNodePrefab[] GetNodePrefabs()
     {
-        return [DoubleInputNodePrefab];
+        return [NodePrefab];
     }
 
     public override UIController GetUIController()
     {
-        return DoubleInputNodePrefab.Collection.UIController;
+        return NodePrefab.Collection.UIController;
     }
 
     public override string ToStringList()
@@ -151,7 +161,7 @@ public class DoubleInputOperationConnectorNode : ConnectorNode
             $"Values: {NoSpace(Value1)} {NoSpace(Value2)} {NoSpace((int)Type)} " + 
             $"Inputs: {NoSpace(InputGateConnector1.Name)} {NoSpace(InputGateConnector2.Name)} " +
             $"Outputs: {NoSpace(OutputGateConnector.Name)} " +
-            $"Prefab: {NoSpace(Name)} {NoSpace(DoubleInputNodePrefab.Collection.Offset)}";
+            $"Prefab: {NoSpace(Name)} {NoSpace(NodePrefab.Collection.Offset)}";
     }
 
     public override void SetValueReferences(List<float> values, ref int index)

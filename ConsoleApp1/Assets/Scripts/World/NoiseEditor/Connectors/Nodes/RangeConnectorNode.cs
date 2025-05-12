@@ -2,8 +2,8 @@ using OpenTK.Windowing.Common;
 
 public class RangeConnectorNode : ConnectorNode
 {
-    public string Name => RangeNodePrefab.Name;
-    public UIRangeNodePrefab RangeNodePrefab;
+    public string Name => NodePrefab.Name;
+    public UIRangeNodePrefab NodePrefab;
 
     public InputGateConnector StartGateConnector;
     public InputGateConnector HeightGateConnector;
@@ -15,7 +15,7 @@ public class RangeConnectorNode : ConnectorNode
             return _start; 
         } set {
             _start = value;
-            RangeNodePrefab.StartInputField.SetText(NoSpace(_start));
+            NodePrefab.StartInputField.SetText(NoSpace(_start));
         }
     }
     public int Height {
@@ -23,15 +23,15 @@ public class RangeConnectorNode : ConnectorNode
             return _height; 
         } set {
             _height = value;
-            RangeNodePrefab.HeightInputField.SetText(NoSpace(_height));
+            NodePrefab.HeightInputField.SetText(NoSpace(_height));
         }
     }
 
     public bool Flipped {
-        get => RangeNodePrefab.IsFlipped; 
+        get => NodePrefab.IsFlipped; 
         set {
-            RangeNodePrefab.IsFlipped = value;
-            RangeNodePrefab.FlippedText.SetText(value ? "Flip: True" : "Flip: False").UpdateCharacters();
+            NodePrefab.IsFlipped = value;
+            NodePrefab.FlippedText.SetText(value ? "Flip: True" : "Flip: False").UpdateCharacters();
         }
     }
 
@@ -43,28 +43,38 @@ public class RangeConnectorNode : ConnectorNode
 
     public RangeConnectorNode(UIRangeNodePrefab doubleInputNodePrefab)
     {
-        RangeNodePrefab = doubleInputNodePrefab;
+        NodePrefab = doubleInputNodePrefab;
         StartGateConnector = new InputGateConnector(doubleInputNodePrefab.StartButton, this);
         HeightGateConnector = new InputGateConnector(doubleInputNodePrefab.HeightButton, this);
         OutputGateConnector = new OutputGateConnector(doubleInputNodePrefab.OutputButton, this);
 
-        RangeNodePrefab.StartButton.SetOnClick(() => InputConnectionTest(StartGateConnector));
-        RangeNodePrefab.HeightButton.SetOnClick(() => InputConnectionTest(HeightGateConnector));
-        RangeNodePrefab.OutputButton.SetOnClick(() => OutputConnectionTest(OutputGateConnector));
+        NodePrefab.StartButton.SetOnClick(() => InputConnectionTest(StartGateConnector));
+        NodePrefab.HeightButton.SetOnClick(() => InputConnectionTest(HeightGateConnector));
+        NodePrefab.OutputButton.SetOnClick(() => OutputConnectionTest(OutputGateConnector));
 
-        RangeNodePrefab.StartInputField.SetOnTextChange(() => SetValue(ref _start, RangeNodePrefab.StartInputField, 20, _startIndex)); 
-        RangeNodePrefab.HeightInputField.SetOnTextChange(() => SetValue(ref _height, RangeNodePrefab.HeightInputField, 20, _heightIndex));
+        NodePrefab.StartInputField.SetOnTextChange(() => SetValue(ref _start, NodePrefab.StartInputField, 20, _startIndex)); 
+        NodePrefab.HeightInputField.SetOnTextChange(() => SetValue(ref _height, NodePrefab.HeightInputField, 20, _heightIndex));
 
-        RangeNodePrefab.StartTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
-        RangeNodePrefab.HeightTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        NodePrefab.StartTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        NodePrefab.HeightTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
 
-        RangeNodePrefab.StartTextField.SetOnHold(() => SetSlideValue(ref _start, RangeNodePrefab.StartInputField, 10, _startIndex)); 
-        RangeNodePrefab.HeightTextField.SetOnHold(() => SetSlideValue(ref _height, RangeNodePrefab.HeightInputField, 10, _heightIndex));
+        NodePrefab.StartTextField.SetOnHold(() => SetSlideValue(ref _start, NodePrefab.StartInputField, 10, _startIndex)); 
+        NodePrefab.HeightTextField.SetOnHold(() => SetSlideValue(ref _height, NodePrefab.HeightInputField, 10, _heightIndex));
 
-        RangeNodePrefab.StartTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
-        RangeNodePrefab.HeightTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
+        NodePrefab.StartTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
+        NodePrefab.HeightTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
 
-        RangeNodePrefab.Collection.SetOnClick(() => NoiseEditor.SelectedNode = this);
+        NodePrefab.Collection.SetOnClick(() => { NoiseEditor.Selected = true; NoiseEditor.SelectedNode = this; });
+    }
+
+    public override void Select()
+    {
+        NodePrefab.SelectionImage.SetVisibility(true);
+    }
+
+    public override void Deselect()
+    {
+        NodePrefab.SelectionImage.SetVisibility(false);
     }
 
     public override string GetLine()
@@ -138,23 +148,23 @@ public class RangeConnectorNode : ConnectorNode
 
     public override UINoiseNodePrefab[] GetNodePrefabs()
     {
-        return [RangeNodePrefab];
+        return [NodePrefab];
     }
 
     public override UIController GetUIController()
     {
-        return RangeNodePrefab.Collection.UIController;
+        return NodePrefab.Collection.UIController;
     }
 
     public override string ToStringList()
     {
-        string flipped = RangeNodePrefab.IsFlipped ? "1" : "0";
+        string flipped = NodePrefab.IsFlipped ? "1" : "0";
         return 
             $"NodeType: Range " +
             $"Values: {NoSpace(Start)} {NoSpace(Height)} {flipped} " + 
             $"Inputs: {NoSpace(StartGateConnector.Name)} {NoSpace(HeightGateConnector.Name)} " +
             $"Outputs: {NoSpace(OutputGateConnector.Name)} " +
-            $"Prefab: {NoSpace(Name)} {NoSpace(RangeNodePrefab.Collection.Offset)}";
+            $"Prefab: {NoSpace(Name)} {NoSpace(NodePrefab.Collection.Offset)}";
     }
 
     public override void SetValueReferences(List<float> values, ref int index)

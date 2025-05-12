@@ -3,8 +3,8 @@ using OpenTK.Windowing.Common;
 
 public class VoronoiConnectorNode : ConnectorNode
 {
-    public string Name => VoronoiNodePrefab.Name;
-    public UIVoronoiPrefab VoronoiNodePrefab;
+    public string Name => NodePrefab.Name;
+    public UIVoronoiPrefab NodePrefab;
 
     public OutputGateConnector OutputGateConnector;
 
@@ -17,7 +17,7 @@ public class VoronoiConnectorNode : ConnectorNode
             return _scale; 
         } set {
             _scale = value;
-            VoronoiNodePrefab.ScaleInputField.SetText(NoSpace(_scale));
+            NodePrefab.ScaleInputField.SetText(NoSpace(_scale));
         }
     }
     public Vector2 Offset
@@ -26,8 +26,8 @@ public class VoronoiConnectorNode : ConnectorNode
             return _offset; 
         } set {
             _offset = value;
-            VoronoiNodePrefab.OffsetXInputField.SetText(NoSpace(_offset.X));
-            VoronoiNodePrefab.OffsetYInputField.SetText(NoSpace(_offset.Y));
+            NodePrefab.OffsetXInputField.SetText(NoSpace(_offset.X));
+            NodePrefab.OffsetYInputField.SetText(NoSpace(_offset.Y));
         }
     }
 
@@ -40,31 +40,41 @@ public class VoronoiConnectorNode : ConnectorNode
 
     public VoronoiConnectorNode(UIVoronoiPrefab voronoiNodePrefab, VoronoiOperationType type)
     {
-        VoronoiNodePrefab = voronoiNodePrefab;
-        OutputGateConnector = new OutputGateConnector(VoronoiNodePrefab.OutputButton, this);
-        VoronoiNodePrefab.OutputButton.SetOnClick(() => OutputConnectionTest(OutputGateConnector));
+        NodePrefab = voronoiNodePrefab;
+        OutputGateConnector = new OutputGateConnector(NodePrefab.OutputButton, this);
+        NodePrefab.OutputButton.SetOnClick(() => OutputConnectionTest(OutputGateConnector));
 
-        VoronoiNodePrefab.ScaleInputField.SetOnTextChange(() => SetValue(ref _scale, VoronoiNodePrefab.ScaleInputField, 1.0f, _scaleIndex));
-        VoronoiNodePrefab.OffsetXInputField.SetOnTextChange(() => SetValue(ref _offset.X, VoronoiNodePrefab.OffsetXInputField, 0.0f, _offsetXIndex));
-        VoronoiNodePrefab.OffsetYInputField.SetOnTextChange(() => SetValue(ref _offset.Y, VoronoiNodePrefab.OffsetYInputField, 0.0f, _offsetYIndex));
+        NodePrefab.ScaleInputField.SetOnTextChange(() => SetValue(ref _scale, NodePrefab.ScaleInputField, 1.0f, _scaleIndex));
+        NodePrefab.OffsetXInputField.SetOnTextChange(() => SetValue(ref _offset.X, NodePrefab.OffsetXInputField, 0.0f, _offsetXIndex));
+        NodePrefab.OffsetYInputField.SetOnTextChange(() => SetValue(ref _offset.Y, NodePrefab.OffsetYInputField, 0.0f, _offsetYIndex));
 
-        VoronoiNodePrefab.ScaleTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
-        VoronoiNodePrefab.OffsetXTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
-        VoronoiNodePrefab.OffsetYTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        NodePrefab.ScaleTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        NodePrefab.OffsetXTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        NodePrefab.OffsetYTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
 
-        VoronoiNodePrefab.ScaleTextField.SetOnHold(() => SetSlideValue(ref _scale, VoronoiNodePrefab.ScaleInputField, 5f, _scaleIndex)); 
-        VoronoiNodePrefab.OffsetXTextField.SetOnHold(() => SetSlideValue(ref _offset.X, VoronoiNodePrefab.OffsetXInputField, 5f, _offsetXIndex));
-        VoronoiNodePrefab.OffsetYTextField.SetOnHold(() => SetSlideValue(ref _offset.Y, VoronoiNodePrefab.OffsetYInputField, 5f, _offsetYIndex));
+        NodePrefab.ScaleTextField.SetOnHold(() => SetSlideValue(ref _scale, NodePrefab.ScaleInputField, 5f, _scaleIndex)); 
+        NodePrefab.OffsetXTextField.SetOnHold(() => SetSlideValue(ref _offset.X, NodePrefab.OffsetXInputField, 5f, _offsetXIndex));
+        NodePrefab.OffsetYTextField.SetOnHold(() => SetSlideValue(ref _offset.Y, NodePrefab.OffsetYInputField, 5f, _offsetYIndex));
 
-        VoronoiNodePrefab.ScaleTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
-        VoronoiNodePrefab.OffsetXTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
-        VoronoiNodePrefab.OffsetYTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
+        NodePrefab.ScaleTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
+        NodePrefab.OffsetXTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
+        NodePrefab.OffsetYTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
 
-        VoronoiNodePrefab.Collection.SetOnClick(() => NoiseEditor.SelectedNode = this);
+        NodePrefab.Collection.SetOnClick(() => { NoiseEditor.Selected = true; NoiseEditor.SelectedNode = this; });
 
         Operation = VoronoiOperation.GetVoronoiOperation(type);
         Type = type;
-    } 
+    }
+
+    public override void Select()
+    {
+        NodePrefab.SelectionImage.SetVisibility(true);
+    }
+
+    public override void Deselect()
+    {
+        NodePrefab.SelectionImage.SetVisibility(false);
+    }
 
     public override string GetLine()
     {
@@ -120,12 +130,12 @@ public class VoronoiConnectorNode : ConnectorNode
 
     public override UINoiseNodePrefab[] GetNodePrefabs()
     {
-        return [VoronoiNodePrefab];
+        return [NodePrefab];
     }
 
     public override UIController GetUIController()
     {
-        return VoronoiNodePrefab.Collection.UIController;
+        return NodePrefab.Collection.UIController;
     }
 
     public override string ToStringList() 
@@ -134,7 +144,7 @@ public class VoronoiConnectorNode : ConnectorNode
             $"NodeType: Voronoi " +
             $"Values: {NoSpace(Scale)} {NoSpace(Offset)} {NoSpace((int)Type)} " +
             $"Outputs: {NoSpace(OutputGateConnector.Name)} " +
-            $"Prefab: {NoSpace(Name)} {NoSpace(VoronoiNodePrefab.Collection.Offset)}";
+            $"Prefab: {NoSpace(Name)} {NoSpace(NodePrefab.Collection.Offset)}";
     }
 
     public override void SetValueReferences(List<float> values, ref int index)

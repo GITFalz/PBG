@@ -3,8 +3,8 @@ using OpenTK.Windowing.Common;
 
 public class SampleConnectorNode : ConnectorNode
 {
-    public string Name => SampleNodePrefab.Name;
-    public UISampleNodePrefab SampleNodePrefab;
+    public string Name => NodePrefab.Name;
+    public UISampleNodePrefab NodePrefab;
 
     public OutputGateConnector OutputGateConnector;
 
@@ -14,7 +14,7 @@ public class SampleConnectorNode : ConnectorNode
             return _scale; 
         } set {
             _scale = value;
-            SampleNodePrefab.ScaleInputField.SetText(NoSpace(_scale));
+            NodePrefab.ScaleInputField.SetText(NoSpace(_scale));
         }
     }
     public Vector2 Offset
@@ -23,8 +23,8 @@ public class SampleConnectorNode : ConnectorNode
             return _offset; 
         } set {
             _offset = value;
-            SampleNodePrefab.OffsetXInputField.SetText(NoSpace(_offset.X));
-            SampleNodePrefab.OffsetYInputField.SetText(NoSpace(_offset.Y));
+            NodePrefab.OffsetXInputField.SetText(NoSpace(_offset.X));
+            NodePrefab.OffsetYInputField.SetText(NoSpace(_offset.Y));
         }
     }
 
@@ -37,28 +37,38 @@ public class SampleConnectorNode : ConnectorNode
 
     public SampleConnectorNode(UISampleNodePrefab sampleNodePrefab)
     {
-        SampleNodePrefab = sampleNodePrefab;
-        OutputGateConnector = new OutputGateConnector(SampleNodePrefab.OutputButton, this);
-        SampleNodePrefab.OutputButton.SetOnClick(() => OutputConnectionTest(OutputGateConnector));
+        NodePrefab = sampleNodePrefab;
+        OutputGateConnector = new OutputGateConnector(NodePrefab.OutputButton, this);
+        NodePrefab.OutputButton.SetOnClick(() => OutputConnectionTest(OutputGateConnector));
 
-        SampleNodePrefab.ScaleInputField.SetOnTextChange(() => SetValue(ref _scale, SampleNodePrefab.ScaleInputField, 1.0f, _scaleIndex));
-        SampleNodePrefab.OffsetXInputField.SetOnTextChange(() => SetValue(ref _offset.X, SampleNodePrefab.OffsetXInputField, 0.0f, _offsetXIndex));
-        SampleNodePrefab.OffsetYInputField.SetOnTextChange(() => SetValue(ref _offset.Y, SampleNodePrefab.OffsetYInputField, 0.0f, _offsetYIndex));
+        NodePrefab.ScaleInputField.SetOnTextChange(() => SetValue(ref _scale, NodePrefab.ScaleInputField, 1.0f, _scaleIndex));
+        NodePrefab.OffsetXInputField.SetOnTextChange(() => SetValue(ref _offset.X, NodePrefab.OffsetXInputField, 0.0f, _offsetXIndex));
+        NodePrefab.OffsetYInputField.SetOnTextChange(() => SetValue(ref _offset.Y, NodePrefab.OffsetYInputField, 0.0f, _offsetYIndex));
 
-        SampleNodePrefab.ScaleTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
-        SampleNodePrefab.OffsetXTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
-        SampleNodePrefab.OffsetYTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        NodePrefab.ScaleTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        NodePrefab.OffsetXTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        NodePrefab.OffsetYTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
 
-        SampleNodePrefab.ScaleTextField.SetOnHold(() => SetSlideValue(ref _scale, SampleNodePrefab.ScaleInputField, 5f, _scaleIndex)); 
-        SampleNodePrefab.OffsetXTextField.SetOnHold(() => SetSlideValue(ref _offset.X, SampleNodePrefab.OffsetXInputField, 5f, _offsetXIndex));
-        SampleNodePrefab.OffsetYTextField.SetOnHold(() => SetSlideValue(ref _offset.Y, SampleNodePrefab.OffsetYInputField, 5f, _offsetYIndex));
+        NodePrefab.ScaleTextField.SetOnHold(() => SetSlideValue(ref _scale, NodePrefab.ScaleInputField, 5f, _scaleIndex)); 
+        NodePrefab.OffsetXTextField.SetOnHold(() => SetSlideValue(ref _offset.X, NodePrefab.OffsetXInputField, 5f, _offsetXIndex));
+        NodePrefab.OffsetYTextField.SetOnHold(() => SetSlideValue(ref _offset.Y, NodePrefab.OffsetYInputField, 5f, _offsetYIndex));
 
-        SampleNodePrefab.ScaleTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
-        SampleNodePrefab.OffsetXTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
-        SampleNodePrefab.OffsetYTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
+        NodePrefab.ScaleTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
+        NodePrefab.OffsetXTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
+        NodePrefab.OffsetYTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
 
-        sampleNodePrefab.Collection.SetOnClick(() => NoiseEditor.SelectedNode = this);
+        sampleNodePrefab.Collection.SetOnClick(() => { NoiseEditor.Selected = true; NoiseEditor.SelectedNode = this; });
     } 
+    
+    public override void Select()
+    {
+        NodePrefab.SelectionImage.SetVisibility(true);
+    }
+
+    public override void Deselect()
+    {
+        NodePrefab.SelectionImage.SetVisibility(false);
+    }
 
     public override string GetLine()
     {
@@ -114,12 +124,12 @@ public class SampleConnectorNode : ConnectorNode
 
     public override UINoiseNodePrefab[] GetNodePrefabs()
     {
-        return [SampleNodePrefab];
+        return [NodePrefab];
     }
 
     public override UIController GetUIController()
     {
-        return SampleNodePrefab.Collection.UIController;
+        return NodePrefab.Collection.UIController;
     }
 
     public override string ToStringList() 
@@ -128,7 +138,7 @@ public class SampleConnectorNode : ConnectorNode
             $"NodeType: Sample " +
             $"Values: {NoSpace(Scale)} {NoSpace(Offset)} " +
             $"Outputs: {NoSpace(OutputGateConnector.Name)} " +
-            $"Prefab: {NoSpace(Name)} {NoSpace(SampleNodePrefab.Collection.Offset)}";
+            $"Prefab: {NoSpace(Name)} {NoSpace(NodePrefab.Collection.Offset)}";
     }
 
     public override void SetValueReferences(List<float> values, ref int index)
