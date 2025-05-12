@@ -80,6 +80,16 @@ public class UICurveNodePrefab : UINoiseNodePrefab
         Controller.AddElements(this);
     }
 
+    public override void MoveNode()
+    {
+        base.MoveNode();
+        Vector2 mouseDelta = Input.GetMouseDelta();
+        if (mouseDelta == Vector2.Zero)
+            return;
+
+        CurveWindow.Position += mouseDelta * (1 / Collection.UIController.Scale);
+    }
+
     public static void Update()
     {
         foreach (var curveWindow in CurveWindows)

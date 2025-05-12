@@ -68,7 +68,7 @@ public class UIMinMaxInputNodePrefab : UINoiseNodePrefab
         Background = new UIImage($"{name}Background", controller, AnchorType.TopLeft, PositionType.Relative, BackgroundColor, (0, 0, 0), Scale, (0, 14, 0, 0), 0, 10, (10f, 0.05f));
 
         MoveButton.SetOnClick(SetOldMousePosition);
-        MoveButton.SetOnHold(MoveNode);
+        MoveButton.SetOnHold(MoveNode); 
 
         mainElements.AddElements(MoveButton, Background, ElementCollection);
         Collection.AddElements(SelectionImage, mainElements);

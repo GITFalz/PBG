@@ -92,9 +92,9 @@ public class UIText : UIElement
     {
         float value;
         string text = Text;
-        if (text.Length == 0 || text.EndsWith(".") || text.EndsWith(","))
+        if (text.Length == 0 || text.EndsWith("."))
             text += "0";
-        if (float.TryParse(text, out float scaleValue))
+        if (Float.TryParse(text, out float scaleValue))
             value = scaleValue;
         else
             value = replacement;

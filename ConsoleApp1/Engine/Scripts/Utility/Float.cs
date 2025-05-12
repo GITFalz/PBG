@@ -13,6 +13,20 @@ public static class Float
             return 0f;
         }
     }
+
+    public static bool TryParse(string value, out float result)
+    {
+        try 
+        {
+            result = Parse(value);
+            return true;
+        }
+        catch (Exception)
+        {
+            result = 0f;
+            return false;
+        }
+    }
 }
 
 public static class Int

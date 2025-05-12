@@ -229,7 +229,12 @@ public class CurveWindow
 
     public UIButton AddButton()
     {
-        UIButton button = new UIButton("Button", Controller, AnchorType.TopLeft, PositionType.Absolute, (0.7f, 0.7f, 0.7f, 1f), (0, 0, 0), (20, 20), (Size.X / 2 - 10, Size.Y / 2 - 10, 0, 0), 0, 10, (10, 0.05f), UIState.Interactable);
+        return AddButton((Size.X / 2 - 10, Size.Y / 2 - 10, 0, 0));
+    }
+
+    public UIButton AddButton(Vector4 offset)
+    {
+        UIButton button = new UIButton("Button", Controller, AnchorType.TopLeft, PositionType.Absolute, (0.7f, 0.7f, 0.7f, 1f), (0, 0, 0), (20, 20), offset, 0, 10, (10, 0.05f), UIState.Interactable);
         int index = 1;
         while (Buttons.Count - 1 > index && Buttons[index].Offset.X < button.Offset.X)
         {
@@ -256,7 +261,7 @@ public class CurveWindow
         int index = ButtonIndex[button];
         Buttons.Remove(button);
         ButtonIndex.Remove(button);
-        for (int i = index; i < Buttons.Count; i++)
+        for (int i = index; i < Buttons.Count - 1; i++)
         {
             ButtonIndex[Buttons[i]]--;
         }

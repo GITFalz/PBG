@@ -18,7 +18,7 @@ public abstract class UINoiseNodePrefab : UIPrefab
     public UINoiseNodePrefab(string name, UIController controller, Vector4 offset) : base(name, controller, offset) {}
 
     public void SetOldMousePosition() => _oldMouseButtonPosition = Input.GetMousePosition();
-    public void MoveNode()
+    public virtual void MoveNode()
     {
         if (Input.GetMouseDelta() == Vector2.Zero)
             return;

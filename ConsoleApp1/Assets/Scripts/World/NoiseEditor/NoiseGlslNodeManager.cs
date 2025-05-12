@@ -61,12 +61,6 @@ public static class NoiseGlslNodeManager
             lines.Insert(lineIndex, newLine);
             lineIndex++;
         }
-
-        Console.WriteLine($"Shader lines: {lines.Count}");
-        foreach (var value in values)
-        {
-            Console.WriteLine(value);
-        }
         
         _valueSSBO.Renew(values);
 

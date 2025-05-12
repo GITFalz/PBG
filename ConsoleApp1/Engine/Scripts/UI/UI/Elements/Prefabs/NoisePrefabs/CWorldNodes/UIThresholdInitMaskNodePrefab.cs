@@ -1,6 +1,6 @@
 using OpenTK.Mathematics;
 
-public class UIInitMaskNodePrefab : UINoiseNodePrefab
+public class UIThresholdInitMaskNodePrefab : UINoiseNodePrefab
 {
     public UIImage SelectionImage;
     public UIButton MoveButton;
@@ -33,7 +33,7 @@ public class UIInitMaskNodePrefab : UINoiseNodePrefab
         set => Collection.Depth = value;
     }
 
-    public UIInitMaskNodePrefab(
+    public UIThresholdInitMaskNodePrefab(
         string name, 
         UIController controller,
         Vector4 offset

@@ -261,7 +261,15 @@ public class NoiseEditor : ScriptingNode
         addMinButton.SetTextCharCount("Min", 1.2f);
         UITextButton addMaxButton = new("AddMaxButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
         addMaxButton.SetTextCharCount("Max", 1.2f);
-        
+
+        // - AddInitMaskNodeCollection -
+        UIVerticalCollection addInitMaskNodeCollection = new("AddInitMaskNodeCollection", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), (0, 0, 0, 0), 0f, 0);
+
+        UITextButton addInitMaskThresholdButton = new("AddInitMaskThresholdButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addInitMaskThresholdButton.SetTextCharCount("Add Threshold", 1.2f);
+        UITextButton addInitMaskMinMaxButton = new("AddInitMaskMinMaxButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addInitMaskMinMaxButton.SetTextCharCount("Add Min Max", 1.2f);
+
 
         addSampleButton.SetOnClick(() =>
         {
@@ -299,18 +307,6 @@ public class NoiseEditor : ScriptingNode
             SelectionCollection.SetVisibility(false);
         });
 
-        addInitMaskButton.SetOnClick(() =>
-        {
-            Vector2 mousePosition = Input.GetMousePosition();
-            UIInitMaskNodePrefab initMaskNodePrefab = new("InitMaskNodePrefab", NodeController, (mousePosition.X, mousePosition.Y, 0, 0))
-            {
-                Depth = 1f
-            };
-
-            NoiseNodeManager.AddNode(initMaskNodePrefab);
-            SelectionCollection.SetVisibility(false);
-        });
-
         addCurveButton.SetOnClick(() =>
         {
             Vector2 mousePosition = Input.GetMousePosition();
@@ -339,6 +335,12 @@ public class NoiseEditor : ScriptingNode
         {
             EmbeddedCollection.SetVisibility(false);
             addDoubleInputTypeCollection.SetVisibility(!addDoubleInputTypeCollection.Visible);
+        });
+
+        addInitMaskButton.SetOnClick(() =>
+        {
+            EmbeddedCollection.SetVisibility(false);
+            addInitMaskNodeCollection.SetVisibility(!addInitMaskNodeCollection.Visible);
         });
 
 
@@ -429,11 +431,37 @@ public class NoiseEditor : ScriptingNode
         });
 
 
+        addInitMaskThresholdButton.SetOnClick(() =>
+        {
+            Vector2 mousePosition = Input.GetMousePosition();
+            UIThresholdInitMaskNodePrefab initMaskNodePrefab = new("InitMaskNodePrefab", NodeController, (mousePosition.X, mousePosition.Y, 0, 0))
+            {
+                Depth = 1f
+            };
+
+            NoiseNodeManager.AddNode(initMaskNodePrefab);
+            SelectionCollection.SetVisibility(false);
+        });
+
+        addInitMaskMinMaxButton.SetOnClick(() =>
+        {
+            Vector2 mousePosition = Input.GetMousePosition();
+            UIMinMaxInitMaskNodePrefab initMaskNodePrefab = new("InitMaskNodePrefab", NodeController, (mousePosition.X, mousePosition.Y, 0, 0))
+            {
+                Depth = 1f
+            };
+
+            NoiseNodeManager.AddNode(initMaskNodePrefab);
+            SelectionCollection.SetVisibility(false);
+        });
+
+
         addVoronoiNodeCollection.AddElements(addVoronoiButtonBasic, addVoronoiButtonEdge, addVoronoiButtonDistance);
         addMinMaxInputTypeCollection.AddElements(addClampButton, addIgnoreButton, addLerpButton, addSlideButton, addSmoothButton);
         addDoubleInputTypeCollection.AddElements(addAddButton, addSubButton, addMulButton, addDivButton, addMinButton, addMaxButton);
+        addInitMaskNodeCollection.AddElements(addInitMaskThresholdButton, addInitMaskMinMaxButton);
 
-        EmbeddedCollection.AddElements(addVoronoiNodeCollection, addMinMaxInputTypeCollection, addDoubleInputTypeCollection);
+        EmbeddedCollection.AddElements(addVoronoiNodeCollection, addMinMaxInputTypeCollection, addDoubleInputTypeCollection, addInitMaskNodeCollection);
         selectionVerticalCollection.AddElements(addSampleButton, addVoronoiButton, addMinMaxInputButton, addDoubleInputButton, addRangeButton, addCombineButton, addInitMaskButton, addCurveButton);
 
         SelectionCollection.AddElements(selectionVerticalCollection, EmbeddedCollection);

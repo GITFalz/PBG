@@ -30,9 +30,7 @@ public class String
         public static Vector4 Vec4(string str)
         {
             str = str.Trim(['(',')',' ']);
-            Console.WriteLine(str);
             string[] parts = str.Split([','], StringSplitOptions.RemoveEmptyEntries);
-            Console.WriteLine("Is valid vec4: " + (parts.Length == 4) + " it is: " + parts.Length + " with: " + string.Join('-', parts));
             if (parts.Length != 4)
                 return Vector4.Zero;
 

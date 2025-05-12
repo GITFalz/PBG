@@ -1,6 +1,6 @@
 using OpenTK.Mathematics;
 
-public class CWorldInitMaskNode : CWorldParameterNode
+public class CWorldThresholdInitMaskNode : CWorldParameterNode
 {
     public CWorldGetterNode ChildNode = new CWorldEmptyNode("ChildNode");
     public CWorldGetterNode MaskNode = new CWorldEmptyNode("MaskNode");
@@ -23,7 +23,7 @@ public class CWorldInitMaskNode : CWorldParameterNode
 
     public override CWorldNode Copy()
     {
-        return new CWorldInitMaskNode()
+        return new CWorldThresholdInitMaskNode()
         {
             Name = Name,
             Threshold = Threshold,
@@ -35,13 +35,13 @@ public class CWorldInitMaskNode : CWorldParameterNode
         if (ChildNode.IsntEmpty())
         {
             string startName = nodeNameMap[ChildNode];
-            ((CWorldInitMaskNode)copiedNode).ChildNode = (CWorldGetterNode)copiedNodes[startName];
+            ((CWorldThresholdInitMaskNode)copiedNode).ChildNode = (CWorldGetterNode)copiedNodes[startName];
         }
         if (MaskNode.IsntEmpty())
         {
             string heightName = nodeNameMap[MaskNode];
-            ((CWorldInitMaskNode)copiedNode).MaskNode = (CWorldGetterNode)copiedNodes[heightName];
+            ((CWorldThresholdInitMaskNode)copiedNode).MaskNode = (CWorldGetterNode)copiedNodes[heightName];
         }
-        ((CWorldInitMaskNode)copiedNode).Threshold = Threshold;
+        ((CWorldThresholdInitMaskNode)copiedNode).Threshold = Threshold;
     }
 }

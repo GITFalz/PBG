@@ -103,15 +103,25 @@ public static class NoiseNodeManager
             OutputGateConnectors.Add(node.OutputGateConnector);
             rangeNodePrefab.AddedMoveAction = UpdateLines;
         }
-        else if (nodePrefab is UIInitMaskNodePrefab initMaskNodePrefab)
+        else if (nodePrefab is UIThresholdInitMaskNodePrefab initMaskNodePrefab)
         {
-            var node = new InitMaskConnectorNode(initMaskNodePrefab);
+            var node = new InitMaskThresholdConnectorNode(initMaskNodePrefab);
             connectorNode = node;
             NoiseNodes.Add(nodePrefab, node);
             InputGateConnectors.Add(node.ChildGateConnector);
             InputGateConnectors.Add(node.MaskGateConnector);
             OutputGateConnectors.Add(node.OutputGateConnector);
             initMaskNodePrefab.AddedMoveAction = UpdateLines;
+        }
+        else if (nodePrefab is UIMinMaxInitMaskNodePrefab minMaxInitMaskNodePrefab)
+        {
+            var node = new InitMaskMinMaxConnectorNode(minMaxInitMaskNodePrefab);
+            connectorNode = node;
+            NoiseNodes.Add(nodePrefab, node);
+            InputGateConnectors.Add(node.ChildGateConnector);
+            InputGateConnectors.Add(node.MaskGateConnector);
+            OutputGateConnectors.Add(node.OutputGateConnector);
+            minMaxInitMaskNodePrefab.AddedMoveAction = UpdateLines;
         }
         else if (nodePrefab is UICurveNodePrefab curveNodePrefab)
         {
@@ -342,12 +352,23 @@ public static class NoiseNodeManager
                 nodeMap.Add(node, cWorldRangeNode);
                 nodeManager.AddNode(cWorldRangeNode);
             }
-            else if (node is InitMaskConnectorNode initMaskNode)
+            else if (node is InitMaskThresholdConnectorNode initMaskNode)
             {
-                CWorldInitMaskNode cWorldInitMaskNode = new CWorldInitMaskNode()
+                CWorldThresholdInitMaskNode cWorldInitMaskNode = new CWorldThresholdInitMaskNode()
                 {
                     Name = node.VariableName,
                     Threshold = initMaskNode.Threshold,
+                };
+                nodeMap.Add(node, cWorldInitMaskNode);
+                nodeManager.AddNode(cWorldInitMaskNode);
+            }
+            else if (node is InitMaskMinMaxConnectorNode minMaxInitMaskNode)
+            {
+                CWorldMinMaxInitMaskNode cWorldInitMaskNode = new CWorldMinMaxInitMaskNode()
+                {
+                    Name = node.VariableName,
+                    Min = minMaxInitMaskNode.Min,
+                    Max = minMaxInitMaskNode.Max, 
                 };
                 nodeMap.Add(node, cWorldInitMaskNode);
                 nodeManager.AddNode(cWorldInitMaskNode);
@@ -416,15 +437,26 @@ public static class NoiseNodeManager
                 }
                 ((CWorldRangeNode)cWorldNode).Flipped = rangeNode.Flipped;
             }
-            else if (node is InitMaskConnectorNode initMaskNode)
+            else if (node is InitMaskThresholdConnectorNode initMaskNode)
             {
                 if (initMaskNode.ChildGateConnector.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var childNode))
                 {
-                    ((CWorldInitMaskNode)cWorldNode).ChildNode = (CWorldGetterNode)childNode;
+                    ((CWorldThresholdInitMaskNode)cWorldNode).ChildNode = (CWorldGetterNode)childNode;
                 }
                 if (initMaskNode.MaskGateConnector.GetConnectedNode(out connectedNode) && nodeMap.TryGetValue(connectedNode, out var maskNode))
                 {
-                    ((CWorldInitMaskNode)cWorldNode).MaskNode = (CWorldGetterNode)maskNode;
+                    ((CWorldThresholdInitMaskNode)cWorldNode).MaskNode = (CWorldGetterNode)maskNode;
+                }
+            }
+            else if (node is InitMaskMinMaxConnectorNode minMaxInitMaskNode)
+            {
+                if (minMaxInitMaskNode.ChildGateConnector.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var childNode))
+                {
+                    ((CWorldMinMaxInitMaskNode)cWorldNode).ChildNode = (CWorldGetterNode)childNode;
+                }
+                if (minMaxInitMaskNode.MaskGateConnector.GetConnectedNode(out connectedNode) && nodeMap.TryGetValue(connectedNode, out var maskNode))
+                {
+                    ((CWorldMinMaxInitMaskNode)cWorldNode).MaskNode = (CWorldGetterNode)maskNode;
                 }
             }
             else if (node is CurveConnectorNode curveNode)
@@ -739,7 +771,7 @@ public static class NoiseNodeManager
                     rangeNode.Flipped = isFlipped;
                 }
             }
-            else if (nodeType == "InitMask")
+            else if (nodeType == "InitMask" || nodeType == "ThresholdInitMask")
             {
                 string threshold = values[3];
 
@@ -751,15 +783,40 @@ public static class NoiseNodeManager
                 string name = values[10];
                 Vector4 offset = String.Parse.Vec4(values[11]);
 
-                UIInitMaskNodePrefab initMaskNodePrefab = new UIInitMaskNodePrefab(name, NodeController, offset);
+                UIThresholdInitMaskNodePrefab initMaskNodePrefab = new UIThresholdInitMaskNodePrefab(name, NodeController, offset);
 
-                if (AddNode(initMaskNodePrefab, out ConnectorNode node) && node is InitMaskConnectorNode initMaskNode)
+                if (AddNode(initMaskNodePrefab, out ConnectorNode node) && node is InitMaskThresholdConnectorNode initMaskNode)
                 {
                     initMaskNode.ChildGateConnector.Name = childName;
                     initMaskNode.MaskGateConnector.Name = maskName;
                     initMaskNode.OutputGateConnector.Name = outputName;
 
                     initMaskNode.Threshold = Float.Parse(threshold);
+                }
+            }
+            else if (nodeType == "MinMaxInitMask")
+            {
+                string min = values[3];
+                string max = values[4];
+
+                string childName = values[6];
+                string maskName = values[7];
+
+                string outputName = values[9];
+
+                string name = values[11];
+                Vector4 offset = String.Parse.Vec4(values[12]);
+
+                UIMinMaxInitMaskNodePrefab minMaxInitMaskNodePrefab = new UIMinMaxInitMaskNodePrefab(name, NodeController, offset);
+
+                if (AddNode(minMaxInitMaskNodePrefab, out ConnectorNode node) && node is InitMaskMinMaxConnectorNode minMaxInitMaskNode)
+                {
+                    minMaxInitMaskNode.ChildGateConnector.Name = childName;
+                    minMaxInitMaskNode.MaskGateConnector.Name = maskName;
+                    minMaxInitMaskNode.OutputGateConnector.Name = outputName;
+
+                    minMaxInitMaskNode.Min = Float.Parse(min);
+                    minMaxInitMaskNode.Max = Float.Parse(max);
                 }
             }
             else if (nodeType == "Curve")
@@ -784,9 +841,10 @@ public static class NoiseNodeManager
                 UICurveNodePrefab curveNodePrefab = new UICurveNodePrefab(name, NodeController, offset);
                 for (int j = 0; j < count; j++)
                 {
-                    UIButton button = curveNodePrefab.CurveWindow.AddButton();
-                    button.Offset = offsets[j];
+                    curveNodePrefab.CurveWindow.AddButton(offsets[j]);
                 }
+
+                Console.WriteLine($"Curve: {offsets.Count}");
                 curveNodePrefab.CurveWindow.GenerateButtons();
                 curveNodePrefab.CurveWindow.UpdatePoints();
 

@@ -40,6 +40,7 @@ public class UIMesh
         VisibleElementCount++;
 
         _generateBuffers = true;
+        _updateVisibility = true;
     }
 
     public bool GetElementData(UIPanel element, out int index)
@@ -170,16 +171,16 @@ public class UIMesh
 
     public void Update()
     {
+        if (_generateBuffers)
+        {
+            GenerateBuffers();
+            _generateBuffers = false;
+        }
         if (_updateVisibility)
         {
             UpdateData();
             _updateVisibility = false;
             _updateData = true;
-        }
-        if (_generateBuffers)
-        {
-            GenerateBuffers();
-            _generateBuffers = false;
         }
         if (_updateData)
         {

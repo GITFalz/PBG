@@ -1,29 +1,40 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 
-public class InitMaskConnectorNode : ConnectorNode
+public class InitMaskMinMaxConnectorNode : ConnectorNode
 {
     public string Name => NodePrefab.Name;
-    public UIInitMaskNodePrefab NodePrefab;
+    public UIMinMaxInitMaskNodePrefab NodePrefab;
 
     public InputGateConnector ChildGateConnector;
     public InputGateConnector MaskGateConnector;
     public OutputGateConnector OutputGateConnector;
 
-    public float Threshold {
+    public float Min {
         get {
-            return _threshold; 
+            return _min; 
         } set {
-            _threshold = value;
-            NodePrefab.ThresholdInputField.SetText(NoSpace(_threshold));
+            _min = value;
+            NodePrefab.MinInputField.SetText(NoSpace(_min));
+        }
+    }
+
+    public float Max {
+        get {
+            return _max; 
+        } set {
+            _max = value;
+            NodePrefab.MaxInputField.SetText(NoSpace(_max));
         }
     }
     
-    private float _threshold = 0;
+    private float _min = 0;
+    private float _max = 1;
 
-    private int _thresholdIndex = -1;
+    private int _minIndex = -1;
+    private int _maxIndex = -1;
 
-    public InitMaskConnectorNode(UIInitMaskNodePrefab initMaskNodePrefab)
+    public InitMaskMinMaxConnectorNode(UIMinMaxInitMaskNodePrefab initMaskNodePrefab)
     {
         NodePrefab = initMaskNodePrefab;
         ChildGateConnector = new InputGateConnector(NodePrefab.ChildButton, this);
@@ -33,13 +44,17 @@ public class InitMaskConnectorNode : ConnectorNode
         NodePrefab.MaskButton.SetOnClick(() => InputConnectionTest(MaskGateConnector));
         NodePrefab.OutputButton.SetOnClick(() => OutputConnectionTest(OutputGateConnector));
 
-        NodePrefab.ThresholdInputField.SetOnTextChange(() => SetValue(ref _threshold, NodePrefab.ThresholdInputField, 0.5f, _thresholdIndex));
+        NodePrefab.MinInputField.SetOnTextChange(() => SetValue(ref _min, NodePrefab.MinInputField, 0.0f, _minIndex));
+        NodePrefab.MaxInputField.SetOnTextChange(() => SetValue(ref _max, NodePrefab.MaxInputField, 1.0f, _maxIndex));
 
-        NodePrefab.ThresholdText.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        NodePrefab.MinText.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        NodePrefab.MaxText.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
 
-        NodePrefab.ThresholdText.SetOnHold(() => SetSlideValue(ref _threshold, NodePrefab.ThresholdInputField, 5f, _thresholdIndex));
+        NodePrefab.MinText.SetOnHold(() => SetSlideValue(ref _min, NodePrefab.MinInputField, 5f, _minIndex));
+        NodePrefab.MaxText.SetOnHold(() => SetSlideValue(ref _max, NodePrefab.MaxInputField, 5f, _maxIndex));
 
-        NodePrefab.ThresholdText.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
+        NodePrefab.MinText.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
+        NodePrefab.MaxText.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
         
         NodePrefab.Collection.SetOnClick(() => SelectNode(this));
     }
@@ -63,7 +78,8 @@ public class InitMaskConnectorNode : ConnectorNode
 
     public override string GetLine()
     {
-        string thresholdValue = _thresholdIndex != -1 ? $"values[{_thresholdIndex}]" : NoSpace(Threshold);
+        string minValue = _minIndex != -1 ? $"values[{_minIndex}]" : NoSpace(Min);
+        string maxValue = _maxIndex != -1 ? $"values[{_maxIndex}]" : NoSpace(Max);
 
         string line = $"    float {VariableName} = ";
         string child = ChildGateConnector.IsConnected && ChildGateConnector.OutputGateConnector != null
@@ -74,7 +90,7 @@ public class InitMaskConnectorNode : ConnectorNode
             ? MaskGateConnector.OutputGateConnector.Node.VariableName
             : "1.0";
 
-        line += $"{mask} > {thresholdValue} ? {child} : 0.0;";
+        line += $"({mask} >= {minValue} && {mask} < {maxValue}) ? {child} : 0.0;";
         return line;
     }
 
@@ -144,8 +160,8 @@ public class InitMaskConnectorNode : ConnectorNode
     public override string ToStringList()
     {
         return 
-            $"NodeType: InitMask " +
-            $"Values: {NoSpace(Threshold)} " +
+            $"NodeType: MinMaxInitMask " +
+            $"Values: {NoSpace(Min)} {NoSpace(Max)} " +
             $"Inputs: {NoSpace(ChildGateConnector.Name)} {NoSpace(MaskGateConnector.Name)} " +
             $"Outputs: {NoSpace(OutputGateConnector.Name)} " +
             $"Prefab: {NoSpace(Name)} {NoSpace(NodePrefab.Collection.Offset)}";
@@ -153,8 +169,12 @@ public class InitMaskConnectorNode : ConnectorNode
 
     public override void SetValueReferences(List<float> values, ref int index)
     {
-        _thresholdIndex = index;
-        values.Add(Threshold);
+        _minIndex = index;
+        values.Add(Min);
+        index++;
+
+        _maxIndex = index;
+        values.Add(Max);
         index++;
     }
 }
