@@ -159,7 +159,7 @@ public class MinMaxInputOperationConnectorNode : ConnectorNode
             "    {\n" +
             "        Float: " + NoSpace(Min) + "\n" +
             "        Float: " + NoSpace(Max) + "\n" +
-            "        Int: " + NoSpace((int)Type) + "\n" +
+            "        Type: " + NoSpace((int)Type) + "\n" +
             "    }\n" +
             "    Inputs:\n" +
             "    {\n" +
