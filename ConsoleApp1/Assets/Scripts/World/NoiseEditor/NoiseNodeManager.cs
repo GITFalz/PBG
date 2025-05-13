@@ -75,7 +75,7 @@ public static class NoiseNodeManager
         }
         else if (nodePrefab is UIDoubleInputNodePrefab doubleInputNode)
         {
-            var node = new DoubleInputOperationConnectorNode(doubleInputNode, doubleInputNode.Type);
+            var node = new DoubleInputConnectorNode(doubleInputNode, doubleInputNode.Type);
             connectorNode = node;
             NoiseNodes.Add(nodePrefab, node);
             InputGateConnectors.Add(node.InputGateConnector1);
@@ -137,6 +137,29 @@ public static class NoiseNodeManager
             return false;
         }
 
+        return true;
+    }
+
+    public static bool AddNode(ConnectorNode node)
+    {
+        if (node is DisplayConnectorNode displayConnectorNode)
+        {
+            // Only one, no delete
+            if (DisplayNode != null)
+                return false;
+
+            DisplayNode = displayConnectorNode;
+        }
+        var prefabs = node.GetNodePrefabs();
+        foreach (var prefab in prefabs)
+        {
+            if (NoiseNodes.ContainsKey(prefab))
+                return false;
+
+            NoiseNodes.Add(prefab, node);
+        }
+        InputGateConnectors.AddRange(node.GetInputGateConnectors());
+        OutputGateConnectors.AddRange(node.GetOutputGateConnectors());
         return true;
     }
 
@@ -318,7 +341,7 @@ public static class NoiseNodeManager
                 nodeMap.Add(node, cWorldMinMaxNode);
                 nodeManager.AddNode(cWorldMinMaxNode);
             }
-            else if (node is DoubleInputOperationConnectorNode doubleInputNode)
+            else if (node is DoubleInputConnectorNode doubleInputNode)
             {
                 CWorldDoubleInputNode cWorldDoubleInputNode = new CWorldDoubleInputNode(doubleInputNode.Type)
                 {
@@ -403,7 +426,7 @@ public static class NoiseNodeManager
                     ((CWorldMinMaxNode)cWorldNode).InputNode = (CWorldGetterNode)inputNode;
                 }
             }
-            else if (node is DoubleInputOperationConnectorNode doubleInputNode)
+            else if (node is DoubleInputConnectorNode doubleInputNode)
             {
                 if (doubleInputNode.InputGateConnector1.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode1))
                 {
@@ -603,260 +626,18 @@ public static class NoiseNodeManager
         Dictionary<string, OutputGateConnector> outputGateConnectors = [];
         Dictionary<string, InputGateConnector> inputGateConnectors = [];
 
-        int nodeCount = Int.Parse(lines[0].Split(' ')[1]);
-        int connectionsCount = Int.Parse(lines[nodeCount + 1].Split(' ')[1]);
+        if (!NodeParser.Parse(NodeController, lines, out int connectionIndex))
+            return;
 
-        for (int i = 0; i < nodeCount; i++)
+        var values = lines[connectionIndex].Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
+        if (values.Length < 2)
+            return;
+
+        int connectionsCount = Int.Parse(values[1]);
+
+        foreach (var node in NodeParser.ConnectorNodes)
         {
-            int index = i + 1;
-            string[] values = lines[index].Split(' ');
-            string nodeType = values[1];
-
-            if (nodeType == "Display")
-            {   
-                string inputName = values[3];
-
-                string name = values[5];
-
-                Vector4 offset = String.Parse.Vec4(values[6]);
-
-                UIDisplayNodePrefab displayNodePrefab = new UIDisplayNodePrefab(name, NodeController, offset);
-
-                if (AddNode(displayNodePrefab, out ConnectorNode node) && node is DisplayConnectorNode displayNode)
-                {
-                    displayNode.InputGateConnector.Name = inputName;
-                }
-            }
-            else if (nodeType == "DoubleInputOperation")
-            {   
-                string value1 = values[3];
-                string value2 = values[4];
-                int type = int.Parse(values[5]);
-
-                string inputName1 = values[7];
-                string inputName2 = values[8];
-
-                string outputName = values[10];
-
-                string name = values[12]; 
-                Vector4 offset = String.Parse.Vec4(values[13]);
-
-                UIDoubleInputNodePrefab doubleInputNodePrefab = new UIDoubleInputNodePrefab(name, NodeController, offset, (DoubleInputOperationType)type);
-
-                if (AddNode(doubleInputNodePrefab, out ConnectorNode node) && node is DoubleInputOperationConnectorNode doubleInputNode)
-                {
-                    doubleInputNode.InputGateConnector1.Name = inputName1;
-                    doubleInputNode.InputGateConnector2.Name = inputName2;
-                    doubleInputNode.OutputGateConnector.Name = outputName;
-
-                    doubleInputNode.Value1 = Float.Parse(value1);
-                    doubleInputNode.Value2 = Float.Parse(value2);
-                }
-            }
-            else if (nodeType == "Combine")
-            {
-                string value1 = values[3];
-                string value2 = values[4];
-
-                string inputName1 = values[6];
-                string inputName2 = values[7];
-
-                string outputName = values[9];
-
-                string name = values[11];
-                Vector4 offset = String.Parse.Vec4(values[12]);
-
-                UICombineNodePrefab combineNodePrefab = new UICombineNodePrefab(name, NodeController, offset);
-
-                if (AddNode(combineNodePrefab, out ConnectorNode node) && node is CombineConnectorNode combineNode)
-                {
-                    combineNode.InputGateConnector1.Name = inputName1;
-                    combineNode.InputGateConnector2.Name = inputName2;
-                    combineNode.OutputGateConnector.Name = outputName;
-
-                    combineNode.Value1 = Float.Parse(value1);
-                    combineNode.Value2 = Float.Parse(value2);
-                }
-            }
-            else if (nodeType == "MinMaxInputOperation")
-            {
-                string min = values[3];
-                string max = values[4];
-                int type = int.Parse(values[5]);
-
-                string inputName = values[7];
-
-                string outputName = values[9];
-
-                string name = values[11];
-                Vector4 offset = String.Parse.Vec4(values[12]);
-
-                UIMinMaxInputNodePrefab minMaxInputNodePrefab = new UIMinMaxInputNodePrefab(name, NodeController, offset, (MinMaxInputOperationType)type);
-
-                if (AddNode(minMaxInputNodePrefab, out ConnectorNode node) && node is MinMaxInputOperationConnectorNode minMaxInputNode)
-                {
-                    minMaxInputNode.InputGateConnector.Name = inputName;
-                    minMaxInputNode.OutputGateConnector.Name = outputName;
-
-                    minMaxInputNode.Min = Float.Parse(min);
-                    minMaxInputNode.Max = Float.Parse(max);
-                }
-            }
-            else if (nodeType == "Sample")
-            {
-                string scale = values[3];
-                string noiseOffset = values[4];
-
-                string outputName = values[6];
-
-                string name = values[8];
-                Vector4 offset = String.Parse.Vec4(values[9]);
-
-                UISampleNodePrefab sampleNodePrefab = new UISampleNodePrefab(name, NodeController, offset);
-
-                if (AddNode(sampleNodePrefab, out ConnectorNode node) && node is SampleConnectorNode sampleNode)
-                {
-                    sampleNode.OutputGateConnector.Name = outputName;
-
-                    sampleNode.Scale = Float.Parse(scale);
-                    sampleNode.Offset = String.Parse.Vec2(noiseOffset);
-                }
-            }
-            else if (nodeType == "Voronoi")
-            {
-                string scale = values[3];
-                string noiseOffset = values[4];
-                int type = int.Parse(values[5]);
-
-                string outputName = values[7];
-
-                string name = values[9];
-                Vector4 offset = String.Parse.Vec4(values[10]);
-
-                UIVoronoiPrefab voronoiNodePrefab = new UIVoronoiPrefab(name, NodeController, offset, (VoronoiOperationType)type);
-
-                if (AddNode(voronoiNodePrefab, out ConnectorNode node) && node is VoronoiConnectorNode voronoiNode)
-                {
-                    voronoiNode.OutputGateConnector.Name = outputName;
-
-                    voronoiNode.Scale = Float.Parse(scale);
-                    voronoiNode.Offset = String.Parse.Vec2(noiseOffset);
-                }
-            }
-            else if (nodeType == "Range")
-            {
-                string start = values[3];
-                string height = values[4];
-                string flipped = values[5];
-                bool isFlipped = flipped == "1";
-
-                string inputName1 = values[7];
-                string inputName2 = values[8];
-
-                string outputName = values[10];
-
-                string name = values[12];
-                Vector4 offset = String.Parse.Vec4(values[13]);
-
-                UIRangeNodePrefab rangeNodePrefab = new UIRangeNodePrefab(name, NodeController, offset);
-
-                if (AddNode(rangeNodePrefab, out ConnectorNode node) && node is RangeConnectorNode rangeNode)
-                {
-                    rangeNode.StartGateConnector.Name = inputName1;
-                    rangeNode.HeightGateConnector.Name = inputName2;
-                    rangeNode.OutputGateConnector.Name = outputName;
-
-                    rangeNode.Start = Int.Parse(start);
-                    rangeNode.Height = Int.Parse(height);
-                    rangeNode.Flipped = isFlipped;
-                }
-            }
-            else if (nodeType == "InitMask" || nodeType == "ThresholdInitMask")
-            {
-                string threshold = values[3];
-
-                string childName = values[5];
-                string maskName = values[6];
-
-                string outputName = values[8];
-
-                string name = values[10];
-                Vector4 offset = String.Parse.Vec4(values[11]);
-
-                UIThresholdInitMaskNodePrefab initMaskNodePrefab = new UIThresholdInitMaskNodePrefab(name, NodeController, offset);
-
-                if (AddNode(initMaskNodePrefab, out ConnectorNode node) && node is InitMaskThresholdConnectorNode initMaskNode)
-                {
-                    initMaskNode.ChildGateConnector.Name = childName;
-                    initMaskNode.MaskGateConnector.Name = maskName;
-                    initMaskNode.OutputGateConnector.Name = outputName;
-
-                    initMaskNode.Threshold = Float.Parse(threshold);
-                }
-            }
-            else if (nodeType == "MinMaxInitMask")
-            {
-                string min = values[3];
-                string max = values[4];
-
-                string childName = values[6];
-                string maskName = values[7];
-
-                string outputName = values[9];
-
-                string name = values[11];
-                Vector4 offset = String.Parse.Vec4(values[12]);
-
-                UIMinMaxInitMaskNodePrefab minMaxInitMaskNodePrefab = new UIMinMaxInitMaskNodePrefab(name, NodeController, offset);
-
-                if (AddNode(minMaxInitMaskNodePrefab, out ConnectorNode node) && node is InitMaskMinMaxConnectorNode minMaxInitMaskNode)
-                {
-                    minMaxInitMaskNode.ChildGateConnector.Name = childName;
-                    minMaxInitMaskNode.MaskGateConnector.Name = maskName;
-                    minMaxInitMaskNode.OutputGateConnector.Name = outputName;
-
-                    minMaxInitMaskNode.Min = Float.Parse(min);
-                    minMaxInitMaskNode.Max = Float.Parse(max);
-                }
-            }
-            else if (nodeType == "Curve")
-            {
-                string min = values[3];
-                string max = values[4];
-                int count = Int.Parse(values[5], 0);
-
-                List<Vector4> offsets = [];
-                for (int j = 0; j < count; j++)
-                {
-                    offsets.Add(String.Parse.Vec4(values[j + 6]));
-                }
-
-                string inputName = values[count+7];
-
-                string outputName = values[count+9];
-
-                string name = values[count+11];
-                Vector4 offset = String.Parse.Vec4(values[count+12]);
-
-                UICurveNodePrefab curveNodePrefab = new UICurveNodePrefab(name, NodeController, offset);
-                for (int j = 0; j < count; j++)
-                {
-                    curveNodePrefab.CurveWindow.AddButton(offsets[j]);
-                }
-
-                Console.WriteLine($"Curve: {offsets.Count}");
-                curveNodePrefab.CurveWindow.GenerateButtons();
-                curveNodePrefab.CurveWindow.UpdatePoints();
-
-                if (AddNode(curveNodePrefab, out ConnectorNode node) && node is CurveConnectorNode curveNode)
-                {
-                    curveNode.InputGateConnector.Name = inputName;
-                    curveNode.OutputGateConnector.Name = outputName;
-
-                    curveNode.Min = Float.Parse(min);
-                    curveNode.Max = Float.Parse(max);
-                }
-            }
+            AddNode(node);
         }
 
         foreach (var output in OutputGateConnectors)
@@ -871,8 +652,8 @@ public static class NoiseNodeManager
 
         for (int i = 0; i < connectionsCount; i++)
         {
-            int index = nodeCount + 2 + i;
-            string[] values = lines[index].Split(' ');
+            int index = connectionIndex + i + 1;
+            values = lines[index].Split(' ');
             string outputName = values[0];
             string inputName = values[2];
 

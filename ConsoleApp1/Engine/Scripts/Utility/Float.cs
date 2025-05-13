@@ -6,7 +6,7 @@ public static class Float
     {
         try 
         {
-            return float.Parse(value, CultureInfo.InvariantCulture);
+            return float.Parse(value.Trim(), CultureInfo.InvariantCulture);
         }
         catch (Exception)
         {
@@ -35,7 +35,7 @@ public static class Int
     {
         try 
         {
-            return int.Parse(value, CultureInfo.InvariantCulture);
+            return int.Parse(value.Trim(), CultureInfo.InvariantCulture);
         }
         catch (Exception)
         {

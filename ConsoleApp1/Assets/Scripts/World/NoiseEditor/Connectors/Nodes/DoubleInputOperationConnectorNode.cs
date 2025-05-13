@@ -1,7 +1,7 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 
-public class DoubleInputOperationConnectorNode : ConnectorNode
+public class DoubleInputConnectorNode : ConnectorNode
 {
     public string Name => NodePrefab.Name;
     public UIDoubleInputNodePrefab NodePrefab;
@@ -37,7 +37,7 @@ public class DoubleInputOperationConnectorNode : ConnectorNode
     private int _value1Index = -1;
     private int _value2Index = -1;
 
-    public DoubleInputOperationConnectorNode(UIDoubleInputNodePrefab doubleInputNodePrefab, DoubleInputOperationType type)
+    public DoubleInputConnectorNode(UIDoubleInputNodePrefab doubleInputNodePrefab, DoubleInputOperationType type)
     {
         NodePrefab = doubleInputNodePrefab;
         InputGateConnector1 = new InputGateConnector(doubleInputNodePrefab.InputButton1, this);

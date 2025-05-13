@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using OpenTK.Mathematics;
 
 public class DisplayConnectorNode : ConnectorNode
@@ -101,9 +102,19 @@ public class DisplayConnectorNode : ConnectorNode
     public override string ToStringList()
     {
         return 
-            $"NodeType: Display " +
-            $"Inputs: {NoSpace(InputGateConnector.Name)} " +
-            $"Prefab: {NoSpace(Name)} {NoSpace(DisplayNodePrefab.Collection.Offset)}";
+            "NodeType: Display\n"+
+            "{\n"+
+            "    Inputs:\n"+
+            "    {\n"+
+            "        Name: "+NoSpace(InputGateConnector.Name)+"\n"+
+            "    }\n"+
+            "    Prefab:\n"+
+            "    {\n"+
+            "        Name: "+NoSpace(Name)+"\n"+
+            "        Offset: "+NoSpace(DisplayNodePrefab.Collection.Offset)+"\n"+
+            "    }\n"+
+            "}\n";
+        ;
     }
 
     public override void SetValueReferences(List<float> values, ref int index)
