@@ -154,7 +154,7 @@ public static class NoiseNodeManager
         foreach (var prefab in prefabs)
         {
             if (NoiseNodes.ContainsKey(prefab))
-                return false;
+                continue;
 
             NoiseNodes.Add(prefab, node);
         }
@@ -649,7 +649,7 @@ public static class NoiseNodeManager
                 none++;
             }
                 
-            outputGateConnectors.Add(output.Name, output);
+            outputGateConnectors.Add(output.Name.Trim(), output);
         }
 
         none = 0;
@@ -661,15 +661,15 @@ public static class NoiseNodeManager
                 none++;
             }
 
-            inputGateConnectors.Add(input.Name, input);
+            inputGateConnectors.Add(input.Name.Trim(), input);
         }
 
         for (int i = 0; i < connectionsCount; i++)
         {
             int index = connectionIndex + i + 1;
             values = lines[index].Split(' ');
-            string outputName = values[0];
-            string inputName = values[2];
+            string outputName = values[0].Trim();
+            string inputName = values[2].Trim();
 
             if (outputGateConnectors.ContainsKey(outputName) && inputGateConnectors.ContainsKey(inputName))
             {

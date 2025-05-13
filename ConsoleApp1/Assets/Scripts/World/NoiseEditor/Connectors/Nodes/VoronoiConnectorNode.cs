@@ -154,7 +154,7 @@ public class VoronoiConnectorNode : ConnectorNode
             "    {\n" +
             "        Float: " + NoSpace(Scale) + "\n" +
             "        Vector2: " + NoSpace(Offset) + "\n" +
-            "        Int: " + NoSpace((int)Type) + "\n" +
+            "        Type: " + NoSpace((int)Type) + "\n" +
             "    }\n" +
             "    Outputs:\n" +
             "    {\n" +

@@ -235,6 +235,7 @@ public static class NodeParser
             {
                 index++;
                 var values = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
+                
                 if (values.Length > 1)
                 {
                     input.SetType(Int.Parse(values[1]));
@@ -265,7 +266,14 @@ public static class NodeParser
             {
                 index++;
                 var values = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-                input.SetInputName(values.Length > 1 ? values[1].Trim() : "none");
+                if (values.Length > 2)
+                {
+                    input.SetInputName(values[1].Trim(), Int.Parse(values[2]));
+                }
+                else if (values.Length > 1)
+                {
+                    input.SetInputName(values[1].Trim());
+                }
                 return true;
             }
         },
@@ -292,7 +300,10 @@ public static class NodeParser
             {
                 index++;
                 var values = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-                input.SetOutputName(values.Length > 1 ? values[1].Trim() : "none");
+                if (values.Length > 1)
+                {
+                    input.SetOutputName(values[1].Trim());
+                }
                 return true;
             }
         },
