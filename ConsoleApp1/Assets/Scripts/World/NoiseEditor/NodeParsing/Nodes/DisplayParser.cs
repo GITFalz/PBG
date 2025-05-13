@@ -10,13 +10,13 @@ public class DisplayData : INodeData
     public string PrefabName = "DisplayPrefab";
     public Vector4 PrefabOffset = (0, 0, 0, 0);
 
-    public void SetValue(float value) => Console.WriteLine("A display node cannot have a float value");
-    public void SetValue(int value) => Console.WriteLine("A display node cannot have a int value");
-    public void SetValue(bool value) => Console.WriteLine("A display node cannot have a bool value");
-    public void SetValue(Vector4 value) => Console.WriteLine("A display node cannot have a vector4 value");
-    public void SetValue(Vector2 value) => Console.WriteLine("A MinMax node cannot have a vector2 value");
+    public void SetValue(float value, int index = 0) => Console.WriteLine("A display node cannot have a float value");
+    public void SetValue(int value, int index = 0) => Console.WriteLine("A display node cannot have a int value");
+    public void SetValue(bool value, int index = 0) => Console.WriteLine("A display node cannot have a bool value");
+    public void SetValue(Vector4 value, int index = 0) => Console.WriteLine("A display node cannot have a vector4 value");
+    public void SetValue(Vector2 value, int index = 0) => Console.WriteLine("A MinMax node cannot have a vector2 value");
     public void SetType(int type) => Console.WriteLine("A display node cannot have a type");
-    public void SetInputName(string inputName) => InputName = inputName;
+    public void SetInputName(string inputName, int index = 0) => InputName = inputName;
     public void SetOutputName(string outputName) => Console.WriteLine("A display node cannot have an output name");
     public void SetPrefabName(string prefabName) => PrefabName = prefabName;
     public void SetPrefabOffset(Vector4 prefabOffset) => PrefabOffset = prefabOffset;

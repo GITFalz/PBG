@@ -164,13 +164,13 @@ public class InitMaskMinMaxConnectorNode : ConnectorNode
             "{\n" +
             "    Values:\n" +
             "    {\n" +
-            "        Float: " + NoSpace(Min) + "\n" +
-            "        Float: " + NoSpace(Max) + "\n" +
+            "        Float: " + NoSpace(Min) + " 0\n" +
+            "        Float: " + NoSpace(Max) + " 1\n" +
             "    }\n" +
             "    Inputs:\n" +
             "    {\n" +
-            "        Name: " + NoSpace(ChildGateConnector.Name) + "\n" +
-            "        Name: " + NoSpace(MaskGateConnector.Name) + "\n" +
+            "        Name: " + NoSpace(ChildGateConnector.Name) + " 0\n" +
+            "        Name: " + NoSpace(MaskGateConnector.Name) + " 1\n" +
             "    }\n" +
             "    Outputs:\n" +
             "    {\n" +

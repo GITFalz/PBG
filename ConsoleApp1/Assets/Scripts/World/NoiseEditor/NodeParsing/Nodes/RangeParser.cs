@@ -4,13 +4,11 @@ using OpenTK.Mathematics;
 public class RangeData : INodeData
 {
     // Values
-    private int _valueIndex = 0;
     public int Start = 0;
     public int Height = 1;
     public bool Flipped = false;
 
     // Inputs
-    private int _inputIndex = 0;
     public string InputName1 = "none";
     public string InputName2 = "none";
 
@@ -21,40 +19,36 @@ public class RangeData : INodeData
     public string PrefabName = "DisplayPrefab";
     public Vector4 PrefabOffset = (0, 0, 0, 0);
 
-    public void SetValue(int value)
+    public void SetValue(int value, int index = 0)
     {
-        if (_valueIndex == 0)
+        if (index == 0)
         {
             Start = value;
-            _valueIndex++;
         }
-        else if (_valueIndex == 1)
+        else if (index == 1)
         {
             Height = value;
-            _valueIndex++;
         }
         else
             Console.WriteLine("A Range node cannot have more than 2 int values");
     }
 
-    public void SetValue(float value) => Console.WriteLine("A Range node does not accept float values");
-    public void SetValue(bool value) => Flipped = value;
-    public void SetValue(Vector2 value) => Console.WriteLine("A Range node does not accept Vector2 values");
-    public void SetValue(Vector4 value) => Console.WriteLine("A Range node does not accept Vector4 values");
+    public void SetValue(float value, int index = 0) => Console.WriteLine("A Range node does not accept float values");
+    public void SetValue(bool value, int index = 0) => Flipped = value;
+    public void SetValue(Vector2 value, int index = 0) => Console.WriteLine("A Range node does not accept Vector2 values");
+    public void SetValue(Vector4 value, int index = 0) => Console.WriteLine("A Range node does not accept Vector4 values");
 
     public void SetType(int type) => Console.WriteLine("A Range node does not use a type");
 
-    public void SetInputName(string inputName)
+    public void SetInputName(string inputName, int index = 0)
     {
-        if (_inputIndex == 0)
+        if (index == 0)
         {
             InputName1 = inputName;
-            _inputIndex++;
         }
-        else if (_inputIndex == 1)
+        else if (index == 1)
         {
             InputName2 = inputName;
-            _inputIndex++;
         }
         else
             Console.WriteLine("A Range node cannot have more than 2 input names");
@@ -104,12 +98,10 @@ public class RangeData : INodeData
 
     public void Clear()
     {
-        _valueIndex = 0;
         Start = 0;
         Height = 1;
         Flipped = false;
 
-        _inputIndex = 0;
         InputName1 = "none";
         InputName2 = "none";
         OutputName = "none";

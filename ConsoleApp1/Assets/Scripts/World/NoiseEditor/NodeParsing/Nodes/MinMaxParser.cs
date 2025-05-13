@@ -4,7 +4,6 @@ using OpenTK.Mathematics;
 public class MinMaxInputOperationData : INodeData
 {
     // Values
-    private int _valueIndex = 0;
     public float Min = 0.0f;
     public float Max = 1.0f;
 
@@ -21,30 +20,28 @@ public class MinMaxInputOperationData : INodeData
     public string PrefabName = "DisplayPrefab";
     public Vector4 PrefabOffset = (0, 0, 0, 0);
 
-    public void SetValue(float value)
+    public void SetValue(float value, int index = 0)
     {
-        if (_valueIndex == 0)
+        if (index == 0)
         {
             Min = value;
-            _valueIndex++;
         }
-        else if (_valueIndex == 1)
+        else if (index == 1)
         {
             Max = value;
-            _valueIndex++;
         }
         else
             Console.WriteLine("A MinMax node cannot have more than 2 values");
     }
 
-    public void SetValue(int value) => Console.WriteLine("Use SetType to define the operation type");
-    public void SetValue(bool value) => Console.WriteLine("A MinMax node cannot have a bool value");
-    public void SetValue(Vector4 value) => Console.WriteLine("A MinMax node cannot have a vector4 value");
-    public void SetValue(Vector2 value) => Console.WriteLine("A MinMax node cannot have a vector2 value");
+    public void SetValue(int value, int index = 0) => Console.WriteLine("Use SetType to define the operation type");
+    public void SetValue(bool value, int index = 0) => Console.WriteLine("A MinMax node cannot have a bool value");
+    public void SetValue(Vector4 value, int index = 0) => Console.WriteLine("A MinMax node cannot have a vector4 value");
+    public void SetValue(Vector2 value, int index = 0) => Console.WriteLine("A MinMax node cannot have a vector2 value");
 
     public void SetType(int type) => Type = (MinMaxInputOperationType)type;
 
-    public void SetInputName(string inputName) => InputName = inputName;
+    public void SetInputName(string inputName, int index) => InputName = inputName;
 
     public void SetOutputName(string outputName) => OutputName = outputName;
 
@@ -87,7 +84,6 @@ public class MinMaxInputOperationData : INodeData
 
     public void Clear()
     {
-        _valueIndex = 0;
         Min = 0.0f;
         Max = 1.0f;
         Type = 0;

@@ -155,7 +155,11 @@ public static class NodeParser
             {
                 index++;
                 var values = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-                if (values.Length > 1)
+                if (values.Length > 2)
+                {
+                    input.SetValue(Float.Parse(values[1]), Int.Parse(values[2]));
+                }
+                else if (values.Length > 1)
                 {
                     input.SetValue(Float.Parse(values[1]));
                 }
@@ -167,7 +171,11 @@ public static class NodeParser
             {
                 index++;
                 var values = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-                if (values.Length > 1)
+                if (values.Length > 2)
+                {
+                    input.SetValue(Int.Parse(values[1]), Int.Parse(values[2]));
+                }
+                else if (values.Length > 1)
                 {
                     input.SetValue(Int.Parse(values[1]));
                 }
@@ -179,7 +187,11 @@ public static class NodeParser
             {
                 index++;
                 var values = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-                if (values.Length > 1)
+                if (values.Length > 2)
+                {
+                    input.SetValue(Int.Parse(values[1]) == 1, Int.Parse(values[2]));
+                }
+                else if (values.Length > 1)
                 {
                     input.SetValue(Int.Parse(values[1]) == 1);
                 }
@@ -191,7 +203,11 @@ public static class NodeParser
             {
                 index++;
                 var values = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-                if (values.Length > 1)
+                if (values.Length > 2)
+                {
+                    input.SetValue(String.Parse.Vec4(values[1]), Int.Parse(values[2]));
+                }
+                else if (values.Length > 1)
                 {
                     input.SetValue(String.Parse.Vec4(values[1]));
                 }
@@ -203,7 +219,11 @@ public static class NodeParser
             {
                 index++;
                 var values = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-                if (values.Length > 1)
+                if (values.Length > 2)
+                {
+                    input.SetValue(String.Parse.Vec2(values[1]), Int.Parse(values[2]));
+                }
+                else if (values.Length > 1)
                 {
                     input.SetValue(String.Parse.Vec2(values[1]));
                 }
@@ -342,13 +362,13 @@ public static class NodeParser
 
 public interface INodeData
 {
-    public void SetValue(float value);
-    public void SetValue(int value);
-    public void SetValue(bool value);
-    public void SetValue(Vector4 value);
-    public void SetValue(Vector2 value);
+    public void SetValue(float value, int index = 0);
+    public void SetValue(int value, int index = 0);
+    public void SetValue(bool value, int index = 0);
+    public void SetValue(Vector4 value, int index = 0);
+    public void SetValue(Vector2 value, int index = 0);
     public void SetType(int type);
-    public void SetInputName(string inputName);
+    public void SetInputName(string inputName, int index = 0);
     public void SetOutputName(string outputName);
     public void SetPrefabName(string prefabName);
     public void SetPrefabOffset(Vector4 prefabOffset);

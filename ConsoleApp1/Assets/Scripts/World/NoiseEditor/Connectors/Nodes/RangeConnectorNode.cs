@@ -172,14 +172,14 @@ public class RangeConnectorNode : ConnectorNode
             "{\n" +
             "    Values:\n" +
             "    {\n" +
-            "        Int: " + NoSpace(Start) + "\n" +
-            "        Int: " + NoSpace(Height) + "\n" +
+            "        Int: " + NoSpace(Start) + " 0\n" +
+            "        Int: " + NoSpace(Height) + " 1\n" +
             "        Bool: " + NoSpace(flipped) + "\n" +
             "    }\n" +
             "    Inputs:\n" +
             "    {\n" +
-            "        Name: " + NoSpace(StartGateConnector.Name) + "\n" +
-            "        Name: " + NoSpace(HeightGateConnector.Name) + "\n" +
+            "        Name: " + NoSpace(StartGateConnector.Name) + " 0\n" +
+            "        Name: " + NoSpace(HeightGateConnector.Name) + " 1\n" +
             "    }\n" +
             "    Outputs:\n" +
             "    {\n" +

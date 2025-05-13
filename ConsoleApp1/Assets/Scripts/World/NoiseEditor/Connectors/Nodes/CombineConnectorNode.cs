@@ -159,13 +159,13 @@ public class CombineConnectorNode : ConnectorNode
             "{\n" +
             "    Values:\n" +
             "    {\n" +
-            "        Float: " + NoSpace(Value1) + "\n" +
-            "        Float: " + NoSpace(Value2) + "\n" +
+            "        Float: " + NoSpace(Value1) + " 0\n" +
+            "        Float: " + NoSpace(Value2) + " 1\n" +
             "    }\n" +
             "    Inputs:\n" +
             "    {\n" +
-            "        Name: " + NoSpace(InputGateConnector1.Name) + "\n" +
-            "        Name: " + NoSpace(InputGateConnector2.Name) + "\n" +
+            "        Name: " + NoSpace(InputGateConnector1.Name) + " 0\n" +
+            "        Name: " + NoSpace(InputGateConnector2.Name) + " 1\n" +
             "    }\n" +
             "    Outputs:\n" +
             "    {\n" +

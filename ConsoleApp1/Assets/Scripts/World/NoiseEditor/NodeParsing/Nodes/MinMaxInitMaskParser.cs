@@ -18,19 +18,15 @@ public class MinMaxInitMaskData : INodeData
     public string PrefabName = "DisplayPrefab";
     public Vector4 PrefabOffset = (0, 0, 0, 0);
 
-    private int _valueIndex = 0;
-
-    public void SetValue(float value)
+    public void SetValue(float value, int index = 0)
     {
-        if (_valueIndex == 0)
+        if (index == 0)
         {
             Min = value;
-            _valueIndex++;
         }
-        else if (_valueIndex == 1)
+        else if (index == 1)
         {
             Max = value;
-            _valueIndex++;
         }
         else
         {
@@ -38,20 +34,20 @@ public class MinMaxInitMaskData : INodeData
         }
     }
 
-    public void SetValue(int value) => Console.WriteLine("MinMaxInitMask node does not accept int values.");
-    public void SetValue(bool value) => Console.WriteLine("MinMaxInitMask node does not accept bool values.");
-    public void SetValue(Vector2 value) => Console.WriteLine("MinMaxInitMask node does not accept Vector2 values.");
-    public void SetValue(Vector4 value) => Console.WriteLine("MinMaxInitMask node does not accept Vector4 values.");
+    public void SetValue(int value, int index = 0) => Console.WriteLine("MinMaxInitMask node does not accept int values.");
+    public void SetValue(bool value, int index = 0) => Console.WriteLine("MinMaxInitMask node does not accept bool values.");
+    public void SetValue(Vector2 value, int index = 0) => Console.WriteLine("MinMaxInitMask node does not accept Vector2 values.");
+    public void SetValue(Vector4 value, int index = 0) => Console.WriteLine("MinMaxInitMask node does not accept Vector4 values.");
 
     public void SetType(int type) => Console.WriteLine("MinMaxInitMask node does not use a type.");
 
-    public void SetInputName(string inputName)
+    public void SetInputName(string inputName, int index = 0)
     {
-        if (ChildInputName == "none")
+        if (index == 0)
         {
             ChildInputName = inputName;
         }
-        else if (MaskInputName == "none")
+        else if (index == 1)
         {
             MaskInputName = inputName;
         }
@@ -104,7 +100,6 @@ public class MinMaxInitMaskData : INodeData
 
     public void Clear()
     {
-        _valueIndex = 0;
         Min = 0.0f;
         Max = 1.0f;
         ChildInputName = "none";

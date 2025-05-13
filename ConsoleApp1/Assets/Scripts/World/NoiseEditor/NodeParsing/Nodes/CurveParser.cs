@@ -6,6 +6,7 @@ public class CurveData : INodeData
     public float Min = 0.0f;
     public float Max = 1.0f;
     public List<Vector4> Offsets = new();
+    private int _pointCount = 0;
 
     public string InputName = "none";
     public string OutputName = "none";
@@ -13,16 +14,13 @@ public class CurveData : INodeData
     public string PrefabName = "DisplayPrefab";
     public Vector4 PrefabOffset = (0, 0, 0, 0);
 
-    private int _valueIndex = 0;
-    private int _pointCount = 0;
-
-    public void SetValue(float value)
+    public void SetValue(float value, int index = 0)
     {
-        if (_valueIndex == 0)
+        if (index == 0)
         {
             Min = value;
         }
-        else if (_valueIndex == 1)
+        else if (index == 1)
         {
             Max = value;
         }
@@ -30,28 +28,24 @@ public class CurveData : INodeData
         {
             Console.WriteLine("Unexpected float value for Curve node.");
         }
-        _valueIndex++;
     }
 
-    public void SetValue(Vector4 value)
+    public void SetValue(Vector4 value, int index = 0)
     {
         Offsets.Add(value);
     }
 
-    public void SetValue(int value)
+    public void SetValue(int value, int index = 0)
     {
-        if (_pointCount == 0)
-            _pointCount = value;
-        else
-            Console.WriteLine("Curve node already has a point count.");
+        _pointCount = value;
     }
 
-    public void SetValue(Vector2 value) => Console.WriteLine("Curve node does not accept Vector2 values.");
+    public void SetValue(Vector2 value, int index = 0) => Console.WriteLine("Curve node does not accept Vector2 values.");
 
-    public void SetValue(bool value) => Console.WriteLine("Curve node does not accept bool values.");
+    public void SetValue(bool value, int index = 0) => Console.WriteLine("Curve node does not accept bool values.");
     public void SetType(int type) => Console.WriteLine("Curve node does not use a type.");
 
-    public void SetInputName(string inputName) => InputName = inputName;
+    public void SetInputName(string inputName, int index = 0) => InputName = inputName;
     public void SetOutputName(string outputName) => OutputName = outputName;
     public void SetPrefabName(string prefabName) => PrefabName = prefabName;
     public void SetPrefabOffset(Vector4 prefabOffset) => PrefabOffset = prefabOffset;
@@ -112,8 +106,6 @@ public class CurveData : INodeData
     {
         Min = 0.0f;
         Max = 1.0f;
-        _valueIndex = 0;
-        _pointCount = 0;
         Offsets.Clear();
         InputName = "none";
         OutputName = "none";

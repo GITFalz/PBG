@@ -4,7 +4,6 @@ using OpenTK.Mathematics;
 public class SampleData : INodeData
 {
     // Values
-    private int _valueIndex = 0;
     public float Scale = 1.0f;
     public Vector2 Offset = Vector2.Zero;
 
@@ -15,25 +14,24 @@ public class SampleData : INodeData
     public string PrefabName = "DisplayPrefab";
     public Vector4 PrefabOffset = (0, 0, 0, 0);
 
-    public void SetValue(float value)
+    public void SetValue(float value, int index = 0)
     {
-        if (_valueIndex == 0)
+        if (index == 0)
         {
             Scale = value;
-            _valueIndex++;
         }
         else
             Console.WriteLine("A Sample node only accepts one float (scale)");
     }
 
-    public void SetValue(Vector4 value) => Console.WriteLine("Use SetOffset for Sample node vector2 offset");
-    public void SetValue(Vector2 value) => Offset = value;
-    public void SetValue(bool value) => Console.WriteLine("A Sample node cannot have a bool value");
-    public void SetValue(int value) => Console.WriteLine("A Sample node cannot have an int value");
+    public void SetValue(Vector4 value, int index = 0) => Console.WriteLine("Use SetOffset for Sample node vector2 offset");
+    public void SetValue(Vector2 value, int index = 0) => Offset = value;
+    public void SetValue(bool value, int index = 0) => Console.WriteLine("A Sample node cannot have a bool value");
+    public void SetValue(int value, int index = 0) => Console.WriteLine("A Sample node cannot have an int value");
 
     public void SetType(int type) => Console.WriteLine("A Sample node does not have a type");
 
-    public void SetInputName(string inputName) => Console.WriteLine("A Sample node has no input connectors");
+    public void SetInputName(string inputName, int index) => Console.WriteLine("A Sample node has no input connectors");
 
     public void SetOutputName(string outputName) => OutputName = outputName;
 
@@ -73,7 +71,6 @@ public class SampleData : INodeData
 
     public void Clear()
     {
-        _valueIndex = 0;
         Scale = 1.0f;
         Offset = Vector2.Zero;
         OutputName = "none";

@@ -152,8 +152,8 @@ public class InitMaskThresholdConnectorNode : ConnectorNode
             "    }\n" +
             "    Inputs:\n" +
             "    {\n" +
-            "        Name: " + NoSpace(ChildGateConnector.Name) + "\n" +
-            "        Name: " + NoSpace(MaskGateConnector.Name) + "\n" +
+            "        Name: " + NoSpace(ChildGateConnector.Name) + " 0\n" +
+            "        Name: " + NoSpace(MaskGateConnector.Name) + " 1\n" +
             "    }\n" +
             "    Outputs:\n" +
             "    {\n" +

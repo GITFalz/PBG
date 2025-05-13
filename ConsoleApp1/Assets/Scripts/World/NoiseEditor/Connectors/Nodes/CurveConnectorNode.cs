@@ -182,8 +182,8 @@ public class CurveConnectorNode : ConnectorNode
             "{\n" +
             "    Values:\n" +
             "    {\n" +
-            "        Float: " + NoSpace(Min) + "\n" +
-            "        Float: " + NoSpace(Max) + "\n" +
+            "        Float: " + NoSpace(Min) + " 0\n" +
+            "        Float: " + NoSpace(Max) + " 1\n" +
             "        " + offsets +
             "    }\n" +
             "    Inputs:\n" +

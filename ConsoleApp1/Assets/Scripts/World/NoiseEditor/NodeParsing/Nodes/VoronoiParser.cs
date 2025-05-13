@@ -4,7 +4,6 @@ using OpenTK.Mathematics;
 public class VoronoiData : INodeData
 {
     // Values
-    private int _valueIndex = 0;
     public float Scale = 1.0f;
     public Vector2 Offset = Vector2.Zero;
 
@@ -18,25 +17,24 @@ public class VoronoiData : INodeData
     public string PrefabName = "DisplayPrefab";
     public Vector4 PrefabOffset = (0, 0, 0, 0);
 
-    public void SetValue(float value)
+    public void SetValue(float value, int index = 0)
     {
-        if (_valueIndex == 0)
+        if (index == 0)
         {
             Scale = value;
-            _valueIndex++;
         }
         else
             Console.WriteLine("A Voronoi node only accepts one float (scale)");
     }
 
-    public void SetValue(Vector2 value) => Offset = value;
-    public void SetValue(Vector4 value) => Console.WriteLine("A Voronoi node does not accept a Vector4");
-    public void SetValue(int value) => Console.WriteLine("Use SetType to set the operation type");
-    public void SetValue(bool value) => Console.WriteLine("A Voronoi node does not accept a bool");
+    public void SetValue(Vector2 value, int index = 0) => Offset = value;
+    public void SetValue(Vector4 value, int index = 0) => Console.WriteLine("A Voronoi node does not accept a Vector4");
+    public void SetValue(int value, int index = 0) => Console.WriteLine("Use SetType to set the operation type");
+    public void SetValue(bool value, int index = 0) => Console.WriteLine("A Voronoi node does not accept a bool");
 
     public void SetType(int type) => Type = (VoronoiOperationType)type;
 
-    public void SetInputName(string inputName) => Console.WriteLine("A Voronoi node has no input connectors");
+    public void SetInputName(string inputName, int index) => Console.WriteLine("A Voronoi node has no input connectors");
 
     public void SetOutputName(string outputName) => OutputName = outputName;
 
@@ -77,7 +75,6 @@ public class VoronoiData : INodeData
 
     public void Clear()
     {
-        _valueIndex = 0;
         Scale = 1.0f;
         Offset = Vector2.Zero;
         Type = 0;

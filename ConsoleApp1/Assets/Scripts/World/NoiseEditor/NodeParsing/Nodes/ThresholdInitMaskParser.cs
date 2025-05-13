@@ -17,33 +17,25 @@ public class ThresholdInitMaskData : INodeData
     public string PrefabName = "DisplayPrefab";
     public Vector4 PrefabOffset = (0, 0, 0, 0);
 
-    private bool _thresholdSet = false;
-
-    public void SetValue(float value)
+    public void SetValue(float value, int index = 0)
     {
-        if (!_thresholdSet)
-        {
-            Threshold = value;
-            _thresholdSet = true;
-        }
-        else
-            Console.WriteLine("ThresholdInitMask node only accepts one float threshold value");
+        Threshold = value;
     }
 
-    public void SetValue(int value) => Console.WriteLine("ThresholdInitMask node does not accept int values");
-    public void SetValue(bool value) => Console.WriteLine("ThresholdInitMask node does not accept bool values");
-    public void SetValue(Vector2 value) => Console.WriteLine("ThresholdInitMask node does not accept Vector2 values");
-    public void SetValue(Vector4 value) => Console.WriteLine("ThresholdInitMask node does not accept Vector4 values");
+    public void SetValue(int value, int index = 0) => Console.WriteLine("ThresholdInitMask node does not accept int values");
+    public void SetValue(bool value, int index = 0) => Console.WriteLine("ThresholdInitMask node does not accept bool values");
+    public void SetValue(Vector2 value, int index = 0) => Console.WriteLine("ThresholdInitMask node does not accept Vector2 values");
+    public void SetValue(Vector4 value, int index = 0) => Console.WriteLine("ThresholdInitMask node does not accept Vector4 values");
 
     public void SetType(int type) => Console.WriteLine("ThresholdInitMask node does not use a type");
 
-    public void SetInputName(string inputName)
+    public void SetInputName(string inputName, int index)
     {
-        if (ChildInputName == "none")
+        if (index == 0)
         {
             ChildInputName = inputName;
         }
-        else if (MaskInputName == "none")
+        else if (index == 1)
         {
             MaskInputName = inputName;
         }
@@ -90,7 +82,6 @@ public class ThresholdInitMaskData : INodeData
     public void Clear()
     {
         Threshold = 0.5f;
-        _thresholdSet = false;
         ChildInputName = "none";
         MaskInputName = "none";
         OutputName = "none";

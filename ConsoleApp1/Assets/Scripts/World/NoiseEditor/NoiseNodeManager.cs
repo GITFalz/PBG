@@ -640,13 +640,27 @@ public static class NoiseNodeManager
             AddNode(node);
         }
 
+        int none = 0;
         foreach (var output in OutputGateConnectors)
         {
+            if (output.Name == "none")
+            {
+                output.Name = "none" + none;
+                none++;
+            }
+                
             outputGateConnectors.Add(output.Name, output);
         }
 
+        none = 0;
         foreach (var input in InputGateConnectors)
         {
+            if (input.Name == "none")
+            {
+                input.Name = "none" + none;
+                none++;
+            }
+
             inputGateConnectors.Add(input.Name, input);
         }
 

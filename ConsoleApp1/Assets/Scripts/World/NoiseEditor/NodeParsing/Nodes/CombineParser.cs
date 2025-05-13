@@ -4,12 +4,10 @@ using OpenTK.Mathematics;
 public class CombineData : INodeData
 {
     // Values
-    private int _valueIndex = 0;
     public float Value1 = 1.0f;
     public float Value2 = 1.0f;
 
     // Inputs
-    private int _inputIndex = 0;
     public string InputName1 = "none";
     public string InputName2 = "none";
 
@@ -20,38 +18,34 @@ public class CombineData : INodeData
     public string PrefabName = "DisplayPrefab";
     public Vector4 PrefabOffset = (0, 0, 0, 0);
 
-    public void SetValue(float value)
+    public void SetValue(float value, int index = 0)
     {
-        if (_valueIndex == 0)
+        if (index == 0)
         {
             Value1 = value;
-            _valueIndex++;
         }
-        else if (_valueIndex == 1)
+        else if (index == 1)
         {
             Value2 = value;
-            _valueIndex++;
         }
         else
             Console.WriteLine("A combine node cannot have more than 2 values");
     }
 
-    public void SetValue(int value) => Console.WriteLine("A combine node cannot have a int value");
-    public void SetValue(bool value) => Console.WriteLine("A combine node cannot have a bool value");
-    public void SetValue(Vector4 value) => Console.WriteLine("A combine node cannot have a vector4 value");
-    public void SetValue(Vector2 value) => Console.WriteLine("A MinMax node cannot have a vector2 value");
+    public void SetValue(int value, int index = 0) => Console.WriteLine("A combine node cannot have a int value");
+    public void SetValue(bool value, int index = 0) => Console.WriteLine("A combine node cannot have a bool value");
+    public void SetValue(Vector4 value, int index = 0) => Console.WriteLine("A combine node cannot have a vector4 value");
+    public void SetValue(Vector2 value, int index = 0) => Console.WriteLine("A MinMax node cannot have a vector2 value");
     public void SetType(int type) => Console.WriteLine("A combine node cannot have a type");
-    public void SetInputName(string inputName)
+    public void SetInputName(string inputName, int index = 0)
     {
-        if (_inputIndex == 0)
+        if (index == 0)
         {
             InputName1 = inputName;
-            _inputIndex++;
         }
-        else if (_inputIndex == 1)
+        else if (index == 1)
         {
             InputName2 = inputName;
-            _inputIndex++;
         }
         else
             Console.WriteLine("A combine node cannot have more than 2 inputs");
@@ -94,10 +88,9 @@ public class CombineData : INodeData
 
     public void Clear()
     {
-        _valueIndex = 0;
         Value1 = 1.0f;
         Value2 = 1.0f;
-        _inputIndex = 0;
+
         InputName1 = "none";
         InputName2 = "none";
         OutputName = "none";
