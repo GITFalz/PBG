@@ -142,10 +142,23 @@ public class SampleConnectorNode : ConnectorNode
     public override string ToStringList() 
     {
         return 
-            $"NodeType: Sample " +
-            $"Values: {NoSpace(Scale)} {NoSpace(Offset)} " +
-            $"Outputs: {NoSpace(OutputGateConnector.Name)} " +
-            $"Prefab: {NoSpace(Name)} {NoSpace(NodePrefab.Collection.Offset)}";
+            "NodeType: Sample\n" +
+            "{\n" +
+            "    Values:\n" +
+            "    {\n" +
+            "        Float: " + NoSpace(Scale) + "\n" +
+            "        Vector2: " + NoSpace(Offset) + "\n" +
+            "    }\n" +
+            "    Outputs:\n" +
+            "    {\n" +
+            "        Name: " + NoSpace(OutputGateConnector.Name) + "\n" +
+            "    }\n" +
+            "    Prefab:\n" +
+            "    {\n" +
+            "        Name: " + NoSpace(Name) + "\n" +
+            "        Offset: " + NoSpace(NodePrefab.Collection.Offset) + "\n" +
+            "    }\n" +
+            "}\n";
     }
 
     public override void SetValueReferences(List<float> values, ref int index)

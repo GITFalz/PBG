@@ -148,10 +148,24 @@ public class VoronoiConnectorNode : ConnectorNode
     public override string ToStringList() 
     {
         return 
-            $"NodeType: Voronoi " +
-            $"Values: {NoSpace(Scale)} {NoSpace(Offset)} {NoSpace((int)Type)} " +
-            $"Outputs: {NoSpace(OutputGateConnector.Name)} " +
-            $"Prefab: {NoSpace(Name)} {NoSpace(NodePrefab.Collection.Offset)}";
+            "NodeType: Voronoi\n" +
+            "{\n" +
+            "    Values:\n" +
+            "    {\n" +
+            "        Float: " + NoSpace(Scale) + "\n" +
+            "        Vector2: " + NoSpace(Offset) + "\n" +
+            "        Int: " + NoSpace((int)Type) + "\n" +
+            "    }\n" +
+            "    Outputs:\n" +
+            "    {\n" +
+            "        Name: " + NoSpace(OutputGateConnector.Name) + "\n" +
+            "    }\n" +
+            "    Prefab:\n" +
+            "    {\n" +
+            "        Name: " + NoSpace(Name) + "\n" +
+            "        Offset: " + NoSpace(NodePrefab.Collection.Offset) + "\n" +
+            "    }\n" +
+            "}\n";
     }
 
     public override void SetValueReferences(List<float> values, ref int index)

@@ -168,11 +168,29 @@ public class RangeConnectorNode : ConnectorNode
     {
         string flipped = NodePrefab.IsFlipped ? "1" : "0";
         return 
-            $"NodeType: Range " +
-            $"Values: {NoSpace(Start)} {NoSpace(Height)} {flipped} " + 
-            $"Inputs: {NoSpace(StartGateConnector.Name)} {NoSpace(HeightGateConnector.Name)} " +
-            $"Outputs: {NoSpace(OutputGateConnector.Name)} " +
-            $"Prefab: {NoSpace(Name)} {NoSpace(NodePrefab.Collection.Offset)}";
+            "NodeType: Range\n" +
+            "{\n" +
+            "    Values:\n" +
+            "    {\n" +
+            "        Int: " + NoSpace(Start) + "\n" +
+            "        Int: " + NoSpace(Height) + "\n" +
+            "        Bool: " + NoSpace(flipped) + "\n" +
+            "    }\n" +
+            "    Inputs:\n" +
+            "    {\n" +
+            "        Name: " + NoSpace(StartGateConnector.Name) + "\n" +
+            "        Name: " + NoSpace(HeightGateConnector.Name) + "\n" +
+            "    }\n" +
+            "    Outputs:\n" +
+            "    {\n" +
+            "        Name: " + NoSpace(OutputGateConnector.Name) + "\n" +
+            "    }\n" +
+            "    Prefab:\n" +
+            "    {\n" +
+            "        Name: " + NoSpace(Name) + "\n" +
+            "        Offset: " + NoSpace(NodePrefab.Collection.Offset) + "\n" +
+            "    }\n" +
+            "}\n";
     }
 
     public override void SetValueReferences(List<float> values, ref int index)

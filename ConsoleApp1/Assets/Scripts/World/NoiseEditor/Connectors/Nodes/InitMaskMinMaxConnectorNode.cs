@@ -159,12 +159,29 @@ public class InitMaskMinMaxConnectorNode : ConnectorNode
 
     public override string ToStringList()
     {
-        return 
-            $"NodeType: MinMaxInitMask " +
-            $"Values: {NoSpace(Min)} {NoSpace(Max)} " +
-            $"Inputs: {NoSpace(ChildGateConnector.Name)} {NoSpace(MaskGateConnector.Name)} " +
-            $"Outputs: {NoSpace(OutputGateConnector.Name)} " +
-            $"Prefab: {NoSpace(Name)} {NoSpace(NodePrefab.Collection.Offset)}";
+        return
+            "NodeType: MinMaxInitMask\n" +
+            "{\n" +
+            "    Values:\n" +
+            "    {\n" +
+            "        Float: " + NoSpace(Min) + "\n" +
+            "        Float: " + NoSpace(Max) + "\n" +
+            "    }\n" +
+            "    Inputs:\n" +
+            "    {\n" +
+            "        Name: " + NoSpace(ChildGateConnector.Name) + "\n" +
+            "        Name: " + NoSpace(MaskGateConnector.Name) + "\n" +
+            "    }\n" +
+            "    Outputs:\n" +
+            "    {\n" +
+            "        Name: " + NoSpace(OutputGateConnector.Name) + "\n" +
+            "    }\n" +
+            "    Prefab:\n" +
+            "    {\n" +
+            "        Name: " + NoSpace(Name) + "\n" +
+            "        Offset: " + NoSpace(NodePrefab.Collection.Offset) + "\n" +
+            "    }\n" +
+            "}\n";
     }
 
     public override void SetValueReferences(List<float> values, ref int index)

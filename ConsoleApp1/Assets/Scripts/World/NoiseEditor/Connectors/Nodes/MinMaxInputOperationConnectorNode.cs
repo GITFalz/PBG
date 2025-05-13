@@ -152,12 +152,29 @@ public class MinMaxInputOperationConnectorNode : ConnectorNode
 
     public override string ToStringList()
     {
-        return 
-            $"NodeType: MinMaxInputOperation " +
-            $"Values: {NoSpace(Min)} {NoSpace(Max)} {NoSpace((int)Type)} " +
-            $"Inputs: {NoSpace(InputGateConnector.Name)} " +
-            $"Outputs: {NoSpace(OutputGateConnector.Name)} " +
-            $"Prefab: {NoSpace(Name)} {NoSpace(NodePrefab.Collection.Offset)}";
+        return
+            "NodeType: MinMaxInputOperation\n" +
+            "{\n" +
+            "    Values:\n" +
+            "    {\n" +
+            "        Float: " + NoSpace(Min) + "\n" +
+            "        Float: " + NoSpace(Max) + "\n" +
+            "        Int: " + NoSpace((int)Type) + "\n" +
+            "    }\n" +
+            "    Inputs:\n" +
+            "    {\n" +
+            "        Name: " + NoSpace(InputGateConnector.Name) + "\n" +
+            "    }\n" +
+            "    Outputs:\n" +
+            "    {\n" +
+            "        Name: " + NoSpace(OutputGateConnector.Name) + "\n" +
+            "    }\n" +
+            "    Prefab:\n" +
+            "    {\n" +
+            "        Name: " + NoSpace(Name) + "\n" +
+            "        Offset: " + NoSpace(NodePrefab.Collection.Offset) + "\n" +
+            "    }\n" +
+            "}\n";
     }
 
     public override void SetValueReferences(List<float> values, ref int index)

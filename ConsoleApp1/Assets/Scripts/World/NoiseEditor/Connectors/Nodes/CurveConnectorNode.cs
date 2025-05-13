@@ -174,14 +174,32 @@ public class CurveConnectorNode : ConnectorNode
         for (int i = 0; i < CurveWindow.Buttons.Count - 2; i++)
         {
             UIButton button = CurveWindow.Buttons[i+1];
-            offsets += $"{NoSpace(button.Offset)} ";
+            offsets += $"        Vector4: {NoSpace(button.Offset)}\n";
         }
+
         return 
-            $"NodeType: Curve " +
-            $"Values: {NoSpace(Min)} {NoSpace(Max)} {NoSpace(CurveWindow.Buttons.Count - 2)} {offsets}" +
-            $"Inputs: {NoSpace(InputGateConnector.Name)} " +
-            $"Outputs: {NoSpace(OutputGateConnector.Name)} " +
-            $"Prefab: {NoSpace(Name)} {NoSpace(NodePrefab.Collection.Offset)}";
+            $"NodeType: Curve\n" +
+            "{\n" +
+            "    Values:\n" +
+            "    {\n" +
+            "        Float: " + NoSpace(Min) + "\n" +
+            "        Float: " + NoSpace(Max) + "\n" +
+            "        " + offsets +
+            "    }\n" +
+            "    Inputs:\n" +
+            "    {\n" +
+            "        Name: " + NoSpace(InputGateConnector.Name) + "\n" +
+            "    }\n" +
+            "    Outputs:\n" +
+            "    {\n" +
+            "        Name: " + NoSpace(OutputGateConnector.Name) + "\n" +
+            "    }\n" +
+            "    Prefab:\n" +
+            "    {\n" +
+            "        Name: " + NoSpace(Name) + "\n" +
+            "        Offset: " + NoSpace(NodePrefab.Collection.Offset) + "\n" +
+            "    }\n" +
+            "}\n";
     }
 
     public override void SetValueReferences(List<float> values, ref int index)

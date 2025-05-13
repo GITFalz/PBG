@@ -164,12 +164,30 @@ public class DoubleInputConnectorNode : ConnectorNode
 
     public override string ToStringList()
     {
-        return 
-            $"NodeType: DoubleInputOperation " +
-            $"Values: {NoSpace(Value1)} {NoSpace(Value2)} {NoSpace((int)Type)} " + 
-            $"Inputs: {NoSpace(InputGateConnector1.Name)} {NoSpace(InputGateConnector2.Name)} " +
-            $"Outputs: {NoSpace(OutputGateConnector.Name)} " +
-            $"Prefab: {NoSpace(Name)} {NoSpace(NodePrefab.Collection.Offset)}";
+        return
+            "NodeType: DoubleInputOperation\n" +
+            "{\n" +
+            "    Values:\n" +
+            "    {\n" +
+            "        Float: " + NoSpace(Value1) + "\n" +
+            "        Float: " + NoSpace(Value2) + "\n" +
+            "        Type: " + NoSpace((int)Type) + "\n" +
+            "    }\n" +
+            "    Inputs:\n" +
+            "    {\n" +
+            "        Name: " + NoSpace(InputGateConnector1.Name) + "\n" +
+            "        Name: " + NoSpace(InputGateConnector2.Name) + "\n" +
+            "    }\n" +
+            "    Outputs:\n" +
+            "    {\n" +
+            "        Name: " + NoSpace(OutputGateConnector.Name) + "\n" +
+            "    }\n" +
+            "    Prefab:\n" +
+            "    {\n" +
+            "        Name: " + NoSpace(Name) + "\n" +
+            "        Offset: " + NoSpace(NodePrefab.Collection.Offset) + "\n" +
+            "    }\n" +
+            "}\n";
     }
 
     public override void SetValueReferences(List<float> values, ref int index)
