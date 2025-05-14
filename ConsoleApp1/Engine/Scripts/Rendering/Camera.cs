@@ -10,8 +10,8 @@ public class Camera
     public float SPEED { get; private set; } = 50f;
     public float SCREEN_WIDTH { get; set; }
     public float SCREEN_HEIGHT { get; set; }
-    public float VERTICAL_SENSITIVITY { get; private set; } = 10f;
-    public float HORIZONTAL_SENSITIVITY { get; private set; } = 10f;
+    public float VERTICAL_SENSITIVITY { get; private set; } = 20f;
+    public float HORIZONTAL_SENSITIVITY { get; private set; } = 20f;
     public float SCROLL_SENSITIVITY { get; private set; } = 0.4f;
     
     public float FOV { get; private set; } = 45f;
