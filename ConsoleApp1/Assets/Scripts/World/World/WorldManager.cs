@@ -446,14 +446,13 @@ public class WorldManager : ScriptingNode
         ChunkManager.OpaqueChunks = [];
         ChunkManager.TransparentChunks = [];
 
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        GC.Collect();
+        ThreadPool.Clear();
     }
 }
 
 public static class ThreadBlocker
 {
+    public static bool Stop = false;
     public static bool isBlocked = false;
 
     public static void Block()
@@ -462,6 +461,7 @@ public static class ThreadBlocker
         while (isBlocked)
         {
             Thread.Sleep(1);
+            if (Stop) return;
         }
     }
 

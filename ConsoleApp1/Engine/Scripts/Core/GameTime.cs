@@ -5,6 +5,12 @@ public static class GameTime
     public static int Fps = 0;
     public static float DeltaTime { get; private set; }
     public static float TotalTime { get; private set; }
+    /// <summary>
+    /// delta use to lerp smoothly between the main update and the physics update
+    /// </summary>
+    public static float PhysicsDelta { get; private set; }
+    private static float _time = 0;
+
     public const int PhysicSteps = 60;
     
     /// <summary>
@@ -24,6 +30,16 @@ public static class GameTime
         DeltaTime = (float)args.Time;
         TotalTime += DeltaTime;
         singleDeltaTime = DeltaTime;
+
+        _time += DeltaTime;
+        float delta = _time / FixedTime;
+        PhysicsDelta = Mathf.Clamp(0, 1, delta * 0.95f);
+    }
+
+    public static void FixedUpdate(float fixedTime)
+    {
+        FixedTime = fixedTime;
+        _time = 0;
     }
 
     public static float GetSingleDelta()

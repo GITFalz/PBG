@@ -315,6 +315,8 @@ public class Game : GameWindow
         BufferBase.Delete();
         IDBOBase.Delete();
 
+        ThreadBlocker.Stop = true;
+
         GC.Collect();
         GC.WaitForPendingFinalizers();
         
@@ -373,12 +375,14 @@ public class Game : GameWindow
         
         while (isRunning)
         {
+            //ThreadBlocker.Block();
             double time = stopwatch.Elapsed.TotalSeconds;
             
             double fixedTime = time - totalTime;
             if (fixedTime >= GameTime.FixedDeltaTime)
             {
-                GameTime.FixedTime = (float)fixedTime;
+                GameTime.FixedUpdate((float)fixedTime);
+                Camera.FixedUpdate();
                 _worldScene.OnFixedUpdate();  
                 totalTime = time;
             }

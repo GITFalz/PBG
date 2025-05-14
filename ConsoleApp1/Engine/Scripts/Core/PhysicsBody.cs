@@ -17,7 +17,6 @@ public class PhysicsBody : ScriptingNode
     
     public Vector3 physicsPosition;
     private Vector3 previousPosition;
-    private float interpolationSpeed = 20f;
 
     private Action Gravity = () => { };
 
@@ -68,22 +67,27 @@ public class PhysicsBody : ScriptingNode
         if (!PlayerData.TestInputs)
             return;
 
-        Transform.Position = Vector3.Lerp(Transform.Position, physicsPosition, GameTime.DeltaTime * interpolationSpeed);
+        if (Input.IsKeyPressed(Keys.B))
+            ThreadBlocker.Unblock();
+
+        Transform.Position = Mathf.Lerp(previousPosition, physicsPosition, GameTime.PhysicsDelta);
     }
     
     void FixedUpdate()
     {
         if (!PlayerData.TestInputs)
             return;
-
-        previousPosition = physicsPosition;
         
         Gravity();
-        Velocity += Acceleration * GameTime.FixedTime;
-        Velocity *= 1f - Drag * GameTime.FixedTime;
+        Velocity += Acceleration * (float)GameTime.FixedDeltaTime;
+        //Console.WriteLine($"Check1 -- Velocity: {Velocity} Acceleration: {Acceleration} IsGrounded: {IsGrounded} Position previous: {previousPosition} physics: {physicsPosition}");
+        Velocity *= 1f - Drag * (float)GameTime.FixedDeltaTime;
+        //Console.WriteLine($"Check2 -- Velocity: {Velocity} Acceleration: {Acceleration} IsGrounded: {IsGrounded} Position previous: {previousPosition} physics: {physicsPosition}");
         float decelerationFactor = IsGrounded ? 10f : DecelerationFactor;
         Acceleration = -decelerationFactor * Velocity;
+        //Console.WriteLine($"Check3 -- Velocity: {Velocity} Acceleration: {Acceleration} IsGrounded: {IsGrounded} Position previous: {previousPosition} physics: {physicsPosition}");
         CollisionCheck();
+        //Console.WriteLine($"Check4   -- Velocity: {Velocity} Acceleration: {Acceleration} IsGrounded: {IsGrounded} Position previous: {previousPosition} physics: {physicsPosition}");
     }
     
     public void ApplyGravity()
@@ -112,18 +116,12 @@ public class PhysicsBody : ScriptingNode
         // Add rotational force - you'll need to implement rotation handling
         // This is a placeholder for now
     }
-
-    public void SnapToBlockY()
-    {
-        physicsPosition.Y = Mathf.RoundToInt(physicsPosition.Y);
-        previousPosition.Y = physicsPosition.Y;
-    }
     
     
     public void CollisionCheck()
     {
         Collider currentCollider = collider + physicsPosition;
-        Vector3 checkDistance = Velocity * GameTime.FixedTime;
+        Vector3 checkDistance = Velocity * (float)GameTime.FixedDeltaTime;
 
         Vector3 pos1 = physicsPosition;
         Vector3 pos2 = physicsPosition + checkDistance.Normalized() * 3;
@@ -144,6 +142,8 @@ public class PhysicsBody : ScriptingNode
             }
         }
 
+        Vector3 newPhysicsPosition = physicsPosition;
+
         // Check Y axis collision first
         (float entryTime, Vector3? normal) entryData = (1f, null);
         Vector3 testingDirection = (0, checkDistance.Y, 0);
@@ -157,15 +157,15 @@ public class PhysicsBody : ScriptingNode
         if (entryData.normal != null && entryData.normal.Value.Y != 0)
         {
             Velocity.Y = 0;
-            physicsPosition.Y += testingDirection.Y * entryData.entryTime;
+            newPhysicsPosition.Y += testingDirection.Y * entryData.entryTime;
             IsGrounded = entryData.normal.Value.Y > 0;
         }
         else
         {
-            physicsPosition.Y += checkDistance.Y;
+            newPhysicsPosition.Y += checkDistance.Y;
         }
 
-        currentCollider = collider + physicsPosition;
+        currentCollider = collider + newPhysicsPosition;
 
         // Check X axis collision
         entryData = (1f, null);
@@ -180,14 +180,14 @@ public class PhysicsBody : ScriptingNode
         if (entryData.normal != null && entryData.normal.Value.X != 0)
         {
             Velocity.X = 0;
-            physicsPosition.X += testingDirection.X * entryData.entryTime;
+            newPhysicsPosition.X += testingDirection.X * entryData.entryTime;
         }
         else
         {
-            physicsPosition.X += checkDistance.X;
+            newPhysicsPosition.X += checkDistance.X;
         }
 
-        currentCollider = collider + physicsPosition;
+        currentCollider = collider + newPhysicsPosition;
 
         // Check Z axis collision
         entryData = (1f, null);
@@ -202,13 +202,15 @@ public class PhysicsBody : ScriptingNode
         if (entryData.normal != null && entryData.normal.Value.Z != 0)
         {
             Velocity.Z = 0;
-            physicsPosition.Z += testingDirection.Z * entryData.entryTime;
+            newPhysicsPosition.Z += testingDirection.Z * entryData.entryTime;
         }
         else
         {
-            physicsPosition.Z += checkDistance.Z;
+            newPhysicsPosition.Z += checkDistance.Z;
         }
 
+        previousPosition = physicsPosition;
+        physicsPosition = newPhysicsPosition;
 
         if (Velocity.Y != 0)
             IsGrounded = false;

@@ -66,6 +66,11 @@ public class PlayerStateMachine : ScriptingNode
     private Vector3 _lastCameraPosition;
     private float _lastCameraYaw;
     private float _lastCameraPitch;
+    private Vector3 _oldCameraCenter = Vector3.Zero;
+    public float CameraDistance = 5;
+    public float _targetDistance = 5;
+    public const float SCROLL_SENSITIVITY = 0.4f;
+    public const float CAMERA_FOLLOW_SPEED = 20f;
     
     private bool _renderPlayer = true;
 
@@ -141,6 +146,7 @@ public class PlayerStateMachine : ScriptingNode
     {
         Transform.Position = new Vector3(0, 200, 0);
         physicsBody.SetPosition(Transform.Position);
+        _oldCameraCenter = Transform.Position;
 
         Camera camera = Game.Camera;
 
@@ -181,7 +187,6 @@ public class PlayerStateMachine : ScriptingNode
         }
         
         forward = Mathf.YAngleToDirection(-yaw);
-        camera.Center = Transform.Position + (0f, 0.5f, 0f);
 
         PlayerData.LookingAtBlock = false;
         PlayerData.LookingAtBlockPosition = Vector3i.Zero;
@@ -198,7 +203,24 @@ public class PlayerStateMachine : ScriptingNode
             PlayerData.LookingAtBlockPosition = blockPos;
             PlayerData.LookingAtBlockPlacementPosition = blockPos + n;
         }
+
+        camera.Center = Mathf.Lerp(_oldCameraCenter, Transform.Position, GameTime.PhysicsDelta);
+
+        if (Input.IsKeyDown(Keys.LeftControl))
+        {
+            float scroll = Input.GetMouseScrollDelta().Y;
             
+            CameraDistance -= scroll * SCROLL_SENSITIVITY;
+            CameraDistance = Math.Clamp(CameraDistance, 3, 10);
+        }
+
+        Vector3 _targetPosition = camera.Center - camera.front * CameraDistance;
+        float delta = CAMERA_FOLLOW_SPEED * GameTime.DeltaTime;
+
+        Console.WriteLine($"Old position: {camera.Position} Target: {_targetPosition} delta: {delta}");
+        camera.Position = Vector3.Lerp(camera.Position, _targetPosition, delta);
+        Console.WriteLine($"New position: {camera.Position} Target: {_targetPosition} delta: {delta}");
+
         _currentState.Update(this);
 
         _oldPosition = Transform.Position;
@@ -207,6 +229,7 @@ public class PlayerStateMachine : ScriptingNode
     
     void FixedUpdate()
     {
+        _oldCameraCenter = Transform.Position;
         if (!PlayerData.UpdatePhysics || Game.Camera.GetCameraMode() == CameraMode.Free || !Game.MoveTest)
             return;
         

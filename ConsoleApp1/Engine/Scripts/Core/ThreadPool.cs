@@ -70,6 +70,11 @@ public static class ThreadPool
         }
     }
 
+    public static void Clear()
+    {
+        _actions.Clear();
+    }
+
     private static void ProcessTasks()
     {
         for (int i = 0; i < ThreadCount; i++)
@@ -110,11 +115,11 @@ public static class ThreadPool
     {
         public int Count => _urgentPriorityActions.Count + _highPriorityActions.Count + _normalPriorityActions.Count + _lowPriorityActions.Count + _backgroundPriorityActions.Count;
         
-        public readonly List<ThreadProcess> _urgentPriorityActions = [];
-        public readonly List<ThreadProcess> _highPriorityActions = [];
-        public readonly List<ThreadProcess> _normalPriorityActions = [];
-        public readonly List<ThreadProcess> _lowPriorityActions = [];
-        public readonly List<ThreadProcess> _backgroundPriorityActions = [];
+        public List<ThreadProcess> _urgentPriorityActions = [];
+        public List<ThreadProcess> _highPriorityActions = [];
+        public List<ThreadProcess> _normalPriorityActions = [];
+        public List<ThreadProcess> _lowPriorityActions = [];
+        public List<ThreadProcess> _backgroundPriorityActions = [];
 
         public void Enqueue(ThreadProcess process)
         {
@@ -191,6 +196,15 @@ public static class ThreadPool
                     return _urgentPriorityActions.Remove(process);
             }
             return false;
+        }
+
+        public void Clear()
+        {
+            _urgentPriorityActions = [];
+            _highPriorityActions = [];
+            _normalPriorityActions = [];
+            _lowPriorityActions = [];
+            _backgroundPriorityActions = [];
         }
     }
 

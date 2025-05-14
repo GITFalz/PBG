@@ -10,8 +10,8 @@ public class Camera
     public float SPEED { get; private set; } = 50f;
     public float SCREEN_WIDTH { get; set; }
     public float SCREEN_HEIGHT { get; set; }
-    public float VERTICAL_SENSITIVITY { get; private set; } = 110f;
-    public float HORIZONTAL_SENSITIVITY { get; private set; } = 80f;
+    public float VERTICAL_SENSITIVITY { get; private set; } = 10f;
+    public float HORIZONTAL_SENSITIVITY { get; private set; } = 10f;
     public float SCROLL_SENSITIVITY { get; private set; } = 0.4f;
     
     public float FOV { get; private set; } = 45f;
@@ -46,9 +46,11 @@ public class Camera
     
     private Vector2 _smoothMouseDelta = Vector2.Zero;
     private bool _smooth = false;
-    private float SMOOTH_FACTOR = 5f;
+    private float SMOOTH_FACTOR = 100f;
     
     private Vector3 _targetPosition;
+    private Vector2 _targetMouseDelta;
+    private Vector2 _currentMouseDelta = Vector2.Zero;
     private bool _positionSmooth = false;
     private float POSITION_SMOOTH_FACTOR = 50f;
     
@@ -68,6 +70,9 @@ public class Camera
     public Plane TopPlane => frustumPlanes[3];
     public Plane NearPlane => frustumPlanes[4];
     public Plane FarPlane => frustumPlanes[5];
+
+
+    private float _time = 0;
 
     public Camera()
     {
@@ -279,6 +284,12 @@ public class Camera
         _lastFront = front;
         FOV = Mathf.Lerp(FOV, targetFOV, FOV_SMOTH_FACTOR * GameTime.DeltaTime);
         _updateAction.Invoke();
+        _time += GameTime.DeltaTime;
+    }
+
+    public void FixedUpdate()
+    {
+        _time = 0;
     }
     
     public void UpdateProjectionMatrix(int width, int height)
@@ -324,8 +335,6 @@ public class Camera
     {
         if (MenuManager.IsOpen)
             return;
-
-        CameraZoom();
     }
 
     private void FollowCamera()
@@ -335,7 +344,6 @@ public class Camera
 
         RotateCamera();
         UpdateVectors();
-        CameraZoom();
     }
 
     private void CenteredCamera()
@@ -374,44 +382,30 @@ public class Camera
 
     private void RotateCamera()
     {
-        Vector2 delta = Input.GetMouseDelta();
+        Vector2 mouseDelta = Input.GetMouseDelta();
+        Vector2 delta = mouseDelta * GameTime.DeltaTime;
 
-        _smoothMouseDelta = _smooth ? Vector2.Lerp(_smoothMouseDelta, delta, SMOOTH_FACTOR * GameTime.DeltaTime) : delta;
-
-        float deltaX = _smoothMouseDelta.X;
-        float deltaY = _smoothMouseDelta.Y;
-
-        deltaX *= HORIZONTAL_SENSITIVITY * GameTime.DeltaTime;
-        deltaY *= VERTICAL_SENSITIVITY * GameTime.DeltaTime;
-
+        _targetMouseDelta = delta;
+        
+        // Smooth the mouse delta using independent smoothing
+        // Use a fixed timestep value for smoothing to avoid frame timing issues
+        float smoothSpeed = SMOOTH_FACTOR * (float)GameTime.DeltaTime;
+        smoothSpeed = Math.Clamp(smoothSpeed, 0.01f, 1.0f); // Ensure smoothing stays reasonable
+        
+        // Gradually move current delta toward target delta
+        _currentMouseDelta.X = Mathf.Lerp(_currentMouseDelta.X, _targetMouseDelta.X, smoothSpeed);
+        _currentMouseDelta.Y = Mathf.Lerp(_currentMouseDelta.Y, _targetMouseDelta.Y, smoothSpeed);
+        
+        // Apply sensitivity to the smoothed delta
+        float deltaX = _currentMouseDelta.X * HORIZONTAL_SENSITIVITY;
+        float deltaY = _currentMouseDelta.Y * VERTICAL_SENSITIVITY;
+        
+        // Update camera angles
         Yaw += deltaX;
         Pitch -= deltaY;
-
-        Pitch = Math.Clamp(Pitch, -89.0f, 89.0f);
-
-        lastPos = new Vector2(pos.X, pos.Y);
-    }
-
-    private void CameraZoom()
-    {
-        if (Input.IsKeyDown(Keys.LeftControl))
-        {
-            float scroll = Input.GetMouseScrollDelta().Y;
-            
-            CameraDistance -= scroll * SCROLL_SENSITIVITY;
-            CameraDistance = Math.Clamp(CameraDistance, 3, 10);
-        }
-            
-        float distance = CameraDistance;
-
-        if (VoxelData.Raycast(PlayerData.Position, -front, CameraDistance, out Hit hit))
-        {
-            distance = hit.Distance - 0.01f; // Adjust the distance to avoid clipping
-        }
-
-        _currentCenter = Mathf.Lerp(_currentCenter, Center, _centerLerpSpeed * GameTime.DeltaTime);
-        _targetPosition = _currentCenter - front * distance;
-        Position = _positionSmooth ? Vector3.Lerp(Position, _targetPosition, POSITION_SMOOTH_FACTOR * GameTime.DeltaTime) : _targetPosition;
+        
+        // Clamp pitch to prevent flipping
+        Pitch = Mathf.Clamp(-89.0f, 89.0f, Pitch);
     }
     
     public void SetSmoothFactor(bool value)
