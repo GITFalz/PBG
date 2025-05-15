@@ -139,7 +139,7 @@ public class Model
 
         if (ModelSettings.WireframeVisible)
         {
-            GL.Enable(EnableCap.DepthTest);
+            GL.DepthMask(false);
             GL.DepthFunc(DepthFunction.Always);
 
             Model = Matrix4.Identity;
@@ -177,6 +177,7 @@ public class Model
             ModelSettings.VertexShader.Unbind();
 
             GL.Disable(EnableCap.DepthTest);
+            GL.DepthMask(true);
             GL.DepthFunc(DepthFunction.Lequal);
         }
 

@@ -51,7 +51,9 @@ public class ModelMesh : Meshes
     public IBO BoneIBO;
 
     public VBO<Vector3> BoneVertexVBO;
+    public VBO<Vector3> BoneNormalVBO;
     public VBO<Matrix4> BoneDataVBO = new();
+    public int indicesCount = 0;
 
 
     public int BoneCount = 0;
@@ -61,74 +63,185 @@ public class ModelMesh : Meshes
     {
         Model = model;
 
-        Vector3 firstScale = new Vector3(0.75f, 0.75f, 0.75f);
+        Vector3 firstSize = new Vector3(0.3f, 0.3f, 0.3f);
         Vector3 firstOffset = new Vector3(0, 0, 0);
 
-        Vector3 secondScale = new Vector3(0.5f, 0.5f, 0.5f);    
+        Vector3 secondScale = new Vector3(0.2f, 0.2f, 0.2f);    
         Vector3 secondOffset = new Vector3(0, 2, 0);
 
-        Vector3 thirdScale = new Vector3(0.25f, 1.25f, 0.25f);   
+        Vector3 thirdScale = new Vector3(2, 2, 2);   
         Vector3 thirdOffset = new Vector3(0, 1.0625f, 0);
 
-        Vector3[] vertices = [
-            // positions       
-            new Vector3(-0.5f, -0.5f, -0.5f) * firstScale + firstOffset,
-            new Vector3( 0.5f, -0.5f, -0.5f) * firstScale + firstOffset,
-            new Vector3( 0.5f,  0.5f, -0.5f) * firstScale + firstOffset,
-            new Vector3(-0.5f,  0.5f, -0.5f) * firstScale + firstOffset,
-            new Vector3(-0.5f, -0.5f,  0.5f) * firstScale + firstOffset,
-            new Vector3( 0.5f, -0.5f,  0.5f) * firstScale + firstOffset,
-            new Vector3( 0.5f,  0.5f,  0.5f) * firstScale + firstOffset,
-            new Vector3(-0.5f,  0.5f,  0.5f) * firstScale + firstOffset,
+        float t = (float)(1.0f + Math.Sqrt(5f)) / 2.0f;
 
-            new Vector3(-0.5f, -0.5f, -0.5f) * secondScale + secondOffset,
-            new Vector3( 0.5f, -0.5f, -0.5f) * secondScale + secondOffset,
-            new Vector3( 0.5f,  0.5f, -0.5f) * secondScale + secondOffset,
-            new Vector3(-0.5f,  0.5f, -0.5f) * secondScale + secondOffset,
-            new Vector3(-0.5f, -0.5f,  0.5f) * secondScale + secondOffset,
-            new Vector3( 0.5f, -0.5f,  0.5f) * secondScale + secondOffset,
-            new Vector3( 0.5f,  0.5f,  0.5f) * secondScale + secondOffset,
-            new Vector3(-0.5f,  0.5f,  0.5f) * secondScale + secondOffset,
+        List<Vector3> vertices = [
+            // Sphere 1     
+            new Vector3(-1, t, 0),
+            new Vector3( 1, t, 0),
+            new Vector3(-1,-t, 0),
+            new Vector3( 1,-t, 0), 
 
-            new Vector3(-0.5f, -0.5f, -0.5f) * thirdScale + thirdOffset,
-            new Vector3( 0.5f, -0.5f, -0.5f) * thirdScale + thirdOffset,
-            new Vector3( 0.5f,  0.5f, -0.5f) * thirdScale + thirdOffset,
-            new Vector3(-0.5f,  0.5f, -0.5f) * thirdScale + thirdOffset,
-            new Vector3(-0.5f, -0.5f,  0.5f) * thirdScale + thirdOffset,
-            new Vector3( 0.5f, -0.5f,  0.5f) * thirdScale + thirdOffset,
-            new Vector3( 0.5f,  0.5f,  0.5f) * thirdScale + thirdOffset,
-            new Vector3(-0.5f,  0.5f,  0.5f) * thirdScale + thirdOffset,
+            new Vector3( 0,-1, t),
+            new Vector3( 0, 1, t),
+            new Vector3( 0,-1,-t),
+            new Vector3( 0, 1,-t),
+
+            new Vector3( t, 0,-1),
+            new Vector3( t, 0, 1),
+            new Vector3(-t, 0,-1),
+            new Vector3(-t, 0, 1),
         ];
 
-        uint[] indices = {
-            0, 1, 2, 2, 3, 0,
-            6, 5, 4, 4, 7, 6,
-            4, 5, 1, 1, 0, 4,
-            2, 6, 7, 7, 3, 2,
-            4, 0, 3, 3, 7, 4,
-            1, 5, 6, 6, 2, 1,
+        uint[] indices = [
+            0, 11, 5,
+            0, 5, 1,
+            0, 1, 7,
+            0, 7, 10,
+            0, 10, 11,
 
-            8, 9, 10, 10, 11, 8,
-            14, 13, 12, 12, 15, 14,
-            12, 13, 9, 9, 8, 12,
-            10, 14, 15, 15, 11, 10,
-            12, 8, 11, 11, 15, 12,
-            9, 13, 14, 14, 10, 9,
+            1, 5, 9,
+            5, 11, 4,
+            11, 10, 2,
+            10, 7, 6,
+            7, 1, 8,
 
-            16, 17, 18, 18, 19, 16,
-            22, 21, 20, 20, 23, 22,
-            20, 21, 17, 17, 16, 20,
-            18, 22, 23, 23, 19, 18,
-            20, 16, 19, 19, 23, 20,
-            17, 21, 22, 22, 18, 17,
-        };
+            3, 9, 4,
+            3, 4, 2,
+            3, 2, 6,
+            3, 6, 8,
+            3, 8, 9,
+
+            4, 9, 5,
+            2, 4, 11,
+            6, 2, 10,
+            8, 6, 7,
+            9, 8, 1,
+        ];
+
+        List<Vector3> newVertices = [];
+        List<Vector3> normals = [];
+        List<uint> newIndices = [];
+
+        Vector3 scale = firstSize;
+        Vector3 offset = firstOffset;
+
+        for (int j = 0; j < 2; j++) 
+        {
+            List<Vector3> sphere = [];
+
+            for (int i = 0; i < 20; i++)
+            {
+                int a = (int)indices[i * 3 + 0];
+                int b = (int)indices[i * 3 + 1];
+                int c = (int)indices[i * 3 + 2];
+
+                Vector3 A = vertices[a];
+                Vector3 B = vertices[b];
+                Vector3 C = vertices[c];
+
+                Vector3 AB = (A + B) / 2;
+                Vector3 AC = (A + C) / 2;
+                Vector3 BC = (B + C) / 2;
+
+                if (!sphere.Contains(A))
+                    sphere.Add(A);
+                
+                if (!sphere.Contains(B))
+                    sphere.Add(B);
+
+                if (!sphere.Contains(C))
+                    sphere.Add(C);
+
+                if (!sphere.Contains(AB))
+                    sphere.Add(AB);
+
+                if (!sphere.Contains(AC))
+                    sphere.Add(AC);
+
+                if (!sphere.Contains(BC))
+                    sphere.Add(BC);
+
+                a = sphere.IndexOf(A);
+                b = sphere.IndexOf(B);
+                c = sphere.IndexOf(C);
+
+                int ab = sphere.IndexOf(AB);
+                int ac = sphere.IndexOf(AC);
+                int bc = sphere.IndexOf(BC);
+
+                newIndices.Add((uint)(a + newVertices.Count));
+                newIndices.Add((uint)(ab + newVertices.Count));
+                newIndices.Add((uint)(ac + newVertices.Count));
+
+                newIndices.Add((uint)(b + newVertices.Count));
+                newIndices.Add((uint)(bc + newVertices.Count));
+                newIndices.Add((uint)(ab + newVertices.Count));
+
+                newIndices.Add((uint)(c + newVertices.Count));
+                newIndices.Add((uint)(ac + newVertices.Count));
+                newIndices.Add((uint)(bc + newVertices.Count));
+
+                newIndices.Add((uint)(ab + newVertices.Count));
+                newIndices.Add((uint)(bc + newVertices.Count));
+                newIndices.Add((uint)(ac + newVertices.Count));
+            }
+
+            for (int i = 0; i < sphere.Count; i++)
+            {  
+                Vector3 vertex = sphere[i];
+                vertex.Normalize();
+                normals.Add(vertex);
+                sphere[i] = vertex * scale + offset;
+            }
+
+            newVertices.AddRange(sphere);
+
+            scale = secondScale;
+            offset = secondOffset;
+        }
+
+        uint count = (uint)newVertices.Count;
+
+        newVertices.AddRange(
+            new Vector3(     0,     1,     0) * thirdScale,
+            new Vector3( 0.1f, 0.25f,     0) * thirdScale,
+            new Vector3(     0, 0.25f, 0.1f) * thirdScale,
+            new Vector3(-0.1f, 0.25f,     0) * thirdScale,
+            new Vector3(     0, 0.25f,-0.1f) * thirdScale,
+            new Vector3(     0,     0,     0) * thirdScale
+        );
+
+        normals.AddRange(
+            new Vector3( 0, 1, 0),
+            new Vector3( 1, 0, 0),
+            new Vector3( 0, 0, 1),
+            new Vector3(-1, 0, 0),
+            new Vector3( 0, 0,-1),
+            new Vector3( 0, 0, 0)
+        );
+
+        newIndices.AddRange(
+            [0+count, 2+count, 1+count,
+            0+count, 3+count, 2+count,
+            0+count, 4+count, 3+count,
+            0+count, 1+count, 4+count,
+            1+count, 2+count, 5+count,
+            2+count, 3+count, 5+count,
+            3+count, 4+count, 5+count,
+            4+count, 1+count, 5+count]
+        );
+
+        indicesCount = newIndices.Count;
         
-        BoneIBO = new(indices);
-        BoneVertexVBO = new(vertices); 
+        
+        BoneIBO = new(newIndices);
+        BoneVertexVBO = new(newVertices); 
+        BoneNormalVBO = new(normals);
 
         _boneVao.Bind();
 
         _boneVao.LinkToVAO(0, 3, VertexAttribPointerType.Float, 3 * sizeof(float), 0, BoneVertexVBO);
+        _boneVao.LinkToVAO(1, 3, VertexAttribPointerType.Float, 3 * sizeof(float), 0, BoneNormalVBO);
 
         _boneVao.Unbind();
     }
@@ -191,7 +304,7 @@ public class ModelMesh : Meshes
         int vec4Size = sizeof(float) * 4;
         for (int i = 0; i < 4; i++)
         {
-            _boneVao.InstanceLink(1 + i, 4, VertexAttribPointerType.Float, 64, i * vec4Size, 1);
+            _boneVao.InstanceLink(2 + i, 4, VertexAttribPointerType.Float, 64, i * vec4Size, 2);
         }
 
         BoneDataVBO.Unbind();
@@ -857,6 +970,7 @@ public class ModelMesh : Meshes
         _edgeVao.DeleteBuffer();
         _boneVao.DeleteBuffer();
         BoneVertexVBO.DeleteBuffer();
+        BoneNormalVBO.DeleteBuffer();
         BoneDataVBO.DeleteBuffer();
         BoneIBO.DeleteBuffer();
     }
@@ -944,6 +1058,10 @@ public class ModelMesh : Meshes
     {
         if (BoneCount == 0)
             return;
+
+        GL.Enable(EnableCap.DepthTest);
+        GL.DepthFunc(DepthFunction.Less);
+        GL.DepthMask(true);
             
         RigShader.Bind();
 
@@ -959,7 +1077,9 @@ public class ModelMesh : Meshes
         _boneVao.Bind();
         BoneIBO.Bind();
 
-        GL.DrawElementsInstanced(PrimitiveType.Triangles, 108, DrawElementsType.UnsignedInt, IntPtr.Zero, BoneCount);
+        GL.DrawElementsInstanced(PrimitiveType.Triangles, indicesCount, DrawElementsType.UnsignedInt, IntPtr.Zero, BoneCount);
+
+        Shader.Error("Bone render error: ");
 
         BoneIBO.Unbind();
         _boneVao.Unbind();
