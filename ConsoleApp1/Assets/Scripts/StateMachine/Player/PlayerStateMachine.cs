@@ -205,8 +205,7 @@ public class PlayerStateMachine : ScriptingNode
         }
 
         camera.Center = Mathf.Lerp(_oldCameraCenter, Transform.Position + (0, 0.85f, 0), GameTime.PhysicsDelta);
-        Console.WriteLine($"Camera Center: {camera.Center} Old Camera Center: {_oldCameraCenter} Player Position: {Transform.Position}");
-
+        
         if (camera.GetCameraMode() == CameraMode.Follow)
         {
             if (Input.IsKeyDown(Keys.LeftControl))
@@ -220,9 +219,7 @@ public class PlayerStateMachine : ScriptingNode
             Vector3 _targetPosition = camera.Center - camera.front * CameraDistance;
             float delta = CAMERA_FOLLOW_SPEED * GameTime.DeltaTime;
 
-            Console.WriteLine($"Old Camera Position: {camera.Position} Target Position: {_targetPosition} Delta: {delta}");
             camera.Position = Vector3.Lerp(camera.Position, _targetPosition, delta);
-            Console.WriteLine($"New Camera Position: {camera.Position} Target Position: {_targetPosition} Delta: {delta}");
         }
 
         _currentState.Update(this);
