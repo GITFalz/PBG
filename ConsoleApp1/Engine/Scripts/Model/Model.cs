@@ -16,7 +16,7 @@ public class Model
 
 
     private static ShaderProgram _shaderProgram = new ShaderProgram("Model/Model.vert", "Model/Model.frag");
-    private static ShaderProgram _animationShader = new ShaderProgram("Model/ModelAnimation.vert", "Model/Model.frag");
+    private static ShaderProgram    _animationShader = new ShaderProgram("Model/ModelAnimation.vert", "Model/Model.frag");
     public Texture Texture = new Texture("empty.png", TextureLocation.NormalTexture);
 
 
@@ -34,33 +34,40 @@ public class Model
     public List<Matrix4> BoneMatricesList = [];
 
 
-    public bool HasRig = true; // A root bone will always be created, even if the model has no rig.
-    public RootBone RootBone = new RootBone("RootBone");
-    public List<Bone> Bones = [];
+    public Rig? Rig;
 
     public bool RenderBones = false;
 
 
     public Model()
     {
+        Rig = new Rig();
         Mesh = new ModelMesh(this);
 
-        ChildBone childBone1 = new ChildBone("ChildBone1", RootBone); 
+        Create();
+    }
 
-        RootBone.Position = (0, 0, 0);
+    public void Create()
+    {
+        if (Rig == null)
+            return;
+
+        RootBone root = Rig.RootBone;
+        ChildBone childBone1 = new ChildBone("ChildBone1", root); 
+
+        root.Position = (0, 0, 0);
         childBone1.Position = (0, 2, 0);
 
-        RootBone.UpdateGlobalTransformation();
-        RootBone.SetBindPose();
+        root.UpdateGlobalTransformation();
+        root.SetBindPose();
         childBone1.SetBindPose();
 
-        RootBone.UpdateGlobalTransformation();
+        root.UpdateGlobalTransformation();
 
-        Bones.Clear();
-        RootBone.GetBones(Bones);
+        Rig.Create();
 
         BoneMatricesList.Clear();
-        foreach (var bone in Bones)
+        foreach (var bone in Rig.Bones)
         {
             BoneMatricesList.Add(bone.FinalMatrix);
         }
@@ -83,10 +90,20 @@ public class Model
 
     public void Update()
     {
-        Bones[1].Rotation *= Quaternion.FromAxisAngle(Vector3.UnitZ, MathHelper.DegreesToRadians(GameTime.DeltaTime * 10f));
-        Bones[1].Rotation *= Quaternion.FromAxisAngle(Vector3.UnitY, MathHelper.DegreesToRadians(GameTime.DeltaTime * 10f));
-        RootBone.UpdateGlobalTransformation();
-        BoneMatricesList[1] = Bones[1].FinalMatrix; 
+        if (Rig == null)
+            return;
+
+        Rig.Bones[0].Rotation *= Quaternion.FromAxisAngle(Vector3.UnitY, MathHelper.DegreesToRadians(GameTime.DeltaTime * 30f));
+
+        Rig.Bones[1].Rotation *= Quaternion.FromAxisAngle(Vector3.UnitZ, MathHelper.DegreesToRadians(GameTime.DeltaTime * 30f));
+
+        Rig.RootBone.UpdateGlobalTransformation();
+
+        BoneMatricesList[0] = Rig.Bones[0].FinalMatrix;
+        BoneMatricesList[1] = Rig.Bones[1].FinalMatrix;
+
+        Mesh.UpdateRig();
+
         BoneMatrices.Renew(BoneMatricesList);
     }
 
@@ -154,7 +171,11 @@ public class Model
             GL.UniformMatrix4(viewLocation, true, ref view);
             GL.UniformMatrix4(projectionLocation, true, ref projection);
 
+            BoneMatrices.Bind(0);
+
             Mesh.RenderEdges();
+
+            BoneMatrices.Unbind();
 
             Shader.Error("Rendering edges error: ");
 
@@ -181,7 +202,7 @@ public class Model
             GL.DepthFunc(DepthFunction.Lequal);
         }
 
-        if (HasRig && RenderBones)
+        if (Rig != null && RenderBones)
         {
             Mesh.RenderBones();
         }

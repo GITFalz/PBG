@@ -284,11 +284,13 @@ public class ModelMesh : Meshes
 
     public void InitRig()
     {
-        List<Bone> bones = Model.Bones;
-        Model.RootBone.GetBones(bones); 
+        Rig? rig = Model.Rig;
+        if (rig == null)
+            return;
+
         List<Matrix4> boneMatrices = [];
 
-        foreach (var bone in bones)
+        foreach (var bone in rig.Bones)
         {
             boneMatrices.Add(bone.BindPoseMatrix);
         }
@@ -304,12 +306,28 @@ public class ModelMesh : Meshes
         int vec4Size = sizeof(float) * 4;
         for (int i = 0; i < 4; i++)
         {
-            _boneVao.InstanceLink(2 + i, 4, VertexAttribPointerType.Float, 64, i * vec4Size, 2);
+            _boneVao.InstanceLink(2 + i, 4, VertexAttribPointerType.Float, 64, i * vec4Size, 1);
         }
 
         BoneDataVBO.Unbind();
 
         _boneVao.Unbind();
+    }
+
+    public void UpdateRig()
+    {
+        Rig? rig = Model.Rig;
+        if (rig == null)
+            return;
+
+        List<Matrix4> boneMatrices = [];
+
+        foreach (var bone in rig.Bones)
+        {
+            boneMatrices.Add(bone.FinalMatrix);
+        }
+
+        BoneDataVBO.Update(boneMatrices);
     }
 
     public void ApplyMirror()
