@@ -16,7 +16,7 @@ public class UIController
     public static ShaderProgram _textShader = UIData.TextShader;
     public static Texture _textTexture = UIData.TextTexture;
 
-    public static Matrix4 OrthographicProjection = Matrix4.Identity;
+    public static Matrix4 OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, 1, 1, 0, -1, 1);
     public List<UIElement> Elements = [];
     public List<UIElement> AbsoluteElements = [];
     public List<UIScrollView> ScrollViews = [];
@@ -42,8 +42,8 @@ public class UIController
 
     public Matrix4 ModelMatrix = Matrix4.Identity;
 
-    public Vector3 Position { get; private set; } = (0, 0, 0);
-    public float Scale { get; private set; } = 1f;
+    public Vector3 Position = (0, 0, 0);
+    public float Scale = 1f;
 
     public Vector3 _localPosition = (0, 0, 0);
 
@@ -208,7 +208,7 @@ public class UIController
 
     public void SetScale(float scale)
     {
-        Vector3 mousePosition = Input.GetMousePosition3();  
+        Vector3 mousePosition = Input.GetMousePosition3();
 
         Vector3 offset = mousePosition - Position;
         Vector3 position = offset / Scale;

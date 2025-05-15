@@ -165,7 +165,6 @@ public class Game : GameWindow
     protected override void OnUnload()
     {
         BufferBase.Delete();
-        IDBOBase.Delete();
 
         GC.Collect();
         GC.WaitForPendingFinalizers();

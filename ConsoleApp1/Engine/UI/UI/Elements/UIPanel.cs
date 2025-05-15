@@ -22,9 +22,6 @@ public abstract class UIPanel : UIRender
 
     public override void SetMaskIndex(int maskedIndex)
     {
-        if (!CanGenerate())
-            return;
-
         base.SetMaskIndex(maskedIndex);
         uIMesh.UpdateMaskedIndex(this, Masked, MaskIndex);
     }
@@ -38,7 +35,7 @@ public abstract class UIPanel : UIRender
 
     public override void SetVisibility(bool visible)
     {
-        if (Visible == visible || !CanGenerate())
+        if (Visible == visible)
             return;
 
         base.SetVisibility(visible);
@@ -47,9 +44,6 @@ public abstract class UIPanel : UIRender
 
     public override void Generate()
     {
-        if (!CanGenerate())
-            return;
-
         SetScale(newScale);
         GenerateUIQuad(uIMesh);    
     }
@@ -62,9 +56,6 @@ public abstract class UIPanel : UIRender
 
     public void GenerateUIQuad(UIMesh uIMesh)
     {
-        if (!CanGenerate())
-            return;
-            
         uIMesh.AddElement(this);
     }
 
@@ -91,10 +82,5 @@ public abstract class UIPanel : UIRender
     public override float GetXScale()
     {
         return newScale.X;
-    }
-
-    public virtual bool CanGenerate()
-    {
-        return true;
     }
 }

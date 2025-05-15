@@ -572,7 +572,7 @@ public class TextureEditor : BaseEditor
 
         GL.Viewport(0, 0, Game.Width, Game.Height);
 
-        ColorPicker.Render();
+        ColorPicker.RenderTexture();
     }
 
     public override void Exit(GeneralModelingEditor editor)

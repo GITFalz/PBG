@@ -30,6 +30,12 @@ public class UITextButton : UIPrefab
         Collection.AddElements(TextCollection);
     }
 
+    public void CorrectScale()
+    {
+        Collection.SetScale(Text.newScale + (14, 14));
+        TextCollection.SetScale(Text.newScale + (14, 14));
+    }
+
     public override UIElement[] GetElements()
     {
         return [Collection, TextCollection, Button, Text];

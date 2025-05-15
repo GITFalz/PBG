@@ -119,6 +119,15 @@ public abstract class UIElement
         if ((int)AnchorType >= 9) newScale = _dimensions[(int)AnchorType - 9](Width, Height, Scale, Offset);
         SetScale(newScale);
         Center = Origin + new Vector3(newScale.X / 2, newScale.Y / 2, 0);
+
+        return;
+        if (Name != "SidePanelBackground" && Name != "SidePanelCollection")
+            return;
+
+        Console.WriteLine();
+        Console.WriteLine($"Name: {Name}, PositionType: {PositionType}, AnchorType: {AnchorType}");
+        Console.WriteLine($"Origin: {Origin}, Transformed: {_transformedOrigin}, Center: {Center}, Scale: {newScale}, Offset: {Offset}, Width: {Width}, Height: {Height}");
+        Console.WriteLine($"Parent: {ParentElement?.Name}, Origin: {ParentElement?.Origin}, Scale: {ParentElement?.newScale}, Offset: {ParentElement?.Offset}, Width: {ParentElement?.Width}, Height: {ParentElement?.Height}");
     }
 
     public virtual void ResetInit() {}
@@ -152,30 +161,35 @@ public abstract class UIElement
     public abstract float GetXScale();
 
     # region Setters for Events
-    public void SetOnClick(Action action)
+    public UIElement SetOnClick(Action action)
     {
         OnClick = new SerializableEvent(action); 
         CanTest = true ;
+        return this;
     } 
-    public void SetOnHover(Action action)
+    public UIElement SetOnHover(Action action)
     {
         OnHover = new SerializableEvent(action); 
         CanTest = true;
+        return this;
     }
-    public void SetOnHold(Action action)
+    public UIElement SetOnHold(Action action)
     {
         OnHold = new SerializableEvent(action); 
         CanTest = true;
+        return this;
     }
-    public void SetOnRelease(Action action)
+    public UIElement SetOnRelease(Action action)
     {
         OnRelease = new SerializableEvent(action); 
         CanTest = true;
+        return this;
     }
-    public void SetOnHoverOut(Action action)
+    public UIElement SetOnHoverOut(Action action)
     {
         OnHoverOut = new SerializableEvent(action); 
         CanTest = true;
+        return this;
     }
     # endregion
 

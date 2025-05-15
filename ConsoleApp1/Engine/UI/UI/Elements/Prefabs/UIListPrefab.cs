@@ -12,8 +12,8 @@ public class UIListPrefab : UIPrefab
     {
         Scale = scale;
 
-        Collection = new($"{name}Collection", controller, anchorType, PositionType.Relative, (0, 0, 0), scale, offset, 0f);
         Collection.SetScale(scale);
+        Collection.SetAnchorType(anchorType);
         Background = new("ListPrefabBackground", controller, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (0, 0), (0, 0, 0, 0), 0f, 11, (10f, 0.05f));
 
         ScrollView = new("ScrollView", controller, AnchorType.MiddleCenter, PositionType.Relative, CollectionType.Vertical, scale - (14, 14), (0, 0, 0, 0));

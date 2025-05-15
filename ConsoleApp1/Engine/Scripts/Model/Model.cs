@@ -137,7 +137,7 @@ public class Model
 
         _animationShader.Unbind();
 
-        if (ModelSettings.WireframeVisible && false)
+        if (ModelSettings.WireframeVisible)
         {
             GL.Enable(EnableCap.DepthTest);
             GL.DepthFunc(DepthFunction.Always);

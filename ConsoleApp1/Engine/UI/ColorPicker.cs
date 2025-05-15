@@ -3,22 +3,34 @@ using OpenTK.Mathematics;
 
 public class ColorPicker
 {
-    public static List<ColorPicker> ColorPickers = [];
-
     public int Width;
     public int Height;
 
     private static ShaderProgram _pickerShader = new ShaderProgram("Painting/Rectangle.vert", "Painting/Picker.frag");
     private static ShaderProgram _pickerBarShader = new ShaderProgram("Painting/Rectangle.vert", "Painting/PickerBar.frag");
-    private VAO _colorPickerVao = new VAO();
-    private int _barModelLocation = -1;
-    private int _barProjectionLocation = -1;
-    private int _barSizeLocation = -1;
 
-    private int _pickerModelLocation = -1;  
-    private int _pickerProjectionLocation = -1;
-    private int _pickerSizeLocation = -1;
-    private int _pickerColorLocation = -1;
+    private static VAO _colorPickerVao = new VAO();
+
+    private static int _barModelLocation = -1;
+    private static int _barProjectionLocation = -1;
+    private static int _barSizeLocation = -1;
+
+    private static int _pickerModelLocation = -1;  
+    private static int _pickerProjectionLocation = -1;
+    private static int _pickerSizeLocation = -1;
+    private static int _pickerColorLocation = -1;
+
+    static ColorPicker()
+    {
+        _barModelLocation = _pickerBarShader.GetLocation("model");
+        _barProjectionLocation = _pickerBarShader.GetLocation("projection");
+        _barSizeLocation = _pickerBarShader.GetLocation("size");
+
+        _pickerModelLocation = _pickerShader.GetLocation("model");
+        _pickerProjectionLocation = _pickerShader.GetLocation("projection");
+        _pickerSizeLocation = _pickerShader.GetLocation("size");
+        _pickerColorLocation = _pickerShader.GetLocation("color");
+    }
 
     public Vector2i ColorPickerPosition = new Vector2i(94, 80);
     
@@ -59,15 +71,6 @@ public class ColorPicker
         Vector2i newPosition = ((int)_colorPickerPosition.X, (int)-_colorPickerPosition.Y + (Game.Height - Height));
         ColorPickerPosition = newPosition;
         ColorPickerSize = 1f;
-
-        _barModelLocation = _pickerBarShader.GetLocation("model");
-        _barProjectionLocation = _pickerBarShader.GetLocation("projection");
-        _barSizeLocation = _pickerBarShader.GetLocation("size");
-
-        _pickerModelLocation = _pickerShader.GetLocation("model");
-        _pickerProjectionLocation = _pickerShader.GetLocation("projection");
-        _pickerSizeLocation = _pickerShader.GetLocation("size");
-        _pickerColorLocation = _pickerShader.GetLocation("color");
 
         ColorPickerController = new();
 
@@ -150,8 +153,6 @@ public class ColorPicker
         _colorPanelCollection.AddElements(_colorButton, ColorBG, ColorPickSlider, ColorBarSlider);
 
         ColorPickerController.AddElements(_colorPanelCollection);
-
-        ColorPickers.Add(this);
     }
 
     public void UpdateColorPickerPosition()
@@ -176,7 +177,7 @@ public class ColorPicker
         ColorPickerController.Test();
     }
 
-    public void Render()
+    public void RenderTexture()
     {
         GL.Clear(ClearBufferMask.DepthBufferBit);
 
@@ -230,13 +231,5 @@ public class ColorPicker
     {
         _colorPickerVao.DeleteBuffer();
         ColorPickerController.Delete();
-    }
-
-    public static void DeleteAll()
-    {
-        foreach (var picker in ColorPickers)
-        {
-            picker.Delete();
-        }
     }
 }
