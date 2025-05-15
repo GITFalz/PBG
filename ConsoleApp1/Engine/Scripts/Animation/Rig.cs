@@ -1,10 +1,16 @@
+using System.Diagnostics.CodeAnalysis;
+using OpenTK.Mathematics;
+
 public class Rig
 {
+    public string Name = "Rig";
     public RootBone RootBone = new RootBone("RootBone");
-    public List<Bone> Bones = [];
+    public Dictionary<string, Bone> Bones = [];
+    public List<Bone> BonesList = [];
 
-    public Rig()
+    public Rig(string name)
     {
+        Name = name;
         Create();
     }
 
@@ -14,8 +20,46 @@ public class Rig
         RootBone.GetBones(Bones);
     }
 
-    public Bone Copy()
+    public void Initialize()
     {
-        return RootBone.Copy();
+        BonesList = [];
+
+        int i = 0;
+        foreach (var (_, bone) in Bones)
+        {
+            BonesList.Add(bone);
+            bone.Index = i;
+            i++;
+        }
+    }
+
+    public bool GetBone(string name, [NotNullWhen(true)] out Bone? bone)
+    {
+        return Bones.TryGetValue(name, out bone);
+    }
+
+    public Rig Copy()
+    {
+        var copy = new Rig(Name);
+        copy.RootBone = RootBone.Copy();
+        copy.Create();
+        copy.Initialize();
+        return copy;
+    }
+
+    public List<Matrix4> GetGlobalAnimatedMatrices()
+    {
+        List<Matrix4> matrices = [];
+        foreach (var (_, bone) in Bones)
+        {
+            matrices.Add(bone.GlobalAnimatedMatrix);
+        }
+        return matrices;
+    }
+
+    public void Delete()
+    {
+        Bones = [];
+        BonesList = [];
     }
 }

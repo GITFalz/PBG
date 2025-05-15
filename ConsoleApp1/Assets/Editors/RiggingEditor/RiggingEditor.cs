@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -124,6 +119,9 @@ public class RiggingEditor : BaseEditor
             return;
 
         Model.RenderBones = true;
+        Model.SetStaticRig("Test");
+
+        Model.SetAnimation();
     }
     
     public override void Render(GeneralModelingEditor editor)
@@ -159,8 +157,9 @@ public class RiggingEditor : BaseEditor
     {
         if (Model == null)
             return;
-            
+
         Model.RenderBones = false;
+        Model.SetStaticRig(null);
     }
 
     public void UpdateVertexPosition(System.Numerics.Matrix4x4 projection, System.Numerics.Matrix4x4 view)

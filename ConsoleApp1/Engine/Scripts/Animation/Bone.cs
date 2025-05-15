@@ -4,6 +4,7 @@ public abstract class Bone
 {
     public string Name;
     public List<ChildBone> Children = [];
+    public BoneSelection Selection = BoneSelection.None;
 
 
     public Vector3 Position = Vector3.Zero;
@@ -12,24 +13,29 @@ public abstract class Bone
 
     // Computed at bind time (static)
     public Matrix4 BindPoseMatrix;
-    public Matrix4 InverseBindMatrix;
 
     // Computed at runtime (updated each frame)
-    public Matrix4 LocalAnimatedMatrix => Matrix4.CreateScale(Scale) * Matrix4.CreateFromQuaternion(Rotation) * Matrix4.CreateTranslation(Position);   
+    public Matrix4 LocalAnimatedMatrix => Matrix4.CreateScale(Scale) * Matrix4.CreateFromQuaternion(Rotation) * Matrix4.CreateTranslation(Position);
 
     public Matrix4 GlobalAnimatedMatrix;
 
     public Matrix4 FinalMatrix => GlobalAnimatedMatrix;
+    public int Index = 0;
 
     public Bone(string name) { Name = name; }
-    
+
     public abstract void UpdateGlobalTransformation();
-    public abstract string GetFullName();
+    public abstract string GetBonePath();
+    public abstract RootBone GetRootBone();
 
     public void SetBindPose()
     {
         BindPoseMatrix = GlobalAnimatedMatrix;
-        InverseBindMatrix = Matrix4.Invert(BindPoseMatrix);
+    }
+
+    public Matrix4 GetInverse()
+    {
+        return GlobalAnimatedMatrix.Inverted();
     }
 
     public bool Add(ChildBone child)
@@ -37,34 +43,32 @@ public abstract class Bone
         if (Children.Contains(child))
             return false;
 
-        string fullName = child.GetFullName();
-        string newName = fullName;
-        bool sameName = false;
-        int cycle = 1;
-        while (!sameName)
+        RootBone root = GetRootBone();
+        List<string> names = [];
+        root.GetBoneNames(names);
+        string name = child.Name;
+        int cycle = 0;
+        while (names.Contains(child.Name))
         {
-            sameName = true;
-            for (int i = 0; i < Children.Count; i++)
-            {
-                if (Children[i].GetFullName() == fullName)
-                {
-                    newName = $"{fullName}_{cycle}";
-                    sameName = false;
-                    break;
-                }
-            }
+            child.Name = $"{name}_{cycle}";
             cycle++;
         }
-        child.Name = newName;
         Children.Add(child);
         return true;
     }
 
-    public void GetBones(List<Bone> bones)
+    public void GetBones(Dictionary<string, Bone> bones)
     {
-        bones.Add(this);
+        bones.Add(Name, this);
         foreach (var child in Children)
             child.GetBones(bones);
+    }
+    
+    public void GetBoneNames(List<string> names)
+    {
+        names.Add(Name);
+        foreach (var child in Children)
+            child.GetBoneNames(names);
     }
 }
 
@@ -79,22 +83,33 @@ public class RootBone : Bone
             child.UpdateGlobalTransformation();
     }
 
-    public override string GetFullName()
+    public override string GetBonePath()
     {
         return Name;
+    }
+
+    public override RootBone GetRootBone()
+    {
+        return this;
     }
 
     public RootBone Copy()
     {
         var copy = new RootBone(Name);
         foreach (var child in Children)
-            copy.Children.Add(child.Copy(this));
+            child.Copy(copy);
+
+        copy.Position = Position;
+        copy.Rotation = Rotation;
+        copy.Scale = Scale;
+        copy.UpdateGlobalTransformation();
+
         return copy;
     }
 }
 
 public class ChildBone : Bone
-{   
+{
     public Bone Parent;
 
     public ChildBone(string name, Bone parent) : base(name)
@@ -103,24 +118,43 @@ public class ChildBone : Bone
         Parent.Add(this);
     }
 
-    public override void UpdateGlobalTransformation() {
-        
+    public override void UpdateGlobalTransformation()
+    {
+
         GlobalAnimatedMatrix = LocalAnimatedMatrix * Parent.GlobalAnimatedMatrix;
-        foreach (var child in Children) {
+        foreach (var child in Children)
+        {
             child.UpdateGlobalTransformation();
         }
     }
 
-    public override string GetFullName()
+    public override string GetBonePath()
     {
-        return $"{Parent.GetFullName()}.{Name}";
+        return $"{Parent.GetBonePath()}.{Name}";
+    }
+
+    public override RootBone GetRootBone()
+    {
+        return Parent.GetRootBone();
     }
 
     public ChildBone Copy(Bone parent)
     {
         var copy = new ChildBone(Name, parent);
         foreach (var child in Children)
-            copy.Children.Add(child.Copy(this));
+            child.Copy(copy);
+
+        copy.Position = Position;
+        copy.Rotation = Rotation;
+        copy.Scale = Scale;
         return copy;
     }
+}
+
+public enum BoneSelection
+{
+    None = 0,
+    Pivot = 1,
+    End = 2,
+    Both = 7
 }

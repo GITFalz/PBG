@@ -8,10 +8,11 @@ public class Vertex
 
     private Vector3 _position = Vector3.Zero;
     public Vector3 Position;
+    public Vector4 V4 => new Vector4(Position.X, Position.Y, Position.Z, 1);
 
     public float X
     {
-        get { return Position.X;}
+        get { return Position.X; }
         set { Position.X = value; }
     }
     public float Y
@@ -29,7 +30,7 @@ public class Vertex
     public HashSet<Triangle> ParentTriangles = new HashSet<Triangle>();
     public HashSet<Edge> ParentEdges = new HashSet<Edge>();
     public int Index = 0;
-    public int BoneIndex = 0;
+    public string BoneName = "ChildBone1";
 
     public Vertex(Vector3 position, Triangle? parentTriangle = null)
     {

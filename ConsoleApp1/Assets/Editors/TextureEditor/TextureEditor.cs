@@ -215,6 +215,11 @@ public class TextureEditor : BaseEditor
         Editor.SaveAction = SaveUvs;
 
         _regenerateColors = true;
+
+        if (Model == null)
+            return;
+
+        Model.SetModeling();
     }
 
     public void CreateNewTexture()

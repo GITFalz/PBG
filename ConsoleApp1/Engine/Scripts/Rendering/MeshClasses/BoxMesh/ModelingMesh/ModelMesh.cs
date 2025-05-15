@@ -53,6 +53,7 @@ public class ModelMesh : Meshes
     public VBO<Vector3> BoneVertexVBO;
     public VBO<Vector3> BoneNormalVBO;
     public VBO<Matrix4> BoneDataVBO = new();
+    public VBO<int> BoneColorVBO = new();
     public int indicesCount = 0;
 
 
@@ -282,6 +283,58 @@ public class ModelMesh : Meshes
         }
     }
 
+    public void Bind(Rig rig)
+    {
+        _transformedVerts.Clear();
+        Uvs.Clear();
+        TextureIndices.Clear();
+
+        if (TriangleList.Count == 0)
+            return;
+
+        foreach (var t in TriangleList)
+        {
+            Vertex A = t.A;
+            Vertex B = t.B;
+            Vertex C = t.C;
+
+            Vector3 APos;
+            int boneIndexA;
+            if (rig.GetBone(A.BoneName, out var boneA))
+            {
+                APos = (boneA.GetInverse().Transposed() * A.V4).Xyz;
+                boneIndexA = boneA.Index;
+            }
+            else
+            {
+                APos = A;
+                boneIndexA = 0;
+            }
+            Vector3 BPos;
+            int boneIndexB;
+            if (rig.GetBone(B.BoneName, out var boneB)) {
+                BPos = (boneB.GetInverse().Transposed() * B.V4).Xyz;
+                boneIndexB = boneB.Index;
+            } else {
+                BPos = B;
+                boneIndexB = 0;
+            }
+            Vector3 CPos;
+            int boneIndexC;
+            if (rig.GetBone(C.BoneName, out var boneC)) {
+                CPos = (boneC.GetInverse().Transposed()  * C.V4).Xyz;
+                boneIndexC = boneC.Index;
+            } else {
+                CPos = C;
+                boneIndexC = 0;
+            }
+
+            _transformedVerts.AddRange(APos, BPos, CPos);
+            Uvs.AddRange(t.GetUvs());
+            TextureIndices.AddRange([(0, boneIndexA), (0, boneIndexB), (0, boneIndexC)]);
+        }
+    }
+
     public void InitRig()
     {
         Rig? rig = Model.Rig;
@@ -289,15 +342,18 @@ public class ModelMesh : Meshes
             return;
 
         List<Matrix4> boneMatrices = [];
+        List<int> boneColors = [];
 
-        foreach (var bone in rig.Bones)
+        foreach (var bone in rig.BonesList)
         {
-            boneMatrices.Add(bone.BindPoseMatrix);
+            boneMatrices.Add(bone.FinalMatrix);
+            boneColors.Add((int)bone.Selection);
         }
 
         BoneCount = boneMatrices.Count;
 
         BoneDataVBO.Renew(boneMatrices);
+        BoneColorVBO.Renew(boneColors);
 
         _boneVao.Bind();
 
@@ -311,6 +367,12 @@ public class ModelMesh : Meshes
 
         BoneDataVBO.Unbind();
 
+        BoneColorVBO.Bind();
+
+        _boneVao.InstanceIntLink(6, 1, VertexAttribIntegerType.Int, 4, 0, 1);
+
+        BoneColorVBO.Unbind();
+
         _boneVao.Unbind();
     }
 
@@ -321,13 +383,16 @@ public class ModelMesh : Meshes
             return;
 
         List<Matrix4> boneMatrices = [];
+        List<int> boneColors = [];
 
-        foreach (var bone in rig.Bones)
+        foreach (var bone in rig.BonesList)
         {
             boneMatrices.Add(bone.FinalMatrix);
+            boneColors.Add((int)bone.Selection);
         }
 
         BoneDataVBO.Update(boneMatrices);
+        BoneColorVBO.Update(boneColors);
     }
 
     public void ApplyMirror()
@@ -335,7 +400,7 @@ public class ModelMesh : Meshes
         List<Vertex> currentVertices = [.. VertexList];
         List<Edge> currentEdges = [.. EdgeList];
         List<Triangle> currentTriangles = [.. TriangleList];
-        
+
         Vector3[] flip = ModelSettings.Mirrors;
         bool[] swaps = ModelSettings.Swaps;
 
@@ -385,7 +450,7 @@ public class ModelMesh : Meshes
                 }
 
                 Triangle triangle = new Triangle(VertexList[indexA], VertexList[indexB], VertexList[indexC], EdgeList[edgeIndexAB], EdgeList[edgeIndexBC], EdgeList[edgeIndexCA]);
-                
+
                 AddTriangle(triangle);
             }
         }
@@ -435,21 +500,6 @@ public class ModelMesh : Meshes
         }
 
         UpdateMesh();
-    }
-
-    public Edge AddOrReplace(Edge edge)
-    {
-        foreach (var e in EdgeList)
-        {
-            if (e.HasSameVertex(edge))
-                return e;
-        }
-
-        EdgeList.Add(edge);
-        EdgeVertices.AddRange(edge.A, edge.B);
-        EdgeColors.AddRange(edge.A.Color, edge.B.Color);
-
-        return edge;
     }
 
     public void AddTriangle(Triangle triangle)
@@ -603,17 +653,6 @@ public class ModelMesh : Meshes
         if (B.ParentEdges.Count == 1) VertexList.Remove(B); else B.ParentEdges.Remove(edge);
 
         EdgeList.Remove(edge.Delete());
-    }
-
-    public int VertexCount(Vertex vertex)
-    {
-        int count = 0;
-        foreach (var t in TriangleList)
-        {
-            if (t.A == vertex || t.B == vertex || t.C == vertex)
-                count++;
-        }
-        return count;
     }
     
     public bool SwapVertices(Vertex A, Vertex B)
@@ -772,6 +811,13 @@ public class ModelMesh : Meshes
         _edgeVbo.Update(EdgeVertices);
     }
 
+    public void UpdateModel()
+    {
+        _normalVbo.Update(Normals);
+        _vertVbo.Update(_transformedVerts);
+        _textureVbo.Update(TextureIndices);
+    }
+
     public void UpdateVertices()
     {
         _vertVbo.Update(_transformedVerts);
@@ -805,17 +851,17 @@ public class ModelMesh : Meshes
         List<string> oldLines = [.. File.ReadAllLines(path)];
         List<string> newLines = new List<string>();
 
-        int oldVertexCount = int.Parse(oldLines[0]);
-        int oldEdgeCount = int.Parse(oldLines[oldVertexCount + 1]);
-        int oldUvCount = int.Parse(oldLines[oldVertexCount + oldEdgeCount + 2]);
-        int oldTriangleCount = int.Parse(oldLines[oldVertexCount + oldEdgeCount + oldUvCount + 3]);
-        int oldNormalCount = int.Parse(oldLines[oldVertexCount + oldEdgeCount + oldUvCount + oldTriangleCount + 4]);
+        int oldVertexCount = Int.Parse(oldLines[0]);
+        int oldEdgeCount = Int.Parse(oldLines[oldVertexCount + 1]);
+        int oldUvCount = Int.Parse(oldLines[oldVertexCount + oldEdgeCount + 2]);
+        int oldTriangleCount = Int.Parse(oldLines[oldVertexCount + oldEdgeCount + oldUvCount + 3]);
+        int oldNormalCount = Int.Parse(oldLines[oldVertexCount + oldEdgeCount + oldUvCount + oldTriangleCount + 4]);
         int rigStart = oldVertexCount + oldEdgeCount + oldUvCount + oldTriangleCount + oldNormalCount + 5;
 
         newLines.Add(VertexList.Count.ToString());
         foreach (var vertex in VertexList)
         {
-            newLines.Add($"v {Float.Str(vertex.X)} {Float.Str(vertex.Y)} {Float.Str(vertex.Z)} {vertex.Index} {vertex.BoneIndex}");
+            newLines.Add($"v {Float.Str(vertex.X)} {Float.Str(vertex.Y)} {Float.Str(vertex.Z)} {vertex.Index} {vertex.BoneName}");
         }
 
         newLines.Add(EdgeList.Count.ToString());
@@ -871,10 +917,10 @@ public class ModelMesh : Meshes
 
         string[] lines = File.ReadAllLines(path);
 
-        int vertexCount = int.Parse(lines[0]);
-        int edgeCount = int.Parse(lines[vertexCount + 1]);
-        int uvCount = int.Parse(lines[vertexCount + edgeCount + 2]);
-        int triangleCount = int.Parse(lines[vertexCount + edgeCount + uvCount + 3]);
+        int vertexCount = Int.Parse(lines[0]);
+        int edgeCount = Int.Parse(lines[vertexCount + 1]);
+        int uvCount = Int.Parse(lines[vertexCount + edgeCount + 2]);
+        int triangleCount = Int.Parse(lines[vertexCount + edgeCount + uvCount + 3]);
 
         for (int i = 1; i <= vertexCount; i++)
         {
@@ -883,10 +929,10 @@ public class ModelMesh : Meshes
             Vertex vertex = new Vertex(new Vector3(Float.Parse(values[1]), Float.Parse(values[2]), Float.Parse(values[3])));
             vertex.Name = "Vertex " + i;
             if (values.Length > 4)
-                vertex.Index = int.Parse(values[4]);
+                vertex.Index = Int.Parse(values[4]);
 
             if (values.Length > 5)
-                vertex.BoneIndex = int.Parse(values[5]);
+                vertex.BoneName = values[5].Trim();
             
             VertexList.Add(vertex);
         }
@@ -894,7 +940,7 @@ public class ModelMesh : Meshes
         for (int i = vertexCount + 2; i <= vertexCount + edgeCount + 1; i++)
         {
             string[] values = lines[i].Trim().Split(' ');
-            EdgeList.Add(new Edge(VertexList[int.Parse(values[1])], VertexList[int.Parse(values[2])]));
+            EdgeList.Add(new Edge(VertexList[Int.Parse(values[1])], VertexList[Int.Parse(values[2])]));
         }
 
         for (int i = vertexCount + edgeCount + 3; i <= vertexCount + edgeCount + uvCount + 2; i++)
@@ -912,9 +958,9 @@ public class ModelMesh : Meshes
         
             try
             {
-                a = VertexList[int.Parse(values[1])];
-                b = VertexList[int.Parse(values[2])];
-                c = VertexList[int.Parse(values[3])];
+                a = VertexList[Int.Parse(values[1])];
+                b = VertexList[Int.Parse(values[2])];
+                c = VertexList[Int.Parse(values[3])];
             }
             catch (Exception)
             {
@@ -931,9 +977,9 @@ public class ModelMesh : Meshes
 
             try
             {
-                ab = EdgeList[int.Parse(values[4])];
-                bc = EdgeList[int.Parse(values[5])];
-                ca = EdgeList[int.Parse(values[6])];
+                ab = EdgeList[Int.Parse(values[4])];
+                bc = EdgeList[Int.Parse(values[5])];
+                ca = EdgeList[Int.Parse(values[6])];
             }
             catch (Exception)
             {
@@ -1077,6 +1123,7 @@ public class ModelMesh : Meshes
         if (BoneCount == 0)
             return;
 
+        GL.Clear(ClearBufferMask.DepthBufferBit);
         GL.Enable(EnableCap.DepthTest);
         GL.DepthFunc(DepthFunction.Less);
         GL.DepthMask(true);

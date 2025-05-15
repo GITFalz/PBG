@@ -120,6 +120,9 @@ public class AnimationEditor : BaseEditor
             return;
 
         Model.RenderBones = true;
+        Model.SetAnimationRig("Test");
+
+        Model.SetAnimation();
     }
     
     public override void Render(GeneralModelingEditor editor)
@@ -157,8 +160,10 @@ public class AnimationEditor : BaseEditor
     {
         if (Model == null)
             return;
-            
+
         Model.RenderBones = false;
+        Model.Rig?.Delete();
+        Model.SetAnimationRig(null);
     }
 
     public void UpdateVertexPosition(System.Numerics.Matrix4x4 projection, System.Numerics.Matrix4x4 view)

@@ -16,7 +16,20 @@ public class Model
 
 
     private static ShaderProgram _shaderProgram = new ShaderProgram("Model/Model.vert", "Model/Model.frag");
-    private static ShaderProgram    _animationShader = new ShaderProgram("Model/ModelAnimation.vert", "Model/Model.frag");
+    private static int _modelLocation = _shaderProgram.GetLocation("model");
+    private static int _viewLocation = _shaderProgram.GetLocation("view");
+    private static int _projectionLocation = _shaderProgram.GetLocation("projection");
+    private static int _colorAlphaLocation = _shaderProgram.GetLocation("colorAlpha");
+    private static ShaderProgram _animationShader = new ShaderProgram("Model/ModelAnimation.vert", "Model/Model.frag");
+    private static int _animationModelLocation = _animationShader.GetLocation("model");
+    private static int _animationViewLocation = _animationShader.GetLocation("view");
+    private static int _animationProjectionLocation = _animationShader.GetLocation("projection");
+    private static int _animationColorAlphaLocation = _animationShader.GetLocation("colorAlpha");
+    private static ShaderProgram _activeShader = _shaderProgram;
+    private static int _activeModelLocation = _modelLocation;
+    private static int _activeViewLocation = _viewLocation; 
+    private static int _activeProjectionLocation = _projectionLocation;
+    private static int _activeColorAlphaLocation = _colorAlphaLocation;
     public Texture Texture = new Texture("empty.png", TextureLocation.NormalTexture);
 
 
@@ -37,11 +50,12 @@ public class Model
     public Rig? Rig;
 
     public bool RenderBones = false;
+    public bool Animate = false;
 
 
     public Model()
     {
-        Rig = new Rig();
+        Rig = new Rig("Test");
         Mesh = new ModelMesh(this);
 
         Create();
@@ -65,15 +79,99 @@ public class Model
         root.UpdateGlobalTransformation();
 
         Rig.Create();
+        Rig.Initialize();
+
+        if (!RigManager.Add(Rig))
+        {
+            PopUp.AddPopUp($"Rig {Rig.Name} already exists.");
+            return;
+        }
 
         BoneMatricesList.Clear();
-        foreach (var bone in Rig.Bones)
+        foreach (var bone in Rig.BonesList)
         {
             BoneMatricesList.Add(bone.FinalMatrix);
         }
         BoneMatrices.Renew(BoneMatricesList);
 
         Mesh.InitRig();
+    }
+
+    public void SetModeling()
+    {
+        _activeShader = _shaderProgram;
+        _activeModelLocation = _modelLocation;
+        _activeViewLocation = _viewLocation;
+        _activeProjectionLocation = _projectionLocation;
+        _activeColorAlphaLocation = _colorAlphaLocation;
+        Mesh.Init();
+        Mesh.UpdateModel();
+    }
+
+    public void SetAnimation()
+    {
+        _activeShader = _animationShader;
+        _activeModelLocation = _animationModelLocation;
+        _activeViewLocation = _animationViewLocation;
+        _activeProjectionLocation = _animationProjectionLocation;
+        _activeColorAlphaLocation = _animationColorAlphaLocation;
+        if (Rig != null)
+        {
+            Mesh.Bind(Rig);
+            Mesh.UpdateModel();
+        }
+    }
+
+    public void SetStaticRig(string? rigName)
+    {
+        if (rigName == null)
+        {
+            Animate = false;
+            if (Rig != null)
+            {
+                BoneMatrices.Renew(Rig.GetGlobalAnimatedMatrices());
+                Mesh.InitRig();
+            }
+            Rig = null;
+            return;
+        }
+
+        if (RigManager.Rigs.TryGetValue(rigName, out Rig? value))
+        {
+            Animate = false;
+            Rig = value;
+            BoneMatrices.Renew(Rig.GetGlobalAnimatedMatrices());
+            Mesh.InitRig();
+        }
+        else
+        {
+            PopUp.AddPopUp($"Rig {rigName} not found.");
+        }
+    }
+
+    public void SetAnimationRig(string? rigName)
+    {
+        if (rigName == null)
+        {
+            Animate = false;
+            if (Rig != null)
+            {
+                SetStaticRig(Rig.Name);
+            }
+            Rig = null;
+            return;
+        }
+        
+        if (RigManager.Rigs.TryGetValue(rigName, out Rig? value))
+        {
+            Animate = true;
+            Rig = value.Copy();
+            Mesh.InitRig();
+        }
+        else
+        {
+            PopUp.AddPopUp($"Rig {rigName} not found.");
+        }
     }
 
     public void Renew(string fileName, TextureLocation textureLocation)
@@ -93,18 +191,20 @@ public class Model
         if (Rig == null)
             return;
 
-        Rig.Bones[0].Rotation *= Quaternion.FromAxisAngle(Vector3.UnitY, MathHelper.DegreesToRadians(GameTime.DeltaTime * 30f));
+        if (Animate)
+        {
+            Rig.BonesList[0].Rotation *= Quaternion.FromAxisAngle(Vector3.UnitY, MathHelper.DegreesToRadians(GameTime.DeltaTime * 30f));
+            Rig.BonesList[1].Rotation *= Quaternion.FromAxisAngle(Vector3.UnitZ, MathHelper.DegreesToRadians(GameTime.DeltaTime * 30f));
 
-        Rig.Bones[1].Rotation *= Quaternion.FromAxisAngle(Vector3.UnitZ, MathHelper.DegreesToRadians(GameTime.DeltaTime * 30f));
+            Rig.RootBone.UpdateGlobalTransformation();
 
-        Rig.RootBone.UpdateGlobalTransformation();
+            BoneMatricesList[0] = Rig.BonesList[0].FinalMatrix;
+            BoneMatricesList[1] = Rig.BonesList[1].FinalMatrix;
 
-        BoneMatricesList[0] = Rig.Bones[0].FinalMatrix;
-        BoneMatricesList[1] = Rig.Bones[1].FinalMatrix;
+            Mesh.UpdateRig();
 
-        Mesh.UpdateRig();
-
-        BoneMatrices.Renew(BoneMatricesList);
+            BoneMatrices.Renew(BoneMatricesList);
+        }
     }
 
     public void Render()
@@ -113,7 +213,7 @@ public class Model
         if (camera == null)
             return;
 
-        _animationShader.Bind();
+        _activeShader.Bind();
 
         GL.Enable(EnableCap.DepthTest);
         GL.DepthFunc(DepthFunction.Lequal);
@@ -122,37 +222,36 @@ public class Model
         Matrix4 view = camera.GetViewMatrix();
         Matrix4 projection = camera.GetProjectionMatrix();
 
-        int modelLocation;
-        int viewLocation;
-        int projectionLocation;
-        int colorAlphaLocation;
-
         foreach (var flip in ModelSettings.Mirrors)
         { 
             Model = Matrix4.CreateScale(flip);
 
-            modelLocation = GL.GetUniformLocation(_animationShader.ID, "model");
-            viewLocation = GL.GetUniformLocation(_animationShader.ID, "view");
-            projectionLocation = GL.GetUniformLocation(_animationShader.ID, "projection");
-            colorAlphaLocation = GL.GetUniformLocation(_animationShader.ID, "colorAlpha");
-            
-            GL.UniformMatrix4(modelLocation, false, ref Model);
-            GL.UniformMatrix4(viewLocation, false, ref view);
-            GL.UniformMatrix4(projectionLocation, false, ref projection);
-            GL.Uniform1(colorAlphaLocation, ModelSettings.MeshAlpha);
+            GL.UniformMatrix4(_activeModelLocation, false, ref Model);
+            GL.UniformMatrix4(_activeViewLocation, false, ref view);
+            GL.UniformMatrix4(_activeProjectionLocation, false, ref projection);
+            GL.Uniform1(_activeColorAlphaLocation, ModelSettings.MeshAlpha);
 
             Texture.Bind();
 
-            BoneMatrices.Bind(0);
-            
-            Mesh.Render();
-
-            BoneMatrices.Unbind();
+            if (Rig != null)
+            {
+                BoneMatrices.Bind(0);
+                Mesh.Render();
+                BoneMatrices.Unbind();
+            }
+            else
+            {
+                Mesh.Render();
+            }
 
             Texture.Unbind();
         }
 
-        _animationShader.Unbind();
+        _activeShader.Unbind();
+
+        int modelLocation;
+        int viewLocation;
+        int projectionLocation;
 
         if (ModelSettings.WireframeVisible)
         {

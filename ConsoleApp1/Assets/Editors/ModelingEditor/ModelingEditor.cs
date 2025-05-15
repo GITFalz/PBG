@@ -126,10 +126,15 @@ public class ModelingEditor : BaseEditor
 
     public override void Awake(GeneralModelingEditor editor)
     {
+        Console.WriteLine("Awake Modeling Editor");
+
         Editor.LoadAction = Editor.LoadModel;
         Editor.SaveAction = Editor.SaveModel;
 
-        Console.WriteLine("Awake Modeling Editor");
+        if (Model == null)
+            return;
+
+        Model.SetModeling();
     }
     
     public override void Update(GeneralModelingEditor editor)
