@@ -389,6 +389,7 @@ public class ModelMesh : Meshes
         {
             boneMatrices.Add(bone.FinalMatrix);
             boneColors.Add((int)bone.Selection);
+            Console.WriteLine($"{bone.Name} {bone.FinalMatrix} {bone.Selection}");
         }
 
         BoneDataVBO.Update(boneMatrices);

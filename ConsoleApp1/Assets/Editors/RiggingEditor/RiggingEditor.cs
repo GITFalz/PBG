@@ -14,7 +14,7 @@ public class RiggingEditor : BaseEditor
     public Dictionary<Vertex, Vector2> Vertices = new Dictionary<Vertex, Vector2>();
 
     public List<BonePivot> SelectedBonePivots = new();
-    public Dictionary<BonePivot, Vector2> BonePivots = new Dictionary<BonePivot, Vector2>();
+    public Dictionary<BonePivot, (Vector2, float)> BonePivots = new Dictionary<BonePivot, (Vector2, float)>();
 
     private bool regenerateVertexUi = true;
     
@@ -151,12 +151,12 @@ public class RiggingEditor : BaseEditor
             {
                 Game.Instance.CursorState = CursorState.Grabbed;
                 Game.camera.Unlock();
-                UpdateBonePosition(Game.camera.ProjectionMatrix, Game.camera.ViewMatrix);
             }
             else
             {
                 Game.Instance.CursorState = CursorState.Normal;
                 Game.camera.Lock();
+                UpdateBonePosition(Game.camera.ProjectionMatrix, Game.camera.ViewMatrix);
                 Model.UpdateVertexPosition();
             }
         }
@@ -169,7 +169,8 @@ public class RiggingEditor : BaseEditor
         if (Model == null || Model.Rig == null)
             return;
 
-        TestBonePosition();
+        if (Input.IsMousePressed(MouseButton.Left))
+            TestBonePosition();
 
         if (Input.IsKeyPressed(Keys.H))
         {
@@ -222,17 +223,20 @@ public class RiggingEditor : BaseEditor
 
         BonePivots.Clear();
 
-        foreach (var (_, bonePivot) in Model.Rig.Bones)
+        foreach (var (_, bone) in Model.Rig.Bones)
         {
-            Vector2? screenPos1 = Mathf.WorldToScreen(bonePivot.Pivot.Get, Mathf.ToNumerics(projection), Mathf.ToNumerics(view));
-            Vector2? screenPos2 = Mathf.WorldToScreen(bonePivot.End.Get, Mathf.ToNumerics(projection), Mathf.ToNumerics(view));
-            if (screenPos1 == null || screenPos2 == null)
-                continue;
+            Vector3 pivot = bone.Pivot.Get;
+            Vector3 end = bone.End.Get;
 
-            Console.WriteLine($"Bone: {screenPos1}");
+            Vector2? screenPos1 = Mathf.WorldToScreen(pivot, Mathf.ToNumerics(projection), Mathf.ToNumerics(view));
+            Vector2? screenPos1Side = Mathf.WorldToScreen(pivot + Game.camera.right.Normalized() * 0.3f, Mathf.ToNumerics(projection), Mathf.ToNumerics(view));
+            Vector2? screenPos2 = Mathf.WorldToScreen(end, Mathf.ToNumerics(projection), Mathf.ToNumerics(view));
+            Vector2? screenPos2Side = Mathf.WorldToScreen(end + Game.camera.right.Normalized() * 0.2f, Mathf.ToNumerics(projection), Mathf.ToNumerics(view));
+            if (screenPos1 != null && screenPos1Side != null)
+                BonePivots.Add(bone.Pivot, (screenPos1.Value, Vector2.Distance(screenPos1.Value, screenPos1Side.Value)));
 
-            BonePivots.Add(bonePivot.Pivot, screenPos1.Value);
-            BonePivots.Add(bonePivot.End, screenPos2.Value);
+            if (screenPos2 != null && screenPos2Side != null)
+                BonePivots.Add(bone.End, (screenPos2.Value, Vector2.Distance(screenPos2.Value, screenPos2Side.Value)));
         }
     }
 
@@ -247,34 +251,51 @@ public class RiggingEditor : BaseEditor
         Vector2 mousePos = Input.GetMousePosition();
         Vector2? closest = null;
         BonePivot? closestBone = null;
-
-        Console.WriteLine($"Mouse: {mousePos}");
     
-        foreach (var bone in BonePivots)
+        foreach (var (pivot, (position, radius)) in BonePivots)
         {
-            float distance = Vector2.Distance(mousePos, bone.Value);
+            float distance = Vector2.Distance(mousePos, position);
             float distanceClosest = closest == null ? 1000 : Vector2.Distance(mousePos, (Vector2)closest);
-
-            if (distance < distanceClosest && distance < 30)
+            
+            if (distance < distanceClosest && distance < radius)
             {
-                closest = bone.Value;
-                closestBone = bone.Key;
+                closest = position;
+                closestBone = pivot;
             }
         }
 
         if (closestBone != null && !SelectedBonePivots.Remove(closestBone))
             SelectedBonePivots.Add(closestBone);
 
-        if (closestBone != null)
+        UpdateBoneColors();
+    }
+
+    public void UpdateBoneColors()
+    {
+        HashSet<Bone> seenBones = [];
+        foreach (var (pivot, _) in BonePivots)
         {
-            bool isPivot = closestBone.IsPivot();
-            if (isPivot)
-                closestBone.Bone.Selection = BoneSelection.Pivot;
-            else
-                closestBone.Bone.Selection = BoneSelection.End;
+            Bone bone = pivot.Bone;
+            if (SelectedBonePivots.Contains(pivot))
+            {
+                seenBones.Add(bone);
+                bool isPivot = pivot.IsPivot();
+                if (isPivot)
+                {
+                    bone.Selection = BoneSelection.Pivot;
+                }
+                else
+                {
+                    bone.Selection = BoneSelection.End;
+                }
+            }
+            else if (!seenBones.Contains(bone))
+            {
+                bone.Selection = BoneSelection.None;
+            }
         }
 
-        Model.UpdateRig();
+        Model?.UpdateRig();
     }
 
     public Vector3 GetMovement()

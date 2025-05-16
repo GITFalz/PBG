@@ -121,6 +121,7 @@ public class Model
         foreach (var bone in Rig.BonesList)
         {
             BoneMatricesList.Add(bone.FinalMatrix);
+            Console.WriteLine(bone.Selection);
         }
         BoneMatrices.Update(BoneMatricesList, 0);
 
@@ -135,7 +136,7 @@ public class Model
         _activeProjectionLocation = _projectionLocation;
         _activeColorAlphaLocation = _colorAlphaLocation;
         Mesh.Init();
-        Mesh.UpdateModel();
+        Mesh.UpdateModel(); 
     }
 
     public void SetAnimation()
