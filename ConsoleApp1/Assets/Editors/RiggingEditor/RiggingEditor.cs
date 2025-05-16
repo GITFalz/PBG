@@ -5,10 +5,14 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 public class RiggingEditor : BaseEditor
 {
     public UIController ModelingUi;
+    public Camera Camera => Game.camera;
 
     public static UIText BackfaceCullingText;
     public static UIText MeshAlphaText;
     public static UIText AxisText;
+
+    public static UIInputFieldPrefab BoneNameText;
+
 
     public List<Vertex> SelectedVertices = new();
     public Dictionary<Vertex, Vector2> Vertices = new Dictionary<Vertex, Vector2>();
@@ -17,6 +21,9 @@ public class RiggingEditor : BaseEditor
     public Dictionary<BonePivot, (Vector2, float)> BonePivots = new Dictionary<BonePivot, (Vector2, float)>();
 
     private bool regenerateVertexUi = true;
+
+    
+    private Vector3 _endPosition = Vector3.Zero;
     
 
     public RiggingEditor(GeneralModelingEditor editor) : base(editor)
@@ -55,8 +62,38 @@ public class RiggingEditor : BaseEditor
         alphaButton.SetOnRelease(() => { blocked = false; });
 
         alphaCollection.AddElements(MeshAlphaText, alphaButton);
+
+
+        // Bone info panel collection
+        UICollection boneInfoCollection = new("BoneInfoCollection", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 45), (0, 0, 0, 0), 0);
+
+        UICollection boneTextCollection = new("BoneTextCollection", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (225, 20), (0, 0, 0, 0), 0);
         
-        
+        UIText boneNameText = new("BoneNameText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 20, 0), (400, 45), (0, 0, 0, 0), 0);
+        boneNameText.SetTextCharCount("Name:", 1.2f);
+
+        UITextButton boneSetNameButton = new("BoneSetNameButton", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (40, 20), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
+        boneSetNameButton.SetTextCharCount("Set", 1f);
+        boneSetNameButton.SetOnClick(() => {
+            var bones = GetSelectedBones();
+            if (bones.Count != 1)
+                return;
+
+            Console.WriteLine("Set bone name");
+            var bone = bones.First();
+            bone.SetName(BoneNameText.InputField.Text);
+            BoneNameText.SetText(bone.Name, 1.2f).UpdateCharacters();
+        });
+
+        boneTextCollection.AddElements(boneNameText, boneSetNameButton.Collection);
+
+        BoneNameText = new UIInputFieldPrefab("BoneNameText", ModelingUi, (0, 0, 0, 0), (0.5f, 0.5f, 0.5f, 1f), 1, 21, "BoneName", TextType.Alphanumeric);
+        BoneNameText.SetText("BoneName", 1f);
+        BoneNameText.UpdateScaling();
+        BoneNameText.Collection.SetAnchorType(AnchorType.BottomLeft);
+
+        boneInfoCollection.AddElements(boneTextCollection, BoneNameText.Collection);
+
 
         // Camera speed panel collection
         UICollection cameraSpeedStacking = new("CameraSpeedStacking", ModelingUi, AnchorType.BottomCenter, PositionType.Relative, (0, 0, 0), (225, 35), (5, 0, 0, 0), 0);
@@ -78,7 +115,7 @@ public class RiggingEditor : BaseEditor
 
         cameraSpeedStacking.AddElements(CameraSpeedTextLabel, speedStacking);
 
-        mainPanelStacking.AddElements(cullingCollection, alphaCollection);
+        mainPanelStacking.AddElements(cullingCollection, alphaCollection, boneInfoCollection);
 
         mainPanelCollection.AddElements(mainPanel, mainPanelStacking, cameraSpeedStacking);
 
@@ -166,28 +203,23 @@ public class RiggingEditor : BaseEditor
 
     private void RigUpdate()
     {
-        if (Model == null || Model.Rig == null)
-            return;
-
         if (Input.IsMousePressed(MouseButton.Left))
             TestBonePosition();
 
-        if (Input.IsKeyPressed(Keys.H))
+        if (Input.IsKeyPressed(Keys.G))
         {
-            if (Model.Rig.GetBone("ChildBone1", out Bone? bone))
-            {
-                bone.Selection = BoneSelection.End;
-                Model.UpdateRig();
-            }
+            Game.SetCursorState(CursorState.Grabbed);
         }
 
-        if (Input.IsKeyPressed(Keys.J))
+        if (Input.IsKeyDown(Keys.G))
         {
-            if (Model.Rig.GetBone("ChildBone1", out Bone? bone))
-            {
-                bone.Selection = BoneSelection.None;
-                Model.UpdateRig();
-            }
+            Handle_BoneMovement();
+        }
+
+        if (Input.IsKeyReleased(Keys.G))
+        {
+            Game.SetCursorState(CursorState.Normal);
+            UpdateBonePosition(Camera.ProjectionMatrix, Camera.ViewMatrix);
         }
     }
 
@@ -200,20 +232,45 @@ public class RiggingEditor : BaseEditor
         Model.SetStaticRig(null);
     }
 
-    public void UpdateVertexPosition(System.Numerics.Matrix4x4 projection, System.Numerics.Matrix4x4 view)
+    public void Handle_BoneMovement()
     {
-        Vertices.Clear();
+        if (Model == null || Model.Rig == null)
+            return;
 
-        /*
-        foreach (var vert in Mesh.VertexList)
+        Vector2 mouseDelta = Input.GetMouseDelta();
+        if (mouseDelta == Vector2.Zero)
+            return;
+
+        foreach (var bone in Model.Rig.BonesList)
         {
-            Vector2? screenPos = Mathf.WorldToScreen(vert, projection, view);
-            if (screenPos == null)
-                continue;
-            
-            Vertices.Add(vert, screenPos.Value);
+            if (bone.Selection == BoneSelection.End)
+            {
+                bone.Rotate();
+            }
+            else if (bone.Selection == BoneSelection.Pivot || bone.Selection == BoneSelection.Both)
+            {
+                bone.Move();
+            }
         }
-        */
+
+        Model.Rig.RootBone.UpdateGlobalTransformation();
+        Model.UpdateRig();
+        Model.Mesh.UpdateRigVertexPosition();
+
+        foreach (var bone in Model.Rig.BonesList)
+        {
+            bone.UpdateEndTarget();
+        }
+    }
+
+    public HashSet<Bone> GetSelectedBones()
+    {
+        HashSet<Bone> selectedBones = new HashSet<Bone>();
+        foreach (var pivot in SelectedBonePivots)
+        {
+            selectedBones.Add(pivot.Bone);
+        }
+        return selectedBones;
     }
 
     public void UpdateBonePosition(Matrix4 projection, Matrix4 view)
@@ -278,16 +335,20 @@ public class RiggingEditor : BaseEditor
             Bone bone = pivot.Bone;
             if (SelectedBonePivots.Contains(pivot))
             {
-                seenBones.Add(bone);
                 bool isPivot = pivot.IsPivot();
                 if (isPivot)
                 {
                     bone.Selection = BoneSelection.Pivot;
                 }
+                else if (seenBones.Contains(bone)) // Pivot is processed first, so we can check if the bone is already selected
+                {
+                    bone.Selection = BoneSelection.Both;
+                }
                 else
                 {
                     bone.Selection = BoneSelection.End;
                 }
+                seenBones.Add(bone);
             }
             else if (!seenBones.Contains(bone))
             {

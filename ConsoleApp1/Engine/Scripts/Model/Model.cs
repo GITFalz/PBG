@@ -48,6 +48,7 @@ public class Model
 
 
     public Rig? Rig;
+    public Animation? Animation;
 
     public bool RenderBones = false;
     public bool Animate = false;
@@ -121,7 +122,6 @@ public class Model
         foreach (var bone in Rig.BonesList)
         {
             BoneMatricesList.Add(bone.FinalMatrix);
-            Console.WriteLine(bone.Selection);
         }
         BoneMatrices.Update(BoneMatricesList, 0);
 
@@ -219,18 +219,26 @@ public class Model
 
     public void Update()
     {
-        if (Rig == null)
+        if (Rig == null || Animation == null)
             return;
 
         if (Animate)
         {
-            Rig.BonesList[0].Rotation *= Quaternion.FromAxisAngle(Vector3.UnitY, MathHelper.DegreesToRadians(GameTime.DeltaTime * 30f));
-            Rig.BonesList[1].Rotation *= Quaternion.FromAxisAngle(Vector3.UnitZ, MathHelper.DegreesToRadians(GameTime.DeltaTime * 30f));
+            foreach (var bone in Rig.BonesList)
+            {
+                var frame = Animation.GetFrame(bone.Name);
+                if (frame == null)
+                    continue;
+
+                bone.LocalAnimatedMatrix = frame.Value;
+            }
 
             Rig.RootBone.UpdateGlobalTransformation();
 
-            BoneMatricesList[0] = Rig.BonesList[0].FinalMatrix;
-            BoneMatricesList[1] = Rig.BonesList[1].FinalMatrix;
+            foreach (var bone in Rig.BonesList)
+            {
+                BoneMatricesList[bone.Index] = bone.GlobalAnimatedMatrix;
+            }
 
             Mesh.UpdateRig();
 

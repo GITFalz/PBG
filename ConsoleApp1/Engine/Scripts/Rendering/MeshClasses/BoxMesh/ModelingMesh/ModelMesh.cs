@@ -292,39 +292,44 @@ public class ModelMesh : Meshes
         if (TriangleList.Count == 0)
             return;
 
-        foreach (var t in TriangleList)
+        for (int i = 0; i < TriangleList.Count; i++)
         {
+            var t = TriangleList[i];
+
             Vertex A = t.A;
             Vertex B = t.B;
             Vertex C = t.C;
 
             Vector3 APos;
             int boneIndexA;
-            if (rig.GetBone(A.BoneName, out var boneA))
-            {
-                APos = (boneA.GetInverse().Transposed() * A.V4).Xyz;
+            if (rig.GetBone(A.BoneName, out var boneA)) {
+                A.Bone = boneA;
+                APos = (boneA.TransposedInverseGlobalAnimatedMatrix * A.V4).Xyz;
                 boneIndexA = boneA.Index;
-            }
-            else
-            {
+            } else {
+                A.Bone = null;
                 APos = A;
                 boneIndexA = 0;
             }
             Vector3 BPos;
             int boneIndexB;
             if (rig.GetBone(B.BoneName, out var boneB)) {
-                BPos = (boneB.GetInverse().Transposed() * B.V4).Xyz;
+                B.Bone = boneB;
+                BPos = (boneB.TransposedInverseGlobalAnimatedMatrix * B.V4).Xyz;
                 boneIndexB = boneB.Index;
             } else {
+                B.Bone = null;
                 BPos = B;
                 boneIndexB = 0;
             }
             Vector3 CPos;
             int boneIndexC;
             if (rig.GetBone(C.BoneName, out var boneC)) {
-                CPos = (boneC.GetInverse().Transposed()  * C.V4).Xyz;
+                C.Bone = boneC;
+                CPos = (boneC.TransposedInverseGlobalAnimatedMatrix  * C.V4).Xyz;
                 boneIndexC = boneC.Index;
             } else {
+                C.Bone = null;
                 CPos = C;
                 boneIndexC = 0;
             }
@@ -376,6 +381,41 @@ public class ModelMesh : Meshes
         _boneVao.Unbind();
     }
 
+    public void UpdateRigVertexPosition()
+    {
+        for (int i = 0; i < TriangleList.Count; i++)
+        {
+            var t = TriangleList[i];
+            
+            Vertex A = t.A;
+            Vertex B = t.B;
+            Vertex C = t.C;
+
+            if (A.Bone != null)
+            {
+                Vector3 APos = (A.Bone.TransposedInverseGlobalAnimatedMatrix * A.V4).Xyz;
+                _transformedVerts[i * 3 + 0] = APos;
+                TextureIndices[i * 3 + 0] = (0, A.Bone.Index);
+            }
+
+            if (B.Bone != null)
+            {
+                Vector3 BPos = (B.Bone.TransposedInverseGlobalAnimatedMatrix * B.V4).Xyz;
+                _transformedVerts[i * 3 + 1] = BPos;
+                TextureIndices[i * 3 + 1] = (0, B.Bone.Index);
+            }
+
+            if (C.Bone != null)
+            {
+                Vector3 CPos = (C.Bone.TransposedInverseGlobalAnimatedMatrix * C.V4).Xyz;
+                _transformedVerts[i * 3 + 2] = CPos;
+                TextureIndices[i * 3 + 2] = (0, C.Bone.Index);
+            }
+        }
+
+        UpdateModel();
+    }
+
     public void UpdateRig()
     {
         Rig? rig = Model.Rig;
@@ -389,7 +429,6 @@ public class ModelMesh : Meshes
         {
             boneMatrices.Add(bone.FinalMatrix);
             boneColors.Add((int)bone.Selection);
-            Console.WriteLine($"{bone.Name} {bone.FinalMatrix} {bone.Selection}");
         }
 
         BoneDataVBO.Update(boneMatrices);

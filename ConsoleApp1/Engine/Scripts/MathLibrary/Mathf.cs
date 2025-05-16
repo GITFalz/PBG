@@ -351,6 +351,41 @@ public static class Mathf
         }
     }
 
+    public static Quaternion GetDirectionQuaternion(Vector3 pivot, Vector3 target)
+    {
+        Vector3 from = Vector3.UnitY;
+        Vector3 to = Vector3.Normalize(target - pivot);
+
+        // Compute rotation axis and angle
+        Vector3 axis = Vector3.Cross(from, to);
+        float dot = Vector3.Dot(from, to);
+        float angle = MathF.Acos(MathHelper.Clamp(dot, -1.0f, 1.0f));
+
+        Quaternion rotation;
+        if (axis.LengthSquared < 1e-6f)
+        {
+            if (dot < 0)
+            {
+                // 180° rotation around any perpendicular axis
+                axis = Vector3.Cross(from, Vector3.UnitX);
+                if (axis.LengthSquared < 1e-6f)
+                    axis = Vector3.Cross(from, Vector3.UnitZ);
+                axis.Normalize();
+                rotation = Quaternion.FromAxisAngle(axis, MathF.PI);
+            }
+            else
+            {
+                // Vectors are the same
+                rotation = Quaternion.Identity;
+            }
+        }
+        else
+        {
+            axis.Normalize();
+            rotation = Quaternion.FromAxisAngle(axis, angle);
+        }
+        return rotation;
+    }
     
     
     public static bool IsPointNearLine(Link<Vector2> link, Vector2 point, float distance)

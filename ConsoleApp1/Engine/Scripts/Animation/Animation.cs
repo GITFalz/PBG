@@ -9,23 +9,23 @@ public class Animation
     public const int FRAMES = 24;
 
     public string Name;
-    public Dictionary<int, BoneAnimation> BoneAnimations = new Dictionary<int, BoneAnimation>();
+    public Dictionary<string, BoneAnimation> BoneAnimations = new Dictionary<string, BoneAnimation>();
 
     public Animation(string name)
     {
         Name = name;
     }
 
-    public Quaternion? GetFrame(int boneIndex)
+    public Matrix4? GetFrame(string boneName)
     {
-        if (BoneAnimations.TryGetValue(boneIndex, out var boneAnimation))
+        if (BoneAnimations.TryGetValue(boneName, out var boneAnimation))
             return boneAnimation.GetFrame();
         return null;
     }
 
-    public void AddOrUpdateKeyframe(int boneIndex, AnimationKeyframe keyframe)
+    public void AddOrUpdateKeyframe(string boneName, AnimationKeyframe keyframe)
     {
-        if (BoneAnimations.TryGetValue(boneIndex, out var boneAnimation))
+        if (BoneAnimations.TryGetValue(boneName, out var boneAnimation))
         {
             boneAnimation.AddOrUpdateKeyframe(keyframe);
         }
@@ -33,7 +33,15 @@ public class Animation
         {
             BoneAnimation newBoneAnimation = new BoneAnimation();
             newBoneAnimation.AddOrUpdateKeyframe(keyframe);
-            BoneAnimations.Add(boneIndex, newBoneAnimation);
+            BoneAnimations.Add(boneName, newBoneAnimation);
+        }
+    }
+
+    public void RemoveKeyframe(string boneName, int index)
+    {
+        if (BoneAnimations.TryGetValue(boneName, out var boneAnimation))
+        {
+            boneAnimation.RemoveKeyframe(index);
         }
     }
 }
@@ -41,16 +49,16 @@ public class Animation
 public class BoneAnimation
 {
     public List<AnimationKeyframe> Keyframes = new List<AnimationKeyframe>();
-    public Func<Quaternion?> GetFrame;
+    public Func<Matrix4?> GetFrame;
     public float elapsedTime = 0;
     int index = 0;
 
 
     public BoneAnimation() { GetFrame = GetNullFrame; }
-    public Quaternion? GetNullFrame() { return null; }
-    public Quaternion? GetFrameSingle() { return Keyframes[0].Rotation; }
+    public Matrix4? GetNullFrame() { return null; }
+    public Matrix4? GetFrameSingle() { return Keyframes[0].GetLocalTransform(); }
 
-    public Quaternion? GetFrameMultiple()
+    public Matrix4? GetFrameMultiple()
     {
         ResetIndexCheck();
 
@@ -70,7 +78,7 @@ public class BoneAnimation
         float t = Mathf.LerpI(t1, t2, elapsedTime);
 
         elapsedTime += GameTime.DeltaTime;
-        return Keyframes[index].Lerp(Keyframes[index + 1], t).Rotation;
+        return Keyframes[index].Lerp(Keyframes[index + 1], t).GetLocalTransform();
     }
 
     /// <summary>
@@ -95,6 +103,33 @@ public class BoneAnimation
         GetFrame = Keyframes.Count > 1 ? GetFrameMultiple : GetFrameSingle;
     }
 
+    public void RemoveKeyframe(int index)
+    {
+        if (Keyframes.Count > 0)
+        {
+            foreach (var keyframe in Keyframes)
+            {
+                if (keyframe.Index == index)
+                {
+                    Keyframes.Remove(keyframe);
+                    break;
+                }
+            }
+
+            if (Keyframes.Count == 0)
+            {
+                GetFrame = GetNullFrame;
+                elapsedTime = 0;
+                index = 0;
+            }
+            else
+            {
+                Keyframes = Keyframes.OrderBy(k => k.Time).ToList();
+                GetFrame = Keyframes.Count > 1 ? GetFrameMultiple : GetFrameSingle;
+            }
+        }
+    }
+
     private bool ResetIndexCheck()
     {
         if (index >= Keyframes.Count - 1)
@@ -111,22 +146,46 @@ public class AnimationKeyframe
 {
     public float Time;
     public int Index;
+    public Vector3 Position;
     public Quaternion Rotation;
+    public float Scale;
 
-    public AnimationKeyframe(int index, Quaternion rotation)
+    public AnimationKeyframe(int index, Vector3 position, Quaternion rotation, float scale)
     {
         Index = index;
         Time = (float)index / (float)Animation.FRAMES;
+        Position = position;
         Rotation = rotation;
+        Scale = scale;
     }
 
-    private AnimationKeyframe(Quaternion rotation)
+    public AnimationKeyframe(Vector3 position, Quaternion rotation, float scale)
     {
+        Index = 0;
+        Time = 0;
+        Position = position;
         Rotation = rotation;
+        Scale = scale;
+    }
+
+    public void SetIndex(int index)
+    {
+        Index = index;
+        Time = (float)index / (float)Animation.FRAMES;
+    }
+
+    public AnimationKeyframe Lerp(Vector3 position, Quaternion rotation, float scale, float t)
+    {
+        return new AnimationKeyframe(Mathf.Lerp(Position, position, t), Quaternion.Slerp(Rotation, rotation, t), Mathf.Lerp(Scale, scale, t));
     }
 
     public AnimationKeyframe Lerp(AnimationKeyframe keyframe, float t)
     {
-        return new AnimationKeyframe(Quaternion.Slerp(Rotation, keyframe.Rotation, t));
+        return Lerp(keyframe.Position, keyframe.Rotation, keyframe.Scale, t);
+    }
+
+    public Matrix4 GetLocalTransform()
+    {
+        return Matrix4.CreateScale(Scale) * Matrix4.CreateFromQuaternion(Rotation) * Matrix4.CreateTranslation(Position);
     }
 }

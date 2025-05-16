@@ -31,6 +31,7 @@ public class Vertex
     public HashSet<Edge> ParentEdges = new HashSet<Edge>();
     public int Index = 0;
     public string BoneName = "ChildBone1";
+    public Bone? Bone = null;
 
     public Vertex(Vector3 position, Triangle? parentTriangle = null)
     {

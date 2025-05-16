@@ -7,34 +7,71 @@ public abstract class Bone
     public BoneSelection Selection = BoneSelection.None;
 
 
-    public Vector3 Position = Vector3.Zero;
-    public Quaternion Rotation = Quaternion.Identity;
-    public float Scale = 1;
+    public Vector3 Position {
+        get => _position;
+        set
+        {
+            _position = value;
+            LocalAnimatedMatrix = Matrix4.CreateScale(Scale) * Matrix4.CreateFromQuaternion(Rotation) * Matrix4.CreateTranslation(Position);
+        }
+    }
+    private Vector3 _position = Vector3.Zero;
+    public Quaternion Rotation {
+        get => _rotation;
+        set
+        {
+            _rotation = value;
+            LocalAnimatedMatrix = Matrix4.CreateScale(Scale) * Matrix4.CreateFromQuaternion(Rotation) * Matrix4.CreateTranslation(Position);
+        }
+    }
+    private Quaternion _rotation = Quaternion.Identity;
+    public float Scale {
+        get => _scale;
+        set
+        {
+            _scale = value;
+            LocalAnimatedMatrix = Matrix4.CreateScale(Scale) * Matrix4.CreateFromQuaternion(Rotation) * Matrix4.CreateTranslation(Position);
+        }
+    }
+    private float _scale = 1;
 
     // Computed at bind time (static)
     public Matrix4 BindPoseMatrix;
 
     // Computed at runtime (updated each frame)
-    public Matrix4 LocalAnimatedMatrix => Matrix4.CreateScale(Scale) * Matrix4.CreateFromQuaternion(Rotation) * Matrix4.CreateTranslation(Position);
+    public Matrix4 LocalAnimatedMatrix = Matrix4.Identity;
 
-    public Matrix4 GlobalAnimatedMatrix;
+    public Matrix4 GlobalAnimatedMatrix = Matrix4.Identity;
+    public Matrix4 InverseGlobalAnimatedMatrix;
+    public Matrix4 TransposedInverseGlobalAnimatedMatrix;
 
     public Matrix4 FinalMatrix => GlobalAnimatedMatrix;
     public int Index = 0;
 
     public BonePivot Pivot;
     public BonePivot End;
+    public Vector3 EndTarget;
 
-    public Bone(string name)
+    public Bone(string name) 
     {
         Name = name;
-        Pivot = new(() => Position, this);
-        End = new(() => Position + Vector3.Transform(new Vector3(0, 2, 0) * Scale, Rotation), this);
+        Pivot = new(GetPivot, this);
+        End = new(GetEnd, this);
+        LocalAnimatedMatrix = Matrix4.CreateScale(Scale) * Matrix4.CreateFromQuaternion(Rotation) * Matrix4.CreateTranslation(Position);
     }
 
     public abstract void UpdateGlobalTransformation();
     public abstract string GetBonePath();
     public abstract RootBone GetRootBone();
+    public abstract Vector3 GetPivot();
+    public abstract Vector3 GetEnd();
+    public abstract void Rotate();
+    public abstract void Move();
+
+    public void UpdateEndTarget()
+    {
+        EndTarget = End.Get - Pivot.Get;
+    }
 
     public void SetBindPose()
     {
@@ -51,18 +88,27 @@ public abstract class Bone
         if (Children.Contains(child))
             return false;
 
+        child.SetName(child.Name);
+        Children.Add(child);
+        return true;
+    }
+
+    public void SetName(string newName)
+    {
+        if (newName == Name)
+            return;
+
         RootBone root = GetRootBone();
         List<string> names = [];
         root.GetBoneNames(names);
-        string name = child.Name;
+        string name = newName;
         int cycle = 0;
-        while (names.Contains(child.Name))
+        while (names.Contains(newName))
         {
-            child.Name = $"{name}_{cycle}";
+            newName = $"{name}_{cycle}";
             cycle++;
         }
-        Children.Add(child);
-        return true;
+        Name = newName;
     }
 
     public BonePivot Not(BonePivot pivot)
@@ -90,11 +136,14 @@ public abstract class Bone
 
 public class RootBone : Bone
 {
-    public RootBone(string name) : base(name) {}
+    public RootBone(string name) : base(name) { EndTarget = End.Get + Vector3.UnitY; }
 
     public override void UpdateGlobalTransformation()
     {
         GlobalAnimatedMatrix = LocalAnimatedMatrix;
+        InverseGlobalAnimatedMatrix = GlobalAnimatedMatrix.Inverted();
+        TransposedInverseGlobalAnimatedMatrix = InverseGlobalAnimatedMatrix.Transposed();
+
         foreach (var child in Children)
             child.UpdateGlobalTransformation();
     }
@@ -107,6 +156,38 @@ public class RootBone : Bone
     public override RootBone GetRootBone()
     {
         return this;
+    }
+
+    public override Vector3 GetPivot()
+    {
+        return Position;
+    }
+
+    public override Vector3 GetEnd()
+    {
+        return Position + Vector3.Transform(new Vector3(0, 2, 0) * Scale, Rotation);
+    }
+
+    public override void Rotate()
+    {
+        Vector2 mouseDelta = Input.GetMouseDelta();
+        
+        Vector3 axisY = Vector3.Normalize(Game.camera.front);
+        Vector3 axisX = Vector3.Normalize(Game.camera.right);
+
+        Rotation *= Quaternion.FromAxisAngle(axisY, MathHelper.DegreesToRadians(mouseDelta.X * GameTime.DeltaTime * 50f));
+        Rotation *= Quaternion.FromAxisAngle(axisX, MathHelper.DegreesToRadians(mouseDelta.Y * GameTime.DeltaTime * 50f));
+    }
+
+    public override void Move()
+    {
+        Vector2 mouseDelta = Input.GetMouseDelta();
+        
+        Vector3 axisY = Vector3.Normalize(Game.camera.up);
+        Vector3 axisX = Vector3.Normalize(Game.camera.right);
+
+        Position += axisY * -mouseDelta.Y * GameTime.DeltaTime * 5f;
+        Position += axisX * mouseDelta.X * GameTime.DeltaTime * 5f;
     }
 
     public RootBone Copy()
@@ -132,12 +213,16 @@ public class ChildBone : Bone
     {
         Parent = parent;
         Parent.Add(this);
+        EndTarget = End.Get + Vector3.UnitY;
     }
 
     public override void UpdateGlobalTransformation()
     {
 
         GlobalAnimatedMatrix = LocalAnimatedMatrix * Parent.GlobalAnimatedMatrix;
+        InverseGlobalAnimatedMatrix = GlobalAnimatedMatrix.Inverted();
+        TransposedInverseGlobalAnimatedMatrix = InverseGlobalAnimatedMatrix.Transposed();
+
         foreach (var child in Children)
         {
             child.UpdateGlobalTransformation();
@@ -152,6 +237,42 @@ public class ChildBone : Bone
     public override RootBone GetRootBone()
     {
         return Parent.GetRootBone();
+    }
+
+    public override Vector3 GetPivot()
+    {
+        var v4Position = new Vector4(Position, 1f);
+        var v4Transformed = Parent.GlobalAnimatedMatrix.Transposed() * v4Position;
+        return v4Transformed.Xyz;
+    }
+
+    public override Vector3 GetEnd()
+    {
+        var v4Position = new Vector4(Position + Vector3.Transform(new Vector3(0, 2, 0) * Scale, Rotation), 1f);
+        var v4Transformed = Parent.GlobalAnimatedMatrix.Transposed() * v4Position;
+        return v4Transformed.Xyz;
+    }
+
+    public override void Rotate()
+    {
+        Vector2 mouseDelta = Input.GetMouseDelta();
+        
+        Vector3 axisY = Vector3.Normalize(Game.camera.front);
+        Vector3 axisX = Vector3.Normalize(Game.camera.right);
+
+        Rotation *= Quaternion.FromAxisAngle((Parent.GetInverse().Transposed() * new Vector4(axisY, 1f)).Xyz, MathHelper.DegreesToRadians(mouseDelta.X * GameTime.DeltaTime * 50f));
+        Rotation *= Quaternion.FromAxisAngle((Parent.GetInverse().Transposed() * new Vector4(axisX, 1f)).Xyz, MathHelper.DegreesToRadians(mouseDelta.Y * GameTime.DeltaTime * 50f));
+    }
+
+    public override void Move()
+    {
+        Vector2 mouseDelta = Input.GetMouseDelta();
+        
+        Vector3 axisY = Vector3.Normalize(Game.camera.up);
+        Vector3 axisX = Vector3.Normalize(Game.camera.right);
+
+        Position += (Parent.GetInverse().Transposed() * new Vector4(axisY, 1f)).Xyz * -mouseDelta.Y * GameTime.DeltaTime * 5f;
+        Position += (Parent.GetInverse().Transposed() * new Vector4(axisX, 1f)).Xyz * mouseDelta.X * GameTime.DeltaTime * 5f;
     }
 
     public ChildBone Copy(Bone parent)
