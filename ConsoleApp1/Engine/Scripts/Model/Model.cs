@@ -97,6 +97,36 @@ public class Model
         Mesh.InitRig();
     }
 
+    public void InitRig()
+    {
+        if (Rig == null)
+            return;
+
+        BoneMatricesList.Clear();
+        foreach (var bone in Rig.BonesList)
+        {
+            BoneMatricesList.Add(bone.FinalMatrix);
+        }
+        BoneMatrices.Renew(BoneMatricesList);
+
+        Mesh.InitRig();
+    }
+
+    public void UpdateRig()
+    {
+        if (Rig == null)
+            return;
+
+        BoneMatricesList.Clear();
+        foreach (var bone in Rig.BonesList)
+        {
+            BoneMatricesList.Add(bone.FinalMatrix);
+        }
+        BoneMatrices.Update(BoneMatricesList, 0);
+
+        Mesh.UpdateRig();
+    }
+
     public void SetModeling()
     {
         _activeShader = _shaderProgram;

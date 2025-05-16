@@ -13,7 +13,11 @@ public class RiggingEditor : BaseEditor
     public List<Vertex> SelectedVertices = new();
     public Dictionary<Vertex, Vector2> Vertices = new Dictionary<Vertex, Vector2>();
 
+    public List<BonePivot> SelectedBonePivots = new();
+    public Dictionary<BonePivot, Vector2> BonePivots = new Dictionary<BonePivot, Vector2>();
+
     private bool regenerateVertexUi = true;
+    
 
     public RiggingEditor(GeneralModelingEditor editor) : base(editor)
     {
@@ -122,6 +126,7 @@ public class RiggingEditor : BaseEditor
         Model.SetStaticRig("Test");
 
         Model.SetAnimation();
+        UpdateBonePosition(Game.camera.ProjectionMatrix, Game.camera.ViewMatrix);
     }
     
     public override void Render(GeneralModelingEditor editor)
@@ -133,22 +138,54 @@ public class RiggingEditor : BaseEditor
 
     public override void Update(GeneralModelingEditor editor)
     {
+        if (Model == null)
+            return;
+
         ModelingUi.Update();
 
         if (Input.IsKeyPressed(Keys.Escape))
         {
             editor.freeCamera = !editor.freeCamera;
-            
+
             if (editor.freeCamera)
             {
                 Game.Instance.CursorState = CursorState.Grabbed;
                 Game.camera.Unlock();
+                UpdateBonePosition(Game.camera.ProjectionMatrix, Game.camera.ViewMatrix);
             }
             else
             {
                 Game.Instance.CursorState = CursorState.Normal;
                 Game.camera.Lock();
-                Model?.UpdateVertexPosition();
+                Model.UpdateVertexPosition();
+            }
+        }
+
+        RigUpdate();
+    }
+
+    private void RigUpdate()
+    {
+        if (Model == null || Model.Rig == null)
+            return;
+
+        TestBonePosition();
+
+        if (Input.IsKeyPressed(Keys.H))
+        {
+            if (Model.Rig.GetBone("ChildBone1", out Bone? bone))
+            {
+                bone.Selection = BoneSelection.End;
+                Model.UpdateRig();
+            }
+        }
+
+        if (Input.IsKeyPressed(Keys.J))
+        {
+            if (Model.Rig.GetBone("ChildBone1", out Bone? bone))
+            {
+                bone.Selection = BoneSelection.None;
+                Model.UpdateRig();
             }
         }
     }
@@ -176,6 +213,68 @@ public class RiggingEditor : BaseEditor
             Vertices.Add(vert, screenPos.Value);
         }
         */
+    }
+
+    public void UpdateBonePosition(Matrix4 projection, Matrix4 view)
+    {
+        if (Model == null || Model.Rig == null)
+            return;
+
+        BonePivots.Clear();
+
+        foreach (var (_, bonePivot) in Model.Rig.Bones)
+        {
+            Vector2? screenPos1 = Mathf.WorldToScreen(bonePivot.Pivot.Get, Mathf.ToNumerics(projection), Mathf.ToNumerics(view));
+            Vector2? screenPos2 = Mathf.WorldToScreen(bonePivot.End.Get, Mathf.ToNumerics(projection), Mathf.ToNumerics(view));
+            if (screenPos1 == null || screenPos2 == null)
+                continue;
+
+            Console.WriteLine($"Bone: {screenPos1}");
+
+            BonePivots.Add(bonePivot.Pivot, screenPos1.Value);
+            BonePivots.Add(bonePivot.End, screenPos2.Value);
+        }
+    }
+
+    public void TestBonePosition()
+    {
+        if (Model == null)
+            return;
+            
+        if (!Input.IsKeyDown(Keys.LeftShift))
+            SelectedBonePivots.Clear();
+        
+        Vector2 mousePos = Input.GetMousePosition();
+        Vector2? closest = null;
+        BonePivot? closestBone = null;
+
+        Console.WriteLine($"Mouse: {mousePos}");
+    
+        foreach (var bone in BonePivots)
+        {
+            float distance = Vector2.Distance(mousePos, bone.Value);
+            float distanceClosest = closest == null ? 1000 : Vector2.Distance(mousePos, (Vector2)closest);
+
+            if (distance < distanceClosest && distance < 30)
+            {
+                closest = bone.Value;
+                closestBone = bone.Key;
+            }
+        }
+
+        if (closestBone != null && !SelectedBonePivots.Remove(closestBone))
+            SelectedBonePivots.Add(closestBone);
+
+        if (closestBone != null)
+        {
+            bool isPivot = closestBone.IsPivot();
+            if (isPivot)
+                closestBone.Bone.Selection = BoneSelection.Pivot;
+            else
+                closestBone.Bone.Selection = BoneSelection.End;
+        }
+
+        Model.UpdateRig();
     }
 
     public Vector3 GetMovement()

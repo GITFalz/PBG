@@ -22,7 +22,15 @@ public abstract class Bone
     public Matrix4 FinalMatrix => GlobalAnimatedMatrix;
     public int Index = 0;
 
-    public Bone(string name) { Name = name; }
+    public BonePivot Pivot;
+    public BonePivot End;
+
+    public Bone(string name)
+    {
+        Name = name;
+        Pivot = new(() => Position, this);
+        End = new(() => Position + Vector3.Transform(new Vector3(0, 2, 0) * Scale, Rotation), this);
+    }
 
     public abstract void UpdateGlobalTransformation();
     public abstract string GetBonePath();
@@ -55,6 +63,14 @@ public abstract class Bone
         }
         Children.Add(child);
         return true;
+    }
+
+    public BonePivot Not(BonePivot pivot)
+    {
+        if (pivot == Pivot)
+            return End;
+        else
+            return Pivot;
     }
 
     public void GetBones(Dictionary<string, Bone> bones)
@@ -148,6 +164,30 @@ public class ChildBone : Bone
         copy.Rotation = Rotation;
         copy.Scale = Scale;
         return copy;
+    }
+}
+
+public class BonePivot
+{
+    public Bone Bone;
+    public Func<Vector3> PositionFunc;
+
+    public BonePivot(Func<Vector3> positionFunc, Bone bone)
+    {
+        Bone = bone;
+        PositionFunc = positionFunc;
+    }
+
+    public Vector3 Get => PositionFunc();
+
+    public bool IsEnd()
+    {
+        return this == Bone.End;
+    }
+
+    public bool IsPivot()
+    {
+        return this == Bone.Pivot;
     }
 }
 
