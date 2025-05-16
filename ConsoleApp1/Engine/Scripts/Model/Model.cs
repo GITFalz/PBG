@@ -98,10 +98,22 @@ public class Model
         Mesh.InitRig();
     }
 
+    public void BindRig()
+    {
+        if (Rig == null)
+            return;
+
+        Mesh.Bind(Rig);
+        Mesh.UpdateModel();
+    }
+
     public void InitRig()
     {
         if (Rig == null)
             return;
+
+        Rig.Create();
+        Rig.Initialize();
 
         BoneMatricesList.Clear();
         foreach (var bone in Rig.BonesList)

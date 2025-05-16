@@ -1,3 +1,4 @@
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -20,10 +21,11 @@ public class RiggingEditor : BaseEditor
     public List<BonePivot> SelectedBonePivots = new();
     public Dictionary<BonePivot, (Vector2, float)> BonePivots = new Dictionary<BonePivot, (Vector2, float)>();
 
-    private bool regenerateVertexUi = true;
+    public bool renderSelection = false;
+    public Vector2 oldMousePos = Vector2.Zero;
 
-    
-    private Vector3 _endPosition = Vector3.Zero;
+    // Input data
+    private bool _d_pressed = false;
     
 
     public RiggingEditor(GeneralModelingEditor editor) : base(editor)
@@ -171,6 +173,34 @@ public class RiggingEditor : BaseEditor
         editor.RenderModel();
 
         ModelingUi.RenderDepthTest();
+
+        if (renderSelection)
+        {
+            ModelingEditor.selectionShader.Bind();
+
+            Matrix4 model = Matrix4.CreateTranslation((oldMousePos.X, oldMousePos.Y, 0));
+            Matrix4 projection = UIController.OrthographicProjection;
+            Vector2 selectionSize = Input.GetMousePosition() - oldMousePos;
+            Vector3 color = new Vector3(1, 0.5f, 0.25f);
+
+            var modelLoc = GL.GetUniformLocation(ModelingEditor.selectionShader.ID, "model");
+            var projectionLoc = GL.GetUniformLocation(ModelingEditor.selectionShader.ID, "projection");
+            var selectionSizeLoc = GL.GetUniformLocation(ModelingEditor.selectionShader.ID, "selectionSize");
+            var colorLoc = GL.GetUniformLocation(ModelingEditor.selectionShader.ID, "color");
+
+            GL.UniformMatrix4(modelLoc, true, ref model);
+            GL.UniformMatrix4(projectionLoc, true, ref projection);
+            GL.Uniform2(selectionSizeLoc, selectionSize);
+            GL.Uniform3(colorLoc, color);
+
+            ModelingEditor.selectionVao.Bind();
+
+            GL.DrawArrays(PrimitiveType.Lines, 0, 8);
+
+            ModelingEditor.selectionVao.Unbind();
+
+            ModelingEditor.selectionShader.Unbind();
+        }
     }
 
     public override void Update(GeneralModelingEditor editor)
@@ -188,6 +218,7 @@ public class RiggingEditor : BaseEditor
             {
                 Game.Instance.CursorState = CursorState.Grabbed;
                 Game.camera.Unlock();
+                renderSelection = false;
             }
             else
             {
@@ -197,6 +228,12 @@ public class RiggingEditor : BaseEditor
                 Model.UpdateVertexPosition();
             }
         }
+        
+
+        if (!editor.freeCamera)
+        {
+            MultiSelect();
+        }
 
         RigUpdate();
     }
@@ -204,7 +241,20 @@ public class RiggingEditor : BaseEditor
     private void RigUpdate()
     {
         if (Input.IsMousePressed(MouseButton.Left))
+        {
             TestBonePosition();
+            HandleVertexSelection();
+        }
+
+        TestAdd();
+
+        if (Input.IsKeyDown(Keys.LeftControl))
+        {
+            if (Input.IsKeyPressed(Keys.B))
+            {
+                BindSelectedVertices();
+            }
+        }
 
         if (Input.IsKeyPressed(Keys.G))
         {
@@ -230,6 +280,151 @@ public class RiggingEditor : BaseEditor
 
         Model.RenderBones = false;
         Model.SetStaticRig(null);
+    }
+
+    public void BindSelectedVertices()
+    {
+        if (Model == null || Model.Rig == null)
+            return;
+
+        var bones = GetSelectedBones();
+        if (bones.Count == 0)
+            return;
+
+        var bone = bones.First();
+        foreach (var vert in Model.SelectedVertices)
+        {
+            vert.Bone = bone;
+            vert.BoneName = bone.Name;
+        }
+
+        Model.BindRig();
+        Model.Mesh.UpdateModel();
+    }
+
+    public void MultiSelect()
+    {
+        if (Model == null)
+            return;
+
+        if (Input.IsMousePressed(MouseButton.Left))
+        {
+            oldMousePos = Input.GetMousePosition();
+        }
+
+        if (Input.IsMouseDown(MouseButton.Left) && !blocked)
+        {
+            renderSelection = true;
+            
+            Vector2 mousePos = Input.GetMousePosition();
+            Vector2 max = Mathf.Max(mousePos, oldMousePos);
+            Vector2 min = Mathf.Min(mousePos, oldMousePos); 
+            float distance = Vector2.Distance(mousePos, oldMousePos);
+            bool regenColor = false;
+
+            if (distance < 5)
+                return;
+
+            foreach (var vert in Model.Vertices)
+            {
+                Vector2 vPos = vert.Value;
+                if (vPos.X >= min.X && vPos.X <= max.X && vPos.Y >= min.Y && vPos.Y <= max.Y)
+                {
+                    if (!Model.SelectedVertices.Contains(vert.Key))
+                    {
+                        regenColor = true;
+                        Model.SelectedVertices.Add(vert.Key);
+                    }
+                }
+                else
+                {
+                    if (!Input.IsKeyDown(Keys.LeftShift) && Model.SelectedVertices.Contains(vert.Key))
+                    {
+                        regenColor = true;
+                        Model.SelectedVertices.Remove(vert.Key);
+                    }
+                }
+            }
+
+            if (regenColor)
+                Model.GenerateVertexColor();
+        }
+
+        if (Input.IsMouseReleased(MouseButton.Left))
+        {
+            renderSelection = false;
+            oldMousePos = Vector2.Zero;
+        }
+    }
+
+    public void HandleVertexSelection()
+    {   
+        if (Model == null)
+            return;
+            
+        if (!Input.IsKeyDown(Keys.LeftShift))
+            Model.SelectedVertices.Clear();
+        
+        Vector2 mousePos = Input.GetMousePosition();
+        Vector2? closest = null;
+        Vertex? closestVert = null;
+    
+        foreach (var vert in Model.Vertices)
+        {
+            float distance = Vector2.Distance(mousePos, vert.Value);
+            float distanceClosest = closest == null ? 1000 : Vector2.Distance(mousePos, (Vector2)closest);
+        
+            if (distance < distanceClosest && distance < 10)
+            {
+                closest = vert.Value;
+                closestVert = vert.Key;
+            }
+        }
+
+        if (closestVert != null && !Model.SelectedVertices.Remove(closestVert))
+            Model.SelectedVertices.Add(closestVert);
+
+        Model.GenerateVertexColor();
+    }
+
+    public void TestAdd()
+    {
+        if (Input.IsKeyDown(Keys.Q) && Input.IsKeyPressed(Keys.D))
+        {
+            if (!_d_pressed)
+            {
+                _d_pressed = true;
+            }
+            else
+            {
+                _d_pressed = false;
+                Console.WriteLine("Added bone");
+                AddBone();
+            }
+        }
+
+        if (Input.IsKeyReleased(Keys.Q))
+        {
+            _d_pressed = false;
+        }
+    }
+
+    public void AddBone()
+    {
+        if (Model == null || Model.Rig == null)
+            return;
+
+        var bones = GetSelectedBones();
+        if (bones.Count == 0)
+            return;
+
+        var bone = bones.First();
+        ChildBone child = new ChildBone(BoneNameText.InputField.Text, bone);
+        child.Position = (0, 2, 0);
+
+        Model.Rig.RootBone.UpdateGlobalTransformation();
+        Model.InitRig();
+        Model.BindRig();
     }
 
     public void Handle_BoneMovement()

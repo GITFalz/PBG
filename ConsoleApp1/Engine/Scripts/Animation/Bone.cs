@@ -51,6 +51,7 @@ public abstract class Bone
     public BonePivot Pivot;
     public BonePivot End;
     public Vector3 EndTarget;
+    public Vector3 LocalEnd => Position + Vector3.Transform(new Vector3(0, 2, 0) * Scale, Rotation);
 
     public Bone(string name) 
     {
@@ -87,7 +88,7 @@ public abstract class Bone
     {
         if (Children.Contains(child))
             return false;
-
+        
         child.SetName(child.Name);
         Children.Add(child);
         return true;
@@ -95,9 +96,6 @@ public abstract class Bone
 
     public void SetName(string newName)
     {
-        if (newName == Name)
-            return;
-
         RootBone root = GetRootBone();
         List<string> names = [];
         root.GetBoneNames(names);
@@ -260,8 +258,12 @@ public class ChildBone : Bone
         Vector3 axisY = Vector3.Normalize(Game.camera.front);
         Vector3 axisX = Vector3.Normalize(Game.camera.right);
 
-        Rotation *= Quaternion.FromAxisAngle((Parent.GetInverse().Transposed() * new Vector4(axisY, 1f)).Xyz, MathHelper.DegreesToRadians(mouseDelta.X * GameTime.DeltaTime * 50f));
-        Rotation *= Quaternion.FromAxisAngle((Parent.GetInverse().Transposed() * new Vector4(axisX, 1f)).Xyz, MathHelper.DegreesToRadians(mouseDelta.Y * GameTime.DeltaTime * 50f));
+        Matrix4 invParent = GlobalAnimatedMatrix.Inverted();
+        Vector3 localAxisY = Vector3.Normalize(Vector3.TransformNormal(axisY, invParent));
+        Vector3 localAxisX = Vector3.Normalize(Vector3.TransformNormal(axisX, invParent));
+
+        Rotation *= Quaternion.FromAxisAngle(localAxisY, MathHelper.DegreesToRadians(mouseDelta.X * GameTime.DeltaTime * 50f));
+        Rotation *= Quaternion.FromAxisAngle(localAxisX, MathHelper.DegreesToRadians(mouseDelta.Y * GameTime.DeltaTime * 50f));
     }
 
     public override void Move()
@@ -271,8 +273,12 @@ public class ChildBone : Bone
         Vector3 axisY = Vector3.Normalize(Game.camera.up);
         Vector3 axisX = Vector3.Normalize(Game.camera.right);
 
-        Position += (Parent.GetInverse().Transposed() * new Vector4(axisY, 1f)).Xyz * -mouseDelta.Y * GameTime.DeltaTime * 5f;
-        Position += (Parent.GetInverse().Transposed() * new Vector4(axisX, 1f)).Xyz * mouseDelta.X * GameTime.DeltaTime * 5f;
+        Matrix4 invParent = GlobalAnimatedMatrix.Inverted();   
+        Vector3 localAxisY = Vector3.Normalize(Vector3.TransformNormal(axisY, invParent));
+        Vector3 localAxisX = Vector3.Normalize(Vector3.TransformNormal(axisX, invParent));
+
+        Position += localAxisY * -mouseDelta.Y * GameTime.DeltaTime * 5f;
+        Position += localAxisX * mouseDelta.X * GameTime.DeltaTime * 5f;
     }
 
     public ChildBone Copy(Bone parent)
