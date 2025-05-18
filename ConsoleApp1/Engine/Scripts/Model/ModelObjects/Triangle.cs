@@ -166,6 +166,11 @@ public class Triangle
         return false;
     }
 
+    public bool HasSameVertices()
+    {
+        return A == B || A == C || B == C;
+    }
+
     public bool GetVertexUv(Vertex vertex, out Vector2 uv)
     {
         if (A == vertex)
@@ -185,6 +190,25 @@ public class Triangle
         }
         uv = Vector2.Zero;
         return false;
+    }
+
+    public void Not(Edge edge, out Edge A, out Edge B)
+    {
+        if (AB == edge)
+        {
+            A = BC;
+            B = CA;
+        }
+        else if (BC == edge)
+        {
+            A = CA;
+            B = AB;
+        }
+        else
+        {
+            A = AB;
+            B = BC;
+        }
     }
 
     public bool HasEdge(Edge edge)

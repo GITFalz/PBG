@@ -1,3 +1,4 @@
+using ConsoleApp1.Engine.Scripts.Core;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
@@ -48,6 +49,7 @@ public class Model
 
 
     public Rig? Rig;
+    public string? RigName => Rig?.Name;
     public Animation? Animation;
 
     public bool RenderBones = false;
@@ -56,37 +58,51 @@ public class Model
 
     public Model()
     {
-        Rig = new Rig("Test");
         Mesh = new ModelMesh(this);
-
         Create();
     }
 
     public void Create()
     {
+        if (!RigManager.TryGet("Base", out Rig? rig))
+        {
+            if (RigManager.Load("Base") && RigManager.TryGet("Base", out rig, false))
+            {
+                Rig = rig;
+            }
+            else
+            {
+                RootBone root = new RootBone("RootBone");
+                Rig r = new Rig("Base");
+                r.RootBone = root;
+
+                if (!RigManager.Add(r, false))
+                    return;
+
+                if (!RigManager.TryGet("Base", out Rig? rigBase, false))
+                {
+                    PopUp.AddPopUp("Base rig cannot be loaded.");
+                    return;
+                }
+
+                Rig = rigBase;
+                RigManager.Save("Base", false);
+            }
+        }
+        else
+        {
+            Rig = rig;
+        }
+
         if (Rig == null)
+        {
+            PopUp.AddPopUp("Rig cannot be loaded.");
             return;
-
-        RootBone root = Rig.RootBone;
-        ChildBone childBone1 = new ChildBone("ChildBone1", root); 
-
-        root.Position = (0, 0, 0);
-        childBone1.Position = (0, 2, 0);
-
-        root.UpdateGlobalTransformation();
-        root.SetBindPose();
-        childBone1.SetBindPose();
-
-        root.UpdateGlobalTransformation();
+        }
 
         Rig.Create();
         Rig.Initialize();
-
-        if (!RigManager.Add(Rig))
-        {
-            PopUp.AddPopUp($"Rig {Rig.Name} already exists.");
-            return;
-        }
+        Rig.RootBone.UpdateGlobalTransformation();
 
         BoneMatricesList.Clear();
         foreach (var bone in Rig.BonesList)
@@ -125,7 +141,7 @@ public class Model
         Mesh.InitRig();
     }
 
-    public void UpdateRig()
+    public void UpdateMatrices()
     {
         if (Rig == null)
             return;
@@ -136,7 +152,11 @@ public class Model
             BoneMatricesList.Add(bone.FinalMatrix);
         }
         BoneMatrices.Update(BoneMatricesList, 0);
+    }
 
+    public void UpdateRig()
+    {
+        UpdateMatrices();
         Mesh.UpdateRig();
     }
 
@@ -165,9 +185,9 @@ public class Model
         }
     }
 
-    public void SetStaticRig(string? rigName)
+    public void SetStaticRig()
     {
-        if (rigName == null)
+        if (RigName == null)
         {
             Animate = false;
             if (Rig != null)
@@ -179,33 +199,33 @@ public class Model
             return;
         }
 
-        if (RigManager.Rigs.TryGetValue(rigName, out Rig? value))
+        if (RigManager.Rigs.TryGetValue(RigName, out Rig? value))
         {
             Animate = false;
-            Rig = value;
+            Rig = value.Copy();
             BoneMatrices.Renew(Rig.GetGlobalAnimatedMatrices());
             Mesh.InitRig();
         }
         else
         {
-            PopUp.AddPopUp($"Rig {rigName} not found.");
+            PopUp.AddPopUp($"Rig {RigName} not found.");
         }
     }
 
-    public void SetAnimationRig(string? rigName)
+    public void SetAnimationRig()
     {
-        if (rigName == null)
+        if (RigName == null)
         {
             Animate = false;
             if (Rig != null)
             {
-                SetStaticRig(Rig.Name);
+                SetStaticRig();
             }
             Rig = null;
             return;
         }
         
-        if (RigManager.Rigs.TryGetValue(rigName, out Rig? value))
+        if (RigManager.Rigs.TryGetValue(RigName, out Rig? value))
         {
             Animate = true;
             Rig = value.Copy();
@@ -213,7 +233,7 @@ public class Model
         }
         else
         {
-            PopUp.AddPopUp($"Rig {rigName} not found.");
+            PopUp.AddPopUp($"Rig {RigName} not found.");
         }
     }
 
@@ -273,8 +293,14 @@ public class Model
         Matrix4 view = camera.GetViewMatrix();
         Matrix4 projection = camera.GetProjectionMatrix();
 
+        int i = 0;
         foreach (var flip in ModelSettings.Mirrors)
-        { 
+        {
+            if (ModelSettings.BackfaceCulling && 1 == i % 2)
+                GL.CullFace(TriangleFace.Front);
+            else
+                GL.CullFace(TriangleFace.Back);
+
             Model = Matrix4.CreateScale(flip);
 
             GL.UniformMatrix4(_activeModelLocation, false, ref Model);
@@ -296,6 +322,7 @@ public class Model
             }
 
             Texture.Unbind();
+            i++;
         }
 
         _activeShader.Unbind();
@@ -356,6 +383,8 @@ public class Model
         {
             Mesh.RenderBones();
         }
+        
+        GL.CullFace(TriangleFace.Back);
     }
 
 
@@ -467,10 +496,10 @@ public class Model
 
     public void Clear()
     {
-        SelectedVertices.Clear();
-        SelectedEdges.Clear();
-        SelectedTriangles.Clear();
-        Vertices.Clear();
+        SelectedVertices = [];
+        SelectedEdges = [];
+        SelectedTriangles = [];
+        Vertices = [];
     }
 
     

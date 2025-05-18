@@ -205,6 +205,8 @@ public class TextureEditor : BaseEditor
 
     public override void Awake(GeneralModelingEditor editor)
     {
+        ModelSettings.WireframeVisible = false;
+
         DrawingPanel.IsDrawing = true;
         _windowSize = new Vector2i(Game.Width - 272, Game.Height - 77);
         DrawingPanel.WindowPosition = (_windowPosition.X, Game.Height - (_windowPosition.Y + _windowSize.Y));

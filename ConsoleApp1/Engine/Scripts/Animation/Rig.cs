@@ -3,7 +3,7 @@ using OpenTK.Mathematics;
 
 public class Rig
 {
-    public string Name = "Rig";
+    public string Name { get; private set; } = "Rig";
     public RootBone RootBone = new RootBone("RootBone");
     public Dictionary<string, Bone> Bones = [];
     public List<Bone> BonesList = [];
@@ -18,6 +18,12 @@ public class Rig
     {
         Bones = [];
         RootBone.GetBones(Bones);
+    }
+
+    public void SetName(string newName)
+    {
+        if (RigManager.ChangeName(Name, newName))
+            Name = newName;
     }
 
     public void Initialize()

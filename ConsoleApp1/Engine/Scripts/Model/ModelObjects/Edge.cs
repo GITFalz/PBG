@@ -50,9 +50,28 @@ public class Edge
         newVertex.ParentEdges.Add(this);
     }
 
+    public void ReplaceWith(Edge edge)
+    {
+        A.ParentEdges.Remove(this);
+        B.ParentEdges.Remove(this);
+
+        A = edge.A;
+        B = edge.B;
+        
+        foreach (var triangle in ParentTriangles)
+        {
+            triangle.SetEdgeTo(this, edge);
+        }
+    }
+
     public bool Has(Vertex v)
     {
         return A == v || B == v;
+    }
+
+    public bool Is(Vertex a, Vertex b)
+    {
+        return (A == a && B == b) || (A == b && B == a);
     }
 
     public bool HasNot(Vertex v)
@@ -87,6 +106,7 @@ public class Edge
     {
         A.ParentEdges.Remove(this);
         B.ParentEdges.Remove(this);
+        ParentTriangles = [];
         return this;
     }
 

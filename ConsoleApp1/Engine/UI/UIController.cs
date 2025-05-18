@@ -21,7 +21,7 @@ public class UIController
     public List<UIElement> AbsoluteElements = [];
     public List<UIScrollView> ScrollViews = [];
     public List<UIButton> Buttons = [];
-    public static List<UIInputField> InputFields = [];
+    public List<UIInputField> InputFields = [];
 
     public static UIInputField? activeInputField = null;
 
@@ -379,28 +379,6 @@ public class UIController
             name = "Element" + i;
         }
         return name;
-    }
-
-    public static UIInputField? GetStaticInputField(string name)
-    {
-        foreach (var inputField in InputFields)
-        {
-            if (inputField.Name == name)
-                return inputField;
-        }
-
-        return null;
-    }
-
-    public static void AssignInputField(string name)
-    {
-        Console.WriteLine("Assigning: " + name);
-        
-        UIInputField? inputField = GetStaticInputField(name);
-        if (inputField == null)
-            return;
-        
-        activeInputField = inputField;
     }
 
     public static void AssignInputField(UIInputField inputField)

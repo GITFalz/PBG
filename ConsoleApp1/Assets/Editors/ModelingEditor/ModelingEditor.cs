@@ -122,6 +122,8 @@ public class ModelingEditor : BaseEditor
     public override void Resize(GeneralModelingEditor editor)
     {
         ModeController.Resize();
+        SelectionMode.Resize();
+        EditingMode.Resize();
     }
 
     public override void Awake(GeneralModelingEditor editor)
@@ -130,6 +132,8 @@ public class ModelingEditor : BaseEditor
 
         Editor.LoadAction = Editor.LoadModel;
         Editor.SaveAction = Editor.SaveModel;
+
+        ModelSettings.WireframeVisible = true;
 
         if (Model == null)
             return;

@@ -62,16 +62,18 @@ public class ModelMesh : Meshes
     
     public ModelMesh(Model model) 
     {
+        float size = 0.1f;
+
         Model = model;
 
-        Vector3 firstSize = new Vector3(0.3f, 0.3f, 0.3f);
-        Vector3 firstOffset = new Vector3(0, 0, 0);
+        Vector3 firstSize = new Vector3(0.3f, 0.3f, 0.3f) * size;
+        Vector3 firstOffset = new Vector3(0, 0, 0) * size;
 
-        Vector3 secondScale = new Vector3(0.2f, 0.2f, 0.2f);    
-        Vector3 secondOffset = new Vector3(0, 2, 0);
+        Vector3 secondScale = new Vector3(0.2f, 0.2f, 0.2f) * size;    
+        Vector3 secondOffset = new Vector3(0, 2, 0) * size;
 
-        Vector3 thirdScale = new Vector3(2, 2, 2);   
-        Vector3 thirdOffset = new Vector3(0, 1.0625f, 0);
+        Vector3 thirdScale = new Vector3(2, 2, 2) * size;   
+        Vector3 thirdOffset = new Vector3(0, 1.0625f, 0) * size;
 
         float t = (float)(1.0f + Math.Sqrt(5f)) / 2.0f;
 
@@ -735,27 +737,16 @@ public class ModelMesh : Meshes
         if (vertices.Count < 2)
             return;
 
-        HashSet<Edge> edgesToRemove = [];
-        HashSet<Triangle> trianglesToRemove = [];
-
         for (int i = 1; i < vertices.Count; i++)
         {
             vertices[0].Position += vertices[i];
-            vertices[i].ReplaceWith(vertices[0], edgesToRemove, trianglesToRemove);
+            vertices[i].ReplaceWith(vertices[0]);
             VertexList.Remove(vertices[i]);
         }
 
-        foreach (var edge in edgesToRemove)
-        {
-            edge.Delete();
-            EdgeList.Remove(edge);
-        }
-
-        foreach (var triangle in trianglesToRemove)
-        {
-            triangle.Delete();
-            TriangleList.Remove(triangle);
-        }
+        CheckUselessEdges();
+        CheckUselessTriangles();
+        CheckUselessVertices();
 
         vertices[0].Position /= vertices.Count;
 
@@ -772,23 +763,18 @@ public class ModelMesh : Meshes
         for (int i = 0; i < edges.Count; i++)
         {
             Edge edge = edges[i];
-            if (!VertexList.Contains(edge.A) || !VertexList.Contains(edge.B))
+            if (!VertexList.Contains(edge.A) || !VertexList.Contains(edge.B) || edge.A == edge.B)
             {
                 edge.Delete();
                 EdgeList.Remove(edge);
             }
-        }
-
-        // Check for duplicate edges
-        for (int i = 0; i < edges.Count - 1; i++)
-        {
-            Edge edgeA = edges[i];
             for (int j = i + 1; j < edges.Count; j++)
             {
                 Edge edgeB = edges[j];
 
-                if (edgeA.HasSameVertex(edgeB))
+                if (edge.HasSameVertex(edgeB))
                 {
+                    edgeB.ReplaceWith(edge);
                     edgeB.Delete();
                     EdgeList.Remove(edgeB);
                 }
@@ -802,8 +788,21 @@ public class ModelMesh : Meshes
         for (int i = 0; i < triangles.Count; i++)
         {
             Triangle triangle = triangles[i];
-            if (!VertexList.Contains(triangle.A) || !VertexList.Contains(triangle.B) || !VertexList.Contains(triangle.C) || !EdgeList.Contains(triangle.AB) || !EdgeList.Contains(triangle.BC) || !EdgeList.Contains(triangle.CA))
+            if (!VertexList.Contains(triangle.A) || !VertexList.Contains(triangle.B) || !VertexList.Contains(triangle.C))
             {
+                Console.WriteLine($"{triangle} is useless because of vertices.");
+                triangle.Delete();
+                TriangleList.Remove(triangle);
+            }
+            if (!EdgeList.Contains(triangle.AB) || !EdgeList.Contains(triangle.BC) || !EdgeList.Contains(triangle.CA))
+            {
+                Console.WriteLine($"{triangle} is useless because of edges.");
+                triangle.Delete();
+                TriangleList.Remove(triangle);
+            }
+            if (triangle.HasSameVertices())
+            {
+                Console.WriteLine($"{triangle} is useless because of same vertices.");
                 triangle.Delete();
                 TriangleList.Remove(triangle);
             }
@@ -958,9 +957,15 @@ public class ModelMesh : Meshes
         string[] lines = File.ReadAllLines(path);
 
         int vertexCount = Int.Parse(lines[0]);
-        int edgeCount = Int.Parse(lines[vertexCount + 1]);
-        int uvCount = Int.Parse(lines[vertexCount + edgeCount + 2]);
-        int triangleCount = Int.Parse(lines[vertexCount + edgeCount + uvCount + 3]);
+
+        int edgeIndex = vertexCount + 1;
+        int edgeCount = Int.Parse(lines[edgeIndex]);
+
+        int uvIndex = vertexCount + edgeCount + 2;
+        int uvCount = Int.Parse(lines[uvIndex]);
+
+        int triangleIndex = vertexCount + edgeCount + uvCount + 3;
+        int triangleCount = Int.Parse(lines[triangleIndex]);
 
         for (int i = 1; i <= vertexCount; i++)
         {
@@ -973,7 +978,7 @@ public class ModelMesh : Meshes
 
             if (values.Length > 5)
                 vertex.BoneName = values[5].Trim();
-            
+
             VertexList.Add(vertex);
         }
 

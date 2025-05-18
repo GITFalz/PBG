@@ -173,13 +173,14 @@ public class AnimationEditor : BaseEditor
 
     public override void Awake(GeneralModelingEditor editor)
     {
+        ModelSettings.WireframeVisible = false;
         if (Model == null)
             return;
 
         Console.WriteLine("Awake Animation Editor");
 
         Model.RenderBones = true;
-        Model.SetAnimationRig("Test");
+        Model.SetAnimationRig();
 
         Model.SetAnimation();
 
@@ -204,7 +205,7 @@ public class AnimationEditor : BaseEditor
         if (Input.IsKeyPressed(Keys.Escape))
         {
             editor.freeCamera = !editor.freeCamera;
-            
+
             if (editor.freeCamera)
             {
                 Game.Instance.CursorState = CursorState.Grabbed;
@@ -215,12 +216,13 @@ public class AnimationEditor : BaseEditor
                 Game.Instance.CursorState = CursorState.Normal;
                 Game.camera.Lock();
                 Model?.UpdateVertexPosition();
+                UpdateBonePosition(Game.camera.ProjectionMatrix, Game.camera.ViewMatrix);
             }
         }
 
-        if (Input.IsKeyPressed(Keys.Space))
+        if (!editor.freeCamera)
         {
-            if (Model != null)
+            if (Input.IsKeyPressed(Keys.Space) && Model != null)
             {
                 Playing = !Playing;
                 Model.Animate = Playing;
@@ -229,9 +231,9 @@ public class AnimationEditor : BaseEditor
         }
 
         if (Playing)
-            ModelManager.Update();
-        else
-            RigUpdate();
+                ModelManager.Update();
+            else
+                RigUpdate();
     }
 
     private void RigUpdate()
@@ -287,7 +289,6 @@ public class AnimationEditor : BaseEditor
 
         Model.Rig.RootBone.UpdateGlobalTransformation();
         Model.UpdateRig();
-        Model.Mesh.UpdateRigVertexPosition();
 
         foreach (var bone in Model.Rig.BonesList)
         {
@@ -398,7 +399,7 @@ public class AnimationEditor : BaseEditor
 
         Model.RenderBones = false;
         Model.Rig?.Delete();
-        Model.SetAnimationRig(null);
+        Model.SetAnimationRig();
 
         Info.RenderInfo = true;
 

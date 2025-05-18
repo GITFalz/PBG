@@ -320,25 +320,25 @@ public class ModelingEditingMode : ModelingBase
 
                 // Select all
                 if (Input.IsKeyPressed(Keys.A)) Handle_SelectAllVertices();
-                
+
                 // New Face
                 if (Input.IsKeyPressed(Keys.F)) Handle_GenerateNewFace();
 
                 // Flip Selection
                 if (Input.IsKeyPressed(Keys.H)) Handle_FlipSelection();
-                
+
                 // Flipping triangle
                 if (Input.IsKeyPressed(Keys.I)) Handle_FlipTriangleNormal();
-                
+
                 // Deleting triangle
                 if (Input.IsKeyPressed(Keys.D)) Handle_TriangleDeletion();
-                
+
                 // Merging
                 if (Input.IsKeyPressed(Keys.K) && Model.SelectedVertices.Count >= 2) Handle_VertexMerging();
 
                 // Split vertices
                 if (Input.IsKeyPressed(Keys.Q)) Handle_VertexSpliting();
-                
+
                 // Mapping
                 if (Input.IsKeyPressed(Keys.M)) Handle_Mapping();
 
@@ -352,6 +352,9 @@ public class ModelingEditingMode : ModelingBase
 
                 // Delete model
                 if (Input.IsKeyPressed(Keys.Delete)) Model.Delete();
+
+                // Check for useless vertices
+                if (Input.IsKeyPressed(Keys.B)) Model.Mesh.CombineDuplicateVertices();
             }
             else
             {
@@ -367,7 +370,7 @@ public class ModelingEditingMode : ModelingBase
                 if (Input.IsKeyPressed(Keys.S)) ScalingInit();
                 if (Input.IsKeyDown(Keys.S)) Handle_ScalingSelectedVertices();
                 if (Input.IsKeyReleased(Keys.S)) Model.UpdateVertexPosition();
-                
+
                 // Moving
                 if (Input.IsKeyPressed(Keys.G)) StashMesh();
                 if (Input.IsKeyDown(Keys.E) || Input.IsKeyDown(Keys.G)) Handle_MovingSelectedVertices();
@@ -1039,7 +1042,7 @@ public class ModelingEditingMode : ModelingBase
 
     public void Handle_VertexMerging()
     {        
-        if (Model == null || Model.SelectedVertices.Count < 2)
+        if (Model == null || Model.SelectedVertices.Count < 2)
             return;
 
         StashMesh();

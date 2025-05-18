@@ -74,10 +74,8 @@ public class UIInputField : UIText
 
     public void AddCharacter(char character)
     {
-        //Console.WriteLine("Text: " + Text + " Character: " + character);
         if (!TextShaderHelper.CharExists(character)) return;
         string formatedText = Format(Text + character);
-        //Console.WriteLine("Formated Text: " + formatedText);
         SetText(formatedText).UpdateCharacters();
     }
     
@@ -104,17 +102,52 @@ public class UIInputField : UIText
     {
         if (TextType == TextType.Numeric)
         {
-            return new string(text.Where(char.IsDigit).ToArray());
+            string newText = "";
+            int index = 0;
+            foreach (char c in text)
+            {
+                if (char.IsDigit(c)) {
+                    newText += c;
+                }
+                else if (c == '-' && index == 0)
+                {
+                    newText += c;
+                }
+                else
+                {
+                    break;
+                }
+                index++;
+            }
+            return newText;
         }
         else if (TextType == TextType.Decimal)
         {
+            string newText = "";
+            int index = 0;
             int dotCount = 0;
-            return new string(text.Where(c => {
-                if (c != '.') 
-                    return char.IsDigit(c);
-                dotCount++;
-                return dotCount <= 1;
-            }).ToArray());
+            foreach (char c in text)
+            {
+                if (char.IsDigit(c))
+                {
+                    newText += c;
+                }
+                else if (c == '.' && dotCount == 0)
+                {
+                    newText += c;
+                    dotCount++;
+                }
+                else if (c == '-' && index == 0)
+                {
+                    newText += c;
+                }
+                else
+                {
+                    break;
+                }
+                index++;
+            }
+            return newText;
         }
         else if (TextType == TextType.Alphabetic)
         {

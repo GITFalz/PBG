@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using OpenTK.Mathematics;
 
 public class Vertex
@@ -138,32 +139,31 @@ public class Vertex
         return false;
     }
 
-    public void ReplaceWith(Vertex vertex, HashSet<Edge> edgesToRemove, HashSet<Triangle> trianglesToRemove)
+    public void ReplaceWith(Vertex vertex)
     {
-        // Step1: Remove all edges and its triangles that share this vertex with the vertex to be replaced
-        foreach (var edge in ParentEdges)
-        {
-            if (edge.A == vertex || edge.B == vertex)
-            {
-                edgesToRemove.Add(edge);
-                foreach (var triangle in edge.ParentTriangles)
-                {
-                    trianglesToRemove.Add(triangle);
-                }
-            }
-        }
-
-        // Step2: Set this vertex to the new vertex in all edges
         foreach (var edge in ParentEdges)
         {
             edge.SetVertexTo(this, vertex);
         }
 
-        // Step3: Set this vertex to the new vertex in all triangles
         foreach (var triangle in ParentTriangles)
         {
             triangle.SetVertexTo(this, vertex);
         }
+    }
+
+    public bool HasEdgeWith(Vertex vertex, [NotNullWhen(true)] out Edge? edge)
+    {
+        edge = null;
+        foreach (var e in ParentEdges)
+        {
+            if (e.Is(this, vertex))
+            {
+                edge = e;
+                return true;
+            }
+        }
+        return false;
     }
 
     public Vertex Copy()
