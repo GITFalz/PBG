@@ -1,35 +1,44 @@
-﻿using OpenTK.Graphics.OpenGL4;
+﻿using System.Diagnostics.CodeAnalysis;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class AnimationEditor : BaseEditor
 {
+    // === UI COMPONENTS ===
     public UIController ModelingUi;
     public UIController TimelineUI;
+    public UIController KeyframeUI;
+    public UIController TimerUI;
+
+    public UIInputFieldPrefab TimelineTimeField;
+    public UIScrollView TimelineScrollView;
+
+    public UICollection KeyframePanelCollection;
 
     public static UIText BackfaceCullingText;
     public static UIText MeshAlphaText;
     public static UIText AxisText;
 
-    public UIInputFieldPrefab TimelineTimeField;
-
-    public UIScrollView TimelineScrollView;
-
+    // === DATA CONTAINERS ===
     public List<Vertex> SelectedVertices = new();
     public Dictionary<Vertex, Vector2> Vertices = new Dictionary<Vertex, Vector2>();
 
     public List<BonePivot> SelectedBonePivots = new();
     public Dictionary<BonePivot, (Vector2, float)> BonePivots = new Dictionary<BonePivot, (Vector2, float)>();
 
+    // === RENDERING / SHADER RESOURCES ===
     public static ShaderProgram tickShader = new ShaderProgram("Utils/Rectangles.vert", "Animation/Ticks.frag");
     public static VAO tickVao = new();
+
     public struct TickData
     {
         public Vector2 Position;
         public Vector2 Size;
         public Vector2 Tilling;
     }
+
     public static SSBO<TickData> TickSSBO = new(new List<TickData>() {
         new TickData()
         {
@@ -50,25 +59,34 @@ public class AnimationEditor : BaseEditor
             Tilling = new Vector2(6, 1)
         },
     });
-    private int _tickCount = 6 * 3;
 
-    private bool regenerateVertexUi = true;
-
+    // === ANIMATION LOGIC ===
     public Animation Animation = new Animation("Test");
     public bool Playing = false;
 
-    public int CurrentFrame => Int.Parse(TimelineTimeField.InputField.Text, 0);
-
-
+    public int CurrentFrame
+    {
+        get => Int.Parse(TimelineTimeField.InputField.Text, 0);
+        set => TimelineTimeField.InputField.SetText(value.ToString()).UpdateCharacters();
+    }
     public Vector2 TimelinePosition = new Vector2(0, 0);
 
+    // === PRIVATE / INTERNAL STATE ===
+    private int _tickCount = 6 * 3;
+    private bool regenerateVertexUi = true;
 
-    // Input data
     private bool _d_pressed = false;
+    private bool _generate = false;
+
+    // === KEYFRAME ELEMENTS ===
+    public Dictionary<string, TimelineBoneAnimation> BoneAnimations = [];
+    private Vector2 _oldMousePos = new Vector2(0, 0);
+    private bool _moveTimeline = false;
+    private int _timerIndex = 0;
 
     public AnimationEditor(GeneralModelingEditor editor) : base(editor)
     {
-        ModelingUi = new UIController();
+        ModelingUi = new UIController("ModelingUI");
 
         UICollection mainPanelCollection = new("MainPanelCollection", ModelingUi, AnchorType.ScaleRight, PositionType.Absolute, (0, 0, 0), (250, Game.Height), (-5, 5, 5, 5), 0);
 
@@ -85,7 +103,7 @@ public class AnimationEditor : BaseEditor
         BackfaceCullingText.SetText("cull: " + ModelSettings.BackfaceCulling, 1.2f);
 
         UIButton cullingButton = new("CullingButton", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (40, 20), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
-        cullingButton.SetOnClick(BackFaceCullingSwitch); 
+        cullingButton.SetOnClick(BackFaceCullingSwitch);
 
         cullingCollection.AddElements(BackfaceCullingText, cullingButton);
 
@@ -102,8 +120,8 @@ public class AnimationEditor : BaseEditor
         alphaButton.SetOnRelease(() => { blocked = false; });
 
         alphaCollection.AddElements(MeshAlphaText, alphaButton);
-        
-        
+
+
 
         // Camera speed panel collection
         UICollection cameraSpeedStacking = new("CameraSpeedStacking", ModelingUi, AnchorType.BottomCenter, PositionType.Relative, (0, 0, 0), (225, 35), (5, 0, 0, 0), 0);
@@ -112,13 +130,13 @@ public class AnimationEditor : BaseEditor
         CameraSpeedTextLabel.SetTextCharCount("Cam Speed: ", 1.2f);
 
         UICollection speedStacking = new UICollection("CameraSpeedStacking", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (0, 0, 0), (0, 20), (0, 0, 0, 0), 0);
-        
+
         UIImage CameraSpeedFieldPanel = new("CameraSpeedTextLabelPanel", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (45, 30), (0, 0, 0, 0), 0, 1, (10, 0.05f));
-        
+
         UIInputField CameraSpeedField = new("CameraSpeedText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (10, 0, 0, 0), 0, 0, (10, 0.05f));
-        
+
         CameraSpeedField.SetMaxCharCount(2).SetText("50", 1.2f).SetTextType(TextType.Numeric);
-        CameraSpeedField.OnTextChange = new SerializableEvent(() => { try { Game.camera.SPEED = Int.Parse(CameraSpeedField.Text); } catch { Game.camera.SPEED = 1; } }); 
+        CameraSpeedField.OnTextChange = new SerializableEvent(() => { try { Game.camera.SPEED = Int.Parse(CameraSpeedField.Text); } catch { Game.camera.SPEED = 1; } });
 
         speedStacking.SetScale((45, 30f));
         speedStacking.AddElements(CameraSpeedFieldPanel, CameraSpeedField);
@@ -134,7 +152,7 @@ public class AnimationEditor : BaseEditor
         ModelingUi.AddElement(mainPanelCollection);
 
 
-        TimelineUI = new UIController();
+        TimelineUI = new UIController("TimelineUI");
 
         UICollection timelinePanelCollection = new("TimelinePanelCollection", TimelineUI, AnchorType.ScaleBottom, PositionType.Absolute, (0, 0, 0), (0, 250), (5, -5, 255, 5), 0);
 
@@ -143,7 +161,7 @@ public class AnimationEditor : BaseEditor
         timelineMoveButton.SetOnHold(() =>
         {
             Vector2 mouseDelta = Input.GetMouseDelta();
-            if (mouseDelta == Vector2.Zero)
+            if (mouseDelta == Vector2.Zero || !_moveTimeline)
                 return;
 
             TimelinePosition.X = Mathf.Clamp(-1000, 0, TimelinePosition.X + mouseDelta.X);
@@ -165,6 +183,54 @@ public class AnimationEditor : BaseEditor
         timelinePanelCollection.AddElements(timelineBackground, timelineMoveButton, timelineSettingsStacking, timelineScrollViewCollection);
 
         TimelineUI.AddElement(timelinePanelCollection);
+
+
+        KeyframeUI = new UIController("KeyframeUI");
+
+        UICollection mainKeyframePanelCollection = new("MainKeyframePanelCollection", KeyframeUI, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (Game.Width, Game.Height), (0, 0, 0, 0), 0);
+
+        KeyframePanelCollection = new("KeyframePanelCollection", KeyframeUI, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (Game.Width, Game.Height), (0, 0, 0, 0), 0);
+
+        KeyframeUI.AddElement(KeyframePanelCollection);
+
+
+
+        TimerUI = new UIController("TimerCollection");
+
+        UICollection timerPanelCollection = new("TimerPanelCollection", TimerUI, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (Game.Width, Game.Height), (5, 10, 0, 0), 0);
+
+        UIButton timelineIndexButton = new("TimelineIndexButton", TimerUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (12, 12), (0, 0, 0, 0), 0, 10, (5, 0.05f), UIState.Interactable) { Depth = 3f };
+        timelineIndexButton.SetOnClick(() => { _oldMousePos = Input.GetMousePosition(); _moveTimeline = false; });
+        timelineIndexButton.SetOnHold(() =>
+        {
+            Vector2 mouseDelta = Input.GetMouseDelta();
+            if (mouseDelta == Vector2.Zero)
+                return;
+
+            Vector2 mousePosition = Input.GetMousePosition() + (10 * Mathf.Sign(mouseDelta.X), 0);
+
+            int sign = Mathf.Sign(mouseDelta.X);
+            float delta = Mathf.Step(20, mousePosition.X - _oldMousePos.X);
+
+            if (delta != 0)
+            {
+                if (timelineIndexButton.Offset.X + delta < 0)
+                    return;
+
+                timelineIndexButton.Offset.X += delta;
+                _timerIndex = Mathf.FloorToInt(timelineIndexButton.Offset.X / 20);
+                CurrentFrame = _timerIndex;
+                Model?.SetAnimationFrame(_timerIndex);
+                timelineIndexButton.Align();
+                timelineIndexButton.UpdateTransformation();
+                _oldMousePos = mousePosition;
+            }
+        });
+        timelineIndexButton.SetOnRelease(() => { _moveTimeline = true; });
+
+        timerPanelCollection.AddElements(timelineIndexButton);
+
+        TimerUI.AddElement(timerPanelCollection);
     }
 
     public void AlphaControl()
@@ -172,7 +238,7 @@ public class AnimationEditor : BaseEditor
         float mouseX = Input.GetMouseDelta().X;
         if (mouseX == 0)
             return;
-            
+
         ModelSettings.MeshAlpha += mouseX * GameTime.DeltaTime;
         ModelSettings.MeshAlpha = Mathf.Clamp(0, 1, ModelSettings.MeshAlpha);
         MeshAlphaText.SetText("alpha: " + ModelSettings.MeshAlpha.ToString("F2")).UpdateCharacters();
@@ -200,6 +266,8 @@ public class AnimationEditor : BaseEditor
     {
         ModelingUi.Resize();
         TimelineUI.Resize();
+        KeyframeUI.Resize();
+        TimerUI.Resize();
     }
 
     public override void Awake(GeneralModelingEditor editor)
@@ -213,12 +281,93 @@ public class AnimationEditor : BaseEditor
         Model.RenderBones = true;
         Model.SetAnimationRig();
 
+        Model.SetAnimation();
+
+        if (Model.Animation == null)
+            Model.Animation = new Animation("Test");
+
+        Animation = Model.Animation;
+        Animation.Clear();
+
+        TimelineScrollView.ScrollPosition = 0;
+        BoneAnimations = [];
+
         if (Model.Rig != null)
         {
-            
+            int i = 0;
+            foreach (var bone in Model.Rig.BonesList)
+            {
+                Animation.AddBoneAnimation(bone.Name, out var boneAnimation);
+                TimelineBoneAnimation timelineAnimation = new TimelineBoneAnimation(bone.Name, boneAnimation);
+                timelineAnimation.Index = i;
+                
+                UITextButton boneTextButton = new UITextButton(bone.Name, TimelineUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (200, 20), (0, 0, 0, 0), 0, 10, (10, 0.05f));
+                boneTextButton.SetTextCharCount(bone.Name, 1f);
+                TimelineScrollView.AddElement(boneTextButton.Collection);
+                BoneAnimations.Add(bone.Name, timelineAnimation);
+
+                AnimationKeyframe keyframe = new AnimationKeyframe(i, bone);
+                boneAnimation.AddOrUpdateKeyframe(keyframe);
+
+                UIButton keyframeButton = new UIButton("KeyframeButton", KeyframeUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (0, i * 25, 0, 0), 0, 10, (10, 0.05f), UIState.Interactable);
+                KeyframePanelCollection.AddElement(keyframeButton);
+
+                if (_generate)
+                    KeyframeUI.AddElement(keyframeButton);
+
+                keyframeButton.SetOnClick(() =>
+                {
+                    _oldMousePos = Input.GetMousePosition();
+                });
+
+                keyframeButton.SetOnHold(() =>
+                {
+                    Vector2 mouseDelta = Input.GetMouseDelta();
+                    if (mouseDelta == Vector2.Zero)
+                        return;
+
+                    Vector2 mousePosition = Input.GetMousePosition();
+
+                    int sign = Mathf.Sign(mouseDelta.X);
+                    float delta = Mathf.Step(20, mousePosition.X - _oldMousePos.X);
+                    
+                    if (delta != 0)
+                    {
+                        if (keyframeButton.Offset.X + delta < 0)
+                            return;
+
+                        int index = Mathf.FloorToInt((delta + keyframeButton.Offset.X) / 20);
+                        int i = 0;
+                        while (boneAnimation.ContainsIndex(index))
+                        {
+                            i += sign;
+                            index += i;
+                        }
+
+                        keyframe.SetIndex(index);
+                        delta += i * 20;
+
+                        keyframeButton.Offset.X += delta;
+                        keyframeButton.Align();
+                        keyframeButton.UpdateTransformation();
+                        _oldMousePos = mousePosition;
+                    }
+                });
+
+                timelineAnimation.Add(keyframeButton, keyframe);
+
+                i++;
+            }
         }
 
-        Model.SetAnimation();
+        if (_generate)
+        {
+            TimelineUI.AddElement(TimelineScrollView.SubElements);
+            TimelineScrollView.ResetInit();
+            TimelineScrollView.Align();
+            TimelineScrollView.UpdateScale();
+            KeyframePanelCollection.Align();
+        }
 
         Info.RenderInfo = false;
         Handle_BoneMovement();
@@ -232,16 +381,16 @@ public class AnimationEditor : BaseEditor
         ModelingUi.RenderDepthTest();
         TimelineUI.RenderDepthTest();
 
-        GL.Viewport(15, 10, Game.Width - 385, 240);
+        GL.Viewport(220, 10, Game.Width - 590, 240);
 
-        GL.DepthFunc(DepthFunction.Always);
+        GL.Clear(ClearBufferMask.DepthBufferBit);
         GL.Enable(EnableCap.Blend);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
         tickShader.Bind();
 
         Matrix4 tickModel = Matrix4.CreateTranslation((TimelinePosition.X, TimelinePosition.Y, 0));
-        Matrix4 tickProjection = Matrix4.CreateOrthographicOffCenter(0, Game.Width - 385, 240, 0, -1, 1);
+        Matrix4 tickProjection = Matrix4.CreateOrthographicOffCenter(0, Game.Width - 590, 240, 0, -1, 1);
 
         int tickModelLoc = GL.GetUniformLocation(tickShader.ID, "model");
         int tickProjectionLoc = GL.GetUniformLocation(tickShader.ID, "projection");
@@ -263,13 +412,27 @@ public class AnimationEditor : BaseEditor
 
         tickShader.Unbind();
 
-        GL.DepthFunc(DepthFunction.Less);
+        TimerUI.RenderDepthTest(tickProjection);
+
+        GL.Viewport(220, 16, Game.Width - 590, 207);
+
+        Matrix4 keyframeProjection = Matrix4.CreateOrthographicOffCenter(0, Game.Width - 590, 207, 0, -1, 1);
+        KeyframeUI.RenderDepthTest(keyframeProjection);
 
         GL.Viewport(0, 0, Game.Width, Game.Height);
     }
 
+
     public override void Update(GeneralModelingEditor editor)
     {
+        KeyframeUI.SetPosition(TimelinePosition.X, TimelineScrollView.ScrollPosition);
+        Vector2 keyframeScreenPos = new Vector2(220, Game.Height - 223);
+
+        TimerUI.SetPosition(TimelinePosition.X, TimerUI.Position.Y);
+        Vector2 timerScreenPos = new Vector2(220, Game.Height - 256);
+
+        TimerUI.Test(timerScreenPos);
+        KeyframeUI.Test(keyframeScreenPos);
         ModelingUi.Update();
         TimelineUI.Update();
 
@@ -302,9 +465,9 @@ public class AnimationEditor : BaseEditor
         }
 
         if (Playing)
-                ModelManager.Update();
-            else
-                RigUpdate();
+            ModelManager.Update();
+        else
+            RigUpdate();
     }
 
     private void RigUpdate()
@@ -313,6 +476,7 @@ public class AnimationEditor : BaseEditor
             TestBonePosition();
 
         TestAdd();
+        TestRemove();
 
         if (Input.IsKeyPressed(Keys.G))
         {
@@ -395,19 +559,19 @@ public class AnimationEditor : BaseEditor
     {
         if (Model == null)
             return;
-            
+
         if (!Input.IsKeyDown(Keys.LeftShift))
             SelectedBonePivots.Clear();
-        
+
         Vector2 mousePos = Input.GetMousePosition();
         Vector2? closest = null;
         BonePivot? closestBone = null;
-    
+
         foreach (var (pivot, (position, radius)) in BonePivots)
         {
             float distance = Vector2.Distance(mousePos, position);
             float distanceClosest = closest == null ? 1000 : Vector2.Distance(mousePos, (Vector2)closest);
-            
+
             if (distance < distanceClosest && distance < radius)
             {
                 closest = position;
@@ -465,6 +629,9 @@ public class AnimationEditor : BaseEditor
 
     public override void Exit(GeneralModelingEditor editor)
     {
+        TimelineScrollView.DeleteSubElements();
+        TimelineUI.Update();
+
         if (Model == null)
             return;
 
@@ -472,9 +639,16 @@ public class AnimationEditor : BaseEditor
         Model.Rig?.Delete();
         Model.SetAnimationRig();
 
+        foreach (var boneAnimation in BoneAnimations)
+        {
+            boneAnimation.Value.Clear();
+        }
+        KeyframeUI.Update();
+
         Info.RenderInfo = true;
 
         Playing = false;
+        _generate = true;
     }
 
     public void TestAdd()
@@ -498,14 +672,87 @@ public class AnimationEditor : BaseEditor
             _d_pressed = false;
         }
     }
+    
+    public void TestRemove()
+    {
+        if (Input.IsKeyDown(Keys.LeftControl) && Input.IsKeyPressed(Keys.Delete))
+        {
+            Console.WriteLine("Remove keyframe");
+            RemoveKeyframe();
+            Model?.SetAnimationFrame(CurrentFrame);
+            UpdateBonePosition(Game.camera.ProjectionMatrix, Game.camera.ViewMatrix);
+            if (Model == null || Model.Rig == null)
+                return;
+
+            Model.UpdateRig();
+            foreach (var bone in Model.Rig.BonesList)
+            {
+                bone.UpdateEndTarget();
+            }
+        }
+    }
 
     public void AddKeyframe()
     {
         HashSet<Bone> selectedBones = GetSelectedBones();
         foreach (var bone in selectedBones)
         {
+            if (!BoneAnimations.TryGetValue(bone.Name, out TimelineBoneAnimation? timelineAnimation))
+                continue;
+
+            int currentFrame = CurrentFrame;
             AnimationKeyframe keyframe = new AnimationKeyframe(CurrentFrame, bone.Position, bone.Rotation, bone.Scale);
-            Animation.AddOrUpdateKeyframe(bone.Name, keyframe);
+            Animation.AddOrUpdateKeyframe(bone.Name, keyframe, out bool added);
+
+            if (added)
+            {
+                UIButton keyframeButton = new UIButton("KeyframeButton", KeyframeUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (currentFrame * 20, timelineAnimation.Index * 25, 0, 0), 0, 10, (10, 0.05f), UIState.Interactable);
+                KeyframePanelCollection.AddElement(keyframeButton);
+                KeyframePanelCollection.Align();
+
+                keyframeButton.SetOnClick(() =>
+                {
+                    _oldMousePos = Input.GetMousePosition();
+                });
+
+                keyframeButton.SetOnHold(() =>
+                {
+                    Vector2 mouseDelta = Input.GetMouseDelta();
+                    if (mouseDelta == Vector2.Zero)
+                        return;
+
+                    Vector2 mousePosition = Input.GetMousePosition();
+
+                    int sign = Mathf.Sign(mouseDelta.X);
+                    float delta = Mathf.Step(20, mousePosition.X - _oldMousePos.X);
+
+                    if (delta != 0)
+                    {
+                        if (keyframeButton.Offset.X + delta < 0)
+                            return;
+
+                        int index = Mathf.FloorToInt((delta + keyframeButton.Offset.X) / 20);
+                        int i = 0;
+                        while (timelineAnimation.Animation.ContainsIndex(index))
+                        {
+                            i += sign;
+                            index += i;
+                        }
+
+                        keyframe.SetIndex(index);
+                        delta += i * 20;
+
+                        keyframeButton.Offset.X += delta;
+                        keyframeButton.Align();
+                        keyframeButton.UpdateTransformation();
+                        _oldMousePos = mousePosition;
+                    }
+                });
+
+                timelineAnimation.Add(keyframeButton, keyframe);
+
+                KeyframeUI.AddElement(keyframeButton);
+            }
         }
     }
 
@@ -514,7 +761,17 @@ public class AnimationEditor : BaseEditor
         HashSet<Bone> selectedBones = GetSelectedBones();
         foreach (var bone in selectedBones)
         {
-            Animation.RemoveKeyframe(bone.Name, CurrentFrame);
+            if (Animation.RemoveKeyframe(bone.Name, CurrentFrame, out var keyframe))
+            {
+                if (BoneAnimations.TryGetValue(bone.Name, out TimelineBoneAnimation? timelineAnimation))
+                {
+                    if (timelineAnimation.Get(keyframe, out UIButton? button))
+                    {
+                        button.Delete();
+                        timelineAnimation.Remove(keyframe);
+                    }
+                }
+            }
         }
     }
 
@@ -549,13 +806,13 @@ public class AnimationEditor : BaseEditor
         float distance = DistancePointToLine(point, lineStart, lineEnd);
         return distance <= threshold;
     }
-    
+
     private static float DistancePointToLine(Vector2 point, Vector2 lineStart, Vector2 lineEnd)
     {
         Vector2 line = lineEnd - lineStart;
         Vector2 pointVector = point - lineStart;
         float lineLengthSquared = line.LengthSquared;
-        
+
         if (lineLengthSquared == 0f)
         {
             return Vector2.Distance(point, lineStart);
@@ -563,5 +820,77 @@ public class AnimationEditor : BaseEditor
         float t = Mathf.Clamp01(Vector2.Dot(pointVector, line) / lineLengthSquared);
         Vector2 projection = lineStart + t * line;
         return Vector2.Distance(point, projection);
+    }
+
+    public class TimelineBoneAnimation
+    {
+        public string Name;
+        public int Index;
+        public BoneAnimation Animation;
+        public Dictionary<UIButton, AnimationKeyframe> ButtonKeyframes = new Dictionary<UIButton, AnimationKeyframe>();
+        public Dictionary<AnimationKeyframe, UIButton> KeyframeButtons = new Dictionary<AnimationKeyframe, UIButton>();
+
+        public TimelineBoneAnimation(string name, BoneAnimation animation)
+        {
+            Name = name;
+            Animation = animation;
+        }
+
+        public void Add(UIButton button, AnimationKeyframe keyframe)
+        {
+            ButtonKeyframes.Add(button, keyframe);
+            KeyframeButtons.Add(keyframe, button);
+        }
+
+        public void Remove(UIButton button)
+        {
+            if (ButtonKeyframes.TryGetValue(button, out AnimationKeyframe? keyframe))
+            {
+                ButtonKeyframes.Remove(button);
+                KeyframeButtons.Remove(keyframe);
+            }
+        }
+
+        public void Remove(AnimationKeyframe keyframe)
+        {
+            if (KeyframeButtons.TryGetValue(keyframe, out UIButton? button))
+            {
+                KeyframeButtons.Remove(keyframe);
+                ButtonKeyframes.Remove(button);
+            }
+        }
+
+        public bool Get(UIButton button, [NotNullWhen(true)] out AnimationKeyframe? keyframe)
+        {
+            if (ButtonKeyframes.TryGetValue(button, out AnimationKeyframe? value))
+            {
+                keyframe = value;
+                return true;
+            }
+            keyframe = null;
+            return false;
+        }
+
+        public bool Get(AnimationKeyframe keyframe, [NotNullWhen(true)] out UIButton? button)
+        {
+            if (KeyframeButtons.TryGetValue(keyframe, out UIButton? value))
+            {
+                button = value;
+                return true;
+            }
+            button = null;
+            return false;
+        }
+
+        public void Clear()
+        {
+            foreach (var button in ButtonKeyframes.Keys)
+            {
+                button.Delete();
+            }
+            Animation.Clear();
+            ButtonKeyframes = [];
+            KeyframeButtons = [];
+        }
     }
 }

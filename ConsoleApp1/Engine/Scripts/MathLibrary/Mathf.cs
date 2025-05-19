@@ -22,6 +22,15 @@ public static class Mathf
 
     public static float Pow(float value, float power) => (float)Math.Pow(value, power);
     public static double Pow(double value, double power) => Math.Pow(value, power);
+
+    // floors the value to the nearest multiple of size plus offset
+    public static float Step(float size, float value)
+    {
+        if (size == 0) return value;
+
+        float steps = value / size;
+        return (float)(Math.Truncate(steps) * size);
+    }
     
     public static Vector3 Normalize(Vector3 value)
     {

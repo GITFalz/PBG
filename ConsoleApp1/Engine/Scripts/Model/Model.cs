@@ -237,6 +237,35 @@ public class Model
         }
     }
 
+    public void SetAnimationFrame(int index)
+    {
+        if (Animation == null || Rig == null)
+            return;
+
+        foreach (var bone in Rig.BonesList)
+        {
+            var frame = Animation.GetSpecificFrame(bone.Name, index);
+            if (frame == null)
+                continue;
+
+            bone.Position = frame.Position;
+            bone.Rotation = frame.Rotation;
+            bone.Scale = frame.Scale;
+            bone.LocalAnimatedMatrix = frame.GetLocalTransform();
+        }
+
+        Rig.RootBone.UpdateGlobalTransformation();
+
+        foreach (var bone in Rig.BonesList)
+        {
+            BoneMatricesList[bone.Index] = bone.GlobalAnimatedMatrix;
+        }
+
+        Mesh.UpdateRig();
+
+        BoneMatrices.Update(BoneMatricesList, 0);
+    }
+
     public void Renew(string fileName, TextureLocation textureLocation)
     {
         TextureName = fileName;
@@ -262,7 +291,10 @@ public class Model
                 if (frame == null)
                     continue;
 
-                bone.LocalAnimatedMatrix = frame.Value;
+                bone.Position = frame.Position;
+                bone.Rotation = frame.Rotation;
+                bone.Scale = frame.Scale;
+                bone.LocalAnimatedMatrix = frame.GetLocalTransform(); ;
             }
 
             Rig.RootBone.UpdateGlobalTransformation();
@@ -274,7 +306,7 @@ public class Model
 
             Mesh.UpdateRig();
 
-            BoneMatrices.Renew(BoneMatricesList);
+            BoneMatrices.Update(BoneMatricesList, 0);
         }
     }
 

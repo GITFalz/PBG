@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using OpenTK.Mathematics;
@@ -16,11 +17,41 @@ public class Animation
         Name = name;
     }
 
-    public Matrix4? GetFrame(string boneName)
+    public AnimationKeyframe? GetFrame(string boneName)
     {
         if (BoneAnimations.TryGetValue(boneName, out var boneAnimation))
             return boneAnimation.GetFrame();
         return null;
+    }
+
+    public void AddBoneAnimation(string boneName)
+    {
+        if (!BoneAnimations.ContainsKey(boneName))
+        {
+            BoneAnimations.Add(boneName, new BoneAnimation());
+        }
+    }
+
+    public void AddBoneAnimation(string boneName, out BoneAnimation outAnimation)
+    {
+        if (BoneAnimations.TryGetValue(boneName, out BoneAnimation? value))
+        {
+            outAnimation = value;
+            return;
+        }
+
+        BoneAnimation boneAnimation = new BoneAnimation();
+        BoneAnimations.Add(boneName, boneAnimation);
+        outAnimation = boneAnimation;
+    }
+
+    public void RemoveBoneAnimation(string boneName)
+    {
+        if (BoneAnimations.TryGetValue(boneName, out BoneAnimation? value))
+        {
+            value.Clear();
+            BoneAnimations.Remove(boneName);
+        }
     }
 
     public void AddOrUpdateKeyframe(string boneName, AnimationKeyframe keyframe)
@@ -37,28 +68,63 @@ public class Animation
         }
     }
 
-    public void RemoveKeyframe(string boneName, int index)
+    public void AddOrUpdateKeyframe(string boneName, AnimationKeyframe keyframe, out bool added)
+    {
+        added = false;
+        if (BoneAnimations.TryGetValue(boneName, out var boneAnimation))
+        {
+            boneAnimation.AddOrUpdateKeyframe(keyframe, out added);
+        }
+        else
+        {
+            BoneAnimation newBoneAnimation = new BoneAnimation();
+            newBoneAnimation.AddOrUpdateKeyframe(keyframe, out added);
+            BoneAnimations.Add(boneName, newBoneAnimation);
+        }
+    }
+
+    public bool RemoveKeyframe(string boneName, int index, [NotNullWhen(true)] out AnimationKeyframe? keyframe)
+    {
+        keyframe = null;
+        if (BoneAnimations.TryGetValue(boneName, out var boneAnimation))
+        {
+            return boneAnimation.RemoveKeyframe(index, out keyframe);
+        }
+        return false;
+    }
+
+    public AnimationKeyframe? GetSpecificFrame(string boneName, int index)
     {
         if (BoneAnimations.TryGetValue(boneName, out var boneAnimation))
         {
-            boneAnimation.RemoveKeyframe(index);
+            return boneAnimation.GetSpecificFrame(index);
         }
+        return null;
+    }
+
+    public void Clear()
+    {
+        foreach (var boneAnimation in BoneAnimations.Values)
+        {
+            boneAnimation.Clear();
+        }
+        BoneAnimations = [];
     }
 }
 
 public class BoneAnimation
 {
     public List<AnimationKeyframe> Keyframes = new List<AnimationKeyframe>();
-    public Func<Matrix4?> GetFrame;
+    public Func<AnimationKeyframe?> GetFrame;
     public float elapsedTime = 0;
     int index = 0;
 
 
     public BoneAnimation() { GetFrame = GetNullFrame; }
-    public Matrix4? GetNullFrame() { return null; }
-    public Matrix4? GetFrameSingle() { return Keyframes[0].GetLocalTransform(); }
+    public AnimationKeyframe? GetNullFrame() { return null; }
+    public AnimationKeyframe? GetFrameSingle() { return Keyframes[0]; }
 
-    public Matrix4? GetFrameMultiple()
+    public AnimationKeyframe? GetFrameMultiple()
     {
         ResetIndexCheck();
 
@@ -78,7 +144,39 @@ public class BoneAnimation
         float t = Mathf.LerpI(t1, t2, elapsedTime);
 
         elapsedTime += GameTime.DeltaTime;
-        return Keyframes[index].Lerp(Keyframes[index + 1], t).GetLocalTransform();
+        return Keyframes[index].Lerp(Keyframes[index + 1], t);
+    }
+
+    public AnimationKeyframe? GetSpecificFrame(int index)
+    {
+        if (Keyframes.Count > 0)
+        {
+            for (int i = 0; i < Keyframes.Count; i++)
+            {
+                AnimationKeyframe keyframe = Keyframes[i];
+                if (index < keyframe.Index)
+                    continue;
+
+                if (i < Keyframes.Count - 1)
+                {
+                    AnimationKeyframe nextKeyframe = Keyframes[i + 1];
+                    if (index >= nextKeyframe.Index)
+                        continue;
+
+                    elapsedTime = (float)index / (float)Animation.FRAMES;
+                    float t1 = keyframe.Time;
+                    float t2 = nextKeyframe.Time;
+                    float t = Mathf.LerpI(t1, t2, elapsedTime);
+                    return keyframe.Lerp(nextKeyframe, t);
+                }
+                else
+                {
+                    elapsedTime = (float)index / (float)Animation.FRAMES;
+                    return keyframe;
+                }
+            }
+        }
+        return null;
     }
 
     /// <summary>
@@ -103,15 +201,41 @@ public class BoneAnimation
         GetFrame = Keyframes.Count > 1 ? GetFrameMultiple : GetFrameSingle;
     }
 
-    public void RemoveKeyframe(int index)
+    public void AddOrUpdateKeyframe(AnimationKeyframe keyframe, out bool added)
     {
+        var existing = Keyframes.FirstOrDefault(k => k.Index == keyframe.Index);
+
+        if (existing != null)
+        {
+            existing.Position = keyframe.Position;
+            existing.Rotation = keyframe.Rotation;
+            existing.Scale = keyframe.Scale;
+            added = false;
+            return;
+        }
+        else
+        {
+            added = true;
+            Keyframes.Add(keyframe);
+            Keyframes = Keyframes.OrderBy(k => k.Time).ToList();
+        }
+
+        GetFrame = Keyframes.Count > 1 ? GetFrameMultiple : GetFrameSingle;
+    }
+
+    public bool RemoveKeyframe(int index, [NotNullWhen(true)] out AnimationKeyframe? removedKeyframe)
+    {
+        removedKeyframe = null;
+        bool removed = false;
         if (Keyframes.Count > 0)
         {
             foreach (var keyframe in Keyframes)
             {
                 if (keyframe.Index == index)
                 {
+                    removedKeyframe = keyframe;
                     Keyframes.Remove(keyframe);
+                    removed = true;
                     break;
                 }
             }
@@ -128,6 +252,22 @@ public class BoneAnimation
                 GetFrame = Keyframes.Count > 1 ? GetFrameMultiple : GetFrameSingle;
             }
         }
+        return removed;
+    }
+
+    public bool ContainsIndex(int index)
+    {
+        if (Keyframes.Count > 0)
+        {
+            foreach (var keyframe in Keyframes)
+            {
+                if (keyframe.Index == index)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private bool ResetIndexCheck()
@@ -139,6 +279,14 @@ public class BoneAnimation
             return true;
         }
         return false;
+    }
+
+    public void Clear()
+    {
+        Keyframes = [];
+        GetFrame = GetNullFrame;
+        elapsedTime = 0;
+        index = 0;
     }
 }
 
@@ -159,6 +307,7 @@ public class AnimationKeyframe
         Scale = scale;
     }
 
+    public AnimationKeyframe(int index, Bone bone) : this(index, bone.Position, bone.Rotation, bone.Scale) { }
     public AnimationKeyframe(Vector3 position, Quaternion rotation, float scale)
     {
         Index = 0;

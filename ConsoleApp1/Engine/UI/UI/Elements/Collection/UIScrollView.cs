@@ -7,22 +7,32 @@ public class UIScrollView : UICollection
 
     public float ScrollSpeed = 5f;
     public CollectionType CollectionType;
+    public float ScrollPosition
+    {
+        get => _scrollPosition;
+        set
+        {
+            _scrollPosition = value;
+            SubElements.Offset[(int)CollectionType] = value;
+        }
+    }
+    private float _scrollPosition = 0f;
 
     public UIScrollView(
-        string name, 
+        string name,
         UIController controller,
-        AnchorType anchorType, 
-        PositionType positionType, 
-        CollectionType collectionType, 
-        Vector2 scale, 
-        Vector4 offset) : 
+        AnchorType anchorType,
+        PositionType positionType,
+        CollectionType collectionType,
+        Vector2 scale,
+        Vector4 offset) :
         base(name, controller, anchorType, positionType, (0, 0, 0), scale, offset, 0)
     {
         CollectionType = collectionType;
 
         if (collectionType == CollectionType.Horizontal)
             SubElements = new UIHorizontalCollection("HorizontalStacking", UIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (0, 0, 0, 0), (0, 0, 0, 0), 5, 0);
-        else 
+        else
             SubElements = new UIVerticalCollection("VerticalStacking", UIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (0, 0, 0, 0), (0, 0, 0, 0), 5, 0);
 
         SubElements.SetScale(scale);
@@ -30,7 +40,7 @@ public class UIScrollView : UICollection
         MaskPanel = new UIMask($"{name}MaskPanel", controller, anchorType, PositionType.Relative, (1, 1, 1, 0.5f), (0, 0, 0), scale, (0, 0, 0, 0), 0, -1, (0, 0));
         MaskPanel.CanTest = true;
         MaskPanel.SetOnHover(MoveScrollView);
-        
+
         Elements.Add(MaskPanel);
         Elements.Add(SubElements);
 
@@ -45,6 +55,7 @@ public class UIScrollView : UICollection
 
         SubElements.Offset += scrollOffset[CollectionType](scrollDelta) * GameTime.DeltaTime * ScrollSpeed * 1000;
         SubElements.Offset = scrollClamp[CollectionType](SubElements.Scale - newScale, SubElements.Offset);
+        ScrollPosition = SubElements.Offset[(int)CollectionType];
         
         SubElements.Align();
         SubElements.UpdateTransformation();

@@ -4,6 +4,8 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class UIController
 {
+    public string Name = "UIController";
+
     public static List<UIController> Controllers = [];
     public static UIController Empty = new();
 
@@ -55,6 +57,11 @@ public class UIController
         Controllers.Add(this);
     }
 
+    public UIController(string name) : this()
+    {
+        Name = name;
+    }
+
     // Adds the element to the list of elements to be added, but does not add it to the UIController yet.
     // This is useful for adding elements in a single pass, rather than immediately adding them.
     // And it also needs to be done at the start of the frame otherwise the list could change it's size mid-loop.
@@ -95,7 +102,7 @@ public class UIController
     {
         if (element.PositionType == PositionType.Absolute)
             AbsoluteElements.Add(element);
-
+            
         element.CanUpdate = true;
         Elements.Add(element);
         AddedElements.Enqueue(element);
@@ -193,6 +200,11 @@ public class UIController
     {
         ElementsToTransform.Enqueue(element);
     }   
+
+    public void SetPosition(float x, float y)
+    {
+        SetPosition(new Vector3(x, y, Position.Z));
+    }
 
     public void SetPosition(Vector2 position)
     {

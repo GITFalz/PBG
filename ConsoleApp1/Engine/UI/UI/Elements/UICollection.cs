@@ -179,7 +179,7 @@ public class UICollection : UIElement
         base.Delete();
         foreach (UIElement element in Elements)
             element.Delete();
-        Elements.Clear();
+        Elements = [];
     }
 }
 
