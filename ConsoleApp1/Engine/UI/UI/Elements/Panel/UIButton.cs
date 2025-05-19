@@ -27,10 +27,62 @@ public class UIButton : UIPanel
         CanTest = true;
     }
 
+    public override void SetMaskIndex(int maskedIndex)
+    {
+        if (!CanGenerate())
+            return;
+            
+        base.SetMaskIndex(maskedIndex);
+        uIMesh.UpdateMaskedIndex(this, Masked, MaskIndex);
+    }
+
+    public override void SetVisibility(bool visible)
+    {
+        if (!CanGenerate())
+            return;
+
+        if (Visible == visible)
+            return;
+
+        base.SetVisibility(visible);
+        uIMesh.SetVisibility();
+    }
+
+    public override void Generate()
+    {
+        if (!CanGenerate())
+            return;
+        SetScale(newScale);
+        GenerateUIQuad(uIMesh);    
+    }
+
+    public override void Delete() 
+    {
+        if (!CanGenerate())
+            return;
+        base.Delete();
+        uIMesh.RemoveElement(this);
+    }
+
+    protected override void Internal_UpdateTransformation()
+    {
+        if (!CanGenerate())
+            return;
+        uIMesh.UpdateElementTransformation(this);  
+    }
+
+    protected override void Internal_UpdateScale()
+    {
+        if (!CanGenerate())
+            return;
+        uIMesh.UpdateElementScale(this);
+    }
+
     protected override void Internal_UpdateTexture()
     {
-        if (CanGenerate())
-            uIMesh.UpdateElementTexture(this);
+        if (!CanGenerate())
+            return;
+        uIMesh.UpdateElementTexture(this);
     }
 
     protected bool CanGenerate()

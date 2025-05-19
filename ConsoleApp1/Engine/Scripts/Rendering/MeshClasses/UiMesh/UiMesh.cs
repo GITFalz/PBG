@@ -26,7 +26,7 @@ public class UIMesh
     {
         UIStruct uiData = new UIStruct()
         {
-            SizeSlice = element.SizeSlice,
+            Data = element.SizeSlice,
             Color = element.Color,
             TextureIndex = (element.TextureIndex, 0, ElementCount, element.Masked ? (element.MaskIndex | _mask) : 0),
             Transformation = element.Transformation
@@ -142,7 +142,7 @@ public class UIMesh
             return;
 
         UIStruct data = UIData[index];
-        data.SizeSlice = element.SizeSlice;
+        data.Data = element.SizeSlice;
         UIData[index] = data;
     }
 
@@ -218,7 +218,7 @@ public class UIMesh
 
 public struct UIStruct
 {
-    public Vector4 SizeSlice;
+    public Vector4 Data;
     public Vector4 Color;
     public Vector4i TextureIndex;
     public Matrix4 Transformation;
@@ -226,6 +226,6 @@ public struct UIStruct
 
     public override string ToString()
     {
-        return $"SizeSlice: {SizeSlice},\n Color: {Color},\n TextureIndex: {TextureIndex},\n Transformation:\n{Transformation}\n";
+        return $"SizeSlice: {Data},\n Color: {Color},\n TextureIndex: {TextureIndex},\n Transformation:\n{Transformation}\n";
     }
 }

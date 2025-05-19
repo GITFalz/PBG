@@ -14,11 +14,43 @@ public class AnimationEditor : BaseEditor
 
     public UIInputFieldPrefab TimelineTimeField;
 
+    public UIScrollView TimelineScrollView;
+
     public List<Vertex> SelectedVertices = new();
     public Dictionary<Vertex, Vector2> Vertices = new Dictionary<Vertex, Vector2>();
 
     public List<BonePivot> SelectedBonePivots = new();
     public Dictionary<BonePivot, (Vector2, float)> BonePivots = new Dictionary<BonePivot, (Vector2, float)>();
+
+    public static ShaderProgram tickShader = new ShaderProgram("Utils/Rectangles.vert", "Animation/Ticks.frag");
+    public static VAO tickVao = new();
+    public struct TickData
+    {
+        public Vector2 Position;
+        public Vector2 Size;
+        public Vector2 Tilling;
+    }
+    public static SSBO<TickData> TickSSBO = new(new List<TickData>() {
+        new TickData()
+        {
+            Position = new Vector2(0, 0),
+            Size = new Vector2(600, 20),
+            Tilling = new Vector2(6, 1)
+        },
+        new TickData()
+        {
+            Position = new Vector2(600, 0),
+            Size = new Vector2(600, 20),
+            Tilling = new Vector2(6, 1)
+        },
+        new TickData()
+        {
+            Position = new Vector2(1200, 0),
+            Size = new Vector2(600, 20),
+            Tilling = new Vector2(6, 1)
+        },
+    });
+    private int _tickCount = 6 * 3;
 
     private bool regenerateVertexUi = true;
 
@@ -26,6 +58,9 @@ public class AnimationEditor : BaseEditor
     public bool Playing = false;
 
     public int CurrentFrame => Int.Parse(TimelineTimeField.InputField.Text, 0);
+
+
+    public Vector2 TimelinePosition = new Vector2(0, 0);
 
 
     // Input data
@@ -83,7 +118,7 @@ public class AnimationEditor : BaseEditor
         UIInputField CameraSpeedField = new("CameraSpeedText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (10, 0, 0, 0), 0, 0, (10, 0.05f));
         
         CameraSpeedField.SetMaxCharCount(2).SetText("50", 1.2f).SetTextType(TextType.Numeric);
-        CameraSpeedField.OnTextChange = new SerializableEvent(() => { try { Game.camera.SPEED = int.Parse(CameraSpeedField.Text); } catch { Game.camera.SPEED = 1; } }); 
+        CameraSpeedField.OnTextChange = new SerializableEvent(() => { try { Game.camera.SPEED = Int.Parse(CameraSpeedField.Text); } catch { Game.camera.SPEED = 1; } }); 
 
         speedStacking.SetScale((45, 30f));
         speedStacking.AddElements(CameraSpeedFieldPanel, CameraSpeedField);
@@ -103,35 +138,31 @@ public class AnimationEditor : BaseEditor
 
         UICollection timelinePanelCollection = new("TimelinePanelCollection", TimelineUI, AnchorType.ScaleBottom, PositionType.Absolute, (0, 0, 0), (0, 250), (5, -5, 255, 5), 0);
 
-        UIImage timelineBackground = new("TimelineBackground", TimelineUI, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (Game.Width, 250), (0, 0, 105, 0), 0, 1, (10, 0.05f));
+        UIImage timelineBackground = new("TimelineBackground", TimelineUI, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (Game.Width, 250), (0, 0, 0, 0), 0, 0, (10, 0.05f));
+        UIButton timelineMoveButton = new("TimelineMoveButton", TimelineUI, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0, 0), (0, 0, 0), (Game.Width - 385, 30), (7, 0, 0, 0), 0, 0, (0, 0), UIState.InvisibleInteractable);
+        timelineMoveButton.SetOnHold(() =>
+        {
+            Vector2 mouseDelta = Input.GetMouseDelta();
+            if (mouseDelta == Vector2.Zero)
+                return;
 
-        UICollection timelineSettingsCollection = new("TimelineSettingsStacking", TimelineUI, AnchorType.TopRight, PositionType.Relative, (0, 0, 0), (100, 250), (0, 0, 0, 0), 0);
+            TimelinePosition.X = Mathf.Clamp(-1000, 0, TimelinePosition.X + mouseDelta.X);
+        });
 
-        UIImage timelineSettingsBackground = new("TimelineSettingsBackground", TimelineUI, AnchorType.TopRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (100, 250), (0, 0, 0, 0), 0, 0, (10, 0.05f));
         UIVerticalCollection timelineSettingsStacking = new("TimelineSettingsStacking2", TimelineUI, AnchorType.TopRight, PositionType.Relative, (0, 0, 0), (100, 250), (0, 0, 0, 0), (10, 10, 5, 5), 5, 0);
 
         TimelineTimeField = new("TimelineTimeField", TimelineUI, (0, 0, 0, 0), (0.5f, 0.5f, 0.5f, 1f), 11, 4, "0", TextType.Numeric);
 
         timelineSettingsStacking.AddElements(TimelineTimeField.Collection);
 
-        timelineSettingsCollection.AddElements(timelineSettingsBackground, timelineSettingsStacking);
+        UICollection timelineScrollViewCollection = new("TimelineScrollViewCollection", TimelineUI, AnchorType.ScaleBottom, PositionType.Relative, (0, 0, 0), (Game.Width - 10, 250 - 30), (5, -5, 110, 5), 0);
 
-        UIScrollView timelineScrollView = new("TimelineScrollView", TimelineUI, AnchorType.ScaleFull, PositionType.Relative, CollectionType.Vertical, (Game.Width - 10, 250 - 10), (5, 5, 110, 5));
+        UIImage timelineScrollViewBackground = new("TimelineScrollViewBackground", TimelineUI, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (Game.Width - 10, 250 - 10), (0, 0, 0, 0), 0, 11, (10, 0.05f));
+        TimelineScrollView = new("TimelineScrollView", TimelineUI, AnchorType.ScaleFull, PositionType.Relative, CollectionType.Vertical, (Game.Width - 14, 250 - 14), (7, 7, 7, 7));
 
-        UIImage timeTest1 = new("TimelineTest1", TimelineUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (Game.Width + 200, 30), (0, 0, 0, 0), 0, 10, (10, 0.05f));
-        UIImage timeTest2 = new("TimelineTest2", TimelineUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (Game.Width + 200, 30), (0, 0, 0, 0), 0, 10, (10, 0.05f));
-        UIImage timeTest3 = new("TimelineTest3", TimelineUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (Game.Width + 200, 30), (0, 0, 0, 0), 0, 10, (10, 0.05f));
-        UIImage timeTest4 = new("TimelineTest4", TimelineUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (Game.Width + 200, 30), (0, 0, 0, 0), 0, 10, (10, 0.05f));
-        UIImage timeTest5 = new("TimelineTest5", TimelineUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (Game.Width + 200, 30), (0, 0, 0, 0), 0, 10, (10, 0.05f));
-        UIImage timeTest6 = new("TimelineTest6", TimelineUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (Game.Width + 200, 30), (0, 0, 0, 0), 0, 10, (10, 0.05f));
-        UIImage timeTest7 = new("TimelineTest7", TimelineUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (Game.Width + 200, 30), (0, 0, 0, 0), 0, 10, (10, 0.05f));
-        UIImage timeTest8 = new("TimelineTest8", TimelineUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (Game.Width + 200, 30), (0, 0, 0, 0), 0, 10, (10, 0.05f));
-        UIImage timeTest9 = new("TimelineTest9", TimelineUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (Game.Width + 200, 30), (0, 0, 0, 0), 0, 10, (10, 0.05f));
-        UIImage timeTest10 = new("TimelineTest10", TimelineUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (Game.Width + 200, 30), (0, 0, 0, 0), 0, 10, (10, 0.05f));
+        timelineScrollViewCollection.AddElements(timelineScrollViewBackground, TimelineScrollView);
 
-        timelineScrollView.AddElements(timeTest1, timeTest2, timeTest3, timeTest4, timeTest5, timeTest6, timeTest7, timeTest8, timeTest9, timeTest10);
-
-        timelinePanelCollection.AddElements(timelineBackground, timelineSettingsCollection, timelineScrollView);
+        timelinePanelCollection.AddElements(timelineBackground, timelineMoveButton, timelineSettingsStacking, timelineScrollViewCollection);
 
         TimelineUI.AddElement(timelinePanelCollection);
     }
@@ -182,19 +213,59 @@ public class AnimationEditor : BaseEditor
         Model.RenderBones = true;
         Model.SetAnimationRig();
 
+        if (Model.Rig != null)
+        {
+            
+        }
+
         Model.SetAnimation();
 
         Info.RenderInfo = false;
         Handle_BoneMovement();
         regenerateVertexUi = true;
     }
-    
+
     public override void Render(GeneralModelingEditor editor)
     {
         editor.RenderModel();
 
         ModelingUi.RenderDepthTest();
         TimelineUI.RenderDepthTest();
+
+        GL.Viewport(15, 10, Game.Width - 385, 240);
+
+        GL.DepthFunc(DepthFunction.Always);
+        GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+        tickShader.Bind();
+
+        Matrix4 tickModel = Matrix4.CreateTranslation((TimelinePosition.X, TimelinePosition.Y, 0));
+        Matrix4 tickProjection = Matrix4.CreateOrthographicOffCenter(0, Game.Width - 385, 240, 0, -1, 1);
+
+        int tickModelLoc = GL.GetUniformLocation(tickShader.ID, "model");
+        int tickProjectionLoc = GL.GetUniformLocation(tickShader.ID, "projection");
+        int lineDataLoc = GL.GetUniformLocation(tickShader.ID, "lineData");
+
+        GL.UniformMatrix4(tickModelLoc, true, ref tickModel);
+        GL.UniformMatrix4(tickProjectionLoc, true, ref tickProjection);
+        GL.Uniform4(lineDataLoc, new Vector4(0.03f, 0.1f, 0.8f, 0.5f));
+
+        TickSSBO.Bind(0);
+        tickVao.Bind();
+
+        GL.DrawArrays(PrimitiveType.Triangles, 0, _tickCount);
+
+        Shader.Error("Tick shader error: ");
+
+        tickVao.Unbind();
+        TickSSBO.Unbind();
+
+        tickShader.Unbind();
+
+        GL.DepthFunc(DepthFunction.Less);
+
+        GL.Viewport(0, 0, Game.Width, Game.Height);
     }
 
     public override void Update(GeneralModelingEditor editor)
