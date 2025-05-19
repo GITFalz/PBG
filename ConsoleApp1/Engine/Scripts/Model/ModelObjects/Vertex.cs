@@ -141,12 +141,14 @@ public class Vertex
 
     public void ReplaceWith(Vertex vertex)
     {
-        foreach (var edge in ParentEdges)
+        List<Edge> edges = [.. ParentEdges];
+        foreach (var edge in edges)
         {
             edge.SetVertexTo(this, vertex);
         }
 
-        foreach (var triangle in ParentTriangles)
+        List<Triangle> triangles = [.. ParentTriangles];
+        foreach (var triangle in triangles)
         {
             triangle.SetVertexTo(this, vertex);
         }

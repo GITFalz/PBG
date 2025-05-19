@@ -366,8 +366,9 @@ public class AnimationEditor : BaseEditor
             TimelineScrollView.ResetInit();
             TimelineScrollView.Align();
             TimelineScrollView.UpdateScale();
-            KeyframePanelCollection.Align();
         }
+
+        KeyframePanelCollection.Align();
 
         Info.RenderInfo = false;
         Handle_BoneMovement();
