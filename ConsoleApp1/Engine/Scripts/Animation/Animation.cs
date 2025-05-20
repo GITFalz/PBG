@@ -32,6 +32,14 @@ public class Animation
         }
     }
 
+    public void AddBoneAnimation(BoneAnimation boneAnimation)
+    {
+        if (!BoneAnimations.ContainsKey(boneAnimation.Name))
+        {
+            BoneAnimations.Add(boneAnimation.Name, boneAnimation);
+        }
+    }
+
     public void AddBoneAnimation(string boneName, out BoneAnimation outAnimation)
     {
         if (BoneAnimations.TryGetValue(boneName, out BoneAnimation? value))
@@ -102,6 +110,32 @@ public class Animation
         return null;
     }
 
+    public bool HasBoneAnimation(string boneName)
+    {
+        return BoneAnimations.ContainsKey(boneName);
+    }
+
+    public bool TryGetBoneAnimation(string boneName, [NotNullWhen(true)] out BoneAnimation? boneAnimation)
+    {
+        return BoneAnimations.TryGetValue(boneName, out boneAnimation);
+    }
+
+    public List<string> Save()
+    {
+        List<string> lines = new List<string>();
+        foreach (var boneAnimation in BoneAnimations)
+        {
+            lines.Add($"Bone: {boneAnimation.Key}");
+            lines.Add("{");
+            foreach (var keyframe in boneAnimation.Value.Keyframes)
+            {
+                lines.AddRange(keyframe.Save());
+            }
+            lines.Add("}");
+        }
+        return lines;
+    }
+
     public void Clear()
     {
         foreach (var boneAnimation in BoneAnimations.Values)
@@ -114,12 +148,17 @@ public class Animation
 
 public class BoneAnimation
 {
+    public string Name = string.Empty;
     public List<AnimationKeyframe> Keyframes = new List<AnimationKeyframe>();
     public Func<AnimationKeyframe?> GetFrame;
     public float elapsedTime = 0;
     int index = 0;
 
-
+    public BoneAnimation(string name)
+    {
+        Name = name;
+        GetFrame = GetNullFrame;
+    }
     public BoneAnimation() { GetFrame = GetNullFrame; }
     public AnimationKeyframe? GetNullFrame() { return null; }
     public AnimationKeyframe? GetFrameSingle() { return Keyframes[0]; }
@@ -298,6 +337,7 @@ public class AnimationKeyframe
     public Quaternion Rotation;
     public float Scale;
 
+    public AnimationKeyframe() : this(0, Vector3.Zero, Quaternion.Identity, 1) { }
     public AnimationKeyframe(int index, Vector3 position, Quaternion rotation, float scale)
     {
         Index = index;
@@ -321,6 +361,22 @@ public class AnimationKeyframe
     {
         Index = index;
         Time = (float)index / (float)Animation.FRAMES;
+    }
+
+    public List<string> Save()
+    {
+        Vector3 rotation = Rotation.ToEulerAngles();
+        List<string> lines =
+        [
+            $"    Keyframe:",
+            "    {",
+            $"        Position: {Position.X} {Position.Y} {Position.Z}",
+            $"        Rotation: {rotation.X} {rotation.Y} {rotation.Z}",
+            $"        Scale: {Scale}",
+            $"        Index: {Index}",
+            "    }",
+        ];
+        return lines;
     }
 
     public AnimationKeyframe Lerp(Vector3 position, Quaternion rotation, float scale, float t)

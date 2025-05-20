@@ -27,13 +27,12 @@ public class RiggingEditor : BaseEditor
     public List<Vertex> SelectedVertices = new();
     public Dictionary<Vertex, Vector2> Vertices = new Dictionary<Vertex, Vector2>();
 
-    public List<Bone> SelectedBones = new();
-
     public string SelectedBoneName = "";
     public Bone? SelectedBone = null;
 
     public List<BonePivot> SelectedBonePivots = new();
     public Dictionary<BonePivot, (Vector2, float)> BonePivots = new Dictionary<BonePivot, (Vector2, float)>();
+    public List<Bone> SelectedBones = new();
 
     public bool renderSelection = false;
     public Vector2 oldMousePos = Vector2.Zero;

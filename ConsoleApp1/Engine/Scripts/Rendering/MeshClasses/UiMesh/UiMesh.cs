@@ -40,8 +40,6 @@ public class UIMesh
         VisibleElementCount++;
 
         _generateBuffers = true;
-
-        Console.WriteLine($"Added element: {element.Name}, index: {ElementCount - 1} at {uiData}");
     }
 
     public bool GetElementData(UIPanel element, out int index)
