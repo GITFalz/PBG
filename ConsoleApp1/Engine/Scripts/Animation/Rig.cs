@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using ConsoleApp1.Engine.Scripts.Core;
 using OpenTK.Mathematics;
 
 public class Rig
@@ -6,7 +7,7 @@ public class Rig
     public string Name { get; private set; } = "Rig";
     public RootBone RootBone = new RootBone("RootBone");
     public Dictionary<string, Bone> Bones = [];
-    public List<Bone> BonesList = [];
+    public List<Bone>   BonesList = [];
 
     public Rig(string name)
     {
@@ -20,12 +21,6 @@ public class Rig
         RootBone.GetBones(Bones);
     }
 
-    public void SetName(string newName)
-    {
-        if (RigManager.ChangeName(Name, newName))
-            Name = newName;
-    }
-
     public void Initialize()
     {
         BonesList = [];
@@ -37,6 +32,8 @@ public class Rig
             bone.Index = i;
             i++;
         }
+
+        RootBone.UpdateGlobalTransformation();
     }
 
     public bool GetBone(string name, [NotNullWhen(true)] out Bone? bone)

@@ -72,50 +72,6 @@ public static class RigManager
         return true;
     }
 
-    #region Save
-    public static void Save(string name, bool displayError = true)
-    {
-        Save(name, Game.rigPath, displayError);
-    }
-
-    public static void Save(string name, string path, bool displayError = true)
-    {
-        path = Path.Combine(path, name + ".rig");
-        if (!Rigs.TryGetValue(name, out Rig? rig))
-        {
-            if (displayError) PopUp.AddPopUp("Rig not found");
-            return;
-        }
-
-        if (File.Exists(path) && displayError)
-        {
-            PopUp.AddConfirmation("Overwrite Rig?", () => SaveRig(rig, path), () => { });
-            return;      
-        }
-
-        SaveRig(rig, path);
-    }
-
-    private static void SaveRig(Rig rig, string path)
-    {
-        Console.WriteLine($"Saving {rig.Bones.Count} from rig {rig.Name} to {path}");
-        List<string> lines = [rig.Bones.Count.ToString()];
-
-        foreach (var (name, bone) in rig.Bones)
-        {
-            string parentName = bone is ChildBone child ? child.Parent.Name : name;
-            lines.Add($"name {name}");
-            lines.Add($"parent {parentName}");
-            lines.Add($"p {Float.Str(bone.Position.X)}, {Float.Str(bone.Position.Y)}, {Float.Str(bone.Position.Z)}");
-            lines.Add($"r {Float.Str(bone.Rotation.X)}, {Float.Str(bone.Rotation.Y)}, {Float.Str(bone.Rotation.Z)}, {Float.Str(bone.Rotation.W)}");
-            lines.Add($"s {Float.Str(bone.Scale)}");
-        }
-
-        File.WriteAllLines(path, lines);
-        PopUp.AddPopUp("Rig saved");
-    }
-    #endregion
-
     #region Load
     public static bool Load(string name)
     {

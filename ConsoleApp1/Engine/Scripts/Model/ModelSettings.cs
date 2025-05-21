@@ -7,8 +7,6 @@ public static class ModelSettings
 
     public static Camera? Camera;
 
-    public static RenderType RenderType = RenderType.Vertex;
-
     // Ui values
     public static float MeshAlpha = 1.0f;
     public static bool WireframeVisible = true;

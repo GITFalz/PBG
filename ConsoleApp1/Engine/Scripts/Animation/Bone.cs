@@ -63,9 +63,6 @@ public abstract class Bone
     public abstract RootBone GetRootBone();
     public abstract Vector3 GetPivot();
     public abstract Vector3 GetEnd();
-    public abstract void Rotate();
-    public abstract void Rotate(Vector3 axis, float angle);
-    public abstract void Move();
 
     public void UpdateEndTarget()
     {
@@ -159,33 +156,6 @@ public class RootBone : Bone
         return Position + Vector3.Transform(new Vector3(0, 2, 0) * 0.1f * Scale, Rotation);
     }
 
-    public override void Rotate()
-    {
-        Vector2 mouseDelta = Input.GetMouseDelta();
-        
-        Vector3 axisY = Vector3.Normalize(Game.camera.front);
-        Vector3 axisX = Vector3.Normalize(Game.camera.right);
-
-        Rotation *= Quaternion.FromAxisAngle(axisY, MathHelper.DegreesToRadians(mouseDelta.X * GameTime.DeltaTime * 50f));
-        Rotation *= Quaternion.FromAxisAngle(axisX, MathHelper.DegreesToRadians(mouseDelta.Y * GameTime.DeltaTime * 50f));
-    }
-    
-    public override void Rotate(Vector3 axis, float angle)
-    {
-        Rotation *= Quaternion.FromAxisAngle(axis, MathHelper.DegreesToRadians(angle));
-    }
-
-    public override void Move()
-    {
-        Vector2 mouseDelta = Input.GetMouseDelta();
-
-        Vector3 axisY = Vector3.Normalize(Game.camera.up);
-        Vector3 axisX = Vector3.Normalize(Game.camera.right);
-
-        Position += axisY * -mouseDelta.Y * GameTime.DeltaTime * 5f;
-        Position += axisX * mouseDelta.X * GameTime.DeltaTime * 5f;
-    }
-
     public RootBone Copy()
     {
         var copy = new RootBone(Name);
@@ -247,44 +217,6 @@ public class ChildBone : Bone
         var v4Position = new Vector4(Position + Vector3.Transform(new Vector3(0, 2, 0) * 0.1f * Scale, Rotation), 1f);
         var v4Transformed = Parent.GlobalAnimatedMatrix.Transposed() * v4Position;
         return v4Transformed.Xyz;
-    }
-
-    public override void Rotate()
-    {
-        Vector2 mouseDelta = Input.GetMouseDelta();
-
-        Vector3 axisY = Vector3.Normalize(Game.camera.front);
-        Vector3 axisX = Vector3.Normalize(Game.camera.right);
-
-        Matrix4 invParent = GlobalAnimatedMatrix.Inverted();
-        Vector3 localAxisY = Vector3.Normalize(Vector3.TransformNormal(axisY, invParent));
-        Vector3 localAxisX = Vector3.Normalize(Vector3.TransformNormal(axisX, invParent));
-
-        Rotation *= Quaternion.FromAxisAngle(localAxisY, MathHelper.DegreesToRadians(mouseDelta.X * GameTime.DeltaTime * 50f));
-        Rotation *= Quaternion.FromAxisAngle(localAxisX, MathHelper.DegreesToRadians(mouseDelta.Y * GameTime.DeltaTime * 50f));
-    }
-    
-    public override void Rotate(Vector3 axis, float angle)
-    {
-        Matrix4 invParent = GlobalAnimatedMatrix.Inverted();
-        Vector3 localAxis = Vector3.Normalize(Vector3.TransformNormal(axis, invParent));
-
-        Rotation *= Quaternion.FromAxisAngle(localAxis, MathHelper.DegreesToRadians(angle));
-    }
-
-    public override void Move()
-    {
-        Vector2 mouseDelta = Input.GetMouseDelta();
-
-        Vector3 axisY = Vector3.Normalize(Game.camera.up);
-        Vector3 axisX = Vector3.Normalize(Game.camera.right);
-
-        Matrix4 invParent = GlobalAnimatedMatrix.Inverted();
-        Vector3 localAxisY = Vector3.Normalize(Vector3.TransformNormal(axisY, invParent));
-        Vector3 localAxisX = Vector3.Normalize(Vector3.TransformNormal(axisX, invParent));
-
-        Position += localAxisY * -mouseDelta.Y * GameTime.DeltaTime * 5f;
-        Position += localAxisX * mouseDelta.X * GameTime.DeltaTime * 5f;
     }
 
     public ChildBone Copy(Bone parent)

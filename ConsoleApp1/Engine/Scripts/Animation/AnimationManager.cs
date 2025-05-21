@@ -71,38 +71,6 @@ public class AnimationManager
         return true;
     }
 
-    #region Save
-    public static void Save(string name, bool displayError = true)
-    {
-        Save(name, Game.animationPath, displayError);
-    }
-
-    public static void Save(string name, string path, bool displayError = true)
-    {
-        path = Path.Combine(path, name + ".anim");
-        if (!Animations.TryGetValue(name, out Animation? animation))
-        {
-            if (displayError) PopUp.AddPopUp("Animation not found");
-            return;
-        }
-
-        if (File.Exists(path) && displayError)
-        {
-            PopUp.AddConfirmation("Overwrite Animation?", () => SaveRig(animation, path), () => { });
-            return;      
-        }
-
-        SaveRig(animation, path);
-    }
-
-    private static void SaveRig(Animation animation, string path)
-    {
-        var lines = animation.Save();
-        File.WriteAllLines(path, lines);
-        PopUp.AddPopUp("Animation saved");
-    }
-    #endregion
-
     #region Load
     public static bool Load(string name)
     {

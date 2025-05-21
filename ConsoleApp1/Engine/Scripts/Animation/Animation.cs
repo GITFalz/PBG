@@ -136,6 +136,16 @@ public class Animation
         return lines;
     }
 
+    public int GetFrameCount()
+    {
+        int count = 0;
+        foreach (var (_, boneAnimation) in BoneAnimations)
+        {
+            count = Mathf.Max(count, boneAnimation.GetFrameCount()); 
+        }
+        return count;
+    }
+
     public void Clear()
     {
         foreach (var boneAnimation in BoneAnimations.Values)
@@ -318,6 +328,16 @@ public class BoneAnimation
             return true;
         }
         return false;
+    }
+
+    public int GetFrameCount()
+    {
+        int count = 0;
+        foreach (var keyframe in Keyframes)
+        {
+            count = Mathf.Max(count, keyframe.Index);
+        }
+        return count;
     }
 
     public void Clear()

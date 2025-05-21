@@ -30,6 +30,8 @@ public class Game : GameWindow
     public static string uiPath = Path.Combine(assetPath, "UI");
     public static string texturePath = Path.Combine(assetPath, "Textures");
     public static readonly string modelPath = Path.Combine(assetPath, "Models");
+    public static readonly string rigPath = Path.Combine(assetPath, "Rigs");
+    public static readonly string animationPath = Path.Combine(assetPath, "Animations");
     public static readonly string undoModelPath = Path.Combine(mainPath, "UndoModels");
 
 
@@ -170,9 +172,13 @@ public class Game : GameWindow
             Directory.CreateDirectory(modelPath);
         if (!Directory.Exists(undoModelPath))
             Directory.CreateDirectory(undoModelPath);
+        if (!Directory.Exists(rigPath))
+            Directory.CreateDirectory(rigPath);
+        if (!Directory.Exists(animationPath))
+            Directory.CreateDirectory(animationPath);
         
         if (!Directory.Exists(assetPath))
-            Directory.CreateDirectory(assetPath);
+                Directory.CreateDirectory(assetPath);
         if (!Directory.Exists(uiPath))
             Directory.CreateDirectory(uiPath);
         

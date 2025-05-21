@@ -10,16 +10,16 @@ public class Texture : BufferBase
 
     private static int _bufferCount = 0;
     
-    public Texture(string filePath) : base()
+    public Texture(string filePath, TextureLocation textureLocation = TextureLocation.NormalTexture) : base()
     {
-        Create(filePath);
+        Create(filePath, textureLocation);
         _bufferCount++;
     }
 
-    public void Renew(string filePath)
+    public void Renew(string filePath, TextureLocation textureLocation = TextureLocation.NormalTexture)
     {
         GL.DeleteTexture(ID); // The texture needs to be deleted before creating a new one
-        Create(filePath);
+        Create(filePath, textureLocation);
     }
 
     public void Bind()
@@ -43,7 +43,7 @@ public class Texture : BufferBase
     public void Unbind() => GL.BindTexture(TextureTarget.Texture2D, 0); 
     public static void UnbindAll() => GL.BindTexture(TextureTarget.Texture2D, 0);
 
-    private void Create(string filePath)
+    private void Create(string filePath, TextureLocation textureLocation)
     {
         ID = GL.GenTexture();
 
@@ -55,8 +55,17 @@ public class Texture : BufferBase
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
 
-        StbImage.stbi_set_flip_vertically_on_load(1);
-        ImageResult texture = ImageResult.FromStream(File.OpenRead(Path.Combine(Game.texturePath, filePath)), ColorComponents.RedGreenBlueAlpha);
+        string path = textureLocation == TextureLocation.NormalTexture ? Game.texturePath : Game.texturePath;
+
+        StbImage.stbi_set_flip_vertically_on_load(0);
+
+        string fullPath = Path.Combine(path, filePath);
+        ImageResult texture;
+
+        using (var stream = File.OpenRead(fullPath))
+        {
+            texture = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
+        }
         
         Width = texture.Width;
         Height = texture.Height;
@@ -82,4 +91,10 @@ public class Texture : BufferBase
     {
         return "Texture";
     }
+}
+
+public enum TextureLocation
+{
+    NormalTexture,
+    CustumTexture,
 }
