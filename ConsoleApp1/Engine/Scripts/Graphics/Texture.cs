@@ -57,7 +57,7 @@ public class Texture : BufferBase
 
         string path = textureLocation == TextureLocation.NormalTexture ? Game.texturePath : Game.texturePath;
 
-        StbImage.stbi_set_flip_vertically_on_load(0);
+        StbImage.stbi_set_flip_vertically_on_load(1);
 
         string fullPath = Path.Combine(path, filePath);
         ImageResult texture;

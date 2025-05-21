@@ -61,6 +61,7 @@ public class Game : GameWindow
 
     // Miscaleanous Ui
     private PopUp _popUp;
+    private FileManager _fileManager;
 
     // This is needed because the OnResize method is called before the load method
     private Action _resizeAction = () => { };
@@ -80,6 +81,7 @@ public class Game : GameWindow
 
         _ = new Info();
         _popUp = new PopUp();
+        _fileManager = new FileManager();
         
         Width = width;
         Height = height;
@@ -129,6 +131,7 @@ public class Game : GameWindow
     public void OnResize()
     {
         _popUp.Resize();
+        _fileManager.Resize();
         Info.Resize();
         Timer.Resize();
         Inventory.ResizeAll();

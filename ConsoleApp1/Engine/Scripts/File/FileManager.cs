@@ -22,13 +22,23 @@ public class FileManager
 
         UIHorizontalCollection[] horizontalCollections = new UIHorizontalCollection[rows];
 
+        int oldrow = -1;
         for (int i = 0; i < elementCount; i++)
         {
             int currentRow = i / collumns;
             int currentColumn = i % collumns;
 
+            if (currentRow != oldrow)
+            {
+                horizontalCollections[currentRow] = new UIHorizontalCollection("FileHorizontalCollection" + currentRow, FilesUIController, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (Game.Width, Game.Height), (0, 0, 0, 0), (0, 0, 0, 0), 10, 0);
+                oldrow = currentRow;
+            }
 
+            UITextButton textButton = new UITextButton("FileButton" + i, FilesUIController, AnchorType.TopLeft, PositionType.Absolute, (0.5f, 0.5f, 0.5f), (0, 0, 0), (100, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f));
+            horizontalCollections[currentRow].AddElement(textButton.Collection);
         }
+
+        FilesUIController.AddElement(verticalCollection);
     }
 
     public void Resize()
