@@ -350,6 +350,7 @@ public class Game : GameWindow
         Timer.Update();
         Info.Update();
         _popUp.Update();
+        _fileManager.Update();
         UpdateCamera.Invoke();
         CurrentScene?.OnUpdate();
         ThreadPool.Update();
@@ -370,6 +371,7 @@ public class Game : GameWindow
         Skybox.Render();
         CurrentScene?.OnRender();
         _popUp.Render();
+        _fileManager.Render();
         Info.Render();
         Timer.Render();
         

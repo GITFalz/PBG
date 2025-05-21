@@ -1,9 +1,35 @@
+using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
+using OpenTK.Windowing.GraphicsLibraryFramework;
+
 public class FileManager
 {
     public UIController UIController;
+    public UIScrollView PathScrollView;
+    public UIInputField PathInput;
+    private int _pathCharacterCount => PathInput.Text.TrimEnd().Length;
+    private float _charWidth = 0;
+
     public UIController FilesUIController;
+    public UIScrollView UIScrollView;
+
+    public Vector3 Position
+    {
+        get => _position;
+        set
+        {
+            _position = value;
+            UIController.SetPosition(value);
+            FilesUIController.SetPosition(value);
+        }
+    }
+    private Vector3 _position = new Vector3(0, 0, 0);
 
     public string DefaultPath;
+    private List<string> CurrentPaths = [];
+
+    private bool _started = false;
+    private bool _test = false;
 
     public FileManager()
     {
@@ -11,44 +37,184 @@ public class FileManager
         FilesUIController = new UIController();
         DefaultPath = Game.mainPath;
 
-        string[] directories = Directory.GetDirectories(DefaultPath);
-        string[] files = Directory.GetFiles(DefaultPath);
+        UICollection backgroundCollection = new UICollection("FileBackgroundCollection", UIController, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (800, 500), (0, 0, 0, 0), 0);
 
-        int elementCount = directories.Length + files.Length;
-        int collumns = 6;
-        int rows = (int)Math.Ceiling((float)elementCount / collumns);
+        UIImage background = new UIImage("FileBackground", UIController, AnchorType.ScaleFull, PositionType.Relative, (0.65f, 0.65f, 0.65f, 1f), (0, 0, 0), (800, 500), (0, 0, 0, 0), 0, 0, (7.5f, 0.05f));
 
-        UIVerticalCollection verticalCollection = new UIVerticalCollection("FileVerticalCollection", FilesUIController, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (Game.Width, Game.Height), (0, 0, 0, 0), (5, 5, 5, 5), 10, 0);
+        UICollection pathCollection = new UICollection("PathCollection", UIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (790, 25), (5, 5, 0, 0), 0);
 
-        UIHorizontalCollection[] horizontalCollections = new UIHorizontalCollection[rows];
+        UIImage pathBackground = new UIImage("PathBackground", UIController, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (800, 500), (0, 0, 0, 0), 0, 11, (7.5f, 0.05f));
+        PathScrollView = new UIScrollView("PathScrollView", UIController, AnchorType.TopLeft, PositionType.Relative, CollectionType.Horizontal, (775, 25), (5, 0, 0, 0));
+        PathInput = new UIInputField("PathInput", UIController, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (800, 500), (5, 0, 0, 0), 0, 0, (0, 0));
+        PathInput.SetMaxCharCount(300).SetText(DefaultPath, 0.8f).TextType = TextType.All;
+        _charWidth = PathInput.Scale[0] / 300f;
 
-        int oldrow = -1;
-        for (int i = 0; i < elementCount; i++)
+        PathScrollView.AddElement(PathInput);
+
+        pathCollection.AddElements(pathBackground, PathScrollView);
+
+        UICollection manageCollection = new UICollection("ManageCollection", UIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (190, 460), (5, 35, 0, 0), 0);
+
+        UIImage manageBackground = new UIImage("ManageBackground", UIController, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (800, 500), (0, 0, 0, 0), 0, 11, (7.5f, 0.05f));
+        UIVerticalCollection manageVerticalCollection = new UIVerticalCollection("ManageVerticalCollection", UIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (190, 460), (5, 5, 0, 0), (0, 0, 0, 0), 2, 0);
+
+        UITextButton backButton = new UITextButton("BackButton", UIController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (180, 25), (5, 0, 0, 0), 0, 10, (7.5f, 0.05f));
+        backButton.SetText("Back", 0.8f).SetOnClick(() =>
         {
-            int currentRow = i / collumns;
-            int currentColumn = i % collumns;
+            ClearElements();
+            GenerateElements(Path.GetDirectoryName(GetPath()) ?? DefaultPath);
+        });
 
-            if (currentRow != oldrow)
+        manageVerticalCollection.AddElement(backButton.Collection);
+
+        manageCollection.AddElements(manageBackground, manageVerticalCollection);
+
+        UICollection folderCollection = new UICollection("FolderCollection", UIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (595, 460), (200, 35, 0, 0), 0);
+
+        UIImage folderBackground = new UIImage("FolderBackground", UIController, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (800, 500), (0, 0, 0, 0), 0, 11, (7.5f, 0.05f));
+
+        folderCollection.AddElement(folderBackground);
+
+        backgroundCollection.AddElements(background, pathCollection, manageCollection, folderCollection);
+
+        UIController.AddElement(backgroundCollection);
+
+        GenerateElements(DefaultPath);
+
+        PathInput.SetOnTextChange(() =>
+        {
+            if (_pathCharacterCount > 94)
             {
-                horizontalCollections[currentRow] = new UIHorizontalCollection("FileHorizontalCollection" + currentRow, FilesUIController, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (Game.Width, Game.Height), (0, 0, 0, 0), (0, 0, 0, 0), 10, 0);
-                oldrow = currentRow;
+                PathScrollView.ScrollPosition = (95 - _pathCharacterCount) * _charWidth + 5;
+                PathScrollView.SubElements.Align();
+                PathScrollView.SubElements.UpdateTransformation();
             }
+        });
 
-            UITextButton textButton = new UITextButton("FileButton" + i, FilesUIController, AnchorType.TopLeft, PositionType.Absolute, (0.5f, 0.5f, 0.5f), (0, 0, 0), (100, 100), (0, 0, 0, 0), 0, 0, (10, 0.05f));
-            horizontalCollections[currentRow].AddElement(textButton.Collection);
+        Position = (200, 200, 0);
+        _started = true;
+    }
+
+    public void ClearElements()
+    {
+        UIScrollView.Delete();
+    }
+
+    public void GenerateElements(string path)
+    {
+        CurrentPaths = [];
+        
+        string[] directories;
+        string[] files;
+
+        try
+        {
+            directories = Directory.GetDirectories(path);
+            files = Directory.GetFiles(path);
+        }
+        catch (Exception e)
+        {
+            return;
+        }
+        
+        List<string> allFiles = [];
+
+        for (int i = 0; i < directories.Length; i++)
+        {
+            string? directoryName = Path.GetFileName(directories[i]);
+            if (directoryName != null)
+            {
+                CurrentPaths.Add(directories[i]);
+                allFiles.Add(directoryName);
+            }
         }
 
-        FilesUIController.AddElement(verticalCollection);
+        int directoryCount = allFiles.Count;
+
+        for (int i = 0; i < files.Length; i++)
+        {
+            string? fileName = Path.GetFileName(files[i]);
+            if (fileName != null)
+            {
+                CurrentPaths.Add(files[i]);
+                allFiles.Add(fileName);
+            }
+        }
+
+        int elementCount = allFiles.Count;
+
+        UIScrollView = new UIScrollView("FileVerticalCollection", FilesUIController, AnchorType.TopLeft, PositionType.Absolute, CollectionType.Vertical, (595, 450), (200, 40, 0, 0));
+        UIScrollView.SetBorder((5, 5, 5, 5));
+
+        for (int i = 0; i < elementCount; i++)
+        {
+            bool isDirectory = i < directoryCount;
+            string newPath = CurrentPaths[i];
+
+            UICollection fileCollection = new UICollection("FileCollection" + i, FilesUIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 25), (100, 0, 0, 0), 0);
+
+            UIButton fileButton = new UIButton("FileButton" + i, FilesUIController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.7f, 1f), (0, 0, 0), (300, 25), (0, 0, 0, 0), 0, 0, (-1, -1), UIState.InvisibleInteractable);
+            UIImage fileBackground = new UIImage("FileButton" + i, FilesUIController, AnchorType.TopLeft, PositionType.Relative, isDirectory ? (0.4f, 0.5f, 0.7f, 1f) : (0.2f, 0.7f, 0.6f, 1f), (0, 0, 0), (25, 25), (0, 0, 0, 0), 0, isDirectory ? 90 : 91, (-1, -1));
+            UIText fileText = new UIText("FileText" + i, FilesUIController, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (100, 20), (30, 0, 0, 0), 0);
+            fileText.SetMaxCharCount(50).SetText(allFiles[i], 0.8f);
+
+            fileCollection.AddElements(fileButton, fileBackground, fileText);
+
+            UIScrollView.AddElement(fileCollection);
+
+            fileButton.SetOnClick(() =>
+            {
+                if (isDirectory)
+                {
+                    ClearElements();
+                    GenerateElements(newPath);
+                }
+            });
+        }
+
+        FilesUIController.AddElement(UIScrollView);
+            
+        PathInput.SetText(path, 0.8f).UpdateCharacters();
+    }
+
+    public string GetPath()
+    {
+        string[] paths = PathInput.Text.Split('\'');
+        if (paths.Length == 0)
+            return DefaultPath;
+
+        string path = paths[0];
+        for (int i = 1; i < paths.Length; i++)
+        {
+            string p = Path.Combine(path, paths[i]);
+            if (i == paths.Length - 1 && File.Exists(p)) // return only the folder path
+                break;
+    
+            path = p;
+        }
+        return path;
     }
 
     public void Resize()
     {
+        GL.DepthFunc(DepthFunction.Always);
         UIController.Resize();
         FilesUIController.Resize();
+        GL.DepthFunc(DepthFunction.Less);
     }
 
     public void Update()
     {
+        if (Input.IsKeyPressed(Keys.Enter))
+        {
+            string path = GetPath();
+            if (!Directory.Exists(path))
+                return;
+
+            ClearElements();
+            GenerateElements(path);
+        }
+
         UIController.Update();
         FilesUIController.Update();
     }

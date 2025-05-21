@@ -86,7 +86,7 @@ public class UIController
     {
         if (ElementsToAdd.Contains(element))
             return;
-        
+
         ElementsToAdd.Enqueue(element);
         RegenerateBuffers = true;
     }
@@ -264,7 +264,8 @@ public class UIController
 
             while (ElementsToAdd.Count > 0)
             {
-                Internal_AddElement(ElementsToAdd.Dequeue());
+                var element = ElementsToAdd.Dequeue();
+                Internal_AddElement(element);
             }
 
             foreach (var element in AbsoluteElements)
@@ -392,17 +393,6 @@ public class UIController
         return null;
     }
 
-    public static void AssignInputField(string name)
-    {
-        Console.WriteLine("Assigning: " + name);
-        
-        UIInputField? inputField = GetStaticInputField(name);
-        if (inputField == null)
-            return;
-        
-        activeInputField = inputField;
-    }
-
     public static void AssignInputField(UIInputField inputField)
     {
         Console.WriteLine("Assigning: " + inputField.Name);
@@ -416,7 +406,7 @@ public class UIController
 
     public static void InputField(Keys key)
     {
-        if (activeInputField == null || key == Keys.LeftShift || key == Keys.RightShift)
+        if (activeInputField == null || key == Keys.LeftShift || key == Keys.RightShift || key == Keys.RightAlt || key == Keys.LeftAlt || key == Keys.LeftControl || key == Keys.RightControl)
             return;
         
         if (key == Keys.Backspace)
@@ -426,7 +416,7 @@ public class UIController
             return;
         }
         
-        if (!Char.GetChar(out char c, key, Input.AreKeysDown(Keys.LeftShift, Keys.RightShift), Input.AreKeysDown(Keys.LeftAlt)))
+        if (!Char.GetChar(out char c, key, Input.AreKeysDown(Keys.LeftShift, Keys.RightShift), Input.AreKeysDown(Keys.RightAlt)))
             return;
         
         if (TextShaderHelper.CharExists(c))
