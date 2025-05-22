@@ -4,7 +4,7 @@ public class MaskData
 {
     public SSBO<UIMaskStruct> UIMaskSSBO = new();
     public List<UIMaskStruct> Masks = [];
-    public List<UIPanel> Elements = [];
+    public List<UIMask> Elements = [];
     public Dictionary<UIPanel, int> MaskElements = [];
 
     public int MaskCount = 0;

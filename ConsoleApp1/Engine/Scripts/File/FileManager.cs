@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -131,6 +132,9 @@ public class FileManager : ScriptingNode
             return;
         }
 
+        Array.Sort(directories);
+        Array.Sort(files);
+
         List<string> allFiles = [];
 
         for (int i = 0; i < directories.Length; i++)
@@ -159,6 +163,7 @@ public class FileManager : ScriptingNode
 
         UIScrollView = new UIScrollView("FileVerticalCollection", FilesUIController, AnchorType.TopLeft, PositionType.Absolute, CollectionType.Vertical, (595, 450), (200, 40, 0, 0));
         UIScrollView.SetBorder((5, 5, 5, 5));
+        UIScrollView.SetScrollSpeed(10f);
 
         for (int i = 0; i < elementCount; i++)
         {
@@ -194,9 +199,10 @@ public class FileManager : ScriptingNode
 
     public string GetPath()
     {
-        string[] paths = PathInput.Text.Split('\'');
+        string[] paths = PathInput.Text.Split(['\'', '/']);
         if (paths.Length == 0)
             return DefaultPath;
+            
 
         string path = paths[0];
         for (int i = 1; i < paths.Length; i++)
@@ -207,7 +213,8 @@ public class FileManager : ScriptingNode
 
             path = p;
         }
-        return path;
+        
+        return RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? '/' + path : path;
     }
 
     void Awake()
@@ -230,9 +237,9 @@ public class FileManager : ScriptingNode
             string path = GetPath();
             if (!Directory.Exists(path))
                 return;
-
-            ClearElements();
-            GenerateElements(path);
+                
+            _wantedPath = path;
+            _regen = true;
         }
 
         if (Input.IsKeyAndControlPressed(Keys.B))

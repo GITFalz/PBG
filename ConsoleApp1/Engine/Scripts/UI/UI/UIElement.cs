@@ -99,7 +99,6 @@ public abstract class UIElement
 
     public virtual void Align()
     {
-        Masked = false;
 
         if (PositionType == PositionType.Relative && ParentElement != null)
         {
@@ -239,11 +238,11 @@ public abstract class UIElement
         }
     }
 
-    private bool MouseOver(Vector2 pos, Vector2 origin, Vector2 offset, Vector2 scale)
+    private bool MouseOver(Vector2 pos, Vector2 origin, Vector2 offset, Vector2 scale, bool maskCheck = true)
     {
-        if (!Masked || !GetMaskPanel(out var panel))
+        if (maskCheck && Masked && GetMaskPanel(out var mask) && !mask.MouseOver(pos, mask.Origin.Xy, offset, mask.Scale, false))
         {
-            
+            return false;
         }
 
         if (Rotated)
@@ -296,13 +295,13 @@ public abstract class UIElement
         return lines;
     }
 
-    public bool GetMaskPanel([NotNullWhen(true)] out UIPanel? mask)
+    public bool GetMaskPanel([NotNullWhen(true)] out UIMask? mask)
     {
         mask = null;
-        if (MaskIndex < 0 || MaskIndex >= UIController.UIMesh.Elements.Count)
+        if (MaskIndex < 0 || MaskIndex >= UIController.MaskData.Elements.Count)
             return false;
-
-        mask = UIController.UIMesh.Elements[MaskIndex];
+ 
+        mask = UIController.MaskData.Elements[MaskIndex];
         return true;
     }
 
