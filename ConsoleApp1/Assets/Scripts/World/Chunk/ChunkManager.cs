@@ -184,7 +184,7 @@ public static class ChunkManager
                 }
                 else
                 {
-                    chunkEntry.Process.SetOnCompleteAction(() => { FreeChunk(chunkEntry); Console.WriteLine("Chunk freed: " + chunkEntry.Chunk.GetRelativePosition()); });
+                    chunkEntry.Process.SetOnCompleteAction(() => { FreeChunk(chunkEntry); Console.WriteLine("Chunk freed after process: " + chunkEntry.Chunk.GetRelativePosition()); });
                 }
             }
             else
@@ -196,6 +196,8 @@ public static class ChunkManager
 
     public static void FreeChunk(ChunkEntry chunkEntry)
     {
+        ActiveChunks.TryRemove(chunkEntry.Chunk.GetRelativePosition(), out _);
+        
         OpaqueChunks.Remove(chunkEntry.Chunk.GetWorldPosition());
         TransparentChunks.Remove(chunkEntry.Chunk.GetWorldPosition());
         ChunkPool.FreeChunk(chunkEntry.Chunk);
@@ -264,7 +266,7 @@ public static class ChunkManager
     public static bool GetChunk(Vector3i position, [NotNullWhen(true)] out ChunkEntry? entry)
     {
         entry = null;
-        if (!ActiveChunks.TryGetValue(position, out var chunkEntry))
+        if (!ActiveChunks.TryGetValue(position, out var chunkEntry) || chunkEntry.Stage == ChunkStage.Free)
             return false;
 
         entry = chunkEntry;
@@ -302,6 +304,15 @@ public static class ChunkManager
     public static void Unload()
     {
         ChunkPool.Clear();
+        Clear();
+    }
+
+    public static void FreeChunks()
+    {
+        foreach (var (_, chunkEntry) in ActiveChunks)
+        {
+            FreeChunk(chunkEntry);
+        }
         Clear();
     }
     
@@ -380,6 +391,7 @@ public class ChunkEntry
         {
             if (FreeChunk) 
             {
+                Console.WriteLine("Chunk freed after delete: " + Chunk.GetRelativePosition());
                 SetStage(ChunkStage.ToBeFreed);
                 Process = null;
             }

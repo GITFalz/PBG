@@ -32,20 +32,25 @@ public class MenuManager : ScriptingNode
 
         UICollection mainMenuButtonCollection = new UICollection("mainMenuButtonCollection", MainMenuController, AnchorType.MiddleCenter, PositionType.Relative, (0, 0, 0), (600, 800), (0, 0, 0, 0), 0);
 
-        UITextButton exitGameButton = new UITextButton("ExitGame", MainMenuController, AnchorType.BottomCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f), null, (200, 50), (0, -20, 0, 0), 0, 0, (10, 0.05f));
-        UITextButton WorldSwitchButton = new UITextButton("World", MainMenuController, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), null, (200, 50), (20, 20, 0, 0), 0, 0, (10, 0.05f));
-        UITextButton WorldNoiseEditorSwitchButton = new UITextButton("WorldNoiseEditor", MainMenuController, AnchorType.TopRight, PositionType.Relative, (0.6f, 0.6f, 0.6f), null, (200, 50), (-20, 20, 0, 0), 0, 0, (10, 0.05f));
+        UITextButton exitGameButton = new UITextButton("ExitGame", MainMenuController, AnchorType.BottomCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f), null, (180, 30), (0, -15, 0, 0), 0, 10, (10, 0.05f));
 
-        exitGameButton.SetMaxCharCount(9).SetText("Exit Game", 1.5f);
+        UITextButton gameDataButton = new UITextButton("GameData", MainMenuController, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f), null, (180, 30), (15, 15, 0, 0), 0, 10, (10, 0.05f));
+        UITextButton WorldSwitchButton = new UITextButton("World", MainMenuController, AnchorType.TopCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f), null, (180, 30), (0, 15, 0, 0), 0, 10, (10, 0.05f));
+        UITextButton WorldNoiseEditorSwitchButton = new UITextButton("WorldNoiseEditor", MainMenuController, AnchorType.TopRight, PositionType.Relative, (0.6f, 0.6f, 0.6f), null, (180, 30), (-15, 15, 0, 0), 0, 10, (10, 0.05f));
+
+        exitGameButton.SetMaxCharCount(9).SetText("Exit Game", 1.2f);
         exitGameButton.SetOnClick(QuitGame);
 
-        WorldSwitchButton.SetMaxCharCount(5).SetText("World", 1.5f);
+        gameDataButton.SetMaxCharCount(9).SetText("Game Data", 1.2f);
+        gameDataButton.SetOnClick(LoadGameData);
+
+        WorldSwitchButton.SetMaxCharCount(5).SetText("World", 1.2f);
         WorldSwitchButton.SetOnClick(LoadWorld);
 
-        WorldNoiseEditorSwitchButton.SetMaxCharCount(12).SetText("Noise Editor", 1.5f);
+        WorldNoiseEditorSwitchButton.SetMaxCharCount(12).SetText("Noise Editor", 1.2f);
         WorldNoiseEditorSwitchButton.SetOnClick(LoadWorldNoiseEditor);
 
-        mainMenuButtonCollection.AddElements(exitGameButton.GetMainElements(), WorldSwitchButton.GetMainElements(), WorldNoiseEditorSwitchButton.GetMainElements());
+        mainMenuButtonCollection.AddElements(exitGameButton.GetMainElements(), gameDataButton.GetMainElements(), WorldSwitchButton.GetMainElements(), WorldNoiseEditorSwitchButton.GetMainElements());
 
         mainMenuCollection.AddElements(mainMenuBackground, mainMenuButtonCollection);
 
@@ -148,6 +153,11 @@ public class MenuManager : ScriptingNode
     public void QuitGame()
     {
         Game.CloseGame();
+    }
+
+    public void LoadGameData()
+    {
+        Game.LoadScene("GameData");
     }
 
     public void LoadWorld()

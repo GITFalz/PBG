@@ -739,6 +739,7 @@ public class NoiseEditor : ScriptingNode
     void Exit()
     {
         Console.WriteLine("Exiting Noise Editor...");
+        CWorldMultithreadNodeManager.Clear();
         NoiseNodeManager.Compile(CWorldMultithreadNodeManager.MainNodeManager);
         CWorldMultithreadNodeManager.Copy(ThreadPool.ThreadCount);
     }

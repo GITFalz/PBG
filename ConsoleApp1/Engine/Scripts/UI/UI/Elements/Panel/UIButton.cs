@@ -29,10 +29,10 @@ public class UIButton : UIPanel
 
     public override void SetMaskIndex(int maskedIndex)
     {
+        base.SetMaskIndex(maskedIndex);
         if (!CanGenerate())
             return;
-            
-        base.SetMaskIndex(maskedIndex);
+        
         uIMesh.UpdateMaskedIndex(this, Masked, MaskIndex);
     }
 
@@ -58,10 +58,9 @@ public class UIButton : UIPanel
 
     public override void Delete() 
     {
-        if (!CanGenerate())
-            return;
         base.Delete();
-        uIMesh.RemoveElement(this);
+        if (CanGenerate())
+            uIMesh.RemoveElement(this);
     }
 
     protected override void Internal_UpdateTransformation()

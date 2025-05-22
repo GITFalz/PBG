@@ -67,7 +67,7 @@ public class WorldManager : ScriptingNode
 
         ChunkManager.GenerateNearbyPositions();
     }
-    
+
     void Awake()
     {
         Console.WriteLine("World Manager");
@@ -341,7 +341,7 @@ public class WorldManager : ScriptingNode
 
         if (!ChunkManager.GetChunk(chunkPosition, out Chunk? chunk)) 
             return -1;
-        
+
         block = chunk[VoxelData.BlockToRelativePosition(blockPosition)];
         return block.IsAir() ? 1 : 0;
     }
@@ -440,7 +440,6 @@ public class WorldManager : ScriptingNode
     public static void Delete()
     {
         ChunkManager.Unload();
-        CWorldMultithreadNodeManager.Clear();
         Chunk.Chunks = [];
 
         ChunkManager.OpaqueChunks = [];

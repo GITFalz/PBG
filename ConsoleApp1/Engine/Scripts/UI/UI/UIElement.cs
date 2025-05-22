@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
@@ -240,22 +241,27 @@ public abstract class UIElement
 
     private bool MouseOver(Vector2 pos, Vector2 origin, Vector2 offset, Vector2 scale)
     {
+        if (!Masked || !GetMaskPanel(out var panel))
+        {
+            
+        }
+
         if (Rotated)
-        {
-            Vector3 point1 = Mathf.RotateAround((origin.X, origin.Y, 0), Pivot, _rotationAxis, Rotation);
-            Vector3 point2 = Mathf.RotateAround((origin.X + scale.X, origin.Y, 0), Pivot, _rotationAxis, Rotation);
-            Vector3 point3 = Mathf.RotateAround((origin.X + scale.X, origin.Y + scale.Y, 0), _rotationAxis, Pivot, Rotation);
-            Vector3 point4 = Mathf.RotateAround((origin.X, origin.Y + scale.Y, 0), Pivot, _rotationAxis, Rotation);
+            {
+                Vector3 point1 = Mathf.RotateAround((origin.X, origin.Y, 0), Pivot, _rotationAxis, Rotation);
+                Vector3 point2 = Mathf.RotateAround((origin.X + scale.X, origin.Y, 0), Pivot, _rotationAxis, Rotation);
+                Vector3 point3 = Mathf.RotateAround((origin.X + scale.X, origin.Y + scale.Y, 0), _rotationAxis, Pivot, Rotation);
+                Vector3 point4 = Mathf.RotateAround((origin.X, origin.Y + scale.Y, 0), Pivot, _rotationAxis, Rotation);
 
-            return IsPointInRotatedRectangle(pos, [point1.Xy, point2.Xy, point3.Xy, point4.Xy]);
-        }
-        else
-        {
-            Vector2 point1 = Vector3.TransformPosition((origin.X, origin.Y, 0), UIController.ModelMatrix).Xy + offset;
-            Vector2 point2 = Vector3.TransformPosition((origin.X + scale.X, origin.Y + scale.Y, 0), UIController.ModelMatrix).Xy + offset;
+                return IsPointInRotatedRectangle(pos, [point1.Xy, point2.Xy, point3.Xy, point4.Xy]);
+            }
+            else
+            {
+                Vector2 point1 = Vector3.TransformPosition((origin.X, origin.Y, 0), UIController.ModelMatrix).Xy + offset;
+                Vector2 point2 = Vector3.TransformPosition((origin.X + scale.X, origin.Y + scale.Y, 0), UIController.ModelMatrix).Xy + offset;
 
-            return pos.X >= point1.X && pos.X <= point2.X && pos.Y >= point1.Y && pos.Y <= point2.Y;
-        }
+                return pos.X >= point1.X && pos.X <= point2.X && pos.Y >= point1.Y && pos.Y <= point2.Y;
+            }
     }
     # endregion
 
@@ -288,6 +294,16 @@ public abstract class UIElement
         lines.Add(gapString + "    AnchorType: " + (int)AnchorType);
         lines.Add(gapString + "    PositionType: " + (int)PositionType);
         return lines;
+    }
+
+    public bool GetMaskPanel([NotNullWhen(true)] out UIPanel? mask)
+    {
+        mask = null;
+        if (MaskIndex < 0 || MaskIndex >= UIController.UIMesh.Elements.Count)
+            return false;
+
+        mask = UIController.UIMesh.Elements[MaskIndex];
+        return true;
     }
 
     private static bool IsPointInRotatedRectangle(Vector2 point, Vector2[] rectanglePoints)

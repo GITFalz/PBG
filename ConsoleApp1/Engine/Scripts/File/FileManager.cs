@@ -2,7 +2,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-public class FileManager
+public class FileManager : ScriptingNode
 {
     public UIController UIController;
     public UIScrollView PathScrollView;
@@ -29,17 +29,32 @@ public class FileManager
     private List<string> CurrentPaths = [];
 
     private bool _started = false;
-    private bool _test = false;
+    private bool _regen = false;
+    private string _wantedPath;
+    private bool _doubleClick = false;
+    
+    private float _timer = -1;
 
     public FileManager()
     {
         UIController = new UIController();
         FilesUIController = new UIController();
         DefaultPath = Game.mainPath;
+        _wantedPath = DefaultPath;
 
         UICollection backgroundCollection = new UICollection("FileBackgroundCollection", UIController, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (800, 500), (0, 0, 0, 0), 0);
 
-        UIImage background = new UIImage("FileBackground", UIController, AnchorType.ScaleFull, PositionType.Relative, (0.65f, 0.65f, 0.65f, 1f), (0, 0, 0), (800, 500), (0, 0, 0, 0), 0, 0, (7.5f, 0.05f));
+        UIButton moveButton = new UIButton("MoveButton", UIController, AnchorType.TopLeft, PositionType.Relative, (0.65f, 0.65f, 0.65f, 1f), (0, 0, 0), (800, 20), (0, -20, 0, 0), 0, 10, (7.5f, 0.05f), UIState.Interactable);
+        moveButton.SetOnHold(() =>
+        {
+            Vector2 mouseDelta = Input.GetMouseDelta();
+            if (mouseDelta == Vector2.Zero)
+                return;
+
+            Position += new Vector3(mouseDelta.X, mouseDelta.Y, 0);
+        });
+
+        UIImage background = new UIImage("FileBackground", UIController, AnchorType.ScaleFull, PositionType.Relative, (0.65f, 0.65f, 0.65f, 1f), (0, 0, 0), (800, 500), (0, 0, 0, 0), 0, 10, (7.5f, 0.05f));
 
         UICollection pathCollection = new UICollection("PathCollection", UIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (790, 25), (5, 5, 0, 0), 0);
 
@@ -59,10 +74,11 @@ public class FileManager
         UIVerticalCollection manageVerticalCollection = new UIVerticalCollection("ManageVerticalCollection", UIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (190, 460), (5, 5, 0, 0), (0, 0, 0, 0), 2, 0);
 
         UITextButton backButton = new UITextButton("BackButton", UIController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (180, 25), (5, 0, 0, 0), 0, 10, (7.5f, 0.05f));
-        backButton.SetText("Back", 0.8f).SetOnClick(() =>
+        backButton.SetText("Back", 0.8f);
+        backButton.SetOnClick(() =>
         {
-            ClearElements();
-            GenerateElements(Path.GetDirectoryName(GetPath()) ?? DefaultPath);
+            _wantedPath = Path.GetDirectoryName(GetPath()) ?? DefaultPath;
+            _regen = true;
         });
 
         manageVerticalCollection.AddElement(backButton.Collection);
@@ -75,11 +91,9 @@ public class FileManager
 
         folderCollection.AddElement(folderBackground);
 
-        backgroundCollection.AddElements(background, pathCollection, manageCollection, folderCollection);
+        backgroundCollection.AddElements(moveButton, background, pathCollection, manageCollection, folderCollection);
 
         UIController.AddElement(backgroundCollection);
-
-        GenerateElements(DefaultPath);
 
         PathInput.SetOnTextChange(() =>
         {
@@ -92,7 +106,7 @@ public class FileManager
         });
 
         Position = (200, 200, 0);
-        _started = true;
+        _started = true; 
     }
 
     public void ClearElements()
@@ -103,7 +117,7 @@ public class FileManager
     public void GenerateElements(string path)
     {
         CurrentPaths = [];
-        
+
         string[] directories;
         string[] files;
 
@@ -116,7 +130,7 @@ public class FileManager
         {
             return;
         }
-        
+
         List<string> allFiles = [];
 
         for (int i = 0; i < directories.Length; i++)
@@ -154,7 +168,7 @@ public class FileManager
             UICollection fileCollection = new UICollection("FileCollection" + i, FilesUIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 25), (100, 0, 0, 0), 0);
 
             UIButton fileButton = new UIButton("FileButton" + i, FilesUIController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.7f, 1f), (0, 0, 0), (300, 25), (0, 0, 0, 0), 0, 0, (-1, -1), UIState.InvisibleInteractable);
-            UIImage fileBackground = new UIImage("FileButton" + i, FilesUIController, AnchorType.TopLeft, PositionType.Relative, isDirectory ? (0.4f, 0.5f, 0.7f, 1f) : (0.2f, 0.7f, 0.6f, 1f), (0, 0, 0), (25, 25), (0, 0, 0, 0), 0, isDirectory ? 90 : 91, (-1, -1));
+            UIImage fileBackground = new UIImage("FileBackground" + i, FilesUIController, AnchorType.TopLeft, PositionType.Relative, isDirectory ? (0.4f, 0.5f, 0.7f, 1f) : (0.2f, 0.7f, 0.6f, 1f), (0, 0, 0), (25, 25), (0, 0, 0, 0), 0, isDirectory ? 90 : 91, (-1, -1));
             UIText fileText = new UIText("FileText" + i, FilesUIController, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (100, 20), (30, 0, 0, 0), 0);
             fileText.SetMaxCharCount(50).SetText(allFiles[i], 0.8f);
 
@@ -164,16 +178,17 @@ public class FileManager
 
             fileButton.SetOnClick(() =>
             {
-                if (isDirectory)
+                if (_doubleClick && isDirectory)
                 {
-                    ClearElements();
-                    GenerateElements(newPath);
+                    _wantedPath = newPath;
+                    _regen = true;
+                    _doubleClick = false;
                 }
             });
         }
 
         FilesUIController.AddElement(UIScrollView);
-            
+
         PathInput.SetText(path, 0.8f).UpdateCharacters();
     }
 
@@ -189,13 +204,18 @@ public class FileManager
             string p = Path.Combine(path, paths[i]);
             if (i == paths.Length - 1 && File.Exists(p)) // return only the folder path
                 break;
-    
+
             path = p;
         }
         return path;
     }
 
-    public void Resize()
+    void Awake()
+    {
+        GenerateElements(DefaultPath);
+    }
+
+    void Resize()
     {
         GL.DepthFunc(DepthFunction.Always);
         UIController.Resize();
@@ -203,7 +223,7 @@ public class FileManager
         GL.DepthFunc(DepthFunction.Less);
     }
 
-    public void Update()
+    void Update()
     {
         if (Input.IsKeyPressed(Keys.Enter))
         {
@@ -215,13 +235,49 @@ public class FileManager
             GenerateElements(path);
         }
 
+        if (Input.IsKeyAndControlPressed(Keys.B))
+        {
+            FilesUIController.PrintMemory();
+        }
+
+        if (Input.IsMousePressed(MouseButton.Left))
+            {
+                if (_timer < 0)
+                {
+                    _doubleClick = false;
+                    _timer = 0.6f;
+                }
+                else if (_timer >= 0)
+                {
+                    _doubleClick = true;
+                    _timer = -1;
+                }
+            }
+
+        if (_timer >= 0)
+        {
+            _timer -= GameTime.DeltaTime;
+        }
+
         UIController.Update();
         FilesUIController.Update();
+
+        if (_regen)
+        {
+            ClearElements();
+            GenerateElements(_wantedPath);
+            _regen = false;
+        }
     }
 
-    public void Render()
+    void Render()
     {
         UIController.RenderNoDepthTest();
         FilesUIController.RenderNoDepthTest();
+    }
+
+    void Exit()
+    {
+        ClearElements();
     }
 }

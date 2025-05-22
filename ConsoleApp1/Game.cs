@@ -52,6 +52,7 @@ public class Game : GameWindow
     private Thread _physicsThread;
 
 
+    private static Scene _gameDataScene = new Scene("GameData");
     private static Scene _worldScene = new Scene("World");
     private static Scene _worldNoiseEditorScene = new Scene("WorldNoiseEditor");
     private static Scene _UIEditorScene = new Scene("UIEditor");
@@ -61,7 +62,6 @@ public class Game : GameWindow
 
     // Miscaleanous Ui
     private PopUp _popUp;
-    private FileManager _fileManager;
 
     // This is needed because the OnResize method is called before the load method
     private Action _resizeAction = () => { };
@@ -81,7 +81,6 @@ public class Game : GameWindow
 
         _ = new Info();
         _popUp = new PopUp();
-        _fileManager = new FileManager();
         
         Width = width;
         Height = height;
@@ -131,7 +130,6 @@ public class Game : GameWindow
     public void OnResize()
     {
         _popUp.Resize();
-        _fileManager.Resize();
         Info.Resize();
         Timer.Resize();
         Inventory.ResizeAll();
@@ -238,7 +236,12 @@ public class Game : GameWindow
         TransformNode menuNode = new TransformNode();
         MenuManager menuManager = new MenuManager();
         menuNode.AddChild(menuManager);
-        
+
+        // Game data
+        TransformNode gameDataNode = new TransformNode();
+        FileManager fileManager = new FileManager();
+        gameDataNode.AddChild(fileManager);
+         
         // World
         TransformNode worldGenerationNode = new TransformNode();
         worldGenerationNode.AddChild(new WorldManager());
@@ -261,11 +264,12 @@ public class Game : GameWindow
         TransformNode uiNode = new TransformNode();
         uiNode.AddChild(new UIEditor());
 
+        _gameDataScene.AddNode(gameDataNode, menuNode);
         _worldScene.AddNode(playerNode, worldGenerationNode, InventoryNode, SelectedItemNode, menuNode);
         _worldNoiseEditorScene.AddNode(noiseEditorNode, menuNode);
         _UIEditorScene.AddNode(uiNode, menuNode);
 
-        AddScenes(_worldScene, _worldNoiseEditorScene, _UIEditorScene);
+        AddScenes(_gameDataScene, _worldScene, _worldNoiseEditorScene, _UIEditorScene);
         //LoadScene("WorldNoiseEditor");
         LoadScene("World");
 
@@ -350,7 +354,6 @@ public class Game : GameWindow
         Timer.Update();
         Info.Update();
         _popUp.Update();
-        _fileManager.Update();
         UpdateCamera.Invoke();
         CurrentScene?.OnUpdate();
         ThreadPool.Update();
@@ -371,7 +374,6 @@ public class Game : GameWindow
         Skybox.Render();
         CurrentScene?.OnRender();
         _popUp.Render();
-        _fileManager.Render();
         Info.Render();
         Timer.Render();
         
