@@ -27,9 +27,11 @@ public class FileManager : ScriptingNode
     private Vector3 _position = new Vector3(0, 0, 0);
 
     public string DefaultPath;
+
+    public List<string> SelectedPaths = [];
+
     private List<string> CurrentPaths = [];
     private List<UIButton> _buttons = [];
-    private List<UIImage> _hover = [];
 
     private bool _regen = false;
     private string _wantedPath;
@@ -123,7 +125,6 @@ public class FileManager : ScriptingNode
     {
         CurrentPaths = [];
         _buttons = [];
-        _hover = [];
 
         string[] directories;
         string[] files;
@@ -184,10 +185,6 @@ public class FileManager : ScriptingNode
             fileButton.SetVisibility(false);
             fileButton.CanTest = true;
 
-            UIImage hoverImage = new UIImage("HoverImage" + i, FilesUIController, AnchorType.TopLeft, PositionType.Relative, new Vector4(UINoiseNodePrefab.SELECTION_COLOR.Xyz, 0.5f), (0, 0, 0), (300, 25), (0, 0, 0, 0), 0, 12, (7.5f, 0.05F));
-            _hover.Add(hoverImage);
-            hoverImage.SetVisibility(false);
-
             UICollection nameCollection = new UICollection("NameCollection" + i, FilesUIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 25), (0, 0, 0, 0), 0);
 
             UIImage fileBackground = new UIImage("FileBackground" + i, FilesUIController, AnchorType.TopLeft, PositionType.Relative, isDirectory ? (0.4f, 0.5f, 0.7f, 1f) : (0.2f, 0.7f, 0.6f, 1f), (0, 0, 0), (25, 25), (0, 0, 0, 0), 0, isDirectory ? 90 : 91, (-1, -1));
@@ -196,25 +193,9 @@ public class FileManager : ScriptingNode
 
             nameCollection.AddElements(fileBackground, fileText);
 
-            fileCollection.AddElements(fileButton, hoverImage, nameCollection);
+            fileCollection.AddElements(fileButton, nameCollection);
 
             UIScrollView.AddElement(fileCollection);
-
-            fileButton.SetOnHover(() =>
-            {
-                if (fileButton.Visible || hoverImage.Visible)
-                    return;
-
-                SetHover(index);
-            });
-
-            fileButton.SetOnHoverOut(() =>
-            {
-                if (!hoverImage.Visible)
-                    return;
-
-                RemoveHover(index);
-            });
 
             fileButton.SetOnClick(() =>
             {
@@ -254,7 +235,6 @@ public class FileManager : ScriptingNode
                     _start = index;
                     _end = index + 1;
                 }
-                
                 _clickedIndex = index;
             });
         }
@@ -266,6 +246,7 @@ public class FileManager : ScriptingNode
 
     public void SetNoSelection()
     {
+        SelectedPaths = [];
         for (int i = 0; i < _buttons.Count; i++)
         {
             UIButton button = _buttons[i];
@@ -290,6 +271,7 @@ public class FileManager : ScriptingNode
 
             UIButton button = _buttons[i];
             button.SetVisibility(true);
+            SelectedPaths.Add(CurrentPaths[i]);
         }
     }
 
@@ -300,6 +282,10 @@ public class FileManager : ScriptingNode
 
         UIButton button = _buttons[index];
         button.SetVisibility(!button.Visible);
+        if (button.Visible)
+            SelectedPaths.Add(CurrentPaths[index]);
+        else
+            SelectedPaths.Remove(CurrentPaths[index]);
     }
 
     public void RemoveSelection(int index)
@@ -309,24 +295,7 @@ public class FileManager : ScriptingNode
 
         UIButton button = _buttons[index];
         button.SetVisibility(false);
-    }
-
-    public void SetHover(int index)
-    {
-        if (index < 0 || index >= _hover.Count)
-            return;
-
-        UIImage hoverImage = _hover[index];
-        //hoverImage.SetVisibility(true);
-    }
-
-    public void RemoveHover(int index)
-    {
-        if (index < 0 || index >= _hover.Count)
-            return;
-
-        UIImage hoverImage = _hover[index];
-        //hoverImage.SetVisibility(false);
+        SelectedPaths.Remove(CurrentPaths[index]);
     }
 
     public string GetPath()

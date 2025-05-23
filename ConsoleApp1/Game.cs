@@ -240,7 +240,8 @@ public class Game : GameWindow
         // Game data
         TransformNode gameDataNode = new TransformNode();
         FileManager fileManager = new FileManager();
-        gameDataNode.AddChild(fileManager);
+        GameDataManager gameDataManager = new GameDataManager(fileManager);
+        gameDataNode.AddChild(gameDataManager, fileManager);
          
         // World
         TransformNode worldGenerationNode = new TransformNode();
