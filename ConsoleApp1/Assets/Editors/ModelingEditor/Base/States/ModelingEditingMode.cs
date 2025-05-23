@@ -656,6 +656,8 @@ public class ModelingEditingMode : ModelingBase
         Vector3 max = Vector3.Zero;
 
         ModelCopy copy = new ModelCopy(Model.SelectedVertices);
+        List<(Vector3, Vector3, List<Vertex>)> minMax = [];
+        float approximateVolume = 0;
 
         // Basic flattening and packing
         while (triangles.Count > 0)
@@ -701,18 +703,29 @@ public class ModelingEditingMode : ModelingBase
 
                 // Get the smallest possible bounding box of the selected region and rotate it if needed before moving it next to the last one
                 Mathf.GetSmallestBoundingBox(Model.SelectedVertices, out min, out max);
-                Vector3 size = max - min;
-                Vector3 vOffset = (offset.X - min.X, 0, -min.Z);
-                BoundingBoxRegion region = new BoundingBoxRegion(min + vOffset, max + vOffset, [.. Model.SelectedVertices]);
-                boundingBoxes.Add(region);
-
-                foreach (var vert in Model.SelectedVertices)
-                {
-                    vert.MovePosition(vOffset);
-                }
-
-                offset.X += size.X + 1;
+                minMax.Add((min, max, [.. Model.SelectedVertices]));
+                Vector2 size = max.Xz - min.Xz;
+                float volume = size.X * size.Y;
+                approximateVolume += volume;
             }
+        }
+
+        double sideLength = Math.Sqrt(approximateVolume);
+        float skip = (float)sideLength / 50;
+
+        foreach (var (Min, Max, vertices) in minMax)
+        {
+            Vector3 size = Max - Min;
+            Vector3 vOffset = (offset.X - Min.X, 0, -Min.Z);
+            BoundingBoxRegion region = new BoundingBoxRegion(Min + vOffset, Max + vOffset, vertices);
+            boundingBoxes.Add(region);
+
+            foreach (var vert in vertices)
+            {
+                vert.MovePosition(vOffset);
+            }
+
+            offset.X += size.X + skip;
         }
 
         Handle_SelectAllVertices();
@@ -720,17 +733,6 @@ public class ModelingEditingMode : ModelingBase
             trianglesDict[tris.ID] = tris;
 
         // Better packing algorithm
-
-        // Calculate the approximate volume of the packed regions
-        float approximateVolume = 0;
-        foreach (var region in boundingBoxes)
-        {
-            Vector2 size = (region.Max.X - region.Min.X + 2, region.Max.Z - region.Min.Z + 2); // +2 to avoid overlapping
-            float volume = size.X * size.Y;
-            approximateVolume += volume;
-        }
-
-        double sideLength = Math.Sqrt(approximateVolume) + 2; // +2 to avoid overlapping
 
         // Packing algorithm
         bool packed = false;
@@ -758,8 +760,8 @@ public class ModelingEditingMode : ModelingBase
                     continue;
                 }
 
-                Vector3 testMinLeft = (min.X, 0, max.Z + 2); // Tesing the region above the current one on the left side
-                Vector3 testMinRight = (max.X - lastSize.X, 0, max.Z + 2); // Tesing the region above the current one on the right side
+                Vector3 testMinLeft = (min.X, 0, max.Z + skip); // Tesing the region above the current one on the left side
+                Vector3 testMinRight = (max.X - lastSize.X, 0, max.Z + skip); // Tesing the region above the current one on the right side
 
                 bool collidingLeft = false;
                 for (int j = 0; j < boundingBoxes.Count; j++)
