@@ -62,7 +62,7 @@ public abstract class UIElement
         CanTest = false;
     }
 
-    public virtual void SetVisibility(bool visible) { Visible = visible; UIController.UpdateVisibility = true; }
+    public virtual void SetVisibility(bool visible) { Visible = visible; CanTest = visible; }
     public virtual void SetMasked(bool masked) { Masked = masked; }
     public virtual void SetMaskIndex(int maskIndex) { MaskIndex = maskIndex; }
     public virtual void Move(Vector3 offset) { Origin += offset; GetTransformation(); }
@@ -191,15 +191,15 @@ public abstract class UIElement
         CanTest = true;
         return this;
     }
-    # endregion
+    #endregion
 
-    # region Mouse Events
+    #region Mouse Events
     public virtual bool Test(Vector2 offset = default)
-    { 
-        if (!CanTest || !Visible) 
+    {
+        if (!CanTest)
             return false;
 
-        TestButtons(IsMouseOver(offset));  
+        TestButtons(IsMouseOver(offset));
         return true;
     }
     public bool IsMouseOver(Vector2 offset = default)

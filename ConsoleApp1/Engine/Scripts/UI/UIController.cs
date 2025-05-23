@@ -29,7 +29,6 @@ public class UIController
     public static int TextOffset = 0;
 
     public bool RegenerateBuffers = false;
-    public bool UpdateVisibility = true;
 
     public Queue<UIElement> ElementsToAdd = [];  
     public Queue<UIElement> ElementsToRemove = [];

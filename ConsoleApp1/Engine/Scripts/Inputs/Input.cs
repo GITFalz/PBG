@@ -13,6 +13,9 @@ public static class Input
     public static HashSet<Keys> PressedKeys = new HashSet<Keys>();
     public static HashSet<MouseButton> PressedButtons = new HashSet<MouseButton>();
 
+    public static bool LeftShiftDown => IsKeyDown(Keys.LeftShift);
+    public static bool LeftControlDown => IsKeyDown(Keys.LeftControl);
+
     public static void Start(KeyboardState keyboard, MouseState mouse)
     {
         _previousKeyboardState = keyboard;

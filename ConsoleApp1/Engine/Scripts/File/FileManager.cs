@@ -28,13 +28,18 @@ public class FileManager : ScriptingNode
 
     public string DefaultPath;
     private List<string> CurrentPaths = [];
+    private List<UIButton> _buttons = [];
+    private List<UIImage> _hover = [];
 
-    private bool _started = false;
     private bool _regen = false;
     private string _wantedPath;
     private bool _doubleClick = false;
+    private bool _clickedButton = false;
+    private int _clickedIndex = -1;
     
     private float _timer = -1;
+    private int _start = -1;
+    private int _end = -1;
 
     public FileManager()
     {
@@ -107,7 +112,6 @@ public class FileManager : ScriptingNode
         });
 
         Position = (200, 200, 0);
-        _started = true; 
     }
 
     public void ClearElements()
@@ -118,6 +122,8 @@ public class FileManager : ScriptingNode
     public void GenerateElements(string path)
     {
         CurrentPaths = [];
+        _buttons = [];
+        _hover = [];
 
         string[] directories;
         string[] files;
@@ -169,26 +175,87 @@ public class FileManager : ScriptingNode
         {
             bool isDirectory = i < directoryCount;
             string newPath = CurrentPaths[i];
+            int index = i;
 
             UICollection fileCollection = new UICollection("FileCollection" + i, FilesUIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 25), (100, 0, 0, 0), 0);
 
-            UIButton fileButton = new UIButton("FileButton" + i, FilesUIController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.7f, 1f), (0, 0, 0), (300, 25), (0, 0, 0, 0), 0, 0, (-1, -1), UIState.InvisibleInteractable);
+            UIButton fileButton = new UIButton("FileButton" + i, FilesUIController, AnchorType.TopLeft, PositionType.Relative, UINoiseNodePrefab.SELECTION_COLOR, (0, 0, 0), (300, 25), (0, 0, 0, 0), 0, 12, (7.5f, 0.05f), UIState.Interactable);
+            _buttons.Add(fileButton);
+            fileButton.SetVisibility(false);
+            fileButton.CanTest = true;
+
+            UIImage hoverImage = new UIImage("HoverImage" + i, FilesUIController, AnchorType.TopLeft, PositionType.Relative, new Vector4(UINoiseNodePrefab.SELECTION_COLOR.Xyz, 0.5f), (0, 0, 0), (300, 25), (0, 0, 0, 0), 0, 12, (7.5f, 0.05F));
+            _hover.Add(hoverImage);
+            hoverImage.SetVisibility(false);
+
+            UICollection nameCollection = new UICollection("NameCollection" + i, FilesUIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 25), (0, 0, 0, 0), 0);
+
             UIImage fileBackground = new UIImage("FileBackground" + i, FilesUIController, AnchorType.TopLeft, PositionType.Relative, isDirectory ? (0.4f, 0.5f, 0.7f, 1f) : (0.2f, 0.7f, 0.6f, 1f), (0, 0, 0), (25, 25), (0, 0, 0, 0), 0, isDirectory ? 90 : 91, (-1, -1));
             UIText fileText = new UIText("FileText" + i, FilesUIController, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (100, 20), (30, 0, 0, 0), 0);
             fileText.SetMaxCharCount(50).SetText(allFiles[i], 0.8f);
 
-            fileCollection.AddElements(fileButton, fileBackground, fileText);
+            nameCollection.AddElements(fileBackground, fileText);
+
+            fileCollection.AddElements(fileButton, hoverImage, nameCollection);
 
             UIScrollView.AddElement(fileCollection);
 
+            fileButton.SetOnHover(() =>
+            {
+                if (fileButton.Visible || hoverImage.Visible)
+                    return;
+
+                SetHover(index);
+            });
+
+            fileButton.SetOnHoverOut(() =>
+            {
+                if (!hoverImage.Visible)
+                    return;
+
+                RemoveHover(index);
+            });
+
             fileButton.SetOnClick(() =>
             {
-                if (_doubleClick && isDirectory)
+                _clickedButton = true;
+                if (_doubleClick && isDirectory && _clickedIndex == index)
                 {
                     _wantedPath = newPath;
                     _regen = true;
                     _doubleClick = false;
                 }
+
+                if (Input.LeftShiftDown)
+                {
+                    if (_start == -1)
+                    {
+                        _start = index;
+                        _end = index + 1;
+                    }
+                    else
+                    {
+                        _end = index + 1;
+                    }
+
+                    SetSelected(_start, _end);
+                }
+                else if (Input.LeftControlDown)
+                {
+                    if (index < _start)
+                        _start = index;
+                    else
+                        _end = index + 1;
+                    AddSelection(index);
+                }
+                else
+                {
+                    SetSelected(index, index + 1);
+                    _start = index;
+                    _end = index + 1;
+                }
+                
+                _clickedIndex = index;
             });
         }
 
@@ -197,12 +264,77 @@ public class FileManager : ScriptingNode
         PathInput.SetText(path, 0.8f).UpdateCharacters();
     }
 
+    public void SetNoSelection()
+    {
+        for (int i = 0; i < _buttons.Count; i++)
+        {
+            UIButton button = _buttons[i];
+            button.SetVisibility(false);
+            button.CanTest = true;
+        }
+    }
+
+    public void SetSelected(int start, int end)
+    {
+        if (end <= start)
+        {
+            (end, start) = (start, end);
+            start--; end++;
+        }
+
+        SetNoSelection();
+        for (int i = start; i < end; i++)
+        {
+            if (i < 0 || i >= _buttons.Count)
+                continue;
+
+            UIButton button = _buttons[i];
+            button.SetVisibility(true);
+        }
+    }
+
+    public void AddSelection(int index)
+    {
+        if (index < 0 || index >= _buttons.Count)
+            return;
+
+        UIButton button = _buttons[index];
+        button.SetVisibility(!button.Visible);
+    }
+
+    public void RemoveSelection(int index)
+    {
+        if (index < 0 || index >= _buttons.Count)
+            return;
+
+        UIButton button = _buttons[index];
+        button.SetVisibility(false);
+    }
+
+    public void SetHover(int index)
+    {
+        if (index < 0 || index >= _hover.Count)
+            return;
+
+        UIImage hoverImage = _hover[index];
+        //hoverImage.SetVisibility(true);
+    }
+
+    public void RemoveHover(int index)
+    {
+        if (index < 0 || index >= _hover.Count)
+            return;
+
+        UIImage hoverImage = _hover[index];
+        //hoverImage.SetVisibility(false);
+    }
+
     public string GetPath()
     {
         string[] paths = PathInput.Text.Split(['\'', '/']);
         if (paths.Length == 0)
             return DefaultPath;
-            
+
 
         string path = paths[0];
         for (int i = 1; i < paths.Length; i++)
@@ -213,7 +345,7 @@ public class FileManager : ScriptingNode
 
             path = p;
         }
-        
+
         return RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? '/' + path : path;
     }
 
@@ -224,10 +356,8 @@ public class FileManager : ScriptingNode
 
     void Resize()
     {
-        GL.DepthFunc(DepthFunction.Always);
         UIController.Resize();
         FilesUIController.Resize();
-        GL.DepthFunc(DepthFunction.Less);
     }
 
     void Update()
@@ -237,7 +367,7 @@ public class FileManager : ScriptingNode
             string path = GetPath();
             if (!Directory.Exists(path))
                 return;
-                
+
             _wantedPath = path;
             _regen = true;
         }
@@ -247,19 +377,21 @@ public class FileManager : ScriptingNode
             FilesUIController.PrintMemory();
         }
 
-        if (Input.IsMousePressed(MouseButton.Left))
+        bool left = Input.IsMousePressed(MouseButton.Left);
+
+        if (left)
+        {
+            if (_timer < 0)
             {
-                if (_timer < 0)
-                {
-                    _doubleClick = false;
-                    _timer = 0.6f;
-                }
-                else if (_timer >= 0)
-                {
-                    _doubleClick = true;
-                    _timer = -1;
-                }
+                _doubleClick = false;
+                _timer = 0.3f;
             }
+            else if (_timer >= 0)
+            {
+                _doubleClick = true;
+                _timer = -1;
+            }
+        }
 
         if (_timer >= 0)
         {
@@ -275,6 +407,12 @@ public class FileManager : ScriptingNode
             GenerateElements(_wantedPath);
             _regen = false;
         }
+        else if (left && !_clickedButton)
+        {
+            SetNoSelection();
+        }
+        
+        _clickedButton = false;
     }
 
     void Render()
