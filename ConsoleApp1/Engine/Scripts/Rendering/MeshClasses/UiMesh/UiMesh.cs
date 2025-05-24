@@ -166,6 +166,7 @@ public class UIMesh
 
     public void GenerateBuffers()
     {
+        UpdateData();
         _uiDataSSBO.Renew(UIData);
     }
 

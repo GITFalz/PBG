@@ -64,7 +64,7 @@ public class UIScrollView : UICollection
     public void GenerateMask()
     {
         SetMasked(true);
-        SetMaskIndex(0);
+        SetMaskIndex(MaskPanel.MaskData.GetMaskIndex(MaskPanel));
     }
 
     public override void SetVisibility(bool visible)

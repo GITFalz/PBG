@@ -96,6 +96,14 @@ public class MaskData
         Masks[index] = data;
     }
 
+    public int GetMaskIndex(UIMask element)
+    {
+        if (MaskElements.TryGetValue(element, out int index))
+            return index;
+
+        return 0;
+    }
+
     public void GenerateBuffers()
     {
         UIMaskSSBO.Renew(Masks);

@@ -43,6 +43,9 @@ public class FileManager : ScriptingNode
     private int _start = -1;
     private int _end = -1;
 
+    public bool IsVisible { get => _visible; }
+    private bool _visible = false;
+
     public FileManager()
     {
         UIController = new UIController();
@@ -52,7 +55,7 @@ public class FileManager : ScriptingNode
 
         UICollection backgroundCollection = new UICollection("FileBackgroundCollection", UIController, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (800, 500), (0, 0, 0, 0), 0);
 
-        UIButton moveButton = new UIButton("MoveButton", UIController, AnchorType.TopLeft, PositionType.Relative, (0.65f, 0.65f, 0.65f, 1f), (0, 0, 0), (800, 20), (0, -20, 0, 0), 0, 10, (7.5f, 0.05f), UIState.Interactable);
+        UIButton moveButton = new UIButton("MoveButton", UIController, AnchorType.TopLeft, PositionType.Relative, (0.65f, 0.65f, 0.65f, 1f), (0, 0, 0), (800, 20), (0, 0, 0, 0), 0, 10, (7.5f, 0.05f), UIState.Interactable);
         moveButton.SetOnHold(() =>
         {
             Vector2 mouseDelta = Input.GetMouseDelta();
@@ -62,9 +65,9 @@ public class FileManager : ScriptingNode
             Position += new Vector3(mouseDelta.X, mouseDelta.Y, 0);
         });
 
-        UIImage background = new UIImage("FileBackground", UIController, AnchorType.ScaleFull, PositionType.Relative, (0.65f, 0.65f, 0.65f, 1f), (0, 0, 0), (800, 500), (0, 0, 0, 0), 0, 10, (7.5f, 0.05f));
+        UIImage background = new UIImage("FileBackground", UIController, AnchorType.ScaleFull, PositionType.Relative, (0.65f, 0.65f, 0.65f, 1f), (0, 0, 0), (800, 500), (0, 20, 0, 0), 0, 10, (7.5f, 0.05f));
 
-        UICollection pathCollection = new UICollection("PathCollection", UIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (790, 25), (5, 5, 0, 0), 0);
+        UICollection pathCollection = new UICollection("PathCollection", UIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (790, 25), (5, 25, 0, 0), 0);
 
         UIImage pathBackground = new UIImage("PathBackground", UIController, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (800, 500), (0, 0, 0, 0), 0, 11, (7.5f, 0.05f));
         PathScrollView = new UIScrollView("PathScrollView", UIController, AnchorType.TopLeft, PositionType.Relative, CollectionType.Horizontal, (775, 25), (5, 0, 0, 0));
@@ -76,7 +79,7 @@ public class FileManager : ScriptingNode
 
         pathCollection.AddElements(pathBackground, PathScrollView);
 
-        UICollection manageCollection = new UICollection("ManageCollection", UIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (190, 460), (5, 35, 0, 0), 0);
+        UICollection manageCollection = new UICollection("ManageCollection", UIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (190, 460), (5, 55, 0, 0), 0);
 
         UIImage manageBackground = new UIImage("ManageBackground", UIController, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (800, 500), (0, 0, 0, 0), 0, 11, (7.5f, 0.05f));
         UIVerticalCollection manageVerticalCollection = new UIVerticalCollection("ManageVerticalCollection", UIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (190, 460), (5, 5, 0, 0), (0, 0, 0, 0), 2, 0);
@@ -93,7 +96,7 @@ public class FileManager : ScriptingNode
 
         manageCollection.AddElements(manageBackground, manageVerticalCollection);
 
-        UICollection folderCollection = new UICollection("FolderCollection", UIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (595, 460), (200, 35, 0, 0), 0);
+        UICollection folderCollection = new UICollection("FolderCollection", UIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (595, 460), (200, 55, 0, 0), 0);
 
         UIImage folderBackground = new UIImage("FolderBackground", UIController, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (800, 500), (0, 0, 0, 0), 0, 11, (7.5f, 0.05f));
 
@@ -114,6 +117,29 @@ public class FileManager : ScriptingNode
         });
 
         Position = (200, 200, 0);
+    }
+
+    public string[] GetSelectedFiles()
+    {
+        return SelectedPaths.ToArray();
+    }
+
+    public void ToggleOn()
+    {
+        if (_visible)
+            return;
+
+        _wantedPath = DefaultPath;
+        _regen = true;
+        _visible = true;
+    }
+
+    public void ToggleOff()
+    {
+        if (!_visible)
+            return;
+
+        _visible = false;
     }
 
     public void ClearElements()
@@ -168,7 +194,7 @@ public class FileManager : ScriptingNode
 
         int elementCount = allFiles.Count;
 
-        UIScrollView = new UIScrollView("FileVerticalCollection", FilesUIController, AnchorType.TopLeft, PositionType.Absolute, CollectionType.Vertical, (595, 450), (200, 40, 0, 0));
+        UIScrollView = new UIScrollView("FileVerticalCollection", FilesUIController, AnchorType.TopLeft, PositionType.Absolute, CollectionType.Vertical, (595, 450), (200, 60, 0, 0));
         UIScrollView.SetBorder((5, 5, 5, 5));
         UIScrollView.SetScrollSpeed(10f);
 
@@ -331,6 +357,9 @@ public class FileManager : ScriptingNode
 
     void Update()
     {
+        if (!_visible)
+            return;
+
         if (Input.IsKeyPressed(Keys.Enter))
         {
             string path = GetPath();
@@ -386,6 +415,9 @@ public class FileManager : ScriptingNode
 
     void Render()
     {
+        if (!_visible)
+            return;
+
         UIController.RenderNoDepthTest();
         FilesUIController.RenderNoDepthTest();
     }
