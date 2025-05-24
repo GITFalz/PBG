@@ -77,8 +77,6 @@ public abstract class UIElement
 
     public virtual void Generate() { }
 
-    public virtual void CalculateScale() {} // Used in collections
-
     /// <summary>
     /// Used when you want elements to be aligned at the end of the frame. 
     /// This can prevent you from clicking a button that re-aligns BEFORE it is passed trough the mouse clicking test.
@@ -121,9 +119,6 @@ public abstract class UIElement
         Center = Origin + new Vector3(newScale.X / 2, newScale.Y / 2, 0);
 
         return;
-        if (Name != "SidePanelBackground" && Name != "SidePanelCollection")
-            return;
-
         Console.WriteLine();
         Console.WriteLine($"Name: {Name}, PositionType: {PositionType}, AnchorType: {AnchorType}");
         Console.WriteLine($"Origin: {Origin}, Transformed: {_transformedOrigin}, Center: {Center}, Scale: {newScale}, Offset: {Offset}, Width: {Width}, Height: {Height}");
@@ -131,7 +126,11 @@ public abstract class UIElement
     }
 
     public virtual void ResetInit() {}
-    public virtual void Delete() { UIController.RemoveElement(this); }
+    public virtual void Delete(bool baseOnly = false)
+    {
+        ParentElement?.RemoveChild(this);
+        UIController.RemoveElement(this);
+    }
     public virtual void RemoveChild(UIElement element) {}
             
 

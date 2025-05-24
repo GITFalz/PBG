@@ -139,12 +139,12 @@ public class UIScrollView : UICollection
     public void DeleteSubElements()
     {
         SubElements.Delete();
-        SubElements.Clear();
     }
 
-    public override void Delete()
+    public override void Delete(bool baseOnly = false)
     {
-        base.Delete();
+        base.Delete(true);
+        if (baseOnly) return;
         DeleteSubElements();
     }
 

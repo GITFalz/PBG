@@ -48,9 +48,10 @@ public abstract class UIPanel : UIRender
         GenerateUIQuad(uIMesh);    
     }
 
-    public override void Delete() 
+    public override void Delete(bool baseOnly = false) 
     {
         base.Delete();
+        if (baseOnly) return;
         uIMesh.RemoveElement(this);
     }
 

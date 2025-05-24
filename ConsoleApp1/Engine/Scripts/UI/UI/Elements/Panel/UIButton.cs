@@ -56,9 +56,10 @@ public class UIButton : UIPanel
         GenerateUIQuad(uIMesh);    
     }
 
-    public override void Delete() 
+    public override void Delete(bool baseObnly = false) 
     {
         base.Delete();
+        if (baseObnly) return;
         if (CanGenerate())
             uIMesh.RemoveElement(this);
     }

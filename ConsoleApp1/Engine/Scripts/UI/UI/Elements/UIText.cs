@@ -136,9 +136,12 @@ public class UIText : UIElement
         TextMesh.UpdateCharacters(this, CharacterDataList);
     }
 
-    public override void Delete() 
+    public override void Delete(bool baseOnly = false) 
     {
+
         base.Delete();
+        if (baseOnly) 
+            return;
         TextMesh.RemoveElement(this);
         CharacterDataList.Clear();
         Chars.Clear();

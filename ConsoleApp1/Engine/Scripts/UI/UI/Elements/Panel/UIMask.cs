@@ -35,9 +35,10 @@ public class UIMask : UIPanel
         MaskData.AddElement(this);
     }
 
-    public override void Delete() 
+    public override void Delete(bool baseObnly = false) 
     {
         base.Delete();
+        if (baseObnly) return;
         MaskData.RemoveElement(this);
     }
 

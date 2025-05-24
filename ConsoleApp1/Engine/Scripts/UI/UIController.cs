@@ -245,53 +245,50 @@ public class UIController
     public void Test(Vector2 offset)
     {
         Vector2 newOffset = offset;
-        GenerateBuffers();
+        ApplyBufferChanges();
 
         foreach (var element in Elements)
             element.Test(newOffset);
+
+        FinalizeBuffers();
 
         PostTestUpdates();
         UpdateMeshes();
     }
 
-    public void GenerateBuffers()
+    public void ApplyBufferChanges()
     {
-        if (RegenerateBuffers)
-        {
-            while (ElementsToRemove.Count > 0)
-            {
-                Internal_RemoveElement(ElementsToRemove.Dequeue());
-            }
+        if (!RegenerateBuffers)
+            return;
 
-            while (ElementsToAdd.Count > 0)
-            {
-                var element = ElementsToAdd.Dequeue();
-                Internal_AddElement(element);
-            }
+        while (ElementsToRemove.Count > 0)
+            Internal_RemoveElement(ElementsToRemove.Dequeue());
 
-            foreach (var element in AbsoluteElements)
-            {
-                element.Align();
-            }
+        while (ElementsToAdd.Count > 0)
+            Internal_AddElement(ElementsToAdd.Dequeue());
+    }
 
-            foreach (var element in AddedElements)
-            {
-                element.Generate();
-            }
+    public void FinalizeBuffers()
+    {
+        if (!RegenerateBuffers)
+            return;
 
-            foreach (var scrollView in ScrollViews)
-            {
-                scrollView.GenerateMask(); 
-            }
+        foreach (var element in AbsoluteElements)
+            element.Align();
 
-            RemovedElements.Clear();
-            AddedElements.Clear();
+        foreach (var element in AddedElements)
+            element.Generate();
 
-            ElementsToAdd.Clear();
-            ElementsToRemove.Clear();
-        
-            RegenerateBuffers = false;
-        }
+        foreach (var scrollView in ScrollViews)
+            scrollView.GenerateMask();
+
+        RemovedElements.Clear();
+        AddedElements.Clear();
+
+        ElementsToAdd.Clear();
+        ElementsToRemove.Clear();
+
+        RegenerateBuffers = false;
     }
 
     /// <summary>
