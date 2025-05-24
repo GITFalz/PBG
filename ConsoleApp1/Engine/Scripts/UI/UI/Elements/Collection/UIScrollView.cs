@@ -136,9 +136,24 @@ public class UIScrollView : UICollection
         RemoveElement(element);
     }
 
-    public void DeleteSubElements()
+    /// <summary>
+    /// Deletes the sub-element and its children.
+    /// </summary>
+    public void DeleteSubElement()
     {
         SubElements.Delete();
+    }
+
+    /// <summary>
+    /// Deletes only the children of the sub-element.
+    /// </summary>
+    public void DeleteSubElements()
+    {
+        List<UIElement> elementsToRemove = [.. SubElements.Elements];
+        foreach (UIElement element in elementsToRemove)
+        {
+            element.Delete();
+        }
     }
 
     public override void Delete(bool baseOnly = false)

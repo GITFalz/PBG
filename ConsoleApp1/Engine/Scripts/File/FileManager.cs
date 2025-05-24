@@ -117,6 +117,14 @@ public class FileManager : ScriptingNode
         });
 
         Position = (200, 200, 0);
+
+
+        UIScrollView = new UIScrollView("FileVerticalCollection", FilesUIController, AnchorType.TopLeft, PositionType.Absolute, CollectionType.Vertical, (595, 450), (200, 60, 0, 0));
+        UIScrollView.SetBorder((5, 5, 5, 5));
+        UIScrollView.SetScrollSpeed(10f);
+
+        FilesUIController.AddElement(UIScrollView);
+        FilesUIController.Update(); // Force update to generate the UIScrollView
     }
 
     public string[] GetSelectedFiles()
@@ -144,7 +152,7 @@ public class FileManager : ScriptingNode
 
     public void ClearElements()
     {
-        UIScrollView.Delete();
+        UIScrollView.DeleteSubElements();
     }
 
     public void GenerateElements(string path)
@@ -194,10 +202,6 @@ public class FileManager : ScriptingNode
 
         int elementCount = allFiles.Count;
 
-        UIScrollView = new UIScrollView("FileVerticalCollection", FilesUIController, AnchorType.TopLeft, PositionType.Absolute, CollectionType.Vertical, (595, 450), (200, 60, 0, 0));
-        UIScrollView.SetBorder((5, 5, 5, 5));
-        UIScrollView.SetScrollSpeed(10f);
-
         for (int i = 0; i < elementCount; i++)
         {
             bool isDirectory = i < directoryCount;
@@ -222,6 +226,7 @@ public class FileManager : ScriptingNode
             fileCollection.AddElements(fileButton, nameCollection);
 
             UIScrollView.AddElement(fileCollection);
+            FilesUIController.AddElement(fileCollection);
 
             fileButton.SetOnClick(() =>
             {
@@ -264,8 +269,6 @@ public class FileManager : ScriptingNode
                 _clickedIndex = index;
             });
         }
-
-        FilesUIController.AddElement(UIScrollView);
 
         PathInput.SetText(path, 0.8f).UpdateCharacters();
     }
