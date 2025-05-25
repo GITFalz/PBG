@@ -49,8 +49,8 @@ public class PlayerStateMachine : ScriptingNode
     
     private PlayerBaseState _currentState;
     
-    private PlayerGameState _gameState = new();
-    private PlayerMenuState _menuState = new();
+    private PlayerGameState _gameState;
+    private PlayerMenuState _menuState;
     
     // Animation
     private OldAnimationMesh _playerMesh;
@@ -84,6 +84,8 @@ public class PlayerStateMachine : ScriptingNode
     public PlayerStateMachine()
     {
         Instance = this;
+        _gameState = new PlayerGameState(this);
+        _menuState = new PlayerMenuState(this);
     }
     
     void Start()
@@ -98,7 +100,7 @@ public class PlayerStateMachine : ScriptingNode
         PlayerData.PhysicsBody = physicsBody; 
         
         _currentState = _gameState;
-        _currentState.Enter(this);
+        _currentState.Enter();
         
         Transform.Position = new Vector3(0, 200, 0);
         physicsBody.SetPosition(Transform.Position);
@@ -185,15 +187,16 @@ public class PlayerStateMachine : ScriptingNode
                 return;
             }
 
-            model.Rig = rig;
-            model.InitRig();
+            model.AnimationManager = new ModelAnimationManager(rig);
             model.BindRig();
 
-            NormalizedAnimation normalizedAnimation = new(model.Rig, animation);
-            model.Animation = normalizedAnimation;
+            NormalizedAnimation normalizedAnimation = new(rig, animation);
+            model.AnimationManager.AddAnimation(normalizedAnimation);
 
             PlayerModel = model;
             PlayerModel.Animate = true;
+            
+            PlayerModel.AnimationManager.Loop("PlayerAnimation");
         }
     }
 
@@ -228,10 +231,6 @@ public class PlayerStateMachine : ScriptingNode
 
         forward = Mathf.YAngleToDirection(-yaw);
 
-        PlayerData.LookingAtBlock = false;
-        PlayerData.LookingAtBlockPosition = Vector3i.Zero;
-        PlayerData.LookingAtBlockPlacementPosition = Vector3i.Zero;
-
         if (VoxelData.Raycast(camera.Center, camera.front, 4, out Hit hit))
         {
             Vector3i blockPos = hit.BlockPosition;
@@ -242,6 +241,13 @@ public class PlayerStateMachine : ScriptingNode
             PlayerData.LookingAtBlock = true;
             PlayerData.LookingAtBlockPosition = blockPos;
             PlayerData.LookingAtBlockPlacementPosition = blockPos + n;
+        }
+        else if (PlayerData.LookingAtBlock)
+        {
+            PlayerData.LookingAtBlock = false;
+            PlayerData.LookingAtBlockPosition = Vector3i.Zero;
+            PlayerData.LookingAtBlockPlacementPosition = Vector3i.Zero;
+            _renderHit = () => {};
         }
 
         camera.Center = Mathf.Lerp(_oldCameraCenter, Transform.Position + (0, 0.85f, 0), GameTime.PhysicsDelta);
@@ -262,7 +268,7 @@ public class PlayerStateMachine : ScriptingNode
             camera.Position = Vector3.Lerp(camera.Position, _targetPosition, delta);
         }
 
-        _currentState.Update(this);
+        _currentState.Update();
 
         _oldPosition = Transform.Position;
         PlayerData.Position = Transform.Position;
@@ -281,7 +287,7 @@ public class PlayerStateMachine : ScriptingNode
         if (!PlayerData.UpdatePhysics || Game.Camera.GetCameraMode() == CameraMode.Free || !Game.MoveTest)
             return;
         
-        _currentState.FixedUpdate(this);
+        _currentState.FixedUpdate();
     }
 
     void Render()
@@ -389,9 +395,9 @@ public class PlayerStateMachine : ScriptingNode
     
     public void SwitchState(PlayerBaseState newState)
     {
-        _currentState.Exit(this);
+        _currentState.Exit();
         _currentState = newState;
-        _currentState.Enter(this);
+        _currentState.Enter();
     }
 
     public void MovePlayer(PlayerMovementSpeed playerMovementSpeed)

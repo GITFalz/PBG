@@ -1,21 +1,25 @@
 ﻿public class PlayerMenuState : PlayerBaseState
 {
-    public override void Enter(PlayerStateMachine playerStateMachine)
+    public PlayerMenuState(PlayerStateMachine playerStateMachine) : base(playerStateMachine)
     {
-  
+    }
+    
+    public override void Enter()
+    {
+
     }
 
-    public override void Update(PlayerStateMachine playerStateMachine)
+    public override void Update()
     {
 
     }
     
-    public override void FixedUpdate(PlayerStateMachine playerStateMachine)
+    public override void FixedUpdate()
     {
 
     }
 
-    public override void Exit(PlayerStateMachine playerStateMachine)
+    public override void Exit()
     {
 
     }

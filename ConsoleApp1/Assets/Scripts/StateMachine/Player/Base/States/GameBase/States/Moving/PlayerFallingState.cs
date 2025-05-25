@@ -8,7 +8,7 @@ public class PlayerFallingState : PlayerGameBaseState
     double timer = 0;
     
     
-    public override void Enter(PlayerGameState playerGameState)
+    public override void Enter()
     {
         Console.WriteLine("Entering falling state");
 
@@ -17,44 +17,44 @@ public class PlayerFallingState : PlayerGameBaseState
         Camera = Game.Camera;
     }
 
-    public override void Update(PlayerGameState playerGameState)
+    public override void Update()
     {
         input = Input.GetMovementInput();
 
         if (Input.IsKeyPressed(Keys.F))
         {
-            playerGameState.SwitchState(playerGameState.GrapplingState);
+            GameState.SwitchState(GameState.GrapplingState);
             return;
         }
 
         if (timer > 1f)
         {
-            playerGameState.MovementSpeed = PlayerMovementSpeed.Walk;
+            GameState.MovementSpeed = PlayerMovementSpeed.Walk;
         }
         
-        if (playerGameState.PlayerStateMachine.IsHuggingWall() && Input.IsKeyPressed(Keys.Space))
+        if (StateMachine.IsHuggingWall() && Input.IsKeyPressed(Keys.Space))
         {
-            playerGameState.PlayerStateMachine.physicsBody.Velocity.Y = 0;
-            playerGameState.SwitchState(playerGameState.JumpingState);
+            StateMachine.physicsBody.Velocity.Y = 0;
+            GameState.SwitchState(GameState.JumpingState);
             return;
         }
         
-        if (playerGameState.PlayerStateMachine.IsGrounded())
+        if (StateMachine.IsGrounded())
         {
-            playerGameState.SwitchState(playerGameState.GroundedState);
+            GameState.SwitchState(GameState.GroundedState);
             return;
         }
         
         timer += GameTime.DeltaTime;
     }
     
-    public override void FixedUpdate(PlayerGameState playerGameState)
+    public override void FixedUpdate()
     {
         if (input != Vector2.Zero)
-            playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Fall);
+            StateMachine.MovePlayer(PlayerMovementSpeed.Fall);
     }
 
-    public override void Exit(PlayerGameState playerGameState)
+    public override void Exit()
     {
 
     }

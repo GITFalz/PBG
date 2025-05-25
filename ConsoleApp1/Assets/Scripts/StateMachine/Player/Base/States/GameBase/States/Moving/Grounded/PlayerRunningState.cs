@@ -5,68 +5,68 @@ public class PlayerRunningState : PlayerGameBaseState
 {
     Vector2 input = Vector2.Zero;
     
-    public override void Enter(PlayerGameState playerGameState)
+    public override void Enter()
     {
         Console.WriteLine("Entering running state");
 
-        //playerGameState.PlayerStateMachine.physicsBody.Drag = 10f;
-        playerGameState.NextMovingState = playerGameState.RunningState;
-        playerGameState.MovementSpeed = PlayerMovementSpeed.Run;
+        //StateMachine.physicsBody.Drag = 10f;
+        GameState.NextMovingState = GameState.RunningState;
+        GameState.MovementSpeed = PlayerMovementSpeed.Run;
 
         Game.Camera.SetFOV(70);
     }
 
-    public override void Update(PlayerGameState playerGameState)
+    public override void Update()
     {
         input = Input.GetMovementInput();
         
         if (Input.IsKeyPressed(Keys.LeftControl))
         {
-            playerGameState.SwitchState(playerGameState.WalkingState);
+            GameState.SwitchState(GameState.WalkingState);
             return;
         }
 
         if (Input.IsKeyPressed(Keys.F))
         {
-            playerGameState.SwitchState(playerGameState.GrapplingState);
+            GameState.SwitchState(GameState.GrapplingState);
             return;
         }
         
         if (input == Vector2.Zero)
         {
-            playerGameState.SwitchState(playerGameState.IdleState);
+            GameState.SwitchState(GameState.IdleState);
             return;
         }
 
-        if (!playerGameState.PlayerStateMachine.BlockSwitch)
+        if (!StateMachine.BlockSwitch)
         {
             if (Input.IsMousePressed(MouseButton.Right))
             {
-                playerGameState.SwitchState(playerGameState.DashState);
+                GameState.SwitchState(GameState.DashState);
                 return;
             }
         }
         
         if (Input.IsKeyDown(Keys.Space) && Game.MoveTest)
         {
-            playerGameState.SwitchState(playerGameState.JumpingState);
+            GameState.SwitchState(GameState.JumpingState);
             return;
         }
 
-        if (!playerGameState.PlayerStateMachine.IsGrounded())
+        if (!StateMachine.IsGrounded())
         {
-            playerGameState.SwitchState(playerGameState.FallingState);
+            GameState.SwitchState(GameState.FallingState);
             return;
         }
     }
     
-    public override void FixedUpdate(PlayerGameState playerGameState)
+    public override void FixedUpdate()
     {
-        playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Run);
+        StateMachine.MovePlayer(PlayerMovementSpeed.Run);
     }
 
-    public override void Exit(PlayerGameState playerGameState)
+    public override void Exit()
     {
-        //playerGameState.PlayerStateMachine.physicsBody.Drag = 0.3f;
+        //StateMachine.physicsBody.Drag = 0.3f;
     }
 }

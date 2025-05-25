@@ -3,9 +3,6 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PlayerGameState : PlayerBaseState
 {
-    public PlayerStateMachine PlayerStateMachine;
-    private PlayerGameBaseState _currentState;
-    
     public PlayerAdminState AdminState = new();
     public PlayerFallingState FallingState = new();
     public PlayerGroundedState GroundedState = new();
@@ -22,38 +19,36 @@ public class PlayerGameState : PlayerBaseState
     public PlayerGrapplingState GrapplingState = new();
     public PlayerGrapplingSwingOutState GrapplingSwingOutState = new();
 
+    private PlayerGameBaseState _currentState;
+
     public PlayerGameBaseState NextMovingState;
     public PlayerMovementSpeed MovementSpeed;
 
-    public void Start()
+    public PlayerGameState(PlayerStateMachine playerStateMachine) : base(playerStateMachine)
     {
-        InputManager.SetAction([Keys.Space], () => SwitchState(JumpingState));
-        InputManager.SetAction([MouseButton.Left], () => SwitchState(Attack1State));
+        _currentState = IdleState;
+        NextMovingState = IdleState;
     }
     
-    public override void Enter(PlayerStateMachine playerStateMachine)
+    public override void Enter()
     {
         Console.WriteLine("Entering game state");
         
-        NextMovingState = WalkingState;
-        
-        PlayerStateMachine = playerStateMachine;
-        
         _currentState = FallingState;
-        _currentState.Enter(this);
+        _currentState.Enter();
     }
 
-    public override void Update(PlayerStateMachine playerStateMachine)
+    public override void Update()
     {
-        _currentState.Update(this);
+        _currentState.Update();
     }
     
-    public override void FixedUpdate(PlayerStateMachine playerStateMachine)
+    public override void FixedUpdate()
     {
-        _currentState.FixedUpdate(this);
+        _currentState.FixedUpdate();
     }
 
-    public override void Exit(PlayerStateMachine playerStateMachine)
+    public override void Exit()
     {
 
     }
@@ -65,8 +60,8 @@ public class PlayerGameState : PlayerBaseState
     
     public void SwitchState(PlayerGameBaseState newState)
     {
-        _currentState.Exit(this);
+        _currentState.Exit();
         _currentState = newState;
-        _currentState.Enter(this);
+        _currentState.Enter();
     }
 }

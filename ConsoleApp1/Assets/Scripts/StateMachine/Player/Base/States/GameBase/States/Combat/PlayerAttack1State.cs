@@ -10,7 +10,7 @@ public class PlayerAttack1State : PlayerGameBaseState
     
     bool attacked = false;
     
-    public override void Enter(PlayerGameState playerGameState)
+    public override void Enter()
     {
         Console.WriteLine("Entering attack 1 state");
         
@@ -22,7 +22,7 @@ public class PlayerAttack1State : PlayerGameBaseState
         OldAnimationManager.Instance.SetAnimation("Player", "attack1");
     }
 
-    public override void Update(PlayerGameState playerGameState)
+    public override void Update()
     {
         timer += GameTime.DeltaTime;
         input = Input.GetMovementInput();
@@ -34,7 +34,7 @@ public class PlayerAttack1State : PlayerGameBaseState
         {
             if (attacked)
             {
-                playerGameState.SwitchState(playerGameState.Attack2State);
+                GameState.SwitchState(GameState.Attack2State);
                 return;
             }
             
@@ -42,13 +42,13 @@ public class PlayerAttack1State : PlayerGameBaseState
             {
                 if (input != Vector2.Zero && Game.MoveTest)
                 {
-                    playerGameState.SwitchState(playerGameState.NextMovingState);
+                    GameState.SwitchState(GameState.NextMovingState);
                     return;
                 }
 
                 if (input == Vector2.Zero)
                 {
-                    playerGameState.SwitchState(playerGameState.IdleState);
+                    GameState.SwitchState(GameState.IdleState);
                     return;
                 }
             }
@@ -56,17 +56,17 @@ public class PlayerAttack1State : PlayerGameBaseState
         
         if (Input.IsKeyDown(Keys.Space) && Game.MoveTest)
         {
-            playerGameState.SwitchState(playerGameState.JumpingState);
+            GameState.SwitchState(GameState.JumpingState);
             return;
         }
     }
 
-    public override void FixedUpdate(PlayerGameState playerGameState)
+    public override void FixedUpdate()
     {
         
     }
 
-    public override void Exit(PlayerGameState playerGameState)
+    public override void Exit()
     {
         timer = 0;
     }

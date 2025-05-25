@@ -6,49 +6,49 @@ public class PlayerJumpingState : PlayerGameBaseState
     Camera Camera;
     Vector2 input = Vector2.Zero;
     
-    public override void Enter(PlayerGameState playerGameState)
+    public override void Enter()
     {
         Console.WriteLine("Entering jumping state");
         
-        //playerGameState.PlayerStateMachine.physicsBody.Drag = 2;
+        //StateMachine.physicsBody.Drag = 2;
         Camera = Game.Camera;
         
-        playerGameState.PlayerStateMachine.physicsBody.AddForce(new Vector3(0, PlayerStateMachine.JUMP_SPEED, 0));
+        StateMachine.physicsBody.AddForce(new Vector3(0, PlayerStateMachine.JUMP_SPEED, 0));
         
         OldAnimationManager.Instance.SetAnimation("Player", "jumping");
     }
 
-    public override void Update(PlayerGameState playerGameState)
+    public override void Update()
     {
         input = Input.GetMovementInput();
 
         if (Input.IsKeyPressed(Keys.F))
         {
-            playerGameState.SwitchState(playerGameState.GrapplingState);
+            GameState.SwitchState(GameState.GrapplingState);
             return;
         }
         
-        if (playerGameState.PlayerStateMachine.physicsBody.Velocity.Y < 0)
+        if (StateMachine.physicsBody.Velocity.Y < 0)
         {
-            playerGameState.SwitchState(playerGameState.FallingState);
+            GameState.SwitchState(GameState.FallingState);
             return;
         }
         
-        if (playerGameState.PlayerStateMachine.IsGrounded() && playerGameState.PlayerStateMachine.physicsBody.Velocity.Y < 0)
+        if (StateMachine.IsGrounded() && StateMachine.physicsBody.Velocity.Y < 0)
         {
-            playerGameState.SwitchState(playerGameState.GroundedState);
+            GameState.SwitchState(GameState.GroundedState);
             return;
         }
     }
     
-    public override void FixedUpdate(PlayerGameState playerGameState)
+    public override void FixedUpdate()
     {
         if (input != Vector2.Zero)
-            playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Fall);
+            StateMachine.MovePlayer(PlayerMovementSpeed.Fall);
     }
 
-    public override void Exit(PlayerGameState playerGameState)
+    public override void Exit()
     {
-        //playerGameState.PlayerStateMachine.physicsBody.Drag = 0.1f;
+        //StateMachine.physicsBody.Drag = 0.1f;
     }
 }

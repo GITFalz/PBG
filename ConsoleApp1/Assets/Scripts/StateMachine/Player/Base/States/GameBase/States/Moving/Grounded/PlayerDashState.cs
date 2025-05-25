@@ -7,30 +7,30 @@ public class PlayerDashState : PlayerGameBaseState
     
     Vector2 input;
     float timer = 0;
-    public override void Enter(PlayerGameState playerGameState)
+    public override void Enter()
     {
         Console.WriteLine("Entering dash state");
         
         Camera = Game.Camera;
         timer = 0;
 
-        Vector3 forward = playerGameState.PlayerStateMachine.forward;
+        Vector3 forward = StateMachine.forward;
         Console.WriteLine("Dashing with speed: " + PlayerStateMachine.DASH_SPEED + " forward: " + forward);
-        playerGameState.PlayerStateMachine.physicsBody.AddForce(forward, PlayerStateMachine.DASH_SPEED);
-        //playerGameState.PlayerStateMachine.physicsBody.Drag = 10f;
-        playerGameState.MovementSpeed = PlayerMovementSpeed.Sprint;
+        StateMachine.physicsBody.AddForce(forward, PlayerStateMachine.DASH_SPEED);
+        //StateMachine.physicsBody.Drag = 10f;
+        GameState.MovementSpeed = PlayerMovementSpeed.Sprint;
 
         Camera.SetFOV(90); // 1STANNIVERSARY, EVERFLOWING, WITHYOU
     }
 
-    public override void Update(PlayerGameState playerGameState)
+    public override void Update()
     {
         input = Input.GetMovementInput();
         timer += GameTime.DeltaTime;
 
         if (Input.IsKeyPressed(Keys.F))
         {
-            playerGameState.SwitchState(playerGameState.GrapplingState);
+            GameState.SwitchState(GameState.GrapplingState);
             return;
         }
         
@@ -38,36 +38,36 @@ public class PlayerDashState : PlayerGameBaseState
         {
             if (input == Vector2.Zero)
             {
-                playerGameState.SwitchState(playerGameState.IdleState);
+                GameState.SwitchState(GameState.IdleState);
                 return;
             }
             else if (Input.IsMouseDown(MouseButton.Right))
             {
-                playerGameState.SwitchState(playerGameState.SprintingState);
+                GameState.SwitchState(GameState.SprintingState);
                 return;
             }
             else
             {
-                playerGameState.SwitchState(playerGameState.RunningState);
+                GameState.SwitchState(GameState.RunningState);
                 return;
             }
         }
         
         if (Input.IsKeyDown(Keys.Space))
         {
-            playerGameState.SwitchState(playerGameState.JumpingState);
+            GameState.SwitchState(GameState.JumpingState);
             return;
         }
     }
 
-    public override void FixedUpdate(PlayerGameState playerGameState)
+    public override void FixedUpdate()
     {
         if (input != Vector2.Zero)
-            playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Sprint);
+            StateMachine.MovePlayer(PlayerMovementSpeed.Sprint);
     }
 
-    public override void Exit(PlayerGameState playerGameState)
+    public override void Exit()
     {
-        //playerGameState.PlayerStateMachine.physicsBody.Drag = 0.3f;
+        //StateMachine.physicsBody.Drag = 0.3f;
     }
 }

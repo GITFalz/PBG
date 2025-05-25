@@ -11,7 +11,7 @@ public class PlayerAttack4State : PlayerGameBaseState
     bool smashed1 = false;
     bool smashed2 = false;
     
-    public override void Enter(PlayerGameState playerGameState)
+    public override void Enter()
     {
         Console.WriteLine("Entering attack 4 state");
         
@@ -24,20 +24,20 @@ public class PlayerAttack4State : PlayerGameBaseState
         OldAnimationManager.Instance.SetAnimation("Player", "attack4");
     }
 
-    public override void Update(PlayerGameState playerGameState)
+    public override void Update()
     {
         timer += GameTime.DeltaTime;
         input = Input.GetMovementInput();
         
         if (timer > 0.12 && !smashed1)
         {
-            //playerGameState.PlayerStateMachine.physicsBody.SetAcceleration((0, 0.3f, 0));
+            //GameState.PlayerStateMachine.physicsBody.SetAcceleration((0, 0.3f, 0));
             smashed1 = true;
         }
 
         if (timer > 0.3 && !smashed2)
         {
-            //playerGameState.PlayerStateMachine.physicsBody.SetAcceleration((0, -0.2f, 0));
+            //GameState.PlayerStateMachine.physicsBody.SetAcceleration((0, -0.2f, 0));
             smashed2 = true;
         }
         
@@ -45,7 +45,7 @@ public class PlayerAttack4State : PlayerGameBaseState
         {
             if (Input.IsMousePressed(MouseButton.Left))
             {
-                playerGameState.SwitchState(playerGameState.Attack1State);
+                GameState.SwitchState(GameState.Attack1State);
                 return;
             }
             
@@ -53,13 +53,13 @@ public class PlayerAttack4State : PlayerGameBaseState
             {
                 if (input != Vector2.Zero && Game.MoveTest)
                 {
-                    playerGameState.SwitchState(playerGameState.NextMovingState);
+                    GameState.SwitchState(GameState.NextMovingState);
                     return;
                 }
 
                 if (input == Vector2.Zero)
                 {
-                    playerGameState.SwitchState(playerGameState.IdleState);
+                    GameState.SwitchState(GameState.IdleState);
                     return;
                 }
             }
@@ -67,17 +67,17 @@ public class PlayerAttack4State : PlayerGameBaseState
         
         if (Input.IsKeyDown(Keys.Space) && Game.MoveTest)
         {
-            playerGameState.SwitchState(playerGameState.JumpingState);
+            GameState.SwitchState(GameState.JumpingState);
             return;
         }
     }
 
-    public override void FixedUpdate(PlayerGameState playerGameState)
+    public override void FixedUpdate()
     {
         
     }
 
-    public override void Exit(PlayerGameState playerGameState)
+    public override void Exit()
     {
         timer = 0;
     }

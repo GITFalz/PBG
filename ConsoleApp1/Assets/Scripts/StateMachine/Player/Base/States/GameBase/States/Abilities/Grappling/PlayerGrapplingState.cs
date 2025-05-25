@@ -8,7 +8,7 @@ public class PlayerGrapplingState : PlayerGameBaseState
     float timer = 0;
     Vector3 grappleDirection;
     
-    public override void Enter(PlayerGameState playerGameState)
+    public override void Enter()
     {
         Console.WriteLine("Entering grappling state");
         
@@ -16,37 +16,37 @@ public class PlayerGrapplingState : PlayerGameBaseState
         
         Camera.SetFOV(90);
         
-        playerGameState.PlayerStateMachine.physicsBody.DisableGravity();
+        StateMachine.physicsBody.DisableGravity();
         
         timer = 0;
         grappleDirection = Camera.Front();
     }
 
-    public override void Update(PlayerGameState playerGameState)
+    public override void Update()
     {
         timer += GameTime.DeltaTime;
         
         if (Input.IsKeyPressed(Keys.LeftShift))
         {
-            playerGameState.SwitchState(playerGameState.GrapplingSwingOutState);
+            GameState.SwitchState(GameState.GrapplingSwingOutState);
             return;
         }
 
         if (timer > 1f)
         {
             OldAnimationManager.Instance.SetAnimation("Player", "grappleOut");
-            playerGameState.SwitchState(playerGameState.FallingState);
+            GameState.SwitchState(GameState.FallingState);
             return;
         }
     }
 
-    public override void FixedUpdate(PlayerGameState playerGameState)
+    public override void FixedUpdate()
     {
-        playerGameState.PlayerStateMachine.MovePlayer(PlayerMovementSpeed.Grappling, grappleDirection);
+        StateMachine.MovePlayer(PlayerMovementSpeed.Grappling, grappleDirection);
     }
 
-    public override void Exit(PlayerGameState playerGameState)
+    public override void Exit()
     {
-        playerGameState.PlayerStateMachine.physicsBody.EnableGravity();
+        StateMachine.physicsBody.EnableGravity();
     }
 }

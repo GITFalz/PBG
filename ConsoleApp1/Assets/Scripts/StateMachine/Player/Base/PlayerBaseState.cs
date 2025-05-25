@@ -1,7 +1,14 @@
 ﻿public abstract class PlayerBaseState
 {
-    public abstract void Enter(PlayerStateMachine playerStateMachine);
-    public abstract void Update(PlayerStateMachine playerStateMachine);
-    public abstract void FixedUpdate(PlayerStateMachine playerStateMachine);
-    public abstract void Exit(PlayerStateMachine playerStateMachine);
+    public PlayerStateMachine StateMachine;
+
+    public PlayerBaseState(PlayerStateMachine playerStateMachine)
+    {
+        StateMachine = playerStateMachine;
+    }
+    
+    public abstract void Enter();
+    public abstract void Update();
+    public abstract void FixedUpdate();
+    public abstract void Exit();
 }

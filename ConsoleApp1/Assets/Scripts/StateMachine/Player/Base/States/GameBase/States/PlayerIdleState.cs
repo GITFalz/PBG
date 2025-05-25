@@ -3,45 +3,45 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PlayerIdleState : PlayerGameBaseState
 {
-    public override void Enter(PlayerGameState playerGameState)
+    public override void Enter()
     {
         Console.WriteLine("Entering idle state");
-        //playerGameState.PlayerStateMachine.physicsBody.Drag = 10f;
-        playerGameState.NextMovingState = playerGameState.WalkingState;
+        //GameState.PlayerStateMachine.physicsBody.Drag = 10f;
+        GameState.NextMovingState = GameState.WalkingState;
     }
 
-    public override void Update(PlayerGameState playerGameState)
+    public override void Update()
     {
         Vector2 input = Input.GetMovementInput();
 
         if (input != Vector2.Zero && Game.MoveTest)
         {
-            playerGameState.SwitchState(playerGameState.NextMovingState);
+            GameState.SwitchState(GameState.NextMovingState);
             return;
         }
         
         if (Input.IsKeyDown(Keys.Space) && Game.MoveTest)
         {
-            playerGameState.SwitchState(playerGameState.JumpingState);
+            GameState.SwitchState(GameState.JumpingState);
             return;
         }
         
-        if (!playerGameState.PlayerStateMachine.IsGrounded())
+        if (!StateMachine.IsGrounded())
         {
-            playerGameState.SwitchState(playerGameState.FallingState);
+            GameState.SwitchState(GameState.FallingState);
             return;
         }
         
-        //playerGameState.PlayerStateMachine.MoveMeshUpdate();
+        //GameState.PlayerStateMachine.MoveMeshUpdate();
     }
     
-    public override void FixedUpdate(PlayerGameState playerGameState)
+    public override void FixedUpdate()
     {
 
     }
 
-    public override void Exit(PlayerGameState playerGameState)
+    public override void Exit()
     {
-        //playerGameState.PlayerStateMachine.physicsBody.Drag = 0.3f;
+        //GameState.PlayerStateMachine.physicsBody.Drag = 0.3f;
     }
 }

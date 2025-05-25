@@ -1,23 +1,23 @@
 public class PlayerGroundedState : PlayerGameBaseState
 {
-    public override void Enter(PlayerGameState playerGameState)
+    public override void Enter()
     {
         Console.WriteLine("Entering grounded state");
         
-        playerGameState.SwitchState(playerGameState.NextMovingState);
+        GameState.SwitchState(GameState.NextMovingState);
     }
 
-    public override void Update(PlayerGameState playerGameState)
+    public override void Update()
     {
 
     }
     
-    public override void FixedUpdate(PlayerGameState playerGameState)
+    public override void FixedUpdate()
     {
 
     }
 
-    public override void Exit(PlayerGameState playerGameState)
+    public override void Exit()
     {
 
     }

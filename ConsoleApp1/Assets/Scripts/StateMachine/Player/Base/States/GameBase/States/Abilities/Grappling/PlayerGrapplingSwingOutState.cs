@@ -6,39 +6,39 @@ public class PlayerGrapplingSwingOutState : PlayerGameBaseState
     
     Vector3 direction;
     
-    public override void Enter(PlayerGameState playerGameState)
+    public override void Enter()
     {
         Console.WriteLine("Entering grappling swing out state");
         
         Camera = Game.Camera;
 
-        playerGameState.PlayerStateMachine.physicsBody.EnableGravity();
+        StateMachine.physicsBody.EnableGravity();
 
         direction = Camera.FrontYto0();
     }
 
-    public override void Update(PlayerGameState playerGameState)
+    public override void Update()
     {
-        if (playerGameState.PlayerStateMachine.physicsBody.Velocity.Y < -2f)
+        if (StateMachine.physicsBody.Velocity.Y < -2f)
         {
             Camera.SetFOV(60);
-            playerGameState.SwitchState(playerGameState.FallingState);
+            GameState.SwitchState(GameState.FallingState);
             return;
         }
         
-        if (playerGameState.PlayerStateMachine.IsGrounded())
+        if (StateMachine.IsGrounded())
         {
-            playerGameState.SwitchState(playerGameState.GroundedState);
+            GameState.SwitchState(GameState.GroundedState);
             return;
         }
     }
 
-    public override void FixedUpdate(PlayerGameState playerGameState)
+    public override void FixedUpdate()
     {
 
     }
 
-    public override void Exit(PlayerGameState playerGameState)
+    public override void Exit()
     {
 
     }
