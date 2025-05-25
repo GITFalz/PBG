@@ -144,7 +144,7 @@ public class ModelAnimationManager
         }
 
         AnimationQueue = [];
-        CurrentAnimation?.Reset();
+        animation.Reset();
         CurrentAnimation = new NormalizedAnimationData(animation);
         CurrentAnimation.SetAfter(LoopDequeue);
         CurrentAnimation.Status = AnimationStatus.Playing;
@@ -154,7 +154,7 @@ public class ModelAnimationManager
     {
         if (TryDequeue(out NormalizedAnimationData? nextAnimation))
         {
-            CurrentAnimation?.Animation.Reset();
+            nextAnimation.Reset();
             CurrentAnimation = nextAnimation;
             CurrentAnimation.Status = AnimationStatus.Playing;
         }
@@ -194,6 +194,7 @@ public class ModelAnimationManager
         if (CurrentAnimation != null)
             PreviousAnimation = CurrentAnimation;
 
+        animation.Reset();
         CurrentAnimation = new NormalizedAnimationData(animation);
         CurrentAnimation.SetAfter(LoopDequeue);
         CurrentAnimation.Status = AnimationStatus.Playing;
@@ -203,7 +204,7 @@ public class ModelAnimationManager
     {
         if (!Animations.TryGetValue(name, out NormalizedAnimation? animation))
             return;
-
+        
         Play(animation);
     }
 
@@ -235,7 +236,7 @@ public class ModelAnimationManager
             return;
         }
 
-        CurrentAnimation?.Reset();
+        animation.Reset();
         CurrentAnimation = new NormalizedAnimationData(animation);
         CurrentAnimation.Status = AnimationStatus.Playing;
         CurrentAnimation.SetAfter(PlayDequeue);
@@ -268,7 +269,8 @@ public class ModelAnimationManager
 
         if (CurrentAnimation != null)
             PreviousAnimation = CurrentAnimation;
-            
+        
+        animation.Reset();
         CurrentAnimation = new NormalizedAnimationData(animation);
         CurrentAnimation.SetAfter(PlayDequeue);
         CurrentAnimation.Status = AnimationStatus.Playing;
@@ -303,6 +305,7 @@ public class ModelAnimationManager
         if (CurrentAnimation != null)
             PreviousAnimation = CurrentAnimation;
 
+        animation.Reset();
         CurrentAnimation = new NormalizedAnimationData(animation);
         CurrentAnimation.SetAfter(PlayDequeue);
         CurrentAnimation.Status = AnimationStatus.Playing;
@@ -312,7 +315,7 @@ public class ModelAnimationManager
     {
         if (TryDequeue(out NormalizedAnimationData? nextAnimation))
         {
-            CurrentAnimation?.Animation.Reset();
+            nextAnimation.Reset();
             CurrentAnimation = nextAnimation;
             CurrentAnimation.Status = AnimationStatus.Playing;
             return true;
