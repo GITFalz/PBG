@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using OpenTK.Mathematics;
 
 
@@ -7,192 +8,422 @@ using OpenTK.Mathematics;
 /// </summary>
 public class ModelAnimationManager
 {
-    public Dictionary<string, ModelAnimation> Animations = [];
-    public ModelAnimation? CurrentAnimation;
+    public Rig Rig;
+    public Dictionary<string, NormalizedAnimation> Animations = [];
+    public List<NormalizedAnimationData> AnimationQueue = new();
+
+    public float SmoothDelta = 0f;
+    public float SmoothTime = 0f;
+    public float SmoothLerp = 0f;
+    public bool Smooth = false;
+
+    public bool LetFinish = false;
+
+    public NormalizedAnimationData? PreviousAnimation;
+    public NormalizedAnimationData? CurrentAnimation;
+
 
     public SSBO<Matrix4> BoneMatrices;
     private Matrix4[] _baseMatrices;
 
+    public float AnimationSpeed = 1.0f;
+
     public ModelAnimationManager(Rig rig)
     {
-        rig.Create();
-        rig.Initialize();
-        _baseMatrices = new Matrix4[rig.BonesList.Count];
-        for (int i = 0; i < rig.BonesList.Count; i++)
+        Rig = rig;
+        Rig.Create();
+        Rig.Initialize();
+        _baseMatrices = new Matrix4[Rig.BonesList.Count];
+        for (int i = 0; i < Rig.BonesList.Count; i++)
         {
-            _baseMatrices[i] = rig.BonesList[i].GlobalAnimatedMatrix;
+            _baseMatrices[i] = Rig.BonesList[i].GlobalAnimatedMatrix;
         }
         BoneMatrices = new(_baseMatrices);
     }
 
+    // No need to check if the rig is null here, this method should only be called at a point where the rig is guaranteed to be initialized.
+    public void UpdateMatrices()
+    {
+        Rig.RootBone.UpdateGlobalTransformation();
+        foreach (var bone in Rig.BonesList)
+        {
+            _baseMatrices[bone.Index] = bone.GlobalAnimatedMatrix;
+        }
+        BoneMatrices.Update(_baseMatrices, 0);
+    }
+
     public void Update()
     {
-        if (CurrentAnimation == null || !CurrentAnimation.PlayFrame())
+        if (CurrentAnimation == null)
             return;
 
-        BoneMatrices.Update(CurrentAnimation.CurrentTransformations, 0);
+        CurrentAnimation.Animation.Update(AnimationSpeed);
+        if (Smooth)
+            PreviousAnimation?.Animation.Update();
+        
+        if (CurrentAnimation.Status == AnimationStatus.Done)
+            {
+                if (!CurrentAnimation.OnAnimationEnd?.Invoke() ?? true)
+                    return;
+            }
+
+        foreach (var bone in Rig.BonesList)
+        {
+            var frame = CurrentAnimation.Animation.GetBoneKeyframe(bone.Index);
+            if (Smooth && PreviousAnimation != null)
+            {
+                frame = PreviousAnimation.Animation.GetBoneKeyframe(bone.Index).Lerp(frame, SmoothLerp);
+            }
+            bone.Position = frame.Position;
+            bone.Rotation = frame.Rotation;
+            bone.Scale = frame.Scale;
+            bone.LocalAnimatedMatrix = frame.GetLocalTransform(); ;
+        }
+
+        if (Smooth)
+        {
+            if (SmoothDelta >= SmoothTime)
+            {
+                Smooth = false;
+                SmoothDelta = 0f;
+                SmoothLerp = 0f;
+                SmoothTime = 0f;
+                PreviousAnimation?.Reset();
+                PreviousAnimation = null;
+            }
+
+            SmoothDelta += GameTime.DeltaTime;
+            SmoothLerp = Mathf.LerpI(0, SmoothTime, SmoothDelta);
+        }
+
+        UpdateMatrices();
+    }
+
+    public void AddAnimation(NormalizedAnimation animation)
+    {
+        if (Animations.ContainsKey(animation.Name))
+            return;
+
+        Animations[animation.Name] = animation;
     }
 
     public void Loop(string name)
     {
-        if (!Animations.TryGetValue(name, out ModelAnimation? animation))
+        if (!Animations.TryGetValue(name, out NormalizedAnimation? animation))
             return;
 
-        CurrentAnimation?.Reset();
-        CurrentAnimation = animation;
+        Loop(animation);
     }
 
     public void LoopAfter(string name)
     {
-        if (!Animations.TryGetValue(name, out ModelAnimation? animation))
+        if (!Animations.TryGetValue(name, out NormalizedAnimation? animation))
             return;
 
         if (CurrentAnimation != null)
-            CurrentAnimation.OnAnimationEnd = () => Loop(name);
+        {
+            NormalizedAnimationData nextAnimation = new NormalizedAnimationData(animation);
+            nextAnimation.SetAfter(LoopDequeue);
+            nextAnimation.Status = AnimationStatus.Playing;
+            Enqueue(nextAnimation);
+        }
         else
-            Loop(name);
+            Loop(animation);
+    }
+
+    private void Loop(NormalizedAnimation animation)
+    {
+        if (LetFinish && CurrentAnimation != null)
+        {
+            NormalizedAnimationData nextAnimation = new NormalizedAnimationData(animation);
+            nextAnimation.SetAfter(LoopDequeue);
+            nextAnimation.Status = AnimationStatus.Playing;
+            Enqueue(nextAnimation);
+            LetFinish = false;
+            return;
+        }
+
+        AnimationQueue = [];
+        CurrentAnimation?.Reset();
+        CurrentAnimation = new NormalizedAnimationData(animation);
+        CurrentAnimation.SetAfter(LoopDequeue);
+        CurrentAnimation.Status = AnimationStatus.Playing;
+    }
+
+    private bool LoopDequeue()
+    {
+        if (TryDequeue(out NormalizedAnimationData? nextAnimation))
+        {
+            CurrentAnimation?.Animation.Reset();
+            CurrentAnimation = nextAnimation;
+            CurrentAnimation.Status = AnimationStatus.Playing;
+        }
+        else if (CurrentAnimation != null)
+        {
+            CurrentAnimation.Reset();
+            CurrentAnimation.Status = AnimationStatus.Playing;
+        }
+        return true;
+    }
+
+    public void SmoothLoop(string name, float time)
+    {
+        if (!Animations.TryGetValue(name, out NormalizedAnimation? animation))
+            return;
+
+        SmoothLoop(animation, time);
+    }
+
+    private void SmoothLoop(NormalizedAnimation animation, float time)
+    {
+        if (LetFinish && CurrentAnimation != null)
+        {
+            NormalizedAnimationData nextAnimation = new NormalizedAnimationData(animation);
+            nextAnimation.SetAfter(LoopDequeue);
+            nextAnimation.Status = AnimationStatus.Playing;
+            Enqueue(nextAnimation);
+            LetFinish = false;
+            return;
+        }
+
+        Smooth = true;
+        SmoothTime = time;
+        SmoothDelta = 0f;
+        SmoothLerp = 0f;
+
+        if (CurrentAnimation != null)
+            PreviousAnimation = CurrentAnimation;
+
+        CurrentAnimation = new NormalizedAnimationData(animation);
+        CurrentAnimation.SetAfter(LoopDequeue);
+        CurrentAnimation.Status = AnimationStatus.Playing;
     }
 
     public void Play(string name)
     {
-        if (!Animations.TryGetValue(name, out ModelAnimation? animation))
+        if (!Animations.TryGetValue(name, out NormalizedAnimation? animation))
             return;
 
-        CurrentAnimation?.Reset();
-        CurrentAnimation = animation;
-        CurrentAnimation.OnAnimationEnd = SetDefault;
+        Play(animation);
     }
 
     public void PlayAfter(string name)
     {
-        if (!Animations.TryGetValue(name, out ModelAnimation? animation))
+        if (!Animations.TryGetValue(name, out NormalizedAnimation? animation))
             return;
 
         if (CurrentAnimation != null)
-            CurrentAnimation.OnAnimationEnd = () => Play(name);
-        else
-            Play(name);
-    }
-
-    public void SetDefault()
-    {
-        CurrentAnimation?.Reset();
-        CurrentAnimation = null;
-        BoneMatrices.Update(_baseMatrices, 0);
-    }
-    
-}
-
-public class ModelAnimation
-{
-    public const int FrameRate = 24;
-
-    public string Name;
-    public int AnimationFrames;
-    public int BoneCount;
-    public KeyframeData[] AnimationData;
-    public Matrix4[] CurrentTransformations;
-    public AnimationStatus Status = AnimationStatus.Stopped;
-    public Action? OnAnimationEnd;
-
-    private float _elapsedTime;
-    private float _totalDuration;
-
-    public ModelAnimation(Rig rig, Animation animation)
-    {
-        Name = animation.Name;
-        AnimationFrames = animation.GetFrameCount();
-        BoneCount = rig.BonesList.Count;
-        AnimationData = new KeyframeData[AnimationFrames * BoneCount];
-        CurrentTransformations = new Matrix4[BoneCount];
-
-        for (int i = 0; i < rig.BonesList.Count; i++)
         {
-            Bone bone = rig.BonesList[i];
-            if (!animation.TryGetBoneAnimation(bone.Name, out BoneAnimation? boneAnimation))
-            {
-                boneAnimation = new BoneAnimation(bone.Name);
-                boneAnimation.AddOrUpdateKeyframe(new AnimationKeyframe(0, bone));
-            }
+            NormalizedAnimationData nextAnimation = new NormalizedAnimationData(animation);
+            nextAnimation.SetAfter(PlayDequeue);
+            nextAnimation.Status = AnimationStatus.Playing;
+            Enqueue(nextAnimation);
+        }
+        else
+            Play(animation);
+    }
 
-            for (int j = 0; j < AnimationFrames; j++)
-            {
-                AnimationKeyframe keyframe = boneAnimation.GetSpecificFrame(j) ?? new();
-                KeyframeData data = new KeyframeData
-                {
-                    Position = keyframe.Position,
-                    Rotation = keyframe.Rotation,
-                    Scale = keyframe.Scale
-                };
-                AnimationData[j + i * AnimationFrames] = data;
-            }
+    private void Play(NormalizedAnimation animation)
+    {
+        if (LetFinish && CurrentAnimation != null)
+        {
+            NormalizedAnimationData nextAnimation = new NormalizedAnimationData(animation);
+            nextAnimation.SetAfter(PlayDequeue);
+            nextAnimation.Status = AnimationStatus.Playing;
+            Enqueue(nextAnimation);
+            LetFinish = false;
+            return;
         }
 
-        _elapsedTime = 0;
-        _totalDuration = AnimationFrames / (float)FrameRate;
+        CurrentAnimation?.Reset();
+        CurrentAnimation = new NormalizedAnimationData(animation);
+        CurrentAnimation.Status = AnimationStatus.Playing;
+        CurrentAnimation.SetAfter(PlayDequeue);
     }
 
-    public bool PlayFrame()
+    public void SmoothPlay(string name, float time)
     {
-        float frameTime = _elapsedTime * FrameRate;
-        int index = Mathf.FloorToInt(frameTime);
-        float t = (float)(frameTime - index);
+        if (!Animations.TryGetValue(name, out NormalizedAnimation? animation))
+            return;
 
-        if (index >= AnimationFrames - 1)
+        SmoothPlay(animation, time);
+    }
+
+    private void SmoothPlay(NormalizedAnimation animation, float time)
+    {
+        if (LetFinish && CurrentAnimation != null)
         {
-            for (int i = 0; i < BoneCount; i++)
-            {
-                int offset = i * AnimationFrames;
-                KeyframeData keyframe = AnimationData[offset + index];
-                CurrentTransformations[i] = keyframe.GetLocalTransform();
-            }
+            NormalizedAnimationData nextAnimation = new NormalizedAnimationData(animation);
+            nextAnimation.SetAfter(PlayDequeue);
+            nextAnimation.Status = AnimationStatus.Playing;
+            Enqueue(nextAnimation);
+            LetFinish = false;
+            return;
+        }
 
-            OnAnimationEnd?.Invoke();
-            Status = AnimationStatus.Done;
-            _elapsedTime = 0;
+        Smooth = true;
+        SmoothTime = time;
+        SmoothDelta = 0f;
+        SmoothLerp = 0f;
+
+        if (CurrentAnimation != null)
+            PreviousAnimation = CurrentAnimation;
+            
+        CurrentAnimation = new NormalizedAnimationData(animation);
+        CurrentAnimation.SetAfter(PlayDequeue);
+        CurrentAnimation.Status = AnimationStatus.Playing;
+    }
+
+    public void SmoothPlayFinish(string name, float time)
+    {
+        if (!Animations.TryGetValue(name, out NormalizedAnimation? animation))
+            return;
+
+        SmoothPlayFinish(animation, time);
+    }
+
+    private void SmoothPlayFinish(NormalizedAnimation animation, float time)
+    {
+        if (LetFinish && CurrentAnimation != null)
+        {
+            NormalizedAnimationData nextAnimation = new NormalizedAnimationData(animation);
+            nextAnimation.SetAfter(PlayDequeue);
+            nextAnimation.Status = AnimationStatus.Playing;
+            Enqueue(nextAnimation);
+            LetFinish = false;
+            return;
+        }
+
+        Smooth = true;
+        SmoothTime = time;
+        SmoothDelta = 0f;
+        SmoothLerp = 0f;
+        LetFinish = true;
+
+        if (CurrentAnimation != null)
+            PreviousAnimation = CurrentAnimation;
+
+        CurrentAnimation = new NormalizedAnimationData(animation);
+        CurrentAnimation.SetAfter(PlayDequeue);
+        CurrentAnimation.Status = AnimationStatus.Playing;
+    }
+
+    private bool PlayDequeue()
+    {
+        if (TryDequeue(out NormalizedAnimationData? nextAnimation))
+        {
+            CurrentAnimation?.Animation.Reset();
+            CurrentAnimation = nextAnimation;
+            CurrentAnimation.Status = AnimationStatus.Playing;
+            return true;
+        }
+        else
+        {
+            SetDefault();
             return false;
         }
+    }
 
-        for (int i = 0; i < BoneCount; i++)
+    public void Stop()
+    {
+        if (CurrentAnimation == null)
+            return;
+
+        AnimationQueue = [];
+        SetDefault();
+    }
+
+    public void StopAfter()
+    {
+        if (CurrentAnimation == null)
+            return;
+
+        AnimationQueue = [];
+        CurrentAnimation.SetAfter(SetDefault);
+    }
+
+    public void SetSpeed(float speed)
+    {
+        AnimationSpeed = speed;
+    }
+
+    public void Enqueue(NormalizedAnimationData animationData)
+    {
+        AnimationQueue.Add(animationData);
+    }
+
+    public bool TryDequeue([NotNullWhen(true)] out NormalizedAnimationData? animationData)
+    {
+        if (AnimationQueue.Count > 0)
         {
-            int offset = i * AnimationFrames;
-            KeyframeData start = AnimationData[offset + index];
-            KeyframeData end = AnimationData[offset + index + 1];
-            CurrentTransformations[i] = start.Lerp(end, t).GetLocalTransform();
+            animationData = AnimationQueue[0];
+            AnimationQueue.RemoveAt(0);
+            return true;
         }
 
-        Status = AnimationStatus.Playing;
-        _elapsedTime += GameTime.DeltaTime;
-        return true;
+        animationData = null;
+        return false;
+    }
+
+    public bool TryGetLast([NotNullWhen(true)] out NormalizedAnimationData? animationData)
+    {
+        if (AnimationQueue.Count > 0)
+        {
+            animationData = AnimationQueue[^1];
+            return true;
+        }
+
+        animationData = null;
+        return false;
+    }
+
+    public bool SetDefault()
+    {
+        SetSpeed(1.0f);
+        if (CurrentAnimation == null)
+            return false;
+
+        CurrentAnimation.Reset();
+        CurrentAnimation = null;
+        PreviousAnimation?.Reset();
+        PreviousAnimation = null;
+        return false;
+    }
+
+    public List<string> GetAnimations()
+    {
+        List<string> animations = [];
+        foreach (var animation in Animations.Values)
+        {
+            animations.Add("    Animation: " + animation.Name);
+        }
+        return animations;
+    }
+}
+
+public class NormalizedAnimationData
+{
+    public AnimationStatus Status
+    {
+        get => Animation.Status;
+        set => Animation.Status = value;
+    }
+    public NormalizedAnimation Animation;
+    public Func<bool>? OnAnimationEnd;
+
+    public NormalizedAnimationData(NormalizedAnimation animation)
+    {
+        Animation = animation;
     }
 
     public void Reset()
     {
-        Status = AnimationStatus.Stopped;
-        OnAnimationEnd = null;
-        _elapsedTime = 0;
-    }
-}
-
-public struct KeyframeData
-{
-    public Vector3 Position;
-    public Quaternion Rotation;
-    public float Scale;
-
-    public KeyframeData Lerp(KeyframeData other, float t)
-    {
-        return new KeyframeData
-        {
-            Position = Vector3.Lerp(Position, other.Position, t),
-            Rotation = Quaternion.Slerp(Rotation, other.Rotation, t),
-            Scale = Mathf.Lerp(Scale, other.Scale, t)
-        };
+        Animation.Reset();
     }
 
-    public Matrix4 GetLocalTransform()
+    public void SetAfter(Func<bool> action)
     {
-        return Matrix4.CreateScale(Scale) * Matrix4.CreateFromQuaternion(Rotation) * Matrix4.CreateTranslation(Position);
+        OnAnimationEnd = action;
     }
 }
 

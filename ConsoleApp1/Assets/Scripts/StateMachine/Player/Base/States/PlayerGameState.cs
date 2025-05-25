@@ -43,7 +43,7 @@ public class PlayerGameState : PlayerBaseState
         GrapplingSwingOutState = new PlayerGrapplingSwingOutState(this);
         
         _currentState = IdleState;
-        NextMovingState = IdleState;
+        NextMovingState = WalkingState;
     }
     
     public override void Enter()

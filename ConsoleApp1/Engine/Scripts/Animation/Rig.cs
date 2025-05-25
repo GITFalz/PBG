@@ -7,7 +7,7 @@ public class Rig
     public string Name = "Rig";
     public RootBone RootBone = new RootBone("RootBone");
     public Dictionary<string, Bone> Bones = [];
-    public List<Bone>   BonesList = [];
+    public List<Bone> BonesList = [];
 
     public Rig(string name)
     {

@@ -10,22 +10,19 @@ public class PlayerDashState : PlayerGameBaseState
 
     public PlayerDashState(PlayerGameState gameState) : base(gameState)
     {
+        Camera = Game.Camera;
     }
 
     public override void Enter()
     {
-        Console.WriteLine("Entering dash state");
-        
-        Camera = Game.Camera;
         timer = 0;
-
         Vector3 forward = StateMachine.forward;
-        Console.WriteLine("Dashing with speed: " + PlayerStateMachine.DASH_SPEED + " forward: " + forward);
         StateMachine.physicsBody.AddForce(forward, PlayerStateMachine.DASH_SPEED);
-        //StateMachine.physicsBody.Drag = 10f;
         GameState.MovementSpeed = PlayerMovementSpeed.Sprint;
 
-        Camera.SetFOV(90); // 1STANNIVERSARY, EVERFLOWING, WITHYOU
+        Camera.SetFOV(90);
+        Play("PlayerDash");
+        SetSpeed(1.5f);
     }
 
     public override void Update()
@@ -73,6 +70,6 @@ public class PlayerDashState : PlayerGameBaseState
 
     public override void Exit()
     {
-        //StateMachine.physicsBody.Drag = 0.3f;
+        SetSpeed(1.0f);
     }
 }

@@ -6,10 +6,10 @@ public class PlayerStateMachine : ScriptingNode
 {
     public static PlayerStateMachine Instance;
     public CameraMode cameraMode = CameraMode.Follow;
-    public const float WALK_SPEED = 80;
-    public const float RUN_SPEED = 120;
-    public const float DASH_SPEED = 4000;
-    public const float SPRINT_SPEED = 160;
+    public const float WALK_SPEED = 20;
+    public const float RUN_SPEED = 60;
+    public const float DASH_SPEED = 2000;
+    public const float SPRINT_SPEED = 120;
     public const float FALL_SPEED = 15;
     public const float GRAPPLE_SPEED = 200;
     public const float JUMP_SPEED = 900;
@@ -167,7 +167,12 @@ public class PlayerStateMachine : ScriptingNode
         {
             Model? model = GameData.GetModel("Player");
             Rig? rig = GameData.GetRig("PlayerRig");
-            Animation? animation = GameData.GetAnimation("PlayerAnimation");
+            Animation? walking = GameData.GetAnimation("PlayerWalking");
+            Animation? running = GameData.GetAnimation("PlayerRunning");
+            Animation? dash = GameData.GetAnimation("PlayerDash");
+            Animation? idle = GameData.GetAnimation("PlayerIdle");
+            Animation? fall = GameData.GetAnimation("PlayerFall");
+            Animation? land = GameData.GetAnimation("PlayerLand");
 
             if (model == null)
             {
@@ -181,22 +186,77 @@ public class PlayerStateMachine : ScriptingNode
                 return;
             }
 
-            if (animation == null)
+            if (walking == null)
             {
-                PopUp.AddPopUp("Player animation not found");
-                return;
+                PopUp.AddPopUp("Player walking not found");
+            }
+
+            if (running == null)
+            {
+                PopUp.AddPopUp("Player running not found");
+            }
+
+            if (dash == null)
+            {
+                PopUp.AddPopUp("Player dash not found");
+            }
+
+            if (idle == null)
+            {
+                PopUp.AddPopUp("Player idle not found");
+            }
+
+            if (fall == null)
+            {
+                PopUp.AddPopUp("Player fall not found");
+            }
+
+            if (land == null)
+            {
+                PopUp.AddPopUp("Player land not found");
             }
 
             model.AnimationManager = new ModelAnimationManager(rig);
             model.BindRig();
 
-            NormalizedAnimation normalizedAnimation = new(rig, animation);
-            model.AnimationManager.AddAnimation(normalizedAnimation);
+            if (walking != null)
+            {
+                NormalizedAnimation normalizedAnimation = new(rig, walking);
+                model.AnimationManager.AddAnimation(normalizedAnimation);
+            }
+
+            if (running != null)
+            {
+                NormalizedAnimation normalizedAnimation = new(rig, running);
+                model.AnimationManager.AddAnimation(normalizedAnimation);
+            }
+
+            if (dash != null)
+            {
+                NormalizedAnimation normalizedAnimation = new(rig, dash);
+                model.AnimationManager.AddAnimation(normalizedAnimation);
+            }
+
+            if (idle != null)
+            {
+                NormalizedAnimation normalizedAnimation = new(rig, idle);
+                model.AnimationManager.AddAnimation(normalizedAnimation);
+            }
+
+            if (fall != null)
+            {
+                NormalizedAnimation normalizedAnimation = new(rig, fall);
+                model.AnimationManager.AddAnimation(normalizedAnimation);
+            }
+
+            if (land != null)
+            {
+                NormalizedAnimation normalizedAnimation = new(rig, land);
+                model.AnimationManager.AddAnimation(normalizedAnimation);
+            }
 
             PlayerModel = model;
             PlayerModel.Animate = true;
-            
-            PlayerModel.AnimationManager.Loop("PlayerAnimation");
         }
     }
 

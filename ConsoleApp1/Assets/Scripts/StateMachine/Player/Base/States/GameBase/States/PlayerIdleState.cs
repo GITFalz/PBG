@@ -3,38 +3,29 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PlayerIdleState : PlayerGameBaseState
 {
-    public PlayerIdleState(PlayerGameState stateMachine) : base(stateMachine){}
-    
+    public PlayerIdleState(PlayerGameState stateMachine) : base(stateMachine) { }
+
     public override void Enter()
     {
         Console.WriteLine("Entering idle state");
-        //GameState.PlayerStateMachine.physicsBody.Drag = 10f;
-        GameState.NextMovingState = GameState.WalkingState;
+        SmoothLoop("PlayerIdle", 0.5f);
     }
 
     public override void Update()
     {
         Vector2 input = Input.GetMovementInput();
 
-        if (input != Vector2.Zero && Game.MoveTest)
+        if (input != Vector2.Zero)
         {
             GameState.SwitchState(GameState.NextMovingState);
             return;
         }
-        
-        if (Input.IsKeyDown(Keys.Space) && Game.MoveTest)
+
+        if (Input.IsKeyDown(Keys.Space))
         {
             GameState.SwitchState(GameState.JumpingState);
             return;
         }
-        
-        if (!StateMachine.IsGrounded())
-        {
-            GameState.SwitchState(GameState.FallingState);
-            return;
-        }
-        
-        //GameState.PlayerStateMachine.MoveMeshUpdate();
     }
     
     public override void FixedUpdate()
@@ -44,6 +35,6 @@ public class PlayerIdleState : PlayerGameBaseState
 
     public override void Exit()
     {
-        //GameState.PlayerStateMachine.physicsBody.Drag = 0.3f;
+        SetSpeed(1.0f);
     }
 }

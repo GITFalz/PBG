@@ -55,7 +55,6 @@ public static class AnimationParser
             {
                 index++;
                 var values = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-                Console.WriteLine($"line: {line}"); 
                 if (values.Length != 2)
                     return false;
 
@@ -150,8 +149,6 @@ public static class AnimationParser
                 index++;
                 if (currentBoneAnimation != null)
                     currentBoneAnimation.AddOrUpdateKeyframe(new AnimationKeyframe(data.Index, data.Position, data.Rotation, data.Scale));
-
-                Console.WriteLine($"Keyframe {data.Index} added to {currentBoneAnimation.Name} with position {data.Position}, rotation {data.Rotation}, scale {data.Scale}");
 
                 _currentParseAction = _boneData;
                 return true;

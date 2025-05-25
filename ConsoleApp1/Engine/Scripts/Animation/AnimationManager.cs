@@ -3,17 +3,18 @@ using System.Diagnostics.CodeAnalysis;
 public class AnimationManager
 {
     public static Dictionary<string, Animation> Animations = [];
+    public static bool DisplayError = true;
 
-    public static bool Add(Animation animation, bool displayError = true)
+    public static bool Add(Animation animation)
     {
         if (Animations.ContainsKey(animation.Name))
         {
-            if (displayError) PopUp.AddPopUp("Animation already exists");
+            if (DisplayError) PopUp.AddPopUp("Animation already exists");
             return false;
         }
 
         Animations.Add(animation.Name, animation);
-        if (displayError) PopUp.AddPopUp("Animation added");
+        if (DisplayError) PopUp.AddPopUp("Animation added");
         return true;
     }
 
@@ -29,45 +30,45 @@ public class AnimationManager
         }
     }
 
-    public static bool Remove(string name, bool displayError = true)
+    public static bool Remove(string name)
     {
         if (!Animations.ContainsKey(name))
         {
-            if (displayError) PopUp.AddPopUp("Animation not found");
+            if (DisplayError) PopUp.AddPopUp("Animation not found");
             return false;
         }
 
         Animations.Remove(name);
-        if (displayError) PopUp.AddPopUp("Animation removed");
+        if (DisplayError) PopUp.AddPopUp("Animation removed");
         return true;
     }
 
-    public static bool TryGet(string name, [NotNullWhen(true)] out Animation? animation, bool displayError = true)
+    public static bool TryGet(string name, [NotNullWhen(true)] out Animation? animation)
     {
         if (Animations.TryGetValue(name, out animation))
             return true;
 
-        if (displayError) PopUp.AddPopUp("Animation not found");
+        if (DisplayError) PopUp.AddPopUp("Animation not found");
         return false;
     }
 
-    public static bool ChangeName(string oldName, string newName, bool displayError = true)
+    public static bool ChangeName(string oldName, string newName)
     {
         if (!Animations.ContainsKey(oldName))
         {
-            if (displayError) PopUp.AddPopUp("Old Animation name not found");
+            if (DisplayError) PopUp.AddPopUp("Old Animation name not found");
             return false;
         }
 
         if (Animations.ContainsKey(newName))
         {
-            if (displayError) PopUp.AddPopUp("Animation name already exists");
+            if (DisplayError) PopUp.AddPopUp("Animation name already exists");
             return false;
         }
 
         Animations.Add(newName, Animations[oldName]);
         Animations.Remove(oldName);
-        if (displayError) PopUp.AddPopUp("Animation name changed");
+        if (DisplayError) PopUp.AddPopUp("Animation name changed");
         return true;
     }
 
@@ -93,24 +94,37 @@ public class AnimationManager
         animation = null;
         if (!File.Exists(path))
         {
-            PopUp.AddPopUp("Animation file does not exist");
+            if (DisplayError)
+            {
+                Console.WriteLine($"Animation file does not exist at path: {path}");
+                PopUp.AddPopUp("Animation file does not exist");
+            }
             return false;
         }
 
         string name = Path.GetFileNameWithoutExtension(path);
         if (Animations.ContainsKey(name)) // Quietly ignore if the rig already exists
         {
-            Remove(name, false);
+            DisplayError = false;
+            Remove(name);
+            DisplayError = true;
         }
 
         if (!LoadAnimation(name, path, out animation))
         {
-            PopUp.AddPopUp("Animation failed to load");
+            if (DisplayError)
+            {
+                Console.WriteLine($"Failed to load animation from path: {path}");
+                PopUp.AddPopUp("Animation failed to load");
+            }
             return false;
         }
 
         Add(animation);
-        PopUp.AddPopUp("Animation loaded from path");
+        if (DisplayError)
+        {
+            PopUp.AddPopUp("Animation loaded from path");
+        }
         return true;
     }
 

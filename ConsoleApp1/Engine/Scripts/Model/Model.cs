@@ -23,13 +23,7 @@ public class Model
 
     public Texture Texture = new Texture("empty.png", TextureLocation.NormalTexture);
 
-    public SSBO<Matrix4> BoneMatrices = new SSBO<Matrix4>();
-    public List<Matrix4> BoneMatricesList = [];
-
-
-    public Rig? Rig;
-    public string? RigName => Rig?.Name;
-    public NormalizedAnimation? Animation;
+    public ModelAnimationManager? AnimationManager;
 
 
     // === General model settings === //
@@ -56,56 +50,22 @@ public class Model
 
     private Matrix4 _modelMatrix = Matrix4.Identity;
 
-    public bool RenderBones = false;
     public bool Animate = false;
 
+    public string? RigName => AnimationManager?.Rig.Name;
 
     public Model()
     {
         Mesh = new ModelMesh(this);
     }
 
-    public Model(Rig rig, NormalizedAnimation animation)
-    {
-        Mesh = new ModelMesh(this);
-        Rig = rig;
-        Animation = animation;
-    }
-
-    public void InitRig()
-    {
-        if (Rig == null)
-            return;
-
-        Rig.Create();
-        Rig.Initialize();
-
-        BoneMatricesList.Clear();
-        foreach (var bone in Rig.BonesList)
-        {
-            BoneMatricesList.Add(bone.FinalMatrix);
-        }
-        BoneMatrices.Renew(BoneMatricesList);
-    }
-
     public void BindRig()
     {
-        if (Rig == null)
+        if (AnimationManager == null)
             return;
 
-        Mesh.Bind(Rig);
+        Mesh.Bind(AnimationManager.Rig);
         Mesh.UpdateModel();
-    }
-
-    // No need to check if the rig is null here, this method should only be called at a point where the rig is guaranteed to be initialized.
-    public void UpdateMatrices()
-    {
-        Rig.RootBone.UpdateGlobalTransformation();
-        foreach (var bone in Rig.BonesList)
-        {
-            BoneMatricesList[bone.Index] = bone.GlobalAnimatedMatrix;
-        }
-        BoneMatrices.Update(BoneMatricesList, 0);
     }
 
     public void Renew(string fileName, TextureLocation textureLocation)
@@ -122,20 +82,10 @@ public class Model
 
     public void Update()
     {
-        if (Rig == null || Animation == null || !Animate)
+        if (AnimationManager == null || !Animate)
             return;
 
-        Animation.Update();
-        foreach (var bone in Rig.BonesList)
-        {
-            var frame = Animation.GetBoneKeyframe(bone.Index);
-            bone.Position = frame.Position;
-            bone.Rotation = frame.Rotation;
-            bone.Scale = frame.Scale;
-            bone.LocalAnimatedMatrix = frame.GetLocalTransform(); ;
-        }
-
-        UpdateMatrices();
+        AnimationManager.Update();
     }
 
     public void Render()
@@ -160,9 +110,9 @@ public class Model
 
         Texture.Bind();
 
-        BoneMatrices.Bind(0);
+        AnimationManager?.BoneMatrices.Bind(0);
         Mesh.Render();
-        BoneMatrices.Unbind();
+        AnimationManager?.BoneMatrices.Unbind();
 
         Texture.Unbind();
 

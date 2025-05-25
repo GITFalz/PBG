@@ -4,17 +4,18 @@ using OpenTK.Mathematics;
 public static class RigManager
 {
     public static Dictionary<string, Rig> Rigs = [];
+    public static bool DisplayError = true;
 
-    public static bool Add(Rig rig, bool displayError = true)
+    public static bool Add(Rig rig)
     {
         if (Rigs.ContainsKey(rig.Name))
         {
-            if (displayError) PopUp.AddPopUp("Rig already exists");
+            if (DisplayError) PopUp.AddPopUp("Rig already exists");
             return false;
         }
 
         Rigs.Add(rig.Name, rig);
-        if (displayError) PopUp.AddPopUp("Rig added");
+        if (DisplayError) PopUp.AddPopUp("Rig added");
         return true;
     }
 
@@ -30,45 +31,45 @@ public static class RigManager
         }
     }
 
-    public static bool Remove(string name, bool displayError = true)
+    public static bool Remove(string name)
     {
         if (!Rigs.ContainsKey(name))
         {
-            if (displayError) PopUp.AddPopUp("Rig not found");
+            if (DisplayError) PopUp.AddPopUp("Rig not found");
             return false;
         }
 
         Rigs.Remove(name);
-        if (displayError) PopUp.AddPopUp("Rig removed");
+        if (DisplayError) PopUp.AddPopUp("Rig removed");
         return true;
     }
 
-    public static bool TryGet(string name, [NotNullWhen(true)] out Rig? rig, bool displayError = true)
+    public static bool TryGet(string name, [NotNullWhen(true)] out Rig? rig)
     {
         if (Rigs.TryGetValue(name, out rig))
             return true;
 
-        if (displayError) PopUp.AddPopUp("Rig not found");
+        if (DisplayError) PopUp.AddPopUp("Rig not found");
         return false;
     }
 
-    public static bool ChangeName(string oldName, string newName, bool displayError = true)
+    public static bool ChangeName(string oldName, string newName)
     {
         if (!Rigs.ContainsKey(oldName))
         {
-            if (displayError) PopUp.AddPopUp("Old rig name not found");
+            if (DisplayError) PopUp.AddPopUp("Old rig name not found");
             return false;
         }
 
         if (Rigs.ContainsKey(newName))
         {
-            if (displayError) PopUp.AddPopUp("Rig name already exists");
+            if (DisplayError) PopUp.AddPopUp("Rig name already exists");
             return false;
         }
 
         Rigs.Add(newName, Rigs[oldName]);
         Rigs.Remove(oldName);
-        if (displayError) PopUp.AddPopUp("Rig name changed");
+        if (DisplayError) PopUp.AddPopUp("Rig name changed");
         return true;
     }
 
@@ -94,24 +95,37 @@ public static class RigManager
         rig = null;
         if (!File.Exists(path))
         {
-            PopUp.AddPopUp("Rig file does not exist");
+            if (DisplayError)
+            {   
+                Console.WriteLine("Rig file does not exist: " + path);
+                PopUp.AddPopUp("Rig file does not exist");
+            }
             return false;
         }
 
         string name = Path.GetFileNameWithoutExtension(path);
         if (Rigs.ContainsKey(name)) // Quietly ignore if the rig already exists
         {
-            Remove(name, false);
+            DisplayError = false; // Disable error display for this operation
+            Remove(name);
+            DisplayError = true; // Re-enable error display
         }
 
         if (!LoadRig(name, path, out rig))
         {
-            PopUp.AddPopUp("Rig failed to load");
+            if (DisplayError)
+            {
+                Console.WriteLine("Failed to load rig from path: " + path);
+                PopUp.AddPopUp("Rig failed to load");
+            }
             return false;
         }
 
         Add(rig);
-        PopUp.AddPopUp("Rig loaded from path");
+        if (DisplayError)
+        {
+            PopUp.AddPopUp("Rig loaded from path");
+        }
         return true;
     }
 

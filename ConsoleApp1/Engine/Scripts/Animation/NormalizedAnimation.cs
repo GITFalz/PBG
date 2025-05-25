@@ -6,9 +6,12 @@ using Veldrid;
 /// </summary>
 public class NormalizedAnimation
 {
+    public string Name;
     public int FrameSpeed { get; private set; } = 24;
     public int BoneCount { get; private set; }
     public int FrameCount { get; private set; }
+
+    public AnimationStatus Status = AnimationStatus.Stopped;
 
     private NormalizedBoneAnimation[] _boneAnimations = [];
 
@@ -18,6 +21,7 @@ public class NormalizedAnimation
 
     public NormalizedAnimation(Rig rig, Animation animation)
     {
+        Name = animation.Name;
         FrameSpeed = Animation.FRAMES;
         BoneCount = rig.Bones.Count;
         FrameCount = animation.GetFrameCount();
@@ -36,12 +40,20 @@ public class NormalizedAnimation
         }
     }
 
+    public void Reset()
+    {
+        _elapsedTime = 0f;
+        _frameIndex = 0;
+        _t = 0f;
+        Status = AnimationStatus.Stopped;
+    }
+
     public AnimationKeyframe GetSingleBoneKeyframe(int boneIndex)
     {
         return _boneAnimations[boneIndex].GetKeyframe(0);
     }
 
-    public void Update()
+    public void Update(float speed = 1f)
     {
         float frame = _elapsedTime * FrameSpeed;
         _frameIndex = Mathf.FloorToInt(frame);
@@ -50,9 +62,10 @@ public class NormalizedAnimation
             _frameIndex = 0;
             _elapsedTime = 0f;
             frame = 0f;
+            Status = AnimationStatus.Done;
         }
         _t = frame - _frameIndex;
-        _elapsedTime += GameTime.DeltaTime;
+        _elapsedTime += GameTime.DeltaTime * speed;
     }
 
     public AnimationKeyframe GetBoneKeyframe(int boneIndex)
