@@ -149,7 +149,7 @@ public class Animation
 public class BoneAnimation
 {
     public string Name = string.Empty;
-    public List<AnimationKeyframe> Keyframes = new List<AnimationKeyframe>();
+    public List<AnimationKeyframe> Keyframes = [];
     public Func<AnimationKeyframe?> GetFrame;
     public float elapsedTime = 0;
     int index = 0;

@@ -534,11 +534,29 @@ public class Model
         Vertices = [];
     }
 
+
+    public void GetConnectedVertices()
+    {
+        if (SelectedVertices.Count == 0)
+            return;
+
+        HashSet<Vertex> connectedVertices = [];
+        HashSet<Triangle> connectedTriangles = [];
+
+        for (int i = 0; i < SelectedVertices.Count; i++)
+        {
+            SelectedVertices[i].GetConnectedVertices(connectedVertices, connectedTriangles);
+        }
+
+        SelectedVertices.Clear();
+        SelectedVertices.AddRange(connectedVertices);
+        GenerateVertexColor();
+    }
     
     public static List<Edge> GetFullSelectedEdges(List<Vertex> selectedVertices)
     {
         HashSet<Edge> edges = [];
-                
+
         foreach (var vert in selectedVertices)
         {
             foreach (var edge in vert.ParentEdges)

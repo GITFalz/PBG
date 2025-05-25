@@ -834,6 +834,8 @@ public class ModelMesh : Meshes
                 if (vertex.Position == other.Position)
                 {
                     MergeVertices([vertex, other]);
+                    vertices.RemoveAt(j);
+                    j--;
                 }
             }
         }

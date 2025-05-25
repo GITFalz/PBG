@@ -355,6 +355,9 @@ public class ModelingEditingMode : ModelingBase
 
                 // Check for useless vertices
                 if (Input.IsKeyPressed(Keys.B)) Model.Mesh.CombineDuplicateVertices();
+
+                // Get connected vertices
+                if (Input.IsKeyPressed(Keys.N)) Handle_GetConnectedVertices();
             }
             else
             {
@@ -408,25 +411,30 @@ public class ModelingEditingMode : ModelingBase
         
     }
 
+    public void Handle_GetConnectedVertices()
+    {
+        Model?.GetConnectedVertices();
+    }
+
 
     // Selection
     public void HandleVertexSelection()
-    {   
+    {
         if (Model == null)
             return;
-            
+
         if (!Input.IsKeyDown(Keys.LeftShift))
             Model.SelectedVertices.Clear();
-        
+
         Vector2 mousePos = Input.GetMousePosition();
         Vector2? closest = null;
         Vertex? closestVert = null;
-    
+
         foreach (var vert in Model.Vertices)
         {
             float distance = Vector2.Distance(mousePos, vert.Value);
             float distanceClosest = closest == null ? 1000 : Vector2.Distance(mousePos, (Vector2)closest);
-        
+
             if (distance < distanceClosest && distance < 10)
             {
                 closest = vert.Value;

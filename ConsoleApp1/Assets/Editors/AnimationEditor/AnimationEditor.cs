@@ -454,8 +454,6 @@ public class AnimationEditor : BaseEditor
 
                 foreach (var keyframe in boneAnimation.Keyframes)
                 {
-                    Console.WriteLine($"Keyframe: {keyframe.Index} {keyframe.Position} {keyframe.Rotation} {keyframe.Scale}");
-
                     UIButton keyframeButton = new UIButton("KeyframeButton", KeyframeUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (keyframe.Index * 20, i * 25, 0, 0), 0, 10, (10, 0.05f), UIState.Interactable);
                     KeyframePanelCollection.AddElement(keyframeButton);
 
@@ -725,7 +723,7 @@ public class AnimationEditor : BaseEditor
                 TimelineScrollView.AddElement(boneTextButton.Collection);
                 BoneAnimations.Add(bone.Name, timelineAnimation);
 
-                AnimationKeyframe keyframe = new AnimationKeyframe(i, bone);
+                AnimationKeyframe keyframe = new AnimationKeyframe(0, bone);
                 boneAnimation.AddOrUpdateKeyframe(keyframe);
 
                 UIButton keyframeButton = new UIButton("KeyframeButton", KeyframeUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (0, i * 25, 0, 0), 0, 10, (10, 0.05f), UIState.Interactable);

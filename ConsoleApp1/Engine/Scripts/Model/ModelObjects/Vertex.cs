@@ -175,6 +175,26 @@ public class Vertex
         return vertex;
     }
 
+    public void GetConnectedVertices(HashSet<Vertex> vertices, HashSet<Triangle> triangles)
+    {
+        if (!vertices.Add(this))
+            return;
+
+        foreach (var triangle in ParentTriangles)
+        {
+            if (!triangles.Add(triangle))
+                continue;
+
+            foreach (var vertex in triangle.GetVertices())
+            {
+                if (vertex != this)
+                {
+                    vertex.GetConnectedVertices(vertices, triangles);
+                }
+            }
+        }
+    }
+
 
     // Operators
     public static implicit operator Vector3(Vertex vertex) => vertex.Position;

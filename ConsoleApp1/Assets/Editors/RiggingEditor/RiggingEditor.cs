@@ -542,6 +542,8 @@ public class RiggingEditor : BaseEditor
             {
                 BindSelectedVertices();
             }
+
+            if (Input.IsKeyPressed(Keys.N)) Model?.GetConnectedVertices();
         }
 
         if (Input.IsKeyPressed(Keys.G))
