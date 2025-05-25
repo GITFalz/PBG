@@ -20,6 +20,7 @@ public class Game : GameWindow
 
     // User paths
     public static string mainPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Engines", "PBG");
+    public static string gameDataPath = Path.Combine(mainPath, "GameData");
     public static string chunkPath = Path.Combine(mainPath, "Chunks");
     public static string nodePath = Path.Combine(mainPath, "Nodes");
     public static string worldNoiseNodePath = Path.Combine(nodePath, "WorldNoiseNodes");
@@ -146,6 +147,12 @@ public class Game : GameWindow
         stopwatch.Start();
 
         Timer.Start();
+
+        if (!Directory.Exists(mainPath))
+            Directory.CreateDirectory(mainPath);
+
+        if (!Directory.Exists(gameDataPath))
+            Directory.CreateDirectory(gameDataPath);
 
         if (!Directory.Exists(chunkPath))
             Directory.CreateDirectory(chunkPath);

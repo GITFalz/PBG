@@ -9,7 +9,7 @@ public class GameDataManager : ScriptingNode
 
     public UIScrollView ImportedScrollView;
     public UIInputField ImportNameField;
-    
+
     public List<ImportedFileData> ImportedFiles = new List<ImportedFileData>();
     public ImportedFileData? SelectedFileData;
 
@@ -116,6 +116,19 @@ public class GameDataManager : ScriptingNode
             ImportNameField.SetText("Import Name").UpdateCharacters();
             SelectedFileData = null;
         });
+
+        // Load existing game data
+        string savePath = Path.Combine(Game.gameDataPath, "GameData.data");
+        if (File.Exists(savePath))
+        {
+            string[] lines = File.ReadAllLines(savePath);
+            GameDataParser.Parse(lines);
+            PopUp.AddPopUp("Game data loaded!");
+        }
+        else
+        {
+            PopUp.AddPopUp("No game data found, starting fresh.");
+        }
     }
 
     public void ImportFiles()
@@ -160,7 +173,7 @@ public class GameDataManager : ScriptingNode
 
             ImportedScrollView.AddElement(fileButton.Collection);
             GameDataController.AddElement(fileButton.Collection);
-            
+
             ImportedFiles.Add(importedFileData);
             importedFileData.Button = fileButton;
         }
@@ -180,7 +193,7 @@ public class GameDataManager : ScriptingNode
 
     void Start()
     {
-
+        
     }
 
     void Awake()
@@ -210,7 +223,16 @@ public class GameDataManager : ScriptingNode
 
     void Exit()
     {
+        Save();
+    }
 
+    public void Save()
+    {
+        string savePath = Path.Combine(Game.gameDataPath, "GameData.data");
+        List<string> lines = [];
+        lines.AddRange(GameData.SaveLines());
+        File.WriteAllLines(savePath, lines);
+        PopUp.AddPopUp("Game data saved!");
     }
 }
 
@@ -220,7 +242,7 @@ public abstract class ImportedFileData
     public string Name;
     public UITextButton? Button;
 
-    public ImportedFileData(string path, string name, UITextButton? button)
+    public ImportedFileData(string path, string name, UITextButton? button = null)
     {
         Path = path;
         Name = name;
@@ -232,10 +254,14 @@ public abstract class ImportedFileData
 
 public class ImportedModelData : ImportedFileData
 {
-    public ImportedModelData(string path, string name, UITextButton? button) : base(path, name, button) { }
+    public ImportedModelData(string path, string name, UITextButton? button = null) : base(path, name, button) { }
     public override void Import()
     {
-        Model model = new Model();
+        Import(new Model());
+    }
+
+    public void Import(Model model)
+    {
         model.LoadModelFromPath(Path);
         model.Name = Name;
         GameData.ModelSaveData modelSaveData = new GameData.ModelSaveData(model, Path);
@@ -245,13 +271,12 @@ public class ImportedModelData : ImportedFileData
 
 public class ImportedRigData : ImportedFileData
 {
-    public ImportedRigData(string path, string name, UITextButton? button) : base(path, name, button) { }
+    public ImportedRigData(string path, string name, UITextButton? button = null) : base(path, name, button) { }
     public override void Import()
     {
-        if (!Rig.LoadFromPath(Path, out Rig? rig)) 
+        if (!Rig.LoadFromPath(Path, out Rig? rig))
             return;
-
-        rig.Name = Name; 
+        rig.Name = Name;
         GameData.RigSaveData rigSaveData = new GameData.RigSaveData(rig, Path);
         GameData.Add(rigSaveData);
     }
@@ -259,7 +284,7 @@ public class ImportedRigData : ImportedFileData
 
 public class ImportedAnimationData : ImportedFileData
 {
-    public ImportedAnimationData(string path, string name, UITextButton? button) : base(path, name, button) { }
+    public ImportedAnimationData(string path, string name, UITextButton? button = null) : base(path, name, button) { }
     public override void Import()
     {
         if (!Animation.LoadFromPath(Path, out Animation? animation))
