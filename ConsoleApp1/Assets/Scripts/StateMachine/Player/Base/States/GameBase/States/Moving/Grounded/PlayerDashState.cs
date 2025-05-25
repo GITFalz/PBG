@@ -7,6 +7,11 @@ public class PlayerDashState : PlayerGameBaseState
     
     Vector2 input;
     float timer = 0;
+
+    public PlayerDashState(PlayerGameState gameState) : base(gameState)
+    {
+    }
+
     public override void Enter()
     {
         Console.WriteLine("Entering dash state");

@@ -7,13 +7,14 @@ public class PlayerFallingState : PlayerGameBaseState
     Vector2 input = Vector2.Zero;
     double timer = 0;
     
+    public PlayerFallingState(PlayerGameState gameState) : base(gameState) {}
     
     public override void Enter()
     {
         Console.WriteLine("Entering falling state");
 
         timer = 0;
-        
+
         Camera = Game.Camera;
     }
 

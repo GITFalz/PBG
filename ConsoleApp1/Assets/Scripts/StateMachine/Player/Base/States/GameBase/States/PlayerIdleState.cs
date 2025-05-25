@@ -3,6 +3,8 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PlayerIdleState : PlayerGameBaseState
 {
+    public PlayerIdleState(PlayerGameState stateMachine) : base(stateMachine){}
+    
     public override void Enter()
     {
         Console.WriteLine("Entering idle state");

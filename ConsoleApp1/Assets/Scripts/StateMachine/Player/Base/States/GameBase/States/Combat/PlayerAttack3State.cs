@@ -9,7 +9,11 @@ public class PlayerAttack3State : PlayerGameBaseState
     Vector2 input;
     
     bool attacked = false;
-    
+
+    public PlayerAttack3State(PlayerGameState gameState) : base(gameState)
+    {
+    }
+
     public override void Enter()
     {
         

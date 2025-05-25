@@ -1,9 +1,10 @@
 public class PlayerGroundedState : PlayerGameBaseState
 {
+    public PlayerGroundedState(PlayerGameState gameState) : base(gameState) {}
     public override void Enter()
     {
         Console.WriteLine("Entering grounded state");
-        
+
         GameState.SwitchState(GameState.NextMovingState);
     }
 

@@ -5,7 +5,11 @@ public class PlayerGrapplingSwingOutState : PlayerGameBaseState
     Camera Camera;
     
     Vector3 direction;
-    
+
+    public PlayerGrapplingSwingOutState(PlayerGameState gameState) : base(gameState)
+    {
+    }
+
     public override void Enter()
     {
         Console.WriteLine("Entering grappling swing out state");

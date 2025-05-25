@@ -7,7 +7,11 @@ public class PlayerGrapplingState : PlayerGameBaseState
     
     float timer = 0;
     Vector3 grappleDirection;
-    
+
+    public PlayerGrapplingState(PlayerGameState gameState) : base(gameState)
+    {
+    }
+
     public override void Enter()
     {
         Console.WriteLine("Entering grappling state");

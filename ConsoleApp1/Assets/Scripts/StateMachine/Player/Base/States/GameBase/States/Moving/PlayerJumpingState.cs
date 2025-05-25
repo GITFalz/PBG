@@ -6,15 +6,17 @@ public class PlayerJumpingState : PlayerGameBaseState
     Camera Camera;
     Vector2 input = Vector2.Zero;
     
+    public PlayerJumpingState(PlayerGameState gameState) : base(gameState) {}
+    
     public override void Enter()
     {
         Console.WriteLine("Entering jumping state");
-        
+
         //StateMachine.physicsBody.Drag = 2;
         Camera = Game.Camera;
-        
+
         StateMachine.physicsBody.AddForce(new Vector3(0, PlayerStateMachine.JUMP_SPEED, 0));
-        
+
         OldAnimationManager.Instance.SetAnimation("Player", "jumping");
     }
 

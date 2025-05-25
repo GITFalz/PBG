@@ -5,15 +5,19 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 public class PlayerWalkingState : PlayerGameBaseState
 {
     Vector2 input = Vector2.Zero;
-    
+
+    public PlayerWalkingState(PlayerGameState gameState) : base(gameState)
+    {
+    }
+
     public override void Enter()
     {
         Console.WriteLine("Entering walking state");
-        
+
         GameState.NextMovingState = GameState.WalkingState;
         //StateMachine.physicsBody.Drag = 10f;
         GameState.MovementSpeed = PlayerMovementSpeed.Walk;
-        
+
         OldAnimationManager.Instance.LoopAnimation("Player", "walking");
         Game.Camera.SetFOV(60);
     }

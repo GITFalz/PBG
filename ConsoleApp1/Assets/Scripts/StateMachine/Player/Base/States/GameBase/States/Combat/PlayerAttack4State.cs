@@ -10,7 +10,11 @@ public class PlayerAttack4State : PlayerGameBaseState
     
     bool smashed1 = false;
     bool smashed2 = false;
-    
+
+    public PlayerAttack4State(PlayerGameState gameState) : base(gameState)
+    {
+    }
+
     public override void Enter()
     {
         Console.WriteLine("Entering attack 4 state");

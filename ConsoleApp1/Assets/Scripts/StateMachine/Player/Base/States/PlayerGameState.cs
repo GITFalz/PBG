@@ -3,21 +3,21 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PlayerGameState : PlayerBaseState
 {
-    public PlayerAdminState AdminState = new();
-    public PlayerFallingState FallingState = new();
-    public PlayerGroundedState GroundedState = new();
-    public PlayerIdleState IdleState = new();
-    public PlayerWalkingState WalkingState = new();
-    public PlayerRunningState RunningState = new();
-    public PlayerSprintingState SprintingState = new();
-    public PlayerJumpingState JumpingState = new();
-    public PlayerAttack1State Attack1State = new();
-    public PlayerAttack2State Attack2State = new();
-    public PlayerAttack3State Attack3State = new();
-    public PlayerAttack4State Attack4State = new();
-    public PlayerDashState DashState = new();
-    public PlayerGrapplingState GrapplingState = new();
-    public PlayerGrapplingSwingOutState GrapplingSwingOutState = new();
+    public PlayerAdminState AdminState;
+    public PlayerFallingState FallingState;
+    public PlayerGroundedState GroundedState;
+    public PlayerIdleState IdleState;
+    public PlayerWalkingState WalkingState;
+    public PlayerRunningState RunningState;
+    public PlayerSprintingState SprintingState;
+    public PlayerJumpingState JumpingState;
+    public PlayerAttack1State Attack1State;
+    public PlayerAttack2State Attack2State;
+    public PlayerAttack3State Attack3State;
+    public PlayerAttack4State Attack4State;
+    public PlayerDashState DashState;
+    public PlayerGrapplingState GrapplingState;
+    public PlayerGrapplingSwingOutState GrapplingSwingOutState;
 
     private PlayerGameBaseState _currentState;
 
@@ -26,6 +26,22 @@ public class PlayerGameState : PlayerBaseState
 
     public PlayerGameState(PlayerStateMachine playerStateMachine) : base(playerStateMachine)
     {
+        AdminState = new PlayerAdminState(this);
+        FallingState = new PlayerFallingState(this);
+        GroundedState = new PlayerGroundedState(this);
+        IdleState = new PlayerIdleState(this);
+        WalkingState = new PlayerWalkingState(this);
+        RunningState = new PlayerRunningState(this);
+        SprintingState = new PlayerSprintingState(this);
+        JumpingState = new PlayerJumpingState(this);
+        Attack1State = new PlayerAttack1State(this);
+        Attack2State = new PlayerAttack2State(this);
+        Attack3State = new PlayerAttack3State(this);
+        Attack4State = new PlayerAttack4State(this);
+        DashState = new PlayerDashState(this);
+        GrapplingState = new PlayerGrapplingState(this);
+        GrapplingSwingOutState = new PlayerGrapplingSwingOutState(this);
+        
         _currentState = IdleState;
         NextMovingState = IdleState;
     }

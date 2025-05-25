@@ -6,7 +6,11 @@ public class PlayerSprintingState : PlayerGameBaseState
     Camera Camera;
     
     Vector2 input = Vector2.Zero;
-    
+
+    public PlayerSprintingState(PlayerGameState gameState) : base(gameState)
+    {
+    }
+
     public override void Enter()
     {
         Console.WriteLine("Entering sprinting state");

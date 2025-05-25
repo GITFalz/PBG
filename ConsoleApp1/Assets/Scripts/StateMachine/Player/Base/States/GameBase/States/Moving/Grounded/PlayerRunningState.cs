@@ -4,7 +4,11 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 public class PlayerRunningState : PlayerGameBaseState
 {
     Vector2 input = Vector2.Zero;
-    
+
+    public PlayerRunningState(PlayerGameState gameState) : base(gameState)
+    {
+    }
+
     public override void Enter()
     {
         Console.WriteLine("Entering running state");
