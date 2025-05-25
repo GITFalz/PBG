@@ -2,7 +2,7 @@ using System.Globalization;
 
 public static class Float
 {
-    public static float Parse(string value)
+    public static float Parse(string value, float replacement = 0f)
     {
         try 
         {
@@ -10,7 +10,7 @@ public static class Float
         }
         catch (Exception)
         {
-            return 0f;
+            return replacement;
         }
     }
 

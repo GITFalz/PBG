@@ -186,30 +186,26 @@ public class GeneralModelingEditor : ScriptingNode
         UIImage vertexPanel = new("VertexPanel", MainUi, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f));
         UIDepthCollection vertexCollection = new("VertexCollection", MainUi, AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (36, 36), (0, 0, 0, 0), 0);
 
-        vertexCollection.AddElement(vertexPanel);
-        vertexCollection.AddElement(vertexSelectionButton);
+        vertexCollection.AddElements(vertexPanel, vertexSelectionButton);
 
         UIImage edgePanel = new("EdgePanel", MainUi, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f));
         UIDepthCollection edgeCollection = new("EdgeCollection", MainUi, AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (36, 36), (0, 0, 0, 0), 0);
 
-        edgeCollection.AddElement(edgePanel);
-        edgeCollection.AddElement(edgeSelectionButton);
+        edgeCollection.AddElements(edgePanel, edgeSelectionButton);
 
         UIImage facePanel = new("FacePanel", MainUi, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f));
         UIDepthCollection faceCollection = new("FaceCollection", MainUi, AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (36, 36), (0, 0, 0, 0), 0);
 
-        faceCollection.AddElement(facePanel);
-        faceCollection.AddElement(faceSelectionButton);
+        faceCollection.AddElements(facePanel, faceSelectionButton);
 
         UIImage snappingPanel = new("SnappingPanel", MainUi, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (100, 36), (0, 0, 0, 0), 0, 1, (10, 0.05f));
         UIDepthCollection snappingCollection = new("SnappingCollection", MainUi, AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (100, 36), (0, 0, 0, 0), 0);
 
         SnappingText = new("SnappingText", MainUi, AnchorType.MiddleCenter, PositionType.Relative, (1, 1, 1, 1f), (0, 40, 0), (400, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f));
-        SnappingText.SetTextType(TextType.Decimal).SetMaxCharCount(5).SetText("0", 1.2f);
+        SnappingText.SetTextType(TextType.Decimal).SetMaxCharCount(8).SetText("0", 1f);
         SnappingText.OnTextChange = new SerializableEvent(SnappingField);
 
-        snappingCollection.AddElement(snappingPanel);
-        snappingCollection.AddElement(SnappingText);
+        snappingCollection.AddElements(snappingPanel, SnappingText);
 
 
 
@@ -397,9 +393,8 @@ public class GeneralModelingEditor : ScriptingNode
 
     public void SnappingField()
     {
-        string text = SnappingText.Text.EndsWith('.') ? SnappingText.Text[..^1] : SnappingText.Text;
-        SnappingFactor = Mathf.Clamp(0, 100, Float.Parse(text));
-        SnappingText.SetText(SnappingFactor.ToString() + (SnappingText.Text.EndsWith('.') ? "." : "")).UpdateCharacters();
+        string text = SnappingText.Text;
+        SnappingFactor = Mathf.Clamp(0, 100, Float.Parse(text, 0.0f));
         Snapping = SnappingFactor != 0.0f;
     }
     #endregion
