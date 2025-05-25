@@ -120,28 +120,12 @@ public class Animation
         return BoneAnimations.TryGetValue(boneName, out boneAnimation);
     }
 
-    public List<string> Save()
-    {
-        List<string> lines = new List<string>();
-        foreach (var boneAnimation in BoneAnimations)
-        {
-            lines.Add($"Bone: {boneAnimation.Key}");
-            lines.Add("{");
-            foreach (var keyframe in boneAnimation.Value.Keyframes)
-            {
-                lines.AddRange(keyframe.Save());
-            }
-            lines.Add("}");
-        }
-        return lines;
-    }
-
     public int GetFrameCount()
     {
         int count = 0;
         foreach (var (_, boneAnimation) in BoneAnimations)
         {
-            count = Mathf.Max(count, boneAnimation.GetFrameCount()); 
+            count = Mathf.Max(count, boneAnimation.GetFrameCount());
         }
         return count;
     }
@@ -153,6 +137,17 @@ public class Animation
             boneAnimation.Clear();
         }
         BoneAnimations = [];
+    }
+    
+
+    public static bool LoadFromPath(string path)
+    {
+        return AnimationManager.LoadFromPath(path);
+    }
+
+    public static bool LoadFromPath(string path, [NotNullWhen(true)] out Animation? animation)
+    {
+        return AnimationManager.LoadFromPath(path, out animation);
     }
 }
 
@@ -196,7 +191,7 @@ public class BoneAnimation
         return Keyframes[index].Lerp(Keyframes[index + 1], t);
     }
 
-    public AnimationKeyframe? GetSpecificFrame(int index)
+    public AnimationKeyframe GetSpecificFrame(int index)
     {
         if (Keyframes.Count > 0)
         {
@@ -220,12 +215,17 @@ public class BoneAnimation
                 }
                 else
                 {
-                    elapsedTime = (float)index / (float)Animation.FRAMES;
                     return keyframe;
                 }
             }
+            return GetLastFrame();
         }
-        return null;
+        return new AnimationKeyframe();
+    }
+
+    public AnimationKeyframe GetLastFrame()
+    {
+        return Keyframes.Count > 0 ? Keyframes[^1] : new AnimationKeyframe();
     }
 
     /// <summary>

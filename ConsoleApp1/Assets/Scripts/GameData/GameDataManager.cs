@@ -51,20 +51,17 @@ public class GameDataManager : ScriptingNode
 
         UITextButton confirmButton = new UITextButton("ConfirmButton", GameDataController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (290, 25), (0, 30, 0, 0), 0, 10, (7.5f, 0.05f), UIState.Interactable);
         confirmButton.SetTextCharCount("Import", 1f);
+        confirmButton.SetOnClick(() =>
+        {
+            if (SelectedFileData == null)
+                return;
+
+            SelectedFileData.Import();
+            PopUp.AddPopUp("Import Successful");
+        });
 
         UITextButton deleteImportButton = new UITextButton("DeleteImportButton", GameDataController, AnchorType.BottomLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (290, 25), (0, 0, 0, 0), 0, 10, (7.5f, 0.05f), UIState.Interactable);
         deleteImportButton.SetTextCharCount("Delete", 1f);
-        deleteImportButton.SetOnClick(() =>
-        {
-            if (SelectedFileData == null || SelectedFileData.Button == null)
-                return;
-
-            ImportedFiles.Remove(SelectedFileData);
-            SelectedFileData.Button.Collection.Delete();
-            Console.WriteLine(ImportedScrollView?.RemoveElement(SelectedFileData.Button.Collection));
-            SelectedFileData = null;
-            ImportNameField.SetText("Import Name").UpdateCharacters();
-        });
 
         importNameFieldCollection.AddElements(importFieldBackground, ImportNameField, confirmButton.Collection);
 
@@ -104,6 +101,21 @@ public class GameDataManager : ScriptingNode
         mainCollection.AddElements(selectionCollection, centerCollection, importCollection);
 
         GameDataController.AddElement(mainCollection);
+
+
+        // Set up here because of null dereference error
+        deleteImportButton.SetOnClick(() =>
+        {
+            if (SelectedFileData == null || SelectedFileData.Button == null)
+                return;
+
+            ImportedFiles.Remove(SelectedFileData);
+            SelectedFileData.Button.Collection.Delete();
+            ImportedScrollView.ResetInit();
+            ImportedScrollView.QueueUpdateTransformation();
+            ImportNameField.SetText("Import Name").UpdateCharacters();
+            SelectedFileData = null;
+        });
     }
 
     public void ImportFiles()
@@ -123,18 +135,19 @@ public class GameDataManager : ScriptingNode
 
             ImportedFileData importedFileData;
 
-            if (fileExtension == ".model")
+            switch (fileExtension)
             {
-                importedFileData = new ImportedModelData(file, fileName, null);
-
-            }
-            else if (fileExtension == ".anim")
-            {
-                importedFileData = new ImportedAnimationData(file, fileName, null);
-            }
-            else
-            {
-                continue;
+                case ".model":
+                    importedFileData = new ImportedModelData(file, fileName, null);
+                    break;
+                case ".rig":
+                    importedFileData = new ImportedRigData(file, fileName, null);
+                    break;
+                case ".anim":
+                    importedFileData = new ImportedAnimationData(file, fileName, null);
+                    break;
+                default:
+                    continue; // Skip unsupported file types
             }
 
             UITextButton fileButton = new UITextButton(fileName, GameDataController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (290, 25), (0, 0, 0, 0), 0, 10, (7.5f, 0.05f), UIState.Interactable);
@@ -201,7 +214,7 @@ public class GameDataManager : ScriptingNode
     }
 }
 
-public class ImportedFileData
+public abstract class ImportedFileData
 {
     public string Path;
     public string Name;
@@ -213,18 +226,47 @@ public class ImportedFileData
         Name = name;
         Button = button;
     }
+
+    public abstract void Import();
 }
 
 public class ImportedModelData : ImportedFileData
 {
-    public Model? Model;
+    public ImportedModelData(string path, string name, UITextButton? button) : base(path, name, button) { }
+    public override void Import()
+    {
+        Model model = new Model();
+        model.LoadModelFromPath(Path);
+        model.Name = Name;
+        GameData.ModelSaveData modelSaveData = new GameData.ModelSaveData(model, Path);
+        GameData.Add(modelSaveData);
+    }
+}
 
-    public ImportedModelData(string path, string name, UITextButton? button) : base(path, name, button) {}
+public class ImportedRigData : ImportedFileData
+{
+    public ImportedRigData(string path, string name, UITextButton? button) : base(path, name, button) { }
+    public override void Import()
+    {
+        if (!Rig.LoadFromPath(Path, out Rig? rig)) 
+            return;
+
+        rig.Name = Name; 
+        GameData.RigSaveData rigSaveData = new GameData.RigSaveData(rig, Path);
+        GameData.Add(rigSaveData);
+    }
 }
 
 public class ImportedAnimationData : ImportedFileData
 {
-    public Animation? Animation;
+    public ImportedAnimationData(string path, string name, UITextButton? button) : base(path, name, button) { }
+    public override void Import()
+    {
+        if (!Animation.LoadFromPath(Path, out Animation? animation))
+            return;
 
-    public ImportedAnimationData(string path, string name, UITextButton? button) : base(path, name, button) {}
+        animation.Name = Name;
+        GameData.AnimationSaveData animationSaveData = new GameData.AnimationSaveData(animation, Path);
+        GameData.Add(animationSaveData);
+    }
 }

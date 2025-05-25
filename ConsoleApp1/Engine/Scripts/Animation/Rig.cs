@@ -4,7 +4,7 @@ using OpenTK.Mathematics;
 
 public class Rig
 {
-    public string Name { get; private set; } = "Rig";
+    public string Name = "Rig";
     public RootBone RootBone = new RootBone("RootBone");
     public Dictionary<string, Bone> Bones = [];
     public List<Bone>   BonesList = [];
@@ -48,6 +48,11 @@ public class Rig
         copy.Create();
         copy.Initialize();
         return copy;
+    }
+
+    public static bool LoadFromPath(string path, [NotNullWhen(true)] out Rig? rig)
+    {
+        return RigManager.LoadFromPath(path, out rig);
     }
 
     public List<Matrix4> GetGlobalAnimatedMatrices()

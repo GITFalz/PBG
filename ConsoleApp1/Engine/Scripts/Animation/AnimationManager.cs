@@ -79,26 +79,38 @@ public class AnimationManager
 
     public static bool Load(string name, string path)
     {
+        path = Path.Combine(path, name + ".anim");
+        return LoadFromPath(path);
+    }
+
+    public static bool LoadFromPath(string path)
+    {
+        return LoadFromPath(path, out _);
+    }
+
+    public static bool LoadFromPath(string path, [NotNullWhen(true)] out Animation? animation)
+    {
+        animation = null;
+        if (!File.Exists(path))
+        {
+            PopUp.AddPopUp("Animation file does not exist");
+            return false;
+        }
+
+        string name = Path.GetFileNameWithoutExtension(path);
         if (Animations.ContainsKey(name)) // Quietly ignore if the rig already exists
         {
             Remove(name, false);
         }
 
-        path = Path.Combine(path, name + ".anim");
-        if (!File.Exists(path))
-        {
-            PopUp.AddPopUp("Animation does not exist");
-            return false;
-        }
-
-        if (!LoadAnimation(name, path, out Animation? animation))
+        if (!LoadAnimation(name, path, out animation))
         {
             PopUp.AddPopUp("Animation failed to load");
             return false;
         }
 
         Add(animation);
-        PopUp.AddPopUp("Animation loaded");
+        PopUp.AddPopUp("Animation loaded from path");
         return true;
     }
 

@@ -60,9 +60,6 @@ public class Game : GameWindow
     
     public static Scene? CurrentScene;
 
-    // Miscaleanous Ui
-    private PopUp _popUp;
-
     // This is needed because the OnResize method is called before the load method
     private Action _resizeAction = () => { };
     
@@ -75,12 +72,12 @@ public class Game : GameWindow
     {
         Instance = this;
         Camera = new Camera(width, height, new Vector3(0, 0, 0));
+        ModelSettings.Camera = Camera;
 
         CenterWindow(new Vector2i(width, height));
         //this.VSync = VSyncMode.On;
 
         _ = new Info();
-        _popUp = new PopUp();
         
         Width = width;
         Height = height;
@@ -129,7 +126,6 @@ public class Game : GameWindow
 
     public void OnResize()
     {
-        _popUp.Resize();
         Info.Resize();
         Timer.Resize();
         Inventory.ResizeAll();
@@ -232,43 +228,40 @@ public class Game : GameWindow
 
         ItemDataManager.GenerateIcons();
 
+        // File manager
+        FileManager fileManager = new FileManager();
+
+        // PopUp
+        TransformNode popUpNode = new TransformNode();
+        popUpNode.AddChild(new PopUp());
+
         // Menu
         TransformNode menuNode = new TransformNode();
-        MenuManager menuManager = new MenuManager();
-        menuNode.AddChild(menuManager);
+        menuNode.AddChild(new MenuManager());
 
         // Game data
         TransformNode gameDataNode = new TransformNode();
-        FileManager fileManager = new FileManager();
-        GameDataManager gameDataManager = new GameDataManager(fileManager);
-        gameDataNode.AddChild(gameDataManager, fileManager);
+        gameDataNode.AddChild(new GameDataManager(fileManager), fileManager);
          
         // World
         TransformNode worldGenerationNode = new TransformNode();
         worldGenerationNode.AddChild(new WorldManager());
 
         TransformNode playerNode = new TransformNode();
-        playerNode.AddChild(new PlayerStateMachine(), new PhysicsBody());
-
-        TransformNode InventoryNode = new TransformNode();
-        InventoryNode.AddChild(new PlayerInventoryManager());
-
-        TransformNode SelectedItemNode = new TransformNode();
-        SelectedItemNode.AddChild(new SelectedItemManager());
+        playerNode.AddChild(new PlayerStateMachine(), new PhysicsBody(), new PlayerInventoryManager(), new SelectedItemManager());
 
         // World noise
-        NoiseEditor noiseEditor = new NoiseEditor();
         TransformNode noiseEditorNode = new TransformNode();
-        noiseEditorNode.AddChild(noiseEditor);
+        noiseEditorNode.AddChild(new NoiseEditor());
 
         // UI
         TransformNode uiNode = new TransformNode();
         uiNode.AddChild(new UIEditor());
 
-        _gameDataScene.AddNode(gameDataNode, menuNode);
-        _worldScene.AddNode(playerNode, worldGenerationNode, InventoryNode, SelectedItemNode, menuNode);
-        _worldNoiseEditorScene.AddNode(noiseEditorNode, menuNode);
-        _UIEditorScene.AddNode(uiNode, menuNode);
+        _gameDataScene.AddNode(gameDataNode, menuNode, popUpNode);
+        _worldScene.AddNode(playerNode, worldGenerationNode, menuNode, popUpNode);
+        _worldNoiseEditorScene.AddNode(noiseEditorNode, menuNode, popUpNode);
+        _UIEditorScene.AddNode(uiNode, menuNode, popUpNode);
 
         AddScenes(_gameDataScene, _worldScene, _worldNoiseEditorScene, _UIEditorScene);
         //LoadScene("WorldNoiseEditor");
@@ -354,7 +347,6 @@ public class Game : GameWindow
 
         Timer.Update();
         Info.Update();
-        _popUp.Update();
         UpdateCamera.Invoke();
         CurrentScene?.OnUpdate();
         ThreadPool.Update();
@@ -374,7 +366,6 @@ public class Game : GameWindow
         
         Skybox.Render();
         CurrentScene?.OnRender();
-        _popUp.Render();
         Info.Render();
         Timer.Render();
         

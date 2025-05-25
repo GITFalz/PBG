@@ -10,6 +10,11 @@ public static class Mathf
     public static Vector3i FloorToInt(Vector3 value) => new Vector3i(FloorToInt(value.X), FloorToInt(value.Y), FloorToInt(value.Z));
     public static Vector2i FloorToInt(Vector2 value) => new Vector2i(FloorToInt(value.X), FloorToInt(value.Y));
     public static float Floor(float value) => (float)Math.Floor(value);
+    public static float DeltaAngle(float a, float b)
+    {
+        float diff = (b - a + 180f) % 360f - 180f;
+        return diff < -180f ? diff + 360f : diff;
+    }
 
     public static int RoundToInt(float value) => (int)Math.Round(value);
 
@@ -152,6 +157,40 @@ public static class Mathf
     public static Vec4 Num(Vector4 vector) => new Vec4(vector.X, vector.Y, vector.Z, vector.W);
     public static Vec3 Num(Vector3 vector) => new Vec3(vector.X, vector.Y, vector.Z);
     public static Vec2 Num(Vector2 vector) => new Vec2(vector.X, vector.Y);
+
+    public static Vector3 ToDegrees(Vector3 radians)
+    {
+        return new Vector3(
+            MathHelper.RadiansToDegrees(radians.X),
+            MathHelper.RadiansToDegrees(radians.Y),
+            MathHelper.RadiansToDegrees(radians.Z)
+        );
+    }
+
+    public static Vector2 ToDegrees(Vector2 radians)
+    {
+        return new Vector2(
+            MathHelper.RadiansToDegrees(radians.X),
+            MathHelper.RadiansToDegrees(radians.Y)
+        );
+    }
+
+    public static Vector3 ToRadians(Vector3 degrees)
+    {
+        return new Vector3(
+            MathHelper.DegreesToRadians(degrees.X),
+            MathHelper.DegreesToRadians(degrees.Y),
+            MathHelper.DegreesToRadians(degrees.Z)
+        );
+    }
+
+    public static Vector2 ToRadians(Vector2 degrees)
+    {
+        return new Vector2(
+            MathHelper.DegreesToRadians(degrees.X),
+            MathHelper.DegreesToRadians(degrees.Y)
+        );
+    }
 
     // Vector4 Adding
     public static Vec4 Add(Vec4 vector, Vector4 add) => new Vec4(vector.X + add.X, vector.Y + add.Y, vector.Z + add.Z, vector.W + add.W);

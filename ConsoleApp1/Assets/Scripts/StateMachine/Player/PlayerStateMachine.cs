@@ -55,6 +55,7 @@ public class PlayerStateMachine : ScriptingNode
     // Animation
     private OldAnimationMesh _playerMesh;
     public PhysicsBody physicsBody;
+    public Model? PlayerModel;
     
     public float yaw;
     
@@ -77,6 +78,8 @@ public class PlayerStateMachine : ScriptingNode
     private Action _renderHit = () => {};
 
     public bool BlockSwitch = false;
+
+    private float _yaw = 0;
 
     public PlayerStateMachine()
     {
@@ -151,16 +154,51 @@ public class PlayerStateMachine : ScriptingNode
         Camera camera = Game.Camera;
 
         camera.SetCameraMode(cameraMode);
-        
+
         camera.Position = _lastCameraPosition;
         camera.Yaw = _lastCameraYaw;
         camera.Pitch = _lastCameraPitch;
-        
+
         camera.UpdateVectors();
+
+        if (PlayerModel == null)
+        {
+            Model? model = GameData.GetModel("Player");
+            Rig? rig = GameData.GetRig("PlayerRig");
+            Animation? animation = GameData.GetAnimation("PlayerAnimation");
+
+            if (model == null)
+            {
+                PopUp.AddPopUp("Player model not found");
+                return;
+            }
+
+            if (rig == null)
+            {
+                PopUp.AddPopUp("Player rig not found");
+                return;
+            }
+
+            if (animation == null)
+            {
+                PopUp.AddPopUp("Player animation not found");
+                return;
+            }
+
+            model.Rig = rig;
+            model.InitRig();
+            model.BindRig();
+
+            NormalizedAnimation normalizedAnimation = new(model.Rig, animation);
+            model.Animation = normalizedAnimation;
+
+            PlayerModel = model;
+            PlayerModel.Animate = true;
+        }
     }
 
     void Update()
-    {      
+    {
         Camera camera = Game.Camera;
 
         if (Input.IsKeyPressed(Keys.F5))
@@ -179,13 +217,15 @@ public class PlayerStateMachine : ScriptingNode
         if (input != Vector2.Zero)
         {
             yaw = -camera.Yaw + _inputAngle[input];
+            float delta = Mathf.DeltaAngle(_yaw, yaw);
+            _yaw += delta * GameTime.DeltaTime * 10;
         }
-        
+
         if (physicsBody.Velocity != Vector3.Zero)
         {
-            Info.SetPositionText(Transform.Position - (0f, 0.875f, 0f));
+            Info.SetPositionText(Transform.Position);
         }
-        
+
         forward = Mathf.YAngleToDirection(-yaw);
 
         PlayerData.LookingAtBlock = false;
@@ -205,13 +245,13 @@ public class PlayerStateMachine : ScriptingNode
         }
 
         camera.Center = Mathf.Lerp(_oldCameraCenter, Transform.Position + (0, 0.85f, 0), GameTime.PhysicsDelta);
-        
+
         if (camera.GetCameraMode() == CameraMode.Follow)
         {
             if (Input.IsKeyDown(Keys.LeftControl))
             {
                 float scroll = Input.GetMouseScrollDelta().Y;
-                
+
                 CameraDistance -= scroll * SCROLL_SENSITIVITY;
                 CameraDistance = Math.Clamp(CameraDistance, 3, 10);
             }
@@ -226,6 +266,13 @@ public class PlayerStateMachine : ScriptingNode
 
         _oldPosition = Transform.Position;
         PlayerData.Position = Transform.Position;
+        if (PlayerModel != null)
+        {
+            PlayerModel.Position = Transform.Position;
+            PlayerModel.Rotation = (0, _yaw + 90, 0);
+        }
+
+        PlayerModel?.Update();
     }
     
     void FixedUpdate()
@@ -244,6 +291,7 @@ public class PlayerStateMachine : ScriptingNode
         GL.Enable(EnableCap.CullFace);
         GL.CullFace(TriangleFace.Back);
 
+        /*
         Matrix4 model;
         Matrix4 projection;
 
@@ -252,26 +300,26 @@ public class PlayerStateMachine : ScriptingNode
             Camera camera = Game.Camera;
 
             _shaderProgram.Bind();
-            
+
             model = Matrix4.CreateTranslation(Transform.Position);
             Matrix4 view = camera.GetViewMatrix();
             projection = camera.GetProjectionMatrix();
-            
+
             GL.UniformMatrix4(playerModelLocation, true, ref model);
             GL.UniformMatrix4(playerViewLocation, true, ref view);
             GL.UniformMatrix4(playerProjectionLocation, true, ref projection);
 
             _playerMesh.RenderMesh();
-            
+
             _shaderProgram.Unbind();
         }
 
         _renderHit();
-        
+
         GL.DepthFunc(DepthFunction.Always);
         GL.Enable(EnableCap.Blend);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-        
+
         model = Matrix4.CreateTranslation(Game.CenterX - 5, Game.CenterY - 5, 0);
         projection = Matrix4.CreateOrthographicOffCenter(0, Game.Width, Game.Height, 0, -1, 1);
 
@@ -289,6 +337,9 @@ public class PlayerStateMachine : ScriptingNode
         _crosshairShader.Unbind();
 
         GL.DepthFunc(DepthFunction.Less);
+        */
+        
+        PlayerModel?.Render();
     }
 
     private void RenderHit(Vector4i data)

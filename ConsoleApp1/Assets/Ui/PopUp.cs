@@ -2,7 +2,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 
-public class PopUp
+public class PopUp : ScriptingNode
 {
     public static PopUp? Instance = null;
     public List<string> messages = [];
@@ -29,8 +29,6 @@ public class PopUp
     public UIText AcceptText;
     private bool isShowing = false;
     private bool isDone = false;
-
-    public Matrix4 ModelMatrix = Matrix4.Identity;
 
     public PopUp()
     {
@@ -80,13 +78,13 @@ public class PopUp
         ConfirmationUI.AddElement(ConfirmationCollection);
     }
 
-    public void Resize()
+    void Resize()
     {
         MessageUI.Resize();
         ConfirmationUI.Resize();
     }
 
-    public void Update()
+    void Update()
     {
         if (!isShowing)
             return;
@@ -118,7 +116,7 @@ public class PopUp
     }
 
 
-    public void Render()
+    void Render()
     {
         if (!isShowing)
             return;
@@ -127,12 +125,12 @@ public class PopUp
 
     public void RenderMessage()
     {
-        MessageUI.RenderDepthTest();      
+        MessageUI.RenderNoDepthTest();      
     }
 
     public void RenderConfirmation()
     {
-        ConfirmationUI.RenderDepthTest();
+        ConfirmationUI.RenderNoDepthTest();
     }
 
 
@@ -228,6 +226,7 @@ public class PopUp
     {
         if (Instance == null)
             return;
+
         Instance.messages.Add(message);
         Instance.isShowing = true;
         Instance.isDone = true;

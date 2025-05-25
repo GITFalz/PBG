@@ -240,11 +240,11 @@ public class Chunk
 
     public void ClearMeshData()
     {
-        VertexDataList = new List<VertexData>();
-        _indices = new List<uint>();
+        VertexDataList = [];
+        _indices = [];
 
-        TransparentVertexDataList = new List<VertexData>();
-        TransparentIndices = new List<uint>();
+        TransparentVertexDataList = [];
+        TransparentIndices = [];
 
         VertexCount = 0;
         IndicesCount = 0;

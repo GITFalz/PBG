@@ -153,6 +153,7 @@ public class FileManager : ScriptingNode
     public void ClearElements()
     {
         UIScrollView.DeleteSubElements();
+        UIScrollView.ScrollPosition = 0;
     }
 
     public void GenerateElements(string path)

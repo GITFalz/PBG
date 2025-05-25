@@ -15,22 +15,12 @@ public class Model
 
     public ModelMesh Mesh;
 
-
-    private static ShaderProgram _shaderProgram = new ShaderProgram("Model/Model.vert", "Model/Model.frag");
-    private static int _modelLocation = _shaderProgram.GetLocation("model");
-    private static int _viewLocation = _shaderProgram.GetLocation("view");
-    private static int _projectionLocation = _shaderProgram.GetLocation("projection");
-    private static int _colorAlphaLocation = _shaderProgram.GetLocation("colorAlpha");
     private static ShaderProgram _animationShader = new ShaderProgram("Model/ModelAnimation.vert", "Model/Model.frag");
     private static int _animationModelLocation = _animationShader.GetLocation("model");
     private static int _animationViewLocation = _animationShader.GetLocation("view");
     private static int _animationProjectionLocation = _animationShader.GetLocation("projection");
     private static int _animationColorAlphaLocation = _animationShader.GetLocation("colorAlpha");
-    private static ShaderProgram _activeShader = _shaderProgram;
-    private static int _activeModelLocation = _modelLocation;
-    private static int _activeViewLocation = _viewLocation; 
-    private static int _activeProjectionLocation = _projectionLocation;
-    private static int _activeColorAlphaLocation = _colorAlphaLocation;
+
     public Texture Texture = new Texture("empty.png", TextureLocation.NormalTexture);
 
     public SSBO<Matrix4> BoneMatrices = new SSBO<Matrix4>();
@@ -39,11 +29,32 @@ public class Model
 
     public Rig? Rig;
     public string? RigName => Rig?.Name;
-    public Animation? Animation;
+    public NormalizedAnimation? Animation;
 
 
     // === General model settings === //
-    public Vector3 Position;
+    public Vector3 Position
+    {
+        get => _position;
+        set
+        {
+            _position = value;
+            _modelMatrix = Matrix4.CreateRotationX(_rotation.X) * Matrix4.CreateRotationY(_rotation.Y) * Matrix4.CreateRotationZ(_rotation.Z) * Matrix4.CreateTranslation(_position);
+        }
+    }
+    private Vector3 _position = Vector3.Zero;
+    public Vector3 Rotation
+    {
+        get => Mathf.ToDegrees(_rotation);
+        set
+        {
+            _rotation = Mathf.ToRadians(value);
+            _modelMatrix = Matrix4.CreateRotationX(_rotation.X) * Matrix4.CreateRotationY(_rotation.Y) * Matrix4.CreateRotationZ(_rotation.Z) * Matrix4.CreateTranslation(_position);
+        }
+    }
+    private Vector3 _rotation = Vector3.Zero;
+
+    private Matrix4 _modelMatrix = Matrix4.Identity;
 
     public bool RenderBones = false;
     public bool Animate = false;
@@ -52,65 +63,13 @@ public class Model
     public Model()
     {
         Mesh = new ModelMesh(this);
-        Create();
     }
 
-    public void Create()
+    public Model(Rig rig, NormalizedAnimation animation)
     {
-        if (!RigManager.TryGet("Base", out Rig? rig))
-        {
-            if (RigManager.Load("Base") && RigManager.TryGet("Base", out rig, false))
-            {
-                Rig = rig;
-            }
-            else
-            {
-                RootBone root = new RootBone("RootBone");
-                Rig r = new Rig("Base");
-                r.RootBone = root;
-
-                if (!RigManager.Add(r, false))
-                    return;
-
-                if (!RigManager.TryGet("Base", out Rig? rigBase, false))
-                {
-                    PopUp.AddPopUp("Base rig cannot be loaded.");
-                    return;
-                }
-
-                Rig = rigBase;
-            }
-        }
-        else
-        {
-            Rig = rig;
-        }
-
-        if (Rig == null)
-        {
-            PopUp.AddPopUp("Rig cannot be loaded.");
-            return;
-        }
-
-        Rig.Create();
-        Rig.Initialize();
-        Rig.RootBone.UpdateGlobalTransformation();
-
-        BoneMatricesList.Clear();
-        foreach (var bone in Rig.BonesList)
-        {
-            BoneMatricesList.Add(bone.FinalMatrix);
-        }
-        BoneMatrices.Renew(BoneMatricesList);
-    }
-
-    public void BindRig()
-    {
-        if (Rig == null)
-            return;
-
-        Mesh.Bind(Rig);
-        Mesh.UpdateModel();
+        Mesh = new ModelMesh(this);
+        Rig = rig;
+        Animation = animation;
     }
 
     public void InitRig()
@@ -129,47 +88,24 @@ public class Model
         BoneMatrices.Renew(BoneMatricesList);
     }
 
-    public void UpdateMatrices()
+    public void BindRig()
     {
         if (Rig == null)
             return;
 
-        BoneMatricesList.Clear();
+        Mesh.Bind(Rig);
+        Mesh.UpdateModel();
+    }
+
+    // No need to check if the rig is null here, this method should only be called at a point where the rig is guaranteed to be initialized.
+    public void UpdateMatrices()
+    {
+        Rig.RootBone.UpdateGlobalTransformation();
         foreach (var bone in Rig.BonesList)
         {
-            BoneMatricesList.Add(bone.FinalMatrix);
+            BoneMatricesList[bone.Index] = bone.GlobalAnimatedMatrix;
         }
         BoneMatrices.Update(BoneMatricesList, 0);
-    }
-
-    public void UpdateRig()
-    {
-        UpdateMatrices();
-    }
-
-    public void SetModeling()
-    {
-        _activeShader = _shaderProgram;
-        _activeModelLocation = _modelLocation;
-        _activeViewLocation = _viewLocation;
-        _activeProjectionLocation = _projectionLocation;
-        _activeColorAlphaLocation = _colorAlphaLocation;
-        Mesh.Init();
-        Mesh.UpdateModel(); 
-    }
-
-    public void SetAnimation()
-    {
-        _activeShader = _animationShader;
-        _activeModelLocation = _animationModelLocation;
-        _activeViewLocation = _animationViewLocation;
-        _activeProjectionLocation = _animationProjectionLocation;
-        _activeColorAlphaLocation = _animationColorAlphaLocation;
-        if (Rig != null)
-        {
-            Mesh.Bind(Rig);
-            Mesh.UpdateModel();
-        }
     }
 
     public void Renew(string fileName, TextureLocation textureLocation)
@@ -186,32 +122,20 @@ public class Model
 
     public void Update()
     {
-        if (Rig == null || Animation == null)
+        if (Rig == null || Animation == null || !Animate)
             return;
 
-        if (Animate)
+        Animation.Update();
+        foreach (var bone in Rig.BonesList)
         {
-            foreach (var bone in Rig.BonesList)
-            {
-                var frame = Animation.GetFrame(bone.Name);
-                if (frame == null)
-                    continue;
-
-                bone.Position = frame.Position;
-                bone.Rotation = frame.Rotation;
-                bone.Scale = frame.Scale;
-                bone.LocalAnimatedMatrix = frame.GetLocalTransform(); ;
-            }
-
-            Rig.RootBone.UpdateGlobalTransformation();
-
-            foreach (var bone in Rig.BonesList)
-            {
-                BoneMatricesList[bone.Index] = bone.GlobalAnimatedMatrix;
-            }
-
-            BoneMatrices.Update(BoneMatricesList, 0);
+            var frame = Animation.GetBoneKeyframe(bone.Index);
+            bone.Position = frame.Position;
+            bone.Rotation = frame.Rotation;
+            bone.Scale = frame.Scale;
+            bone.LocalAnimatedMatrix = frame.GetLocalTransform(); ;
         }
+
+        UpdateMatrices();
     }
 
     public void Render()
@@ -220,36 +144,29 @@ public class Model
         if (camera == null)
             return;
 
-        _activeShader.Bind();
+        _animationShader.Bind();
 
         GL.Enable(EnableCap.DepthTest);
         GL.DepthFunc(DepthFunction.Lequal);
 
-        Matrix4 Model = Matrix4.CreateTranslation(Position);
+        Matrix4 Model = _modelMatrix;
         Matrix4 view = camera.GetViewMatrix();
         Matrix4 projection = camera.GetProjectionMatrix();
 
-        GL.UniformMatrix4(_activeModelLocation, false, ref Model);
-        GL.UniformMatrix4(_activeViewLocation, false, ref view);
-        GL.UniformMatrix4(_activeProjectionLocation, false, ref projection);
-        GL.Uniform1(_activeColorAlphaLocation, ModelSettings.MeshAlpha);
+        GL.UniformMatrix4(_animationModelLocation, false, ref Model);
+        GL.UniformMatrix4(_animationViewLocation, false, ref view);
+        GL.UniformMatrix4(_animationProjectionLocation, false, ref projection);
+        GL.Uniform1(_animationColorAlphaLocation, ModelSettings.MeshAlpha);
 
         Texture.Bind();
 
-        if (Rig != null)
-        {
-            BoneMatrices.Bind(0);
-            Mesh.Render();
-            BoneMatrices.Unbind();
-        }
-        else
-        {
-            Mesh.Render();
-        }
+        BoneMatrices.Bind(0);
+        Mesh.Render();
+        BoneMatrices.Unbind();
 
         Texture.Unbind();
 
-        _activeShader.Unbind();
+        _animationShader.Unbind();
         
         GL.CullFace(TriangleFace.Back);
     }
@@ -276,6 +193,14 @@ public class Model
             return true;
         }
         return false;
+    }
+
+    public void LoadModelFromPath(string path)
+    {
+        if (Mesh.LoadModelFromPath(path))
+        {
+            CurrentModelName = Path.GetFileNameWithoutExtension(path);
+        }
     }
 
     public void Unload()

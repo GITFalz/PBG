@@ -47,57 +47,57 @@ public class TransformNode : MainNode
 
     public void Awake()
     {
-        foreach (var action in OnAwake)
+        for (int i = 0; i < OnAwake.Count; i++)
         {
-            action.Invoke();
+            OnAwake[i].Invoke();
         }
     }
 
     public void Exit()
     {
-        foreach (var action in OnExit)
+        for (int i = 0; i < OnExit.Count; i++)
         {
-            action.Invoke();
+            OnExit[i].Invoke();
         }
     }
 
     public void FixedUpdate()
     {
-        foreach (var action in OnFixedUpdate)
+        for (int i = 0; i < OnFixedUpdate.Count; i++)
         {
-            action.Invoke();
+            OnFixedUpdate[i].Invoke();
         }
     }
 
     public void Render()
     {
-        foreach (var action in OnRender)
+        for (int i = 0; i < OnRender.Count; i++)
         {
-            action.Invoke();
+            OnRender[i].Invoke();
         }
     }
 
     public void Resize()
     {
-        foreach (var action in OnResize)
+        for (int i = 0; i < OnResize.Count; i++)
         {
-            action.Invoke();
+            OnResize[i].Invoke();
         }
     }
 
     public void Start()
     {
-        foreach (var action in OnStart)
+        for (int i = 0; i < OnStart.Count; i++)
         {
-            action.Invoke();
+            OnStart[i].Invoke();
         }
     }
 
     public void Update()
     {
-        foreach (var action in OnUpdate)
+        for (int i = 0; i < OnUpdate.Count; i++)
         {
-            action.Invoke();
+            OnUpdate[i].Invoke();
         }
     }
 }

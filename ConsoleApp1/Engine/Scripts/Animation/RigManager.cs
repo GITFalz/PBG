@@ -80,24 +80,38 @@ public static class RigManager
 
     public static bool Load(string name, string path)
     {
-        if (Rigs.ContainsKey(name)) // Quietly ignore if the rig already exists
-            return false;
-
         path = Path.Combine(path, name + ".rig");
+        return LoadFromPath(path);
+    }
+    
+    public static bool LoadFromPath(string path)
+    {
+        return LoadFromPath(path, out _);
+    }
+    
+    public static bool LoadFromPath(string path, [NotNullWhen(true)] out Rig? rig)
+    {
+        rig = null;
         if (!File.Exists(path))
         {
-            PopUp.AddPopUp("Rig does not exist");
+            PopUp.AddPopUp("Rig file does not exist");
             return false;
         }
 
-        if (!LoadRig(name, path, out Rig? rig))
+        string name = Path.GetFileNameWithoutExtension(path);
+        if (Rigs.ContainsKey(name)) // Quietly ignore if the rig already exists
+        {
+            Remove(name, false);
+        }
+
+        if (!LoadRig(name, path, out rig))
         {
             PopUp.AddPopUp("Rig failed to load");
             return false;
         }
 
         Add(rig);
-        PopUp.AddPopUp("Rig loaded");
+        PopUp.AddPopUp("Rig loaded from path");
         return true;
     }
 
@@ -196,7 +210,7 @@ public static class RigManager
                 bones.Add(boneName, child);
             }
         }
-        
+
         rig.Create();
         rig.Initialize();
         rig.RootBone.UpdateGlobalTransformation();

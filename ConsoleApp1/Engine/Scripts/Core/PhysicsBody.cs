@@ -23,9 +23,7 @@ public class PhysicsBody : ScriptingNode
     public PhysicsBody()
     {
         Name = "PhysicsBody";
-        Vector3 size = (0.8f, 1.75f, 0.8f);
-        Vector3 halfSize = size / 2;
-        collider = new Collider(-halfSize, halfSize);
+        collider = new Collider((-0.4f, 0, -0.4f), (0.4f, 1.75f, 0.4f));
         EnableGravity();
     }
 
@@ -66,9 +64,6 @@ public class PhysicsBody : ScriptingNode
     {
         if (!PlayerData.TestInputs)
             return;
-
-        if (Input.IsKeyPressed(Keys.B))
-            ThreadBlocker.Unblock();
 
         Transform.Position = Mathf.Lerp(previousPosition, physicsPosition, GameTime.PhysicsDelta);
     }

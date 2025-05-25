@@ -277,15 +277,19 @@ public class ModelMesh
 
     public bool LoadModel(string modelName)
     {
-        return LoadModel(modelName, Game.modelPath);
+        return LoadModelName(modelName, Game.modelPath);
     }
 
-    public bool LoadModel(string modelName, string basePath)
+    public bool LoadModelName(string modelName, string basePath)
     {
-        string path = Path.Combine(basePath, $"{modelName.Trim()}.model");
+        string path = Path.Combine(basePath, modelName + ".model");
+        return LoadModelFromPath(path);
+    }
+
+    public bool LoadModelFromPath(string path)
+    {
         if (!File.Exists(path))
         {
-            Console.WriteLine($"Model {modelName} does not exist.");
             PopUp.AddPopUp("The model does not exist.");
             return false;
         }
@@ -336,9 +340,9 @@ public class ModelMesh
         for (int i = vertexCount + edgeCount + uvCount + 4; i <= vertexCount + edgeCount + uvCount + triangleCount + 3; i++)
         {
             string[] values = lines[i].Trim().Split(' ');
-            
+
             Vertex a, b, c;
-        
+
             try
             {
                 a = VertexList[Int.Parse(values[1])];
@@ -351,7 +355,7 @@ public class ModelMesh
                 Unload();
                 return false;
             }
-            
+
             Vector2 uvA = Uvs.ElementAtOrDefault(index + 0);
             Vector2 uvB = Uvs.ElementAtOrDefault(index + 1);
             Vector2 uvC = Uvs.ElementAtOrDefault(index + 2);
