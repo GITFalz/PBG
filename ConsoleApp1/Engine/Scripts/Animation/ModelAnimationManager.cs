@@ -9,8 +9,8 @@ using OpenTK.Mathematics;
 public class ModelAnimationManager
 {
     public Rig Rig;
-    public Dictionary<string, NormalizedAnimation> Animations = [];
-    public List<NormalizedAnimationData> AnimationQueue = new();
+    private Dictionary<string, NormalizedAnimation> _animations = [];
+    private List<NormalizedAnimationData> _animationQueue = new();
 
     public float SmoothDelta = 0f;
     public float SmoothTime = 0f;
@@ -101,248 +101,110 @@ public class ModelAnimationManager
 
     public void AddAnimation(NormalizedAnimation animation)
     {
-        if (Animations.ContainsKey(animation.Name))
+        if (_animations.ContainsKey(animation.Name))
             return;
 
-        Animations[animation.Name] = animation;
+        _animations[animation.Name] = animation;
     }
 
-    public void Loop(string name)
+    public void Play(string animationName, float blendTime = -1f)
     {
-        if (!Animations.TryGetValue(name, out NormalizedAnimation? animation))
+        if (!_animations.TryGetValue(animationName, out var animation))
             return;
 
-        Loop(animation);
+        PlayInternal(animation, blendTime, false);
     }
 
-    public void LoopAfter(string name)
+    public void Loop(string animationName, float blendTime = -1f)
     {
-        if (!Animations.TryGetValue(name, out NormalizedAnimation? animation))
+        if (!_animations.TryGetValue(animationName, out var animation))
             return;
 
-        if (CurrentAnimation != null)
-        {
-            NormalizedAnimationData nextAnimation = new NormalizedAnimationData(animation);
-            nextAnimation.SetAfter(LoopDequeue);
-            nextAnimation.Status = AnimationStatus.Playing;
-            Enqueue(nextAnimation);
-        }
-        else
-            Loop(animation);
+        PlayInternal(animation, blendTime, true);
     }
 
-    private void Loop(NormalizedAnimation animation)
+    public void PlayQueued(string animationName, float blendTime = -1f)
     {
-        if (LetFinish && CurrentAnimation != null)
-        {
-            NormalizedAnimationData nextAnimation = new NormalizedAnimationData(animation);
-            nextAnimation.SetAfter(LoopDequeue);
-            nextAnimation.Status = AnimationStatus.Playing;
-            Enqueue(nextAnimation);
-            LetFinish = false;
-            return;
-        }
-
-        AnimationQueue = [];
-        animation.Reset();
-        CurrentAnimation = new NormalizedAnimationData(animation);
-        CurrentAnimation.SetAfter(LoopDequeue);
-        CurrentAnimation.Status = AnimationStatus.Playing;
-    }
-
-    private bool LoopDequeue()
-    {
-        if (TryDequeue(out NormalizedAnimationData? nextAnimation))
-        {
-            nextAnimation.Reset();
-            CurrentAnimation = nextAnimation;
-            CurrentAnimation.Status = AnimationStatus.Playing;
-        }
-        else if (CurrentAnimation != null)
-        {
-            CurrentAnimation.Reset();
-            CurrentAnimation.Status = AnimationStatus.Playing;
-        }
-        return true;
-    }
-
-    public void SmoothLoop(string name, float time)
-    {
-        if (!Animations.TryGetValue(name, out NormalizedAnimation? animation))
+        if (!_animations.TryGetValue(animationName, out var animation))
             return;
 
-        SmoothLoop(animation, time);
+        PlayQueued(animation, blendTime, false);
     }
 
-    private void SmoothLoop(NormalizedAnimation animation, float time)
-    {
-        if (LetFinish && CurrentAnimation != null)
-        {
-            NormalizedAnimationData nextAnimation = new NormalizedAnimationData(animation);
-            nextAnimation.SetAfter(LoopDequeue);
-            nextAnimation.Status = AnimationStatus.Playing;
-            Enqueue(nextAnimation);
-            LetFinish = false;
-            return;
-        }
-
-        Smooth = true;
-        SmoothTime = time;
-        SmoothDelta = 0f;
-        SmoothLerp = 0f;
-
-        if (CurrentAnimation != null)
-            PreviousAnimation = CurrentAnimation;
-
-        animation.Reset();
-        CurrentAnimation = new NormalizedAnimationData(animation);
-        CurrentAnimation.SetAfter(LoopDequeue);
-        CurrentAnimation.Status = AnimationStatus.Playing;
-    }
-
-    public void Play(string name)
-    {
-        if (!Animations.TryGetValue(name, out NormalizedAnimation? animation))
-            return;
-        
-        Play(animation);
-    }
-
-    public void PlayAfter(string name)
-    {
-        if (!Animations.TryGetValue(name, out NormalizedAnimation? animation))
-            return;
-
-        if (CurrentAnimation != null)
-        {
-            NormalizedAnimationData nextAnimation = new NormalizedAnimationData(animation);
-            nextAnimation.SetAfter(PlayDequeue);
-            nextAnimation.Status = AnimationStatus.Playing;
-            Enqueue(nextAnimation);
-        }
-        else
-            Play(animation);
-    }
-
-    private void Play(NormalizedAnimation animation)
-    {
-        if (LetFinish && CurrentAnimation != null)
-        {
-            NormalizedAnimationData nextAnimation = new NormalizedAnimationData(animation);
-            nextAnimation.SetAfter(PlayDequeue);
-            nextAnimation.Status = AnimationStatus.Playing;
-            Enqueue(nextAnimation);
-            LetFinish = false;
-            return;
-        }
-
-        animation.Reset();
-        CurrentAnimation = new NormalizedAnimationData(animation);
-        CurrentAnimation.Status = AnimationStatus.Playing;
-        CurrentAnimation.SetAfter(PlayDequeue);
-    }
-
-    public void SmoothPlay(string name, float time)
-    {
-        if (!Animations.TryGetValue(name, out NormalizedAnimation? animation))
-            return;
-
-        SmoothPlay(animation, time);
-    }
-
-    private void SmoothPlay(NormalizedAnimation animation, float time)
-    {
-        if (LetFinish && CurrentAnimation != null)
-        {
-            NormalizedAnimationData nextAnimation = new NormalizedAnimationData(animation);
-            nextAnimation.SetAfter(PlayDequeue);
-            nextAnimation.Status = AnimationStatus.Playing;
-            Enqueue(nextAnimation);
-            LetFinish = false;
-            return;
-        }
-
-        Smooth = true;
-        SmoothTime = time;
-        SmoothDelta = 0f;
-        SmoothLerp = 0f;
-
-        if (CurrentAnimation != null)
-            PreviousAnimation = CurrentAnimation;
-        
-        animation.Reset();
-        CurrentAnimation = new NormalizedAnimationData(animation);
-        CurrentAnimation.SetAfter(PlayDequeue);
-        CurrentAnimation.Status = AnimationStatus.Playing;
-    }
-
-    public void SmoothPlayFinish(string name, float time)
-    {
-        if (!Animations.TryGetValue(name, out NormalizedAnimation? animation))
-            return;
-
-        SmoothPlayFinish(animation, time);
-    }
-
-    private void SmoothPlayFinish(NormalizedAnimation animation, float time)
-    {
-        if (LetFinish && CurrentAnimation != null)
-        {
-            NormalizedAnimationData nextAnimation = new NormalizedAnimationData(animation);
-            nextAnimation.SetAfter(PlayDequeue);
-            nextAnimation.Status = AnimationStatus.Playing;
-            Enqueue(nextAnimation);
-            LetFinish = false;
-            return;
-        }
-
-        Smooth = true;
-        SmoothTime = time;
-        SmoothDelta = 0f;
-        SmoothLerp = 0f;
-        LetFinish = true;
-
-        if (CurrentAnimation != null)
-            PreviousAnimation = CurrentAnimation;
-
-        animation.Reset();
-        CurrentAnimation = new NormalizedAnimationData(animation);
-        CurrentAnimation.SetAfter(PlayDequeue);
-        CurrentAnimation.Status = AnimationStatus.Playing;
-    }
-
-    private bool PlayDequeue()
-    {
-        if (TryDequeue(out NormalizedAnimationData? nextAnimation))
-        {
-            nextAnimation.Reset();
-            CurrentAnimation = nextAnimation;
-            CurrentAnimation.Status = AnimationStatus.Playing;
-            return true;
-        }
-        else
-        {
-            SetDefault();
-            return false;
-        }
-    }
-
-    public void Stop()
+    private void PlayQueued(NormalizedAnimation animation, float blendTime, bool loop)
     {
         if (CurrentAnimation == null)
-            return;
-
-        AnimationQueue = [];
-        SetDefault();
+        {
+            PlayInternal(animation, 0, loop);
+        }
+        else
+        {
+            var animData = new NormalizedAnimationData(animation);
+            animData.OnCallbackEnd(loop ? CreateLoopCallback(animation) : CreatePlayCallback());
+            Enqueue(animData);
+        }
     }
 
-    public void StopAfter()
+    private void PlayInternal(NormalizedAnimation animation, float blendTime, bool loop)
     {
-        if (CurrentAnimation == null)
+        if (LetFinish && CurrentAnimation?.Status == AnimationStatus.Playing)
+        {
+            PlayQueued(animation, blendTime, loop);
+            LetFinish = false;
             return;
+        }
 
-        AnimationQueue = [];
-        CurrentAnimation.SetAfter(SetDefault);
+        ClearQueue();
+
+        if (CurrentAnimation != null)
+        {
+            PreviousAnimation = CurrentAnimation;
+            if (blendTime > 0)
+            {
+                Smooth = true;
+                SmoothTime = blendTime;
+                SmoothDelta = 0f;
+                SmoothLerp = 0f;
+            }
+        }
+
+        animation.Reset();
+        CurrentAnimation = new NormalizedAnimationData(animation);
+        CurrentAnimation.Status = AnimationStatus.Playing;
+        CurrentAnimation.OnCallbackEnd(loop ? CreateLoopCallback(animation) : CreatePlayCallback());
+    }
+
+    private Func<bool> CreateLoopCallback(NormalizedAnimation animationData)
+    {
+        return () =>
+        {
+            if (TryDequeue(out var nextAnimation))
+            {
+                return true;
+            }
+            else
+            {
+                animationData.Reset();
+                animationData.Status = AnimationStatus.Playing;
+                return true;
+            }
+        };
+    }
+
+    private Func<bool> CreatePlayCallback()
+    {
+        return () =>
+        {
+            if (TryDequeue(out var nextAnimation))
+            {
+                return true;
+            }
+            else
+            {
+                SetDefault();
+                return false;
+            }
+        };
     }
 
     public void SetSpeed(float speed)
@@ -352,15 +214,18 @@ public class ModelAnimationManager
 
     public void Enqueue(NormalizedAnimationData animationData)
     {
-        AnimationQueue.Add(animationData);
+        _animationQueue.Add(animationData);
     }
 
     public bool TryDequeue([NotNullWhen(true)] out NormalizedAnimationData? animationData)
     {
-        if (AnimationQueue.Count > 0)
+        if (_animationQueue.Count > 0)
         {
-            animationData = AnimationQueue[0];
-            AnimationQueue.RemoveAt(0);
+            animationData = _animationQueue[0];
+            _animationQueue.RemoveAt(0);
+            animationData.Reset();
+            CurrentAnimation = animationData;
+            CurrentAnimation.Status = AnimationStatus.Playing;
             return true;
         }
 
@@ -368,16 +233,9 @@ public class ModelAnimationManager
         return false;
     }
 
-    public bool TryGetLast([NotNullWhen(true)] out NormalizedAnimationData? animationData)
+    public void ClearQueue()
     {
-        if (AnimationQueue.Count > 0)
-        {
-            animationData = AnimationQueue[^1];
-            return true;
-        }
-
-        animationData = null;
-        return false;
+        _animationQueue.Clear();
     }
 
     public bool SetDefault()
@@ -396,7 +254,7 @@ public class ModelAnimationManager
     public List<string> GetAnimations()
     {
         List<string> animations = [];
-        foreach (var animation in Animations.Values)
+        foreach (var animation in _animations.Values)
         {
             animations.Add("    Animation: " + animation.Name);
         }
@@ -424,7 +282,7 @@ public class NormalizedAnimationData
         Animation.Reset();
     }
 
-    public void SetAfter(Func<bool> action)
+    public void OnCallbackEnd(Func<bool> action)
     {
         OnAnimationEnd = action;
     }

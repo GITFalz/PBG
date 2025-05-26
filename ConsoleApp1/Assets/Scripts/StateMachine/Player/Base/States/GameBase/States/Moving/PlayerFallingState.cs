@@ -35,7 +35,7 @@ public class PlayerFallingState : PlayerGameBaseState
 
         if (timer > 0.5f)
         {
-            SmoothLoop("PlayerFall", 0.5f);
+            Loop("PlayerFall", 0.5f);
         }
         
         if (StateMachine.IsHuggingWall() && Input.IsKeyPressed(Keys.Space))

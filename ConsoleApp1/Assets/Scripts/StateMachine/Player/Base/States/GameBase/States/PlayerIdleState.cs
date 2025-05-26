@@ -8,7 +8,7 @@ public class PlayerIdleState : PlayerGameBaseState
     public override void Enter()
     {
         Console.WriteLine("Entering idle state");
-        SmoothLoop("PlayerIdle", 0.5f);
+        Loop("PlayerIdle", 0.5f);
     }
 
     public override void Update()

@@ -16,7 +16,7 @@ public class PlayerWalkingState : PlayerGameBaseState
         GameState.NextMovingState = GameState.WalkingState;
         GameState.MovementSpeed = PlayerMovementSpeed.Walk;
         Game.Camera.SetFOV(60);
-        SmoothLoop("PlayerWalking", 0.5f);
+        Loop("PlayerWalking", 0.5f);
     }
 
     public override void Update()

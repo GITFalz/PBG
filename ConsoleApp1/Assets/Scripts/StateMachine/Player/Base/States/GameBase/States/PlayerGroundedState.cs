@@ -9,7 +9,7 @@ public class PlayerGroundedState : PlayerGameBaseState
     {
         Console.WriteLine("Entering grounded state");
         _timer = 1f;
-        SmoothPlayFinish("PlayerLand", 0.5f);
+        Play("PlayerLand", 0.5f);
     }
 
     public override void Update()
@@ -24,7 +24,6 @@ public class PlayerGroundedState : PlayerGameBaseState
 
         if (input != Vector2.Zero)
         {
-            Stop();
             GameState.SwitchState(GameState.NextMovingState);
             return;
         }

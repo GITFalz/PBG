@@ -21,7 +21,7 @@ public class PlayerSprintingState : PlayerGameBaseState
 
         Camera = Game.Camera;
         Camera.SetFOV(80);
-        SmoothLoop("PlayerRunning", 0.5f);
+        Loop("PlayerRunning", 0.5f);
         SetSpeed(1.7f);
     }
 

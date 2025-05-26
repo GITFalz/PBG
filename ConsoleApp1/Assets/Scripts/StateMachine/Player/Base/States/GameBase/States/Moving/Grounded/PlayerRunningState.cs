@@ -18,7 +18,7 @@ public class PlayerRunningState : PlayerGameBaseState
         GameState.MovementSpeed = PlayerMovementSpeed.Run;
 
         Game.Camera.SetFOV(70);
-        SmoothLoop("PlayerRunning", 0.5f);
+        Loop("PlayerRunning", 0.5f);
         SetSpeed(1.2f);
     }
 
