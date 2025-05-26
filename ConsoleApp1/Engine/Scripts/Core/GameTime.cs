@@ -5,6 +5,7 @@ public static class GameTime
     public static int Fps = 0;
     public static float DeltaTime { get; private set; }
     public static float TotalTime { get; private set; }
+    public static float FixedTotalTime { get; private set; }
     /// <summary>
     /// delta use to lerp smoothly between the main update and the physics update
     /// </summary>
@@ -38,6 +39,7 @@ public static class GameTime
 
     public static void FixedUpdate(float fixedTime)
     {
+        FixedTotalTime = TotalTime;
         FixedTime = fixedTime;
         _time = 0;
     }

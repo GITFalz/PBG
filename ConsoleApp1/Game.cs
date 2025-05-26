@@ -255,7 +255,7 @@ public class Game : GameWindow
         worldGenerationNode.AddChild(new WorldManager());
 
         TransformNode playerNode = new TransformNode();
-        playerNode.AddChild(new PlayerStateMachine(), new PhysicsBody(), new PlayerInventoryManager(), new SelectedItemManager());
+        playerNode.AddChild(new PhysicsBody(), new PlayerStateMachine(), new PlayerInventoryManager(), new SelectedItemManager());
 
         // World noise
         TransformNode noiseEditorNode = new TransformNode();

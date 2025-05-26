@@ -230,7 +230,7 @@ public class GameDataManager : ScriptingNode
     {
         string savePath = Path.Combine(Game.gameDataPath, "GameData.data");
         List<string> lines = [];
-        lines.AddRange(GameData.SaveLines());
+        lines.AddRange(GameData.SaveLines()); 
         File.WriteAllLines(savePath, lines);
         PopUp.AddPopUp("Game data saved!");
     }
@@ -262,7 +262,9 @@ public class ImportedModelData : ImportedFileData
 
     public void Import(Model model)
     {
-        model.LoadModelFromPath(Path);
+        if (!model.LoadModelFromPath(Path))
+            return;
+            
         model.Name = Name;
         GameData.ModelSaveData modelSaveData = new GameData.ModelSaveData(model, Path);
         GameData.Add(modelSaveData);
@@ -276,6 +278,7 @@ public class ImportedRigData : ImportedFileData
     {
         if (!Rig.LoadFromPath(Path, out Rig? rig))
             return;
+
         rig.Name = Name;
         GameData.RigSaveData rigSaveData = new GameData.RigSaveData(rig, Path);
         GameData.Add(rigSaveData);

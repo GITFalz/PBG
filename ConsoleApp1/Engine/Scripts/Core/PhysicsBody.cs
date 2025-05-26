@@ -20,6 +20,15 @@ public class PhysicsBody : ScriptingNode
 
     private Action Gravity = () => { };
 
+    private struct PhysicsData
+    {
+        public Vector3 Position;
+        public float Time;
+    }
+
+    private Queue<PhysicsData> physicsQueue = new Queue<PhysicsData>();
+    private object queueLock = new object();
+
     public PhysicsBody()
     {
         Name = "PhysicsBody";
@@ -65,7 +74,10 @@ public class PhysicsBody : ScriptingNode
         if (!PlayerData.TestInputs)
             return;
 
-        Transform.Position = Mathf.Lerp(previousPosition, physicsPosition, GameTime.PhysicsDelta);
+        float renderTime = (float)(GameTime.TotalTime - GameTime.FixedDeltaTime); // or add a small interpolation offset
+        var (a, b) = GetValidPhysicsData(renderTime);
+        float t = (renderTime - a.Time) / (b.Time - a.Time + float.Epsilon);
+        Transform.Position = Vector3.Lerp(a.Position, b.Position, Mathf.Clamp(0, 1, t));
     }
     
     void FixedUpdate()
@@ -110,6 +122,31 @@ public class PhysicsBody : ScriptingNode
     {
         // Add rotational force - you'll need to implement rotation handling
         // This is a placeholder for now
+    }
+
+    private (PhysicsData, PhysicsData) GetValidPhysicsData(float renderTime)
+    {
+        lock (queueLock)
+        {
+            if (physicsQueue.Count < 2)
+            {
+                var only = physicsQueue.FirstOrDefault();
+                return (only, only);
+            }
+
+            PhysicsData prev = physicsQueue.First();
+
+            foreach (var current in physicsQueue)
+            {
+                if (current.Time >= renderTime)
+                {
+                    return (prev, current);
+                }
+                prev = current;
+            }
+
+            return (physicsQueue.Last(), physicsQueue.Last());
+        }
     }
     
     
@@ -204,11 +241,21 @@ public class PhysicsBody : ScriptingNode
             newPhysicsPosition.Z += checkDistance.Z;
         }
 
-        previousPosition = physicsPosition;
-        physicsPosition = newPhysicsPosition;
-
         if (Velocity.Y != 0)
             IsGrounded = false;
+
+        previousPosition = physicsPosition;
+        physicsPosition = newPhysicsPosition;
+        lock (queueLock)
+        {
+            physicsQueue.Enqueue(new PhysicsData
+            {
+                Position = physicsPosition,
+                Time = GameTime.FixedTotalTime
+            });
+            if (physicsQueue.Count > 5)
+                physicsQueue.Dequeue(); // Limit the queue size to avoid memory issues
+        }
     }
 
     public Collider GetCollider()

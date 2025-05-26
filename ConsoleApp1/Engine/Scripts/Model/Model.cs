@@ -145,12 +145,14 @@ public class Model
         return false;
     }
 
-    public void LoadModelFromPath(string path)
+    public bool LoadModelFromPath(string path)
     {
         if (Mesh.LoadModelFromPath(path))
         {
             CurrentModelName = Path.GetFileNameWithoutExtension(path);
+            return true;
         }
+        return false;
     }
 
     public void Unload()

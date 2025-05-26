@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 public static class ThreadPool
 {
     private static readonly int MAX_THREAD_COUNT = Environment.ProcessorCount;
-    public static int ThreadCount { get; private set; } = 4;
+    public static int ThreadCount { get; private set; } = 2;
     public static int CurrentProcessingThreads = 0;
     public static int AvailableProcesses => ThreadCount - CurrentProcessingThreads;
     public static int QueueCount => _actions.Count;
