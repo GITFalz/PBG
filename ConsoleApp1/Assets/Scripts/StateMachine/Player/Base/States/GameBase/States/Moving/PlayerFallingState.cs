@@ -6,6 +6,7 @@ public class PlayerFallingState : PlayerGameBaseState
     Camera Camera;
     Vector2 input = Vector2.Zero;
     double timer = 0;
+    bool _animate = true;
 
     public PlayerFallingState(PlayerGameState gameState) : base(gameState)
     {
@@ -15,6 +16,7 @@ public class PlayerFallingState : PlayerGameBaseState
     public override void Enter()
     {
         timer = 0;
+        _animate = true;
         Console.WriteLine("Entering falling state");
     }
 
@@ -33,9 +35,10 @@ public class PlayerFallingState : PlayerGameBaseState
             GameState.MovementSpeed = PlayerMovementSpeed.Walk;
         }
 
-        if (timer > 0.5f)
+        if (timer > 0.5f && _animate)
         {
             Loop("PlayerFall", 0.5f);
+            _animate = false;
         }
         
         if (StateMachine.IsHuggingWall() && Input.IsKeyPressed(Keys.Space))

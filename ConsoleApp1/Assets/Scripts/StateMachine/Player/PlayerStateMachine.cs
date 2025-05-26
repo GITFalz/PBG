@@ -17,13 +17,6 @@ public class PlayerStateMachine : ScriptingNode
     public Vector3 forward = (0, 0, -1);
     private Vector3 _oldPosition = (0, 0, 0);
     
-    public static Vector3 ModifiedBlockPosition = (0, 0, 0);
-
-    private ShaderProgram _shaderProgram = new ShaderProgram("Entity/Entity.vert", "Entity/Entity.frag");
-    int playerModelLocation;
-    int playerViewLocation;
-    int playerProjectionLocation;
-    
     private ShaderProgram _hitShader = new ShaderProgram("Info/Hit.vert", "Info/Hit.frag");
     private VAO _hitVao = new VAO();
     int hitModelLocation;
@@ -53,7 +46,6 @@ public class PlayerStateMachine : ScriptingNode
     private PlayerMenuState _menuState;
     
     // Animation
-    private OldAnimationMesh _playerMesh;
     public PhysicsBody physicsBody;
     public Model? PlayerModel;
     
@@ -104,25 +96,6 @@ public class PlayerStateMachine : ScriptingNode
         
         Transform.Position = new Vector3(0, 200, 0);
         physicsBody.SetPosition(Transform.Position);
-        
-        _playerMesh = new OldAnimationMesh();
-        VoxelData.GenerateStandardMeshBox(_playerMesh, 
-            new Vector3(0.8f, 1.75f, 0.8f), 
-            new Vector3(-0.4f, -1.75f/2, -0.4f), 
-            new Vector3(0, 0, 0), 
-            1
-        );
-        
-        _playerMesh.GenerateBuffers();
-        _playerMesh.UpdateMesh();
-
-        _shaderProgram.Bind();
-
-        playerModelLocation = _shaderProgram.GetLocation("model");
-        playerViewLocation = _shaderProgram.GetLocation("view");
-        playerProjectionLocation = _shaderProgram.GetLocation("projection");
-
-        _shaderProgram.Unbind();
 
         _hitShader.Bind();
 
@@ -167,12 +140,12 @@ public class PlayerStateMachine : ScriptingNode
         {
             Model? model = GameData.GetModel("Player");
             Rig? rig = GameData.GetRig("PlayerRig");
-            Animation? walking = GameData.GetAnimation("PlayerWalking");
-            Animation? running = GameData.GetAnimation("PlayerRunning");
-            Animation? dash = GameData.GetAnimation("PlayerDash");
-            Animation? idle = GameData.GetAnimation("PlayerIdle");
-            Animation? fall = GameData.GetAnimation("PlayerFall");
-            Animation? land = GameData.GetAnimation("PlayerLand");
+            (string, Animation?) walking = ("PlayerWalking", GameData.GetAnimation("PlayerWalking"));
+            (string, Animation?) running = ("PlayerRunning", GameData.GetAnimation("PlayerRunning"));
+            (string, Animation?) dash = ("PlayerDash", GameData.GetAnimation("PlayerDash"));
+            (string, Animation?) idle = ("PlayerIdle", GameData.GetAnimation("PlayerIdle"));
+            (string, Animation?) fall = ("PlayerFall", GameData.GetAnimation("PlayerFall"));
+            (string, Animation?) land = ("PlayerLand", GameData.GetAnimation("PlayerLand"));
 
             if (model == null)
             {
@@ -186,74 +159,10 @@ public class PlayerStateMachine : ScriptingNode
                 return;
             }
 
-            if (walking == null)
-            {
-                PopUp.AddPopUp("Player walking not found");
-            }
-
-            if (running == null)
-            {
-                PopUp.AddPopUp("Player running not found");
-            }
-
-            if (dash == null)
-            {
-                PopUp.AddPopUp("Player dash not found");
-            }
-
-            if (idle == null)
-            {
-                PopUp.AddPopUp("Player idle not found");
-            }
-
-            if (fall == null)
-            {
-                PopUp.AddPopUp("Player fall not found");
-            }
-
-            if (land == null)
-            {
-                PopUp.AddPopUp("Player land not found");
-            }
-
             model.AnimationManager = new ModelAnimationManager(rig);
             model.BindRig();
 
-            if (walking != null)
-            {
-                NormalizedAnimation normalizedAnimation = new(rig, walking);
-                model.AnimationManager.AddAnimation(normalizedAnimation);
-            }
-
-            if (running != null)
-            {
-                NormalizedAnimation normalizedAnimation = new(rig, running);
-                model.AnimationManager.AddAnimation(normalizedAnimation);
-            }
-
-            if (dash != null)
-            {
-                NormalizedAnimation normalizedAnimation = new(rig, dash);
-                model.AnimationManager.AddAnimation(normalizedAnimation);
-            }
-
-            if (idle != null)
-            {
-                NormalizedAnimation normalizedAnimation = new(rig, idle);
-                model.AnimationManager.AddAnimation(normalizedAnimation);
-            }
-
-            if (fall != null)
-            {
-                NormalizedAnimation normalizedAnimation = new(rig, fall);
-                model.AnimationManager.AddAnimation(normalizedAnimation);
-            }
-
-            if (land != null)
-            {
-                NormalizedAnimation normalizedAnimation = new(rig, land);
-                model.AnimationManager.AddAnimation(normalizedAnimation);
-            }
+            model.AnimationManager.AddAnimations(rig, walking, running, dash, idle, fall, land);
 
             PlayerModel = model;
             PlayerModel.Animate = true;
@@ -272,8 +181,7 @@ public class PlayerStateMachine : ScriptingNode
         if (!PlayerData.TestInputs || camera.GetCameraMode() == CameraMode.Free)
             return;
 
-        if (Input.IsKeyDown(Keys.J))
-            physicsBody.Acceleration = (0.001f, 0, 0);
+        _currentState.Update();
 
         Vector2 input = Input.GetMovementInput();
 
@@ -328,8 +236,6 @@ public class PlayerStateMachine : ScriptingNode
             camera.Position = Vector3.Lerp(camera.Position, _targetPosition, delta);
         }
 
-        _currentState.Update();
-
         _oldPosition = Transform.Position;
         PlayerData.Position = Transform.Position;
         if (PlayerModel != null)
@@ -357,37 +263,14 @@ public class PlayerStateMachine : ScriptingNode
         GL.Enable(EnableCap.CullFace);
         GL.CullFace(TriangleFace.Back);
 
-        /*
-        Matrix4 model;
-        Matrix4 projection;
-
-        if (_renderPlayer)
-        {
-            Camera camera = Game.Camera;
-
-            _shaderProgram.Bind();
-
-            model = Matrix4.CreateTranslation(Transform.Position);
-            Matrix4 view = camera.GetViewMatrix();
-            projection = camera.GetProjectionMatrix();
-
-            GL.UniformMatrix4(playerModelLocation, true, ref model);
-            GL.UniformMatrix4(playerViewLocation, true, ref view);
-            GL.UniformMatrix4(playerProjectionLocation, true, ref projection);
-
-            _playerMesh.RenderMesh();
-
-            _shaderProgram.Unbind();
-        }
-
         _renderHit();
 
         GL.DepthFunc(DepthFunction.Always);
         GL.Enable(EnableCap.Blend);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
-        model = Matrix4.CreateTranslation(Game.CenterX - 5, Game.CenterY - 5, 0);
-        projection = Matrix4.CreateOrthographicOffCenter(0, Game.Width, Game.Height, 0, -1, 1);
+        Matrix4 model = Matrix4.CreateTranslation(Game.CenterX - 5, Game.CenterY - 5, 0);
+        Matrix4 projection = Matrix4.CreateOrthographicOffCenter(0, Game.Width, Game.Height, 0, -1, 1);
 
         _crosshairShader.Bind();
 
@@ -403,7 +286,6 @@ public class PlayerStateMachine : ScriptingNode
         _crosshairShader.Unbind();
 
         GL.DepthFunc(DepthFunction.Less);
-        */
         
         PlayerModel?.Render();
     }

@@ -99,6 +99,29 @@ public class ModelAnimationManager
         UpdateMatrices();
     }
 
+    public void AddAnimations(Rig rig, params (string name, Animation? animation)[] animations)
+    {
+        for (int i = 0; i < animations.Length; i++)
+        {
+            Animation? animation = animations[i].animation;
+            if (animation == null)
+            {
+                PopUp.AddPopUp($"Animation {animations[i].name} was not found");
+                continue;
+            }
+
+            AddAnimation(new NormalizedAnimation(rig, animation));
+        }
+    }
+
+    public void AddAnimations(params NormalizedAnimation[] animation)
+    {
+        for (int i = 0; i < animation.Length; i++)
+        {
+            AddAnimation(animation[i]);
+        }
+    }
+
     public void AddAnimation(NormalizedAnimation animation)
     {
         if (_animations.ContainsKey(animation.Name))
@@ -174,6 +197,16 @@ public class ModelAnimationManager
         CurrentAnimation.OnCallbackEnd(loop ? CreateLoopCallback(animation) : CreatePlayCallback());
     }
 
+    public void ForceFinish()
+    {
+        LetFinish = true;
+    }
+
+    public void Stop()
+    {
+        SetDefault();
+    }
+
     private Func<bool> CreateLoopCallback(NormalizedAnimation animationData)
     {
         return () =>
@@ -241,10 +274,7 @@ public class ModelAnimationManager
     public bool SetDefault()
     {
         SetSpeed(1.0f);
-        if (CurrentAnimation == null)
-            return false;
-
-        CurrentAnimation.Reset();
+        CurrentAnimation?.Reset();
         CurrentAnimation = null;
         PreviousAnimation?.Reset();
         PreviousAnimation = null;
