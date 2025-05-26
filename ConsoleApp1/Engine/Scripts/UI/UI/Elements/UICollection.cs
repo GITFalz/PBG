@@ -92,6 +92,8 @@ public class UICollection : UIElement
             base.SetVisibility(visible);
     }
 
+    public virtual void CalculateScale() {}
+
     public override void Align()
     {
         OnAlign?.Invoke(); // This is when a function has to be called before the alignment of the element
@@ -121,6 +123,7 @@ public class UICollection : UIElement
     public override void RemoveChild(UIElement element)
     {
         Elements.Remove(element);
+        element.ParentElement = null;
     }
 
     protected override void Internal_UpdateTransformation()
@@ -174,12 +177,14 @@ public class UICollection : UIElement
     public virtual float GetElementScaleY() { return newScale.Y; }
     public virtual float GetElementScaleX() { return newScale.X; }
 
-    public override void Delete()
+    public override void Delete(bool baseOnly = false)
     {
         base.Delete();
-        foreach (UIElement element in Elements)
+        if (baseOnly) return;
+        List<UIElement> elementsToDelete = [.. Elements];
+        foreach (UIElement element in elementsToDelete)
             element.Delete();
-        Elements = [];
+        Elements.Clear();
     }
 }
 

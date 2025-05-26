@@ -94,7 +94,7 @@ public class UIText : UIElement
         string text = Text;
         if (text.Length == 0 || text.EndsWith("."))
             text += "0";
-        if (Float.TryParse(text, out float scaleValue))
+        if (Float.TryParse(text, out float scaleValue)) 
             value = scaleValue;
         else
             value = replacement;
@@ -136,9 +136,12 @@ public class UIText : UIElement
         TextMesh.UpdateCharacters(this, CharacterDataList);
     }
 
-    public override void Delete() 
+    public override void Delete(bool baseOnly = false) 
     {
+
         base.Delete();
+        if (baseOnly) 
+            return;
         TextMesh.RemoveElement(this);
         CharacterDataList.Clear();
         Chars.Clear();

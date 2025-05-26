@@ -64,7 +64,7 @@ public class UIScrollView : UICollection
     public void GenerateMask()
     {
         SetMasked(true);
-        SetMaskIndex(0);
+        SetMaskIndex(MaskPanel.MaskData.GetMaskIndex(MaskPanel));
     }
 
     public override void SetVisibility(bool visible)
@@ -136,14 +136,30 @@ public class UIScrollView : UICollection
         RemoveElement(element);
     }
 
-    public void DeleteSubElements()
+    /// <summary>
+    /// Deletes the sub-element and its children.
+    /// </summary>
+    public void DeleteSubElement()
     {
         SubElements.Delete();
     }
 
-    public override void Delete()
+    /// <summary>
+    /// Deletes only the children of the sub-element.
+    /// </summary>
+    public void DeleteSubElements()
     {
-        base.Delete();
+        List<UIElement> elementsToRemove = [.. SubElements.Elements];
+        foreach (UIElement element in elementsToRemove)
+        {
+            element.Delete();
+        }
+    }
+
+    public override void Delete(bool baseOnly = false)
+    {
+        base.Delete(true);
+        if (baseOnly) return;
         DeleteSubElements();
     }
 

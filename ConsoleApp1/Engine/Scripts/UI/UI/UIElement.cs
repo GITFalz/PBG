@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
@@ -61,7 +62,7 @@ public abstract class UIElement
         CanTest = false;
     }
 
-    public virtual void SetVisibility(bool visible) { Visible = visible; UIController.UpdateVisibility = true; }
+    public virtual void SetVisibility(bool visible) { Visible = visible; CanTest = visible; }
     public virtual void SetMasked(bool masked) { Masked = masked; }
     public virtual void SetMaskIndex(int maskIndex) { MaskIndex = maskIndex; }
     public virtual void Move(Vector3 offset) { Origin += offset; GetTransformation(); }
@@ -75,8 +76,6 @@ public abstract class UIElement
 
 
     public virtual void Generate() { }
-
-    public virtual void CalculateScale() {} // Used in collections
 
     /// <summary>
     /// Used when you want elements to be aligned at the end of the frame. 
@@ -98,7 +97,6 @@ public abstract class UIElement
 
     public virtual void Align()
     {
-        Masked = false;
 
         if (PositionType == PositionType.Relative && ParentElement != null)
         {
@@ -121,9 +119,6 @@ public abstract class UIElement
         Center = Origin + new Vector3(newScale.X / 2, newScale.Y / 2, 0);
 
         return;
-        if (Name != "SidePanelBackground" && Name != "SidePanelCollection")
-            return;
-
         Console.WriteLine();
         Console.WriteLine($"Name: {Name}, PositionType: {PositionType}, AnchorType: {AnchorType}");
         Console.WriteLine($"Origin: {Origin}, Transformed: {_transformedOrigin}, Center: {Center}, Scale: {newScale}, Offset: {Offset}, Width: {Width}, Height: {Height}");
@@ -131,7 +126,11 @@ public abstract class UIElement
     }
 
     public virtual void ResetInit() {}
-    public virtual void Delete() { UIController.RemoveElement(this); }
+    public virtual void Delete(bool baseOnly = false)
+    {
+        ParentElement?.RemoveChild(this);
+        UIController.RemoveElement(this);
+    }
     public virtual void RemoveChild(UIElement element) {}
             
 
@@ -191,15 +190,15 @@ public abstract class UIElement
         CanTest = true;
         return this;
     }
-    # endregion
+    #endregion
 
-    # region Mouse Events
+    #region Mouse Events
     public virtual bool Test(Vector2 offset = default)
-    { 
-        if (!CanTest || !Visible) 
+    {
+        if (!CanTest)
             return false;
 
-        TestButtons(IsMouseOver(offset));  
+        TestButtons(IsMouseOver(offset));
         return true;
     }
     public bool IsMouseOver(Vector2 offset = default)
@@ -238,24 +237,29 @@ public abstract class UIElement
         }
     }
 
-    private bool MouseOver(Vector2 pos, Vector2 origin, Vector2 offset, Vector2 scale)
+    private bool MouseOver(Vector2 pos, Vector2 origin, Vector2 offset, Vector2 scale, bool maskCheck = true)
     {
+        if (maskCheck && Masked && GetMaskPanel(out var mask) && !mask.MouseOver(pos, mask.Origin.Xy, offset, mask.Scale, false))
+        {
+            return false;
+        }
+
         if (Rotated)
-        {
-            Vector3 point1 = Mathf.RotateAround((origin.X, origin.Y, 0), Pivot, _rotationAxis, Rotation);
-            Vector3 point2 = Mathf.RotateAround((origin.X + scale.X, origin.Y, 0), Pivot, _rotationAxis, Rotation);
-            Vector3 point3 = Mathf.RotateAround((origin.X + scale.X, origin.Y + scale.Y, 0), _rotationAxis, Pivot, Rotation);
-            Vector3 point4 = Mathf.RotateAround((origin.X, origin.Y + scale.Y, 0), Pivot, _rotationAxis, Rotation);
+            {
+                Vector3 point1 = Mathf.RotateAround((origin.X, origin.Y, 0), Pivot, _rotationAxis, Rotation);
+                Vector3 point2 = Mathf.RotateAround((origin.X + scale.X, origin.Y, 0), Pivot, _rotationAxis, Rotation);
+                Vector3 point3 = Mathf.RotateAround((origin.X + scale.X, origin.Y + scale.Y, 0), _rotationAxis, Pivot, Rotation);
+                Vector3 point4 = Mathf.RotateAround((origin.X, origin.Y + scale.Y, 0), Pivot, _rotationAxis, Rotation);
 
-            return IsPointInRotatedRectangle(pos, [point1.Xy, point2.Xy, point3.Xy, point4.Xy]);
-        }
-        else
-        {
-            Vector2 point1 = Vector3.TransformPosition((origin.X, origin.Y, 0), UIController.ModelMatrix).Xy + offset;
-            Vector2 point2 = Vector3.TransformPosition((origin.X + scale.X, origin.Y + scale.Y, 0), UIController.ModelMatrix).Xy + offset;
+                return IsPointInRotatedRectangle(pos, [point1.Xy, point2.Xy, point3.Xy, point4.Xy]);
+            }
+            else
+            {
+                Vector2 point1 = Vector3.TransformPosition((origin.X, origin.Y, 0), UIController.ModelMatrix).Xy + offset;
+                Vector2 point2 = Vector3.TransformPosition((origin.X + scale.X, origin.Y + scale.Y, 0), UIController.ModelMatrix).Xy + offset;
 
-            return pos.X >= point1.X && pos.X <= point2.X && pos.Y >= point1.Y && pos.Y <= point2.Y;
-        }
+                return pos.X >= point1.X && pos.X <= point2.X && pos.Y >= point1.Y && pos.Y <= point2.Y;
+            }
     }
     # endregion
 
@@ -288,6 +292,16 @@ public abstract class UIElement
         lines.Add(gapString + "    AnchorType: " + (int)AnchorType);
         lines.Add(gapString + "    PositionType: " + (int)PositionType);
         return lines;
+    }
+
+    public bool GetMaskPanel([NotNullWhen(true)] out UIMask? mask)
+    {
+        mask = null;
+        if (MaskIndex < 0 || MaskIndex >= UIController.MaskData.Elements.Count)
+            return false;
+ 
+        mask = UIController.MaskData.Elements[MaskIndex]; 
+        return true;
     }
 
     private static bool IsPointInRotatedRectangle(Vector2 point, Vector2[] rectanglePoints)

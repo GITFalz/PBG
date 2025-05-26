@@ -4,7 +4,7 @@ public static class Float
 {
     public static float Parse(string value, float replacement = 0f)
     {
-        try 
+        try
         {
             return float.Parse(value.Trim(), CultureInfo.InvariantCulture);
         }
@@ -16,7 +16,7 @@ public static class Float
 
     public static bool TryParse(string value, out float result)
     {
-        try 
+        try
         {
             result = Parse(value);
             return true;
@@ -27,11 +27,11 @@ public static class Float
             return false;
         }
     }
-
+    
     public static string Str(float value)
     {
         return value.ToString(CultureInfo.InvariantCulture);
-    }
+    }   
 }
 
 public static class Int

@@ -594,9 +594,9 @@ public class AnimationEditor : BaseEditor
 
         TimerUI = new UIController("TimerCollection");
 
-        UICollection timerPanelCollection = new("TimerPanelCollection", TimerUI, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (Game.Width, Game.Height), (5, 10, 0, 0), 0);
+        UICollection timerPanelCollection = new("TimerPanelCollection", TimerUI, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (Game.Width, Game.Height), (5, 2, 0, 0), 0);
 
-        UIButton timelineIndexButton = new("TimelineIndexButton", TimerUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (12, 12), (0, 0, 0, 0), 0, 10, (5, 0.05f), UIState.Interactable) { Depth = 3f };
+        UIButton timelineIndexButton = new("TimelineIndexButton", TimerUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (12, 20), (0, 0, 0, 0), 0, 10, (5, 0.05f), UIState.Interactable) { Depth = 3f };
         timelineIndexButton.SetOnClick(() => { _oldMousePos = Input.GetMousePosition(); _moveTimeline = false; });
         timelineIndexButton.SetOnHold(() =>
         {

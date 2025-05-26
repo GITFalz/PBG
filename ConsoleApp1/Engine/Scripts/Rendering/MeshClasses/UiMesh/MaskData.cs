@@ -4,7 +4,7 @@ public class MaskData
 {
     public SSBO<UIMaskStruct> UIMaskSSBO = new();
     public List<UIMaskStruct> Masks = [];
-    public List<UIPanel> Elements = [];
+    public List<UIMask> Elements = [];
     public Dictionary<UIPanel, int> MaskElements = [];
 
     public int MaskCount = 0;
@@ -94,6 +94,14 @@ public class MaskData
         UIMaskStruct data = Masks[index];
         data.Size = element.Scale;
         Masks[index] = data;
+    }
+
+    public int GetMaskIndex(UIMask element)
+    {
+        if (MaskElements.TryGetValue(element, out int index))
+            return index;
+
+        return 0;
     }
 
     public void GenerateBuffers()
