@@ -64,6 +64,8 @@ public class Game : GameWindow
         camera = new Camera(width, height, new Vector3(0, 0, 0));
         
         CenterWindow(new Vector2i(width, height));
+        PreviousWidth = width;
+        PreviousHeight = height;
         Width = width;
         Height = height;
         

@@ -15,6 +15,7 @@ public abstract class UIElement
     public Vector3 Origin = (0, 0, 0);
     public Vector3 Center = (0, 0, 0);
     public Vector3 Pivot = (0, 0, 0);
+    public Vector2 OldScale = (100, 100);
     public Vector2 Scale = (100, 100);
     public Vector2 newScale = (100, 100);
     public Vector4 Offset = (0, 0, 0, 0);  
@@ -58,11 +59,36 @@ public abstract class UIElement
         Pivot = pivot;
         Scale = scale;
         newScale = scale;
+        OldScale = scale;
         Offset = offset;
         Rotation = rotation;
         CanTest = false;
     }
 
+    public void AddConstraint(UIConstraint constraint, float value) => Constraints.Add(Constraint.GetUIConstraint(constraint, value));
+    // Left
+    public void SetLeftPx(float value)   => AddConstraint(UIConstraint.SetLeftPx, value);
+    public void SetLeftPc(float value)   => AddConstraint(UIConstraint.SetLeftPc, value);
+    public void AddLeftPx(float value)   => AddConstraint(UIConstraint.AddLeftPx, value);
+    public void AddLeftPc(float value)   => AddConstraint(UIConstraint.AddLeftPc, value);
+
+    // Top
+    public void SetTopPx(float value)    => AddConstraint(UIConstraint.SetTopPx, value);
+    public void SetTopPc(float value)    => AddConstraint(UIConstraint.SetTopPc, value);
+    public void AddTopPx(float value)    => AddConstraint(UIConstraint.AddTopPx, value);
+    public void AddTopPc(float value)    => AddConstraint(UIConstraint.AddTopPc, value);
+
+    // Right
+    public void SetRightPx(float value)  => AddConstraint(UIConstraint.SetRightPx, value);
+    public void SetRightPc(float value)  => AddConstraint(UIConstraint.SetRightPc, value);
+    public void AddRightPx(float value)  => AddConstraint(UIConstraint.AddRightPx, value);
+    public void AddRightPc(float value)  => AddConstraint(UIConstraint.AddRightPc, value);
+
+    // Bottom
+    public void SetBottomPx(float value) => AddConstraint(UIConstraint.SetBottomPx, value);
+    public void SetBottomPc(float value) => AddConstraint(UIConstraint.SetBottomPc, value);
+    public void AddBottomPx(float value) => AddConstraint(UIConstraint.AddBottomPx, value);
+    public void AddBottomPc(float value) => AddConstraint(UIConstraint.AddBottomPc, value);
 
     public virtual void SetVisibility(bool visible) { Visible = visible; CanTest = visible; }
     public virtual void SetMasked(bool masked) { Masked = masked; }
@@ -70,7 +96,7 @@ public abstract class UIElement
     public virtual void Move(Vector3 offset) { Origin += offset; GetTransformation(); }
 
 
-    public virtual void SetScale(Vector2 scale) { Scale = scale; newScale = scale; }
+    public virtual void SetScale(Vector2 scale) { OldScale = Scale; Scale = scale; newScale = scale; }
     public virtual void SetOffset(Vector4 offset) { Offset = offset; }
     public virtual void SetAnchorType(AnchorType anchorType) { AnchorType = anchorType; }
     public virtual void SetPositionType(PositionType positionType) { PositionType = positionType; }
@@ -99,11 +125,12 @@ public abstract class UIElement
 
     public virtual void Align()
     {
-
+        OldScale = Scale;
         if (PositionType == PositionType.Relative && ParentElement != null)
         {
             Width = ParentElement.newScale.X;
             Height = ParentElement.newScale.Y;
+            ApplyConstraints(Width, Height);
             GetTransformedOrigin();
             Origin = _transformedOrigin + new Vector3(0, 0, 0.01f) + (new Vector3(0f, 0f, 0.01f) * (Depth + ParentElement.Depth)) + ParentElement.Origin;
         }
@@ -111,6 +138,7 @@ public abstract class UIElement
         {
             Width = Game.Width;
             Height = Game.Height;
+            ApplyConstraints(Width, Height);
             GetTransformedOrigin();
             Origin = _transformedOrigin;
         }
@@ -127,7 +155,16 @@ public abstract class UIElement
         Console.WriteLine($"Parent: {ParentElement?.Name}, Origin: {ParentElement?.Origin}, Scale: {ParentElement?.newScale}, Offset: {ParentElement?.Offset}, Width: {ParentElement?.Width}, Height: {ParentElement?.Height}");
     }
 
-    public virtual void ResetInit() {}
+    private void ApplyConstraints(float width, float height)
+    {
+        for (int i = 0; i < Constraints.Count; i++)
+        {
+            IUIConstraint constraint = Constraints[i];
+            constraint.ApplyConstraint(ref Offset, width, height);
+        }
+    }
+
+    public virtual void ResetInit() { }
     public virtual void Delete(bool baseOnly = false)
     {
         ParentElement?.RemoveChild(this);
@@ -374,35 +411,6 @@ public abstract class UIElement
                $"Rotation: {Rotation},\n" +
                $"State: {State}";
     }
-}
-
-public interface IUIConstraint
-{
-    void ApplyConstraint(ref Vector4 offset, float width, float height);
-}
-public struct TopOffset : IUIConstraint
-{
-    public float Offset;
-    public TopOffset(float offset)
-    {
-        Offset = offset;
-    }
-    public void ApplyConstraint(ref Vector4 offset, float width, float height)
-    {
-        offset.Y = Offset;
-        offset.W = height - Offset;
-    }
-}
-public enum Constraint
-{
-    TopPx,
-    TopPc,
-    BottomPx,
-    BottomPc,
-    LeftPx,
-    LeftPc,
-    RightPx,
-    RightPc
 }
 
 public enum AnchorType

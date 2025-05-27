@@ -6,6 +6,7 @@ public class ModelingSelectionMode : ModelingBase
     public static UIText MeshAlphaText;
     public static UIText AxisText;
 
+    public UIInputField CameraSpeedField;
     public static UIScrollView HierarchyScrollView;
 
     public UIController ModelingUi;
@@ -154,10 +155,10 @@ public class ModelingSelectionMode : ModelingBase
         
         UIImage CameraSpeedFieldPanel = new("CameraSpeedTextLabelPanel", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (45, 30), (0, 0, 0, 0), 0, 1, (10, 0.05f));
         
-        UIInputField CameraSpeedField = new("CameraSpeedText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (10, 0, 0, 0), 0, 0, (10, 0.05f));
+        CameraSpeedField = new("CameraSpeedText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (10, 0, 0, 0), 0, 0, (10, 0.05f));
         
         CameraSpeedField.SetMaxCharCount(2).SetText("50", 1.2f).SetTextType(TextType.Numeric);
-        CameraSpeedField.OnTextChange = new SerializableEvent(() => { try { Game.camera.SPEED = int.Parse(CameraSpeedField.Text); } catch { Game.camera.SPEED = 1; } }); 
+        CameraSpeedField.OnTextChange = new SerializableEvent(() => { try { Game.camera.SPEED = int.Parse(CameraSpeedField.Text); } catch { Game.camera.SPEED = 1; CameraSpeedField.SetText("1").UpdateCharacters(); } }); 
 
         speedStacking.SetScale((45, 30f));
         speedStacking.AddElements(CameraSpeedFieldPanel, CameraSpeedField);
@@ -221,6 +222,7 @@ public class ModelingSelectionMode : ModelingBase
     public override void Start()
     {
         ModelSettings.WireframeVisible = false;
+        CameraSpeedField.SetText($"{Game.camera.SPEED}").UpdateCharacters();
     }
 
     public override void Resize()

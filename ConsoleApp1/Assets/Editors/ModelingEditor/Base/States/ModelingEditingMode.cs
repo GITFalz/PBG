@@ -22,6 +22,8 @@ public class ModelingEditingMode : ModelingBase
     public static UIText MirrorText;
     public static UIText AxisText;
 
+    public UIInputField CameraSpeedField;
+
     public UIController ModelingUi;
     
     public ModelingEditingMode(ModelingEditor editor) : base(editor) 
@@ -43,10 +45,15 @@ public class ModelingEditingMode : ModelingBase
 
         UICollection mainPanelCollection = new("MainPanelCollection", ModelingUi, AnchorType.ScaleRight, PositionType.Absolute, (0, 0, 0), (250, Game.Height), (-5, 5, 5, 5), 0);
 
-        UIImage mainPanel = new("MainPanel", ModelingUi, AnchorType.ScaleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (245, Game.Height), (0, 0, 0, 0), 0, 0, (10, 0.05f));
+        UIImage mainPanel = new("MainPanel", ModelingUi, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (245, Game.Height), (0, 0, 0, 0), 0, 0, (10, 0.05f));
+        mainPanel.SetBottomPc(50);
 
-        UIVerticalCollection mainPanelStacking = new("MainPanelStacking", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (245, 0), (0, 0, 0, 0), (5, 10, 5, 5), 5, 0);
-
+        UIScrollView mainPanelStacking = new("MainPanelStacking", ModelingUi, AnchorType.ScaleRight, PositionType.Relative, CollectionType.Vertical, (245, 0), (0, 0, 0, 0));
+        mainPanelStacking.SetBorder((0, 10, 5, 5));
+        mainPanelStacking.SetSpacing(5);
+        mainPanelStacking.SetTopPx(5);
+        mainPanelStacking.SetBottomPc(50);
+        mainPanelStacking.AddBottomPx(5);
 
 
         // Main panel collection
@@ -167,7 +174,7 @@ public class ModelingEditingMode : ModelingBase
 
 
         // Camera speed panel collection
-        UICollection cameraSpeedStacking = new("CameraSpeedStacking", ModelingUi, AnchorType.BottomCenter, PositionType.Relative, (0, 0, 0), (225, 35), (5, 0, 0, 0), 0);
+        UICollection cameraSpeedStacking = new("CameraSpeedStacking", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 35), (5, 0, 0, 0), 0);
 
         UIText CameraSpeedTextLabel = new("CameraSpeedTextLabel", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (0, 0, 0, 0), 0);
         CameraSpeedTextLabel.SetTextCharCount("Cam Speed: ", 1.2f);
@@ -176,10 +183,10 @@ public class ModelingEditingMode : ModelingBase
         
         UIImage CameraSpeedFieldPanel = new("CameraSpeedTextLabelPanel", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (45, 30), (0, 0, 0, 0), 0, 1, (10, 0.05f));
         
-        UIInputField CameraSpeedField = new("CameraSpeedText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (10, 0, 0, 0), 0, 0, (10, 0.05f));
+        CameraSpeedField = new("CameraSpeedText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (10, 0, 0, 0), 0, 0, (10, 0.05f));
         
         CameraSpeedField.SetMaxCharCount(2).SetText("50", 1.2f).SetTextType(TextType.Numeric);
-        CameraSpeedField.OnTextChange = new SerializableEvent(() => { try { Game.camera.SPEED = int.Parse(CameraSpeedField.Text); } catch { Game.camera.SPEED = 1; } }); 
+        CameraSpeedField.OnTextChange = new SerializableEvent(() => { try { Game.camera.SPEED = Int.Parse(CameraSpeedField.Text); } catch { Game.camera.SPEED = 1; CameraSpeedField.SetText("1").UpdateCharacters(); } }); 
 
         speedStacking.SetScale((45, 30f));
 
@@ -188,9 +195,9 @@ public class ModelingEditingMode : ModelingBase
         cameraSpeedStacking.AddElements(CameraSpeedTextLabel, speedStacking);
 
 
-        mainPanelStacking.AddElements(cullingCollection, alphaCollection, wireframeCollection, mirrorStackingCollection, axisStackingCollection, gridStackingCollection);
+        mainPanelStacking.AddElements(cullingCollection, alphaCollection, wireframeCollection, mirrorStackingCollection, axisStackingCollection, gridStackingCollection, cameraSpeedStacking);
 
-        mainPanelCollection.AddElements(mainPanel, mainPanelStacking, cameraSpeedStacking);
+        mainPanelCollection.AddElements(mainPanel, mainPanelStacking);
 
 
         // Add elements to ui
@@ -291,6 +298,7 @@ public class ModelingEditingMode : ModelingBase
     public override void Start()
     {
         ModelSettings.WireframeVisible = true;
+        CameraSpeedField.SetText($"{Game.camera.SPEED}").UpdateCharacters();
     }
 
     public override void Resize()

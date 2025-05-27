@@ -276,9 +276,9 @@ public class GeneralModelingEditor : ScriptingNode
         camera.SetPositionSmoothFactor(true);
 
         CurrentEditor = modelingEditor;
-        modelingEditor.Start(this);
-        riggingEditor.Start(this);
-        animationEditor.Start(this);
+        modelingEditor.Start();
+        riggingEditor.Start();
+        animationEditor.Start();
 
         //MainUi.ToLines();
     }
@@ -287,16 +287,16 @@ public class GeneralModelingEditor : ScriptingNode
     {
         MainUi.Resize();
         UIScrollViewTest.Resize();
-        modelingEditor.Resize(this);
-        riggingEditor.Resize(this);
-        animationEditor.Resize(this);
-        textureEditor.Resize(this);
+        modelingEditor.Resize();
+        riggingEditor.Resize();
+        animationEditor.Resize();
+        textureEditor.Resize();
     }
 
     public override void Awake()
     {
         Game.BackgroundColor = (0.3f, 0.3f, 0.3f);
-        CurrentEditor.Awake(this);
+        CurrentEditor.Awake();
         base.Awake();
     }
 
@@ -305,13 +305,13 @@ public class GeneralModelingEditor : ScriptingNode
         MainUi.Update();
         UIScrollViewTest.Update();
 
-        CurrentEditor.Update(this);
+        CurrentEditor.Update();
         base.Update();
     }
 
     public override void Render()
     {     
-        CurrentEditor.Render(this);
+        CurrentEditor.Render();
 
         MainUi.RenderNoDepthTest();
         UIScrollViewTest.RenderNoDepthTest();
@@ -320,17 +320,17 @@ public class GeneralModelingEditor : ScriptingNode
 
     public override void Exit()
     {
-        CurrentEditor.Exit(this);
+        CurrentEditor.Exit();
         base.Exit();
     }
 
     public void DoSwitchScene(BaseEditor editor)
     {
-        CurrentEditor.Exit(this);
+        CurrentEditor.Exit();
         CurrentEditor = editor;
         if (!CurrentEditor.Started)
-            CurrentEditor.Start(this);
-        CurrentEditor.Awake(this);
+            CurrentEditor.Start();
+        CurrentEditor.Awake();
     }
 
     public void Load()

@@ -7,8 +7,6 @@ using SharpGen.Runtime;
 
 public class ModelingEditor : BaseEditor
 {
-    public GeneralModelingEditor Editor; 
-
     public ModelingBase CurrentMode;
 
     public ModelingSelectionMode SelectionMode;
@@ -101,13 +99,13 @@ public class ModelingEditor : BaseEditor
         CurrentMode.Start();
     }
 
-    public override void Start(GeneralModelingEditor editor)
+    public override void Start()
     {
         Console.WriteLine("Start Modeling Editor");
 
         CurrentMode.Start();
 
-        if (editor.freeCamera)
+        if (Editor.freeCamera)
         {
             Game.Instance.CursorState = CursorState.Grabbed;
             Game.camera.Unlock();
@@ -119,14 +117,14 @@ public class ModelingEditor : BaseEditor
         }
     }
 
-    public override void Resize(GeneralModelingEditor editor)
+    public override void Resize()
     {
         ModeController.Resize();
         SelectionMode.Resize();
         EditingMode.Resize();
     }
 
-    public override void Awake(GeneralModelingEditor editor)
+    public override void Awake()
     {
         Console.WriteLine("Awake Modeling Editor");
 
@@ -141,7 +139,7 @@ public class ModelingEditor : BaseEditor
         Model.SetModeling();
     }
     
-    public override void Update(GeneralModelingEditor editor)
+    public override void Update()
     {
         ModeController.Update();
 
@@ -159,9 +157,9 @@ public class ModelingEditor : BaseEditor
 
         if (Input.IsKeyPressed(Keys.Escape))
         {
-            editor.freeCamera = !editor.freeCamera;
+            Editor.freeCamera = !Editor.freeCamera;
             
-            if (editor.freeCamera)
+            if (Editor.freeCamera)
             {
                 Game.Instance.CursorState = CursorState.Grabbed;
                 Game.camera.Unlock();
@@ -174,7 +172,7 @@ public class ModelingEditor : BaseEditor
             }
         }
         
-        if (!editor.freeCamera)
+        if (!Editor.freeCamera)
         {   
             if (Input.IsMousePressed(MouseButton.Left))
             {
@@ -223,9 +221,9 @@ public class ModelingEditor : BaseEditor
         ModeClicked = false;
     }
 
-    public override void Render(GeneralModelingEditor editor)
+    public override void Render()
     {
-        editor.RenderModel();
+        Editor.RenderModel();
 
         CurrentMode.Render();
 
@@ -260,7 +258,7 @@ public class ModelingEditor : BaseEditor
         ModeController.RenderDepthTest();
     }
 
-    public override void Exit(GeneralModelingEditor editor)
+    public override void Exit()
     {
         Game.camera.SetSmoothFactor(true);
         Game.camera.SetPositionSmoothFactor(true);

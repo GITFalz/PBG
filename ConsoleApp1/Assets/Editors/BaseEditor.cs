@@ -1,41 +1,18 @@
 using OpenTK.Mathematics;
 
-public abstract class BaseEditor 
+public abstract class BaseEditor(GeneralModelingEditor editor)
 { 
-    public bool Started = false;
-    public GeneralModelingEditor Editor;
-    public string FileName => GeneralModelingEditor.FileName.Text;
+    public GeneralModelingEditor Editor = editor;
     public Model? Model => ModelManager.SelectedModel;
 
+    public bool Started = false;
     public bool blocked = false;
+    public string FileName => GeneralModelingEditor.FileName.Text;
 
-    public BaseEditor(GeneralModelingEditor editor)
-    {
-        Editor = editor;
-    }
-
-    public abstract void Start(GeneralModelingEditor editor);
-    public abstract void Resize(GeneralModelingEditor editor);
-    public abstract void Awake(GeneralModelingEditor editor);
-    public abstract void Update(GeneralModelingEditor editor);
-    public abstract void Render(GeneralModelingEditor editor);
-    public abstract void Exit(GeneralModelingEditor editor);
-}
-
-public class Link<T>(T a, T b) where T : struct
-{
-    public T A = a;
-    public T B = b;
-}
-
-public class VertexPanel
-{
-    public UIPanel Panel;
-    public Vector2 ScreenPosition;
-
-    public VertexPanel(UIPanel panel, Vector2 screenPosition)
-    {
-        Panel = panel;
-        ScreenPosition = screenPosition;
-    }
+    public abstract void Start();
+    public abstract void Resize();
+    public abstract void Awake();
+    public abstract void Update();
+    public abstract void Render();
+    public abstract void Exit();
 }

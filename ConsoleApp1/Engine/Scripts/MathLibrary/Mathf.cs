@@ -395,12 +395,6 @@ public static class Mathf
         }
         return rotation;
     }
-    
-    
-    public static bool IsPointNearLine(Link<Vector2> link, Vector2 point, float distance)
-    {
-        return IsPointNearLine(link.A, link.B, point, distance);
-    }
 
     public static void GetSmallestBoundingBox(List<Vertex> vertices, out Vector3 min, out Vector3 max)
     {

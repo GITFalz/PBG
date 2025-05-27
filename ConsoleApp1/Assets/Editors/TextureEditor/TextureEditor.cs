@@ -162,7 +162,7 @@ public class TextureEditor : BaseEditor
         ModelingUi.AddElements(mainPanelCollection);
     }
 
-    public override void Start(GeneralModelingEditor editor)
+    public override void Start()
     {   
         Started = true;
 
@@ -191,7 +191,7 @@ public class TextureEditor : BaseEditor
         });
     }
 
-    public override void Resize(GeneralModelingEditor editor)
+    public override void Resize()
     {
         ModelingUi.Resize();
         TextureUI.Resize();
@@ -203,7 +203,7 @@ public class TextureEditor : BaseEditor
         DrawingPanel.WindowHeight = _windowSize.Y;
     }
 
-    public override void Awake(GeneralModelingEditor editor)
+    public override void Awake()
     {
         ModelSettings.WireframeVisible = false;
 
@@ -285,7 +285,7 @@ public class TextureEditor : BaseEditor
             UvMesh.SaveModel(FileName);  
     }
 
-    public override void Update(GeneralModelingEditor editor)
+    public override void Update()
     {
         RenderBrushCircle = false;
         MaskCanvas = false;
@@ -485,7 +485,7 @@ public class TextureEditor : BaseEditor
         }
     }
 
-    public override void Render(GeneralModelingEditor editor)
+    public override void Render()
     {
         GL.Enable(EnableCap.DepthTest);
 
@@ -582,7 +582,7 @@ public class TextureEditor : BaseEditor
         ColorPicker.RenderTexture();
     }
 
-    public override void Exit(GeneralModelingEditor editor)
+    public override void Exit()
     {
         DrawingPanel.IsDrawing = false;
     }

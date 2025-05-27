@@ -6,6 +6,8 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 public class RiggingEditor : BaseEditor
 {
     public UIController ModelingUi;
+    public UIInputField CameraSpeedField;
+
     public Camera Camera => Game.camera;
 
     public static UIText BackfaceCullingText;
@@ -372,10 +374,10 @@ public class RiggingEditor : BaseEditor
         
         UIImage CameraSpeedFieldPanel = new("CameraSpeedTextLabelPanel", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (45, 30), (0, 0, 0, 0), 0, 1, (10, 0.05f));
         
-        UIInputField CameraSpeedField = new("CameraSpeedText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (10, 0, 0, 0), 0, 0, (10, 0.05f));
+        CameraSpeedField = new("CameraSpeedText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (10, 0, 0, 0), 0, 0, (10, 0.05f));
         
         CameraSpeedField.SetMaxCharCount(2).SetText("50", 1.2f).SetTextType(TextType.Numeric);
-        CameraSpeedField.OnTextChange = new SerializableEvent(() => { try { Game.camera.SPEED = int.Parse(CameraSpeedField.Text); } catch { Game.camera.SPEED = 1; } }); 
+        CameraSpeedField.OnTextChange = new SerializableEvent(() => { try { Game.camera.SPEED = int.Parse(CameraSpeedField.Text); } catch { Game.camera.SPEED = 1; CameraSpeedField.SetText("1").UpdateCharacters(); } }); 
 
         speedStacking.SetScale((45, 30f));
         speedStacking.AddElements(CameraSpeedFieldPanel, CameraSpeedField);
@@ -429,22 +431,22 @@ public class RiggingEditor : BaseEditor
         BackfaceCullingText.SetText("cull: " + ModelSettings.BackfaceCulling).UpdateCharacters();
     }
 
-    public override void Start(GeneralModelingEditor editor)
+    public override void Start()
     {
         Started = true;
-
 
         Console.WriteLine("Start Rigging Editor");
     }
 
-    public override void Resize(GeneralModelingEditor editor)
+    public override void Resize()
     {
         ModelingUi.Resize();
     }
 
-    public override void Awake(GeneralModelingEditor editor)
+    public override void Awake()
     {
         ModelSettings.WireframeVisible = true;
+        CameraSpeedField.SetText($"{Game.camera.SPEED}").UpdateCharacters();
 
         if (Model == null)
             return;
@@ -456,9 +458,9 @@ public class RiggingEditor : BaseEditor
         UpdateBonePosition(Game.camera.ProjectionMatrix, Game.camera.ViewMatrix);
     }
     
-    public override void Render(GeneralModelingEditor editor)
+    public override void Render()
     {
-        editor.RenderModel();
+        Editor.RenderModel();
 
         ModelingUi.RenderDepthTest();
 
@@ -491,7 +493,7 @@ public class RiggingEditor : BaseEditor
         }
     }
 
-    public override void Update(GeneralModelingEditor editor)
+    public override void Update()
     {
         if (Model == null)
             return;
@@ -500,9 +502,9 @@ public class RiggingEditor : BaseEditor
 
         if (Input.IsKeyPressed(Keys.Escape))
         {
-            editor.freeCamera = !editor.freeCamera;
+            Editor.freeCamera = !Editor.freeCamera;
 
-            if (editor.freeCamera)
+            if (Editor.freeCamera)
             {
                 Game.Instance.CursorState = CursorState.Grabbed;
                 Game.camera.Unlock();
@@ -518,7 +520,7 @@ public class RiggingEditor : BaseEditor
         }
         
 
-        if (!editor.freeCamera)
+        if (!Editor.freeCamera)
         {
             MultiSelect();
         }
@@ -582,7 +584,7 @@ public class RiggingEditor : BaseEditor
         }
     }
 
-    public override void Exit(GeneralModelingEditor editor)
+    public override void Exit()
     {
         if (Model == null)
             return;

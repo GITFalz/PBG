@@ -7,6 +7,7 @@ public class UIScrollView : UICollection
 
     public float ScrollSpeed = 5f;
     public CollectionType CollectionType;
+    public int Cindex = 0;
     public float ScrollPosition
     {
         get => _scrollPosition;
@@ -29,6 +30,7 @@ public class UIScrollView : UICollection
         base(name, controller, anchorType, positionType, (0, 0, 0), scale, offset, 0)
     {
         CollectionType = collectionType;
+        Cindex = (int)CollectionType;
 
         if (collectionType == CollectionType.Horizontal)
             SubElements = new UIHorizontalCollection("HorizontalStacking", UIController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 100), (0, 0, 0, 0), (0, 0, 0, 0), 5, 0);
@@ -48,6 +50,26 @@ public class UIScrollView : UICollection
         SubElements.ParentElement = this;
     }
 
+    public override void Align()
+    {
+        OnAlign?.Invoke();
+        base.Align();
+        float subScale = SubElements.Scale[Cindex];
+        if (SubElements.Scale[Cindex] >= Scale[Cindex])
+        {
+            float newScale = Scale[Cindex];
+            float oldScale = OldScale[Cindex];
+
+            float zoomCenter = subScale - newScale - ScrollPosition;
+            ScrollPosition = (ScrollPosition - zoomCenter) * (oldScale / newScale) + zoomCenter;
+        }
+        
+        foreach (UIElement element in Elements)
+        {
+            element.Align();
+        }
+    }
+
     private void MoveScrollView()
     {
         float scrollDelta = Input.GetMouseScrollDelta().Y;
@@ -56,7 +78,7 @@ public class UIScrollView : UICollection
         SubElements.Offset += scrollOffset[CollectionType](scrollDelta) * GameTime.DeltaTime * ScrollSpeed * 1000;
         SubElements.Offset = scrollClamp[CollectionType](SubElements.Scale - newScale, SubElements.Offset);
         ScrollPosition = SubElements.Offset[(int)CollectionType];
-        
+
         SubElements.Align();
         SubElements.UpdateTransformation();
     }

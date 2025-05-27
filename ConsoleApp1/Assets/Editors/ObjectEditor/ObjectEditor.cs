@@ -5,27 +5,27 @@ public class ObjectEditor : BaseEditor
         // Constructor logic here
     }
     
-    public override void Awake(GeneralModelingEditor editor)
+    public override void Awake()
     {
         throw new NotImplementedException();
     }
 
-    public override void Exit(GeneralModelingEditor editor)
+    public override void Exit()
     {
         throw new NotImplementedException();
     }
 
-    public override void Render(GeneralModelingEditor editor)
+    public override void Render()
     {
         throw new NotImplementedException();
     }
 
-    public override void Resize(GeneralModelingEditor editor)
+    public override void Resize()
     {
         throw new NotImplementedException();
     }
 
-    public override void Start(GeneralModelingEditor editor)
+    public override void Start()
     {
         Started = true;
         /*
@@ -43,7 +43,7 @@ public class ObjectEditor : BaseEditor
         */
     }
 
-    public override void Update(GeneralModelingEditor editor)
+    public override void Update()
     {
         throw new NotImplementedException();
     }
