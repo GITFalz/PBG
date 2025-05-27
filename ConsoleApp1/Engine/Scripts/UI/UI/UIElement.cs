@@ -30,6 +30,7 @@ public abstract class UIElement
 
     private Vector3 _transformedOrigin = (0, 0, 0);
 
+    public List<IUIConstraint> Constraints = [];
     public AnchorType AnchorType = AnchorType.MiddleCenter;
     public PositionType PositionType = PositionType.Absolute;
     public UIState State = UIState.Static;
@@ -61,6 +62,7 @@ public abstract class UIElement
         Rotation = rotation;
         CanTest = false;
     }
+
 
     public virtual void SetVisibility(bool visible) { Visible = visible; CanTest = visible; }
     public virtual void SetMasked(bool masked) { Masked = masked; }
@@ -326,34 +328,34 @@ public abstract class UIElement
 
     private static readonly Func<float, float, Vector2, Vector4, Vector2>[] _dimensions =
     [
-        (w, h, s, o) => (s.X, h - o.Y - o.W),           // ScaleLeft   
-        (w, h, s, o) => (s.X, h - o.Y - o.W),           // ScaleCenter
-        (w, h, s, o) => (s.X, h - o.Y - o.W),           // ScaleRight
-        (w, h, s, o) => (w - o.X - o.Z, s.Y),           // ScaleTop
-        (w, h, s, o) => (w - o.X - o.Z, s.Y),           // ScaleMiddle
-        (w, h, s, o) => (w - o.X - o.Z, s.Y),           // ScaleBottom
-        (w, h, s, o) => (w - o.X - o.Z, h - o.Y - o.W), // ScaleFull
+        (w, h, s, o) => (s.X, h - (o.Y + o.W)),                             // ScaleLeft   
+        (w, h, s, o) => (s.X, h - (o.Y + o.W)),                             // ScaleCenter
+        (w, h, s, o) => (s.X, h - (o.Y + o.W)),                             // ScaleRight
+        (w, h, s, o) => (w - (o.X + o.Z), s.Y),                             // ScaleTop
+        (w, h, s, o) => (w - (o.X + o.Z), s.Y),                             // ScaleMiddle
+        (w, h, s, o) => (w - (o.X + o.Z), s.Y),                             // ScaleBottom
+        (w, h, s, o) => (w - (o.X + o.Z), h - (o.Y + o.W)),                 // ScaleFull
     ];
 
     // w : width, h : height, s : scale, o : offset
     private static readonly Func<float, float, Vector2, Vector4, Vector3>[] origins =
     [
-        (w, h, s, o) => (o.X,                   o.Y,                   0), // TopLeft
-        (w, h, s, o) => (w / 2 - s.X / 2 + o.X, o.Y,                   0), // TopCenter
-        (w, h, s, o) => (w - s.X + o.X,         o.Y,                   0), // TopRight
-        (w, h, s, o) => (o.X,                   h / 2 - s.Y / 2 + o.Y, 0), // MiddleLeft
-        (w, h, s, o) => (w / 2 - s.X / 2 + o.X, h / 2 - s.Y / 2 + o.Y, 0), // MiddleCenter
-        (w, h, s, o) => (w - s.X + o.X,         h / 2 - s.Y / 2 + o.Y, 0), // MiddleRight
-        (w, h, s, o) => (o.X,                   h - s.Y + o.Y,         0), // BottomLeft
-        (w, h, s, o) => (w / 2 - s.X / 2 + o.X, h - s.Y + o.Y,         0), // BottomCenter
-        (w, h, s, o) => (w - s.X + o.X,         h - s.Y + o.Y,         0), // BottomRight
-        (w, h, s, o) => (o.X,                   o.Y,                   0), // ScaleLeft
-        (w, h, s, o) => (w / 2 - s.X / 2 + o.X, o.Y,                   0), // ScaleCenter
-        (w, h, s, o) => (w - s.X + o.X,         o.Y,                   0), // ScaleRight
-        (w, h, s, o) => (o.X,                   o.Y,                   0), // ScaleTop
-        (w, h, s, o) => (o.X,                   h / 2 - s.Y / 2 + o.Y, 0), // ScaleMiddle
-        (w, h, s, o) => (o.X,                   h - s.Y + o.Y,         0), // ScaleBottom
-        (w, h, s, o) => (o.X,                   o.Y,                   0), // ScaleFull
+        (w, h, s, o) => (o.X,                           o.Y,                   0),          // TopLeft
+        (w, h, s, o) => (w / 2 - s.X / 2 + (o.X - o.Z), o.Y,                   0),          // TopCenter
+        (w, h, s, o) => (w - s.X + o.Z,                 o.Y,                   0),          // TopRight
+        (w, h, s, o) => (o.X,                           h / 2 - s.Y / 2 + (o.Y - o.W), 0),  // MiddleLeft
+        (w, h, s, o) => (w / 2 - s.X / 2 + (o.X - o.Z), h / 2 - s.Y / 2 + (o.Y - o.W), 0),  // MiddleCenter
+        (w, h, s, o) => (w - s.X + o.Z,                 h / 2 - s.Y / 2 + (o.Y - o.W), 0),  // MiddleRight
+        (w, h, s, o) => (o.X,                           h - s.Y + o.W,         0),          // BottomLeft
+        (w, h, s, o) => (w / 2 - s.X / 2 + (o.X - o.Z), h - s.Y + o.W,         0),          // BottomCenter
+        (w, h, s, o) => (w - s.X + o.Z,                 h - s.Y + o.W,         0),          // BottomRight
+        (w, h, s, o) => (o.X,                           o.Y,                   0),          // ScaleLeft
+        (w, h, s, o) => (w / 2 - s.X / 2 + o.X,         o.Y,                   0),          // ScaleCenter
+        (w, h, s, o) => (w - s.X + o.X,                 o.Y,                   0),          // ScaleRight
+        (w, h, s, o) => (o.X,                           o.Y,                   0),          // ScaleTop
+        (w, h, s, o) => (o.X,                           h / 2 - s.Y / 2 + o.Y, 0),          // ScaleMiddle
+        (w, h, s, o) => (o.X,                           h - s.Y + o.Y,         0),          // ScaleBottom
+        (w, h, s, o) => (o.X,                           o.Y,                   0),          // ScaleFull
     ];
 
 
@@ -374,6 +376,30 @@ public abstract class UIElement
     }
 }
 
+public interface IUIConstraint
+{
+    void ApplyConstraint(ref Vector4 offset, float width, float height);
+}
+public struct TopOffset : IUIConstraint
+{
+    public float Offset;
+    public TopOffset(float offset)
+    {
+        Offset = offset;
+    }
+}
+public enum Constraint
+{
+    TopPx,
+    TopPc,
+    BottomPx,
+    BottomPc,
+    LeftPx,
+    LeftPc,
+    RightPx,
+    RightPc
+}
+
 public enum AnchorType
 {
     TopLeft = 0,
@@ -382,9 +408,9 @@ public enum AnchorType
     MiddleLeft = 3,
     MiddleCenter = 4,
     MiddleRight = 5,
-    BottomLeft = 6, 
+    BottomLeft = 6,
     BottomCenter = 7,
-    BottomRight = 8, 
+    BottomRight = 8,
     ScaleLeft = 9,
     ScaleCenter = 10,
     ScaleRight = 11,
@@ -392,6 +418,7 @@ public enum AnchorType
     ScaleMiddle = 13,
     ScaleBottom = 14,
     ScaleFull = 15,
+
 }
 
 public enum PositionType

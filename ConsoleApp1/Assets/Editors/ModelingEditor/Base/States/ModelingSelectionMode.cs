@@ -139,8 +139,8 @@ public class ModelingSelectionMode : ModelingBase
 
 
         // Hierarchy panel collection
-        UIListPrefab hierarchyScrollView = new UIListPrefab("HierarchyScrollView", ModelingUi, AnchorType.TopCenter, (225, 400), (0, 0, 0, 0));
-        HierarchyScrollView = hierarchyScrollView.ScrollView;
+
+        //HierarchyScrollView = hierarchyScrollView.ScrollView;
         
         
 
@@ -164,7 +164,7 @@ public class ModelingSelectionMode : ModelingBase
 
         cameraSpeedStacking.AddElements(CameraSpeedTextLabel, speedStacking);
 
-        mainPanelStacking.AddElements(cullingCollection, alphaCollection, axisStackingCollection, gridStackingCollection, textureApplyStackingCollection, hierarchyScrollView.Collection);
+        mainPanelStacking.AddElements(cullingCollection, alphaCollection, axisStackingCollection, gridStackingCollection, textureApplyStackingCollection);
 
         mainPanelCollection.AddElements(mainPanel, mainPanelStacking, cameraSpeedStacking);
 
