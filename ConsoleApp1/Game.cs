@@ -64,11 +64,11 @@ public class Game : GameWindow
         camera = new Camera(width, height, new Vector3(0, 0, 0));
         
         CenterWindow(new Vector2i(width, height));
-        Game.Width = width;
-        Game.Height = height;
+        Width = width;
+        Height = height;
         
-        Game.CenterX = width / 2;
-        Game.CenterY = height / 2;
+        CenterX = width / 2;
+        CenterY = height / 2;
     }
     
     protected override void OnResize(ResizeEventArgs e)

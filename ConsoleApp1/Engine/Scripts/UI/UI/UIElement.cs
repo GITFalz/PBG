@@ -387,6 +387,11 @@ public struct TopOffset : IUIConstraint
     {
         Offset = offset;
     }
+    public void ApplyConstraint(ref Vector4 offset, float width, float height)
+    {
+        offset.Y = Offset;
+        offset.W = height - Offset;
+    }
 }
 public enum Constraint
 {
