@@ -2,68 +2,102 @@ using OpenTK.Mathematics;
 
 public class TransformNode : MainNode
 {
+    public static TransformNode Empty = new();
+
     public Vector3 Position = Vector3.Zero;
     public List<ScriptingNode> Children = new List<ScriptingNode>();
+
+    public List<Action> OnStart = [];
+    public List<Action> OnAwake = [];
+    public List<Action> OnResize = [];
+    public List<Action> OnUpdate = [];
+    public List<Action> OnFixedUpdate = [];
+    public List<Action> OnRender = [];
+    public List<Action> OnExit = [];
 
     public void AddChild(ScriptingNode child)
     {
         Children.Add(child);
         child.Transform = this;
+
+        if (child.GetAction("Start", out Action? action)) OnStart.Add(action); 
+        if (child.GetAction("Awake", out action)) OnAwake.Add(action);
+        if (child.GetAction("Resize", out action)) OnResize.Add(action);
+        if (child.GetAction("Update", out action)) OnUpdate.Add(action);
+        if (child.GetAction("FixedUpdate", out action)) OnFixedUpdate.Add(action);
+        if (child.GetAction("Render", out action)) OnRender.Add(action);
+        if (child.GetAction("Exit", out action)) OnExit.Add(action);
+    }
+
+    public T GetComponent<T>() where T : ScriptingNode
+    {
+        foreach (ScriptingNode child in Children)
+        {
+            if (child is T)
+                return (T)child;
+        }
+        throw new Exception("Component not found");
+    }
+
+    public void AddChild(params ScriptingNode[] child)
+    {
+        foreach (ScriptingNode c in child) 
+            AddChild(c);
     }
 
     public void Awake()
     {
-        foreach (ScriptingNode child in Children)
+        for (int i = 0; i < OnAwake.Count; i++)
         {
-            child.Awake();
+            OnAwake[i].Invoke();
         }
     }
 
     public void Exit()
     {
-        foreach (ScriptingNode child in Children)
+        for (int i = 0; i < OnExit.Count; i++)
         {
-            child.Exit();
+            OnExit[i].Invoke();
         }
     }
 
     public void FixedUpdate()
     {
-        foreach (ScriptingNode child in Children)
+        for (int i = 0; i < OnFixedUpdate.Count; i++)
         {
-            child.FixedUpdate();
+            OnFixedUpdate[i].Invoke();
         }
     }
 
     public void Render()
     {
-        foreach (ScriptingNode child in Children)
+        for (int i = 0; i < OnRender.Count; i++)
         {
-            child.Render();
+            OnRender[i].Invoke();
         }
     }
 
     public void Resize()
     {
-        foreach (ScriptingNode child in Children)
+        for (int i = 0; i < OnResize.Count; i++)
         {
-            child.Resize();
+            OnResize[i].Invoke();
         }
     }
 
     public void Start()
     {
-        foreach (ScriptingNode child in Children)
+        for (int i = 0; i < OnStart.Count; i++)
         {
-            child.Start();
+            OnStart[i].Invoke();
         }
     }
 
     public void Update()
     {
-        foreach (ScriptingNode child in Children)
+        for (int i = 0; i < OnUpdate.Count; i++)
         {
-            child.Update();
+            OnUpdate[i].Invoke();
         }
     }
 }

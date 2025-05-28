@@ -59,6 +59,14 @@ public class Scene
         RootNode.AddNode(node);
     }
 
+    public void AddNode(params MainNode[] nodes)
+    {
+        foreach (var node in nodes)
+        {
+            RootNode.AddNode(node);
+        }
+    }
+
 
 
     // Base functions
