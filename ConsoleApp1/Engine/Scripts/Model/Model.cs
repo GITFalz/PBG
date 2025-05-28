@@ -47,6 +47,18 @@ public class Model
     public SSBO<Matrix4> BoneMatrices = new SSBO<Matrix4>();
     public List<Matrix4> BoneMatricesList = [];
 
+    public Vector3 Position
+    {
+        get => _position;
+        set
+        {
+            _position = value;
+            ModelMatrix = Matrix4.CreateTranslation(_position);
+        }
+    }
+    private Vector3 _position = Vector3.Zero;
+    public Matrix4 ModelMatrix = Matrix4.Identity;
+
 
     public Rig? Rig;
     public string? RigName => Rig?.Name;
@@ -321,7 +333,7 @@ public class Model
         GL.Enable(EnableCap.DepthTest);
         GL.DepthFunc(DepthFunction.Lequal);
 
-        Matrix4 Model = Matrix4.Identity;
+        Matrix4 Model = ModelMatrix;
         Matrix4 view = camera.GetViewMatrix();
         Matrix4 projection = camera.GetProjectionMatrix();
 
@@ -333,7 +345,7 @@ public class Model
             else
                 GL.CullFace(TriangleFace.Back);
 
-            Model = Matrix4.CreateScale(flip);
+            Model = Matrix4.CreateScale(flip) * ModelMatrix;
 
             GL.UniformMatrix4(_activeModelLocation, false, ref Model);
             GL.UniformMatrix4(_activeViewLocation, false, ref view);
@@ -363,12 +375,12 @@ public class Model
         int viewLocation;
         int projectionLocation;
 
-        if (ModelSettings.WireframeVisible)
+        if (ModelSettings.WireframeVisible && IsSelected)
         {
             GL.DepthMask(false);
             GL.DepthFunc(DepthFunction.Always);
 
-            Model = Matrix4.Identity;
+            Model = ModelMatrix;
 
             ModelSettings.EdgeShader.Bind();
 
@@ -429,7 +441,8 @@ public class Model
     
         foreach (var vert in Mesh.VertexList)
         {
-            Vector2? screenPos = Mathf.WorldToScreen(vert, projection, view);
+            Vector3 vertPosition = (ModelMatrix.Transposed() * new Vector4(vert, 1.0f)).Xyz;
+            Vector2? screenPos = Mathf.WorldToScreen(vertPosition, projection, view);
             if (screenPos == null)
                 continue;
             
@@ -480,6 +493,11 @@ public class Model
         return Load(fileName);
     }
 
+    public bool LoadModelFromPath(string path)
+    {
+        return LoadFromPath(path);
+    }
+
     public void SaveModel(string fileName)
     {
         if (fileName.Length == 0)
@@ -495,7 +513,7 @@ public class Model
         if (File.Exists(path))
             PopUp.AddConfirmation("Overwrite existing model?", () => Mesh.SaveModel(fileName), null);
         else
-            Mesh.SaveModel(fileName);  
+            Mesh.SaveModel(fileName);
     }
 
     public void SaveAndLoad(string fileName)
@@ -509,6 +527,16 @@ public class Model
         if (Mesh.LoadModel(fileName))
         {
             CurrentModelName = fileName;
+            return true;
+        }
+        return false;
+    }
+
+    public bool LoadFromPath(string path)
+    {
+        if (Mesh.LoadModelFromPath(path))
+        {
+            CurrentModelName = Path.GetFileNameWithoutExtension(path);
             return true;
         }
         return false;

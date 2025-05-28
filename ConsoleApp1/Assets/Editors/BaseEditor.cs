@@ -7,7 +7,7 @@ public abstract class BaseEditor(GeneralModelingEditor editor)
 
     public bool Started = false;
     public bool blocked = false;
-    public string FileName => GeneralModelingEditor.FileName.Text;
+    public string FileName => Editor.FileName.Text;
 
     public abstract void Start();
     public abstract void Resize();

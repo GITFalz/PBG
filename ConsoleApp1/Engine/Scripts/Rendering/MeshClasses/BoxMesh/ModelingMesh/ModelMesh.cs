@@ -944,6 +944,17 @@ public class ModelMesh : Meshes
         return LoadModel(modelName, Game.modelPath);
     }
 
+    public bool LoadModelFromPath(string path)
+    {
+        if (!File.Exists(path))
+        {
+            PopUp.AddPopUp("The model file does not exist.");
+            return false;
+        }
+
+        return LoadModelFromPathInternal(path);
+    }
+
     public override bool LoadModel(string modelName, string basePath)
     {
         string path = Path.Combine(basePath, $"{modelName.Trim()}.model");
@@ -954,6 +965,11 @@ public class ModelMesh : Meshes
             return false;
         }
 
+        return LoadModelFromPathInternal(path);
+    }
+
+    private bool LoadModelFromPathInternal(string path)
+    {
         Unload();
 
         string[] lines = File.ReadAllLines(path);
@@ -1000,9 +1016,9 @@ public class ModelMesh : Meshes
         for (int i = vertexCount + edgeCount + uvCount + 4; i <= vertexCount + edgeCount + uvCount + triangleCount + 3; i++)
         {
             string[] values = lines[i].Trim().Split(' ');
-            
+
             Vertex a, b, c;
-        
+
             try
             {
                 a = VertexList[Int.Parse(values[1])];
@@ -1015,7 +1031,7 @@ public class ModelMesh : Meshes
                 Unload();
                 return false;
             }
-            
+
             Uv uvA = Uvs.ElementAtOrDefault(index + 0);
             Uv uvB = Uvs.ElementAtOrDefault(index + 1);
             Uv uvC = Uvs.ElementAtOrDefault(index + 2);

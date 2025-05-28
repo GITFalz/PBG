@@ -41,15 +41,17 @@ public abstract class UIElement
 
     public Matrix4 Transformation = Matrix4.Identity;
 
+    public SerializableEvent? OnHoverEnter { get; private set; } = null;
     public SerializableEvent? OnHover { get; private set; } = null;
     public SerializableEvent? OnClick { get; private set; } = null;
     public SerializableEvent? OnHold { get; private set; } = null;
     public SerializableEvent? OnRelease { get; private set; } = null;
-    public SerializableEvent? OnHoverOut { get; private set; } = null;
+    public SerializableEvent? OnHoverExit { get; private set; } = null;
     public Action? OnAlign;
     private bool _clicked = false;
+    private bool _hover = false;
 
-    public UIElement() {}
+    public UIElement() { }
     public UIElement(string name, UIController controller, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation)
     {
         Name = name;
@@ -205,9 +207,15 @@ public abstract class UIElement
         CanTest = true ;
         return this;
     } 
+    public UIElement SetOnHoverEnter(Action action)
+    {
+        OnHoverEnter = new SerializableEvent(action); 
+        CanTest = true;
+        return this;
+    }
     public UIElement SetOnHover(Action action)
     {
-        OnHover = new SerializableEvent(action); 
+        OnHover = new SerializableEvent(action);
         CanTest = true;
         return this;
     }
@@ -223,9 +231,9 @@ public abstract class UIElement
         CanTest = true;
         return this;
     }
-    public UIElement SetOnHoverOut(Action action)
+    public UIElement SetOnHoverExit(Action action)
     {
-        OnHoverOut = new SerializableEvent(action); 
+        OnHoverExit = new SerializableEvent(action); 
         CanTest = true;
         return this;
     }
@@ -249,6 +257,12 @@ public abstract class UIElement
     {
         if (mouseOver)
         {
+            if (!_hover)
+            {
+                OnHoverEnter?.Invoke();
+                _hover = true;
+            }
+
             OnHover?.Invoke();
 
             if (Input.IsMousePressed(MouseButton.Left) && !_clicked)
@@ -256,6 +270,11 @@ public abstract class UIElement
                 OnClick?.Invoke();
                 _clicked = true;
             }
+        }
+        else if (_hover)
+        {
+            OnHoverExit?.Invoke();
+            _hover = false;
         }
         
         if (_clicked)
@@ -270,9 +289,6 @@ public abstract class UIElement
                 OnRelease?.Invoke();
                 _clicked = false;
             }
-
-            if (mouseOver)
-                OnHoverOut?.Invoke();
         }
     }
 

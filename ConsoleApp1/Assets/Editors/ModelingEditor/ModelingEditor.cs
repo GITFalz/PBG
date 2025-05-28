@@ -148,17 +148,17 @@ public class ModelingEditor : BaseEditor
             ModeCollection.SetVisibility(false);
         }
 
-        if (Model == null)
-            return;
-
         renderSelection = false;
 
         CurrentMode.Update();
+        
+        if (Model == null)
+            return;
 
         if (Input.IsKeyPressed(Keys.Escape))
         {
             Editor.freeCamera = !Editor.freeCamera;
-            
+
             if (Editor.freeCamera)
             {
                 Game.Instance.CursorState = CursorState.Grabbed;
@@ -179,7 +179,7 @@ public class ModelingEditor : BaseEditor
                 oldMousePos = Input.GetMousePosition();
             }
 
-            if (Input.IsMouseDown(MouseButton.Left) && !blocked)
+            if (!Editor.FileManager.IsHovering && Input.IsMouseDown(MouseButton.Left) && !blocked)
             {
                 renderSelection = true;
                 

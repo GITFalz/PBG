@@ -17,16 +17,8 @@ public class GeneralModelingEditor : ScriptingNode
     public List<string> MeshSaveNames = new List<string>();
 
     // Main UI
-    public static UIInputField FileName;
-    public static UIInputField SnappingText;
-
-
-    public static UIText BonePivotX;
-    public static UIText BonePivotY;
-    public static UIText BonePivotZ;
-    public static UIText BoneEndX;
-    public static UIText BoneEndY;
-    public static UIText BoneEndZ;
+    public UIInputField FileName;
+    public UIInputField SnappingText;
 
 
     public float MeshAlpha 
@@ -111,6 +103,8 @@ public class GeneralModelingEditor : ScriptingNode
     public Action LoadAction = () => {};
     public Action SaveAction = () => {};
 
+    public Action FileManagerLoadAction = () => {};
+
     
     public bool freeCamera = false;
     public int _selectedModel = 0;
@@ -126,25 +120,20 @@ public class GeneralModelingEditor : ScriptingNode
         { 4, 0.1f }
     };
 
-    public GeneralModelingEditor()
+    public FileManager FileManager;
+
+    public GeneralModelingEditor(FileManager fileManager)
     {
+        FileManager = fileManager;
         MainUi = new UIController();
         UIScrollViewTest = new UIController();
 
-        modelingEditor = new ModelingEditor(this); 
-        riggingEditor = new RiggingEditor(this); 
+        modelingEditor = new ModelingEditor(this);
+        riggingEditor = new RiggingEditor(this);
         animationEditor = new AnimationEditor(this);
         textureEditor = new TextureEditor(this);
-    }
 
-    public override void Start()
-    {
-        Console.WriteLine("Animation Editor Start");
-        
-        Game.camera = new Camera(Game.Width, Game.Height, new Vector3(0, 0, 5));
-        ModelSettings.Camera = Game.camera;
-        
-        Transform.Position = new Vector3(0, 0, 0);
+        CurrentEditor = modelingEditor;
 
         UICollection stateCollection = new("StateCollection", MainUi, AnchorType.ScaleTop, PositionType.Absolute, (0, 0, 0), (Game.Width, 50), (5, 5, 255, 5), 0);
 
@@ -214,7 +203,7 @@ public class GeneralModelingEditor : ScriptingNode
         FileName = new("ModelName", MainUi, AnchorType.MiddleCenter, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (200, 36), (0, 0, 0, 0), 0, 0, (10, 0.15f));
         FileName.SetMaxCharCount(24).SetText("cube", 1.2f);
 
-        
+
         UIButton saveModelButton = new("saveModelButton", MainUi, AnchorType.TopLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 95, (0, 0), UIState.Static);
         saveModelButton.SetOnClick(Save);
 
@@ -224,42 +213,47 @@ public class GeneralModelingEditor : ScriptingNode
 
         UIImage fileNamePanel = new("FileNamePanel", MainUi, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (310, 36), (0, 0, 0, 0), 0, 1, (10, 0.05f));
         UIDepthCollection fileNameCollection = new("FileNameCollection", MainUi, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (310, 36), (0, 0, 0, 0), 0);
-        
-        fileNameCollection.AddElement(fileNamePanel);
-        fileNameCollection.AddElement(FileName);
+
+        fileNameCollection.AddElements(fileNamePanel, FileName);
 
         UIImage savePanel = new("SavePanel", MainUi, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f));
         UIDepthCollection saveCollection = new("SaveCollection", MainUi, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (36, 36), (0, 0, 0, 0), 0);
 
-        saveCollection.AddElement(savePanel);
-        saveCollection.AddElement(saveModelButton);
+        saveCollection.AddElements(savePanel, saveModelButton);
 
         UIImage loadPanel = new("LoadPanel", MainUi, AnchorType.TopLeft, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 0, (10, 0.05f));
         UIDepthCollection loadCollection = new("LoadCollection", MainUi, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (36, 36), (0, 0, 0, 0), 0);
 
-        loadCollection.AddElement(loadPanel);
-        loadCollection.AddElement(loadModelButton);
+        loadCollection.AddElements(loadPanel, loadModelButton);
 
+        UICollection importCollection = new("ImportCollection", MainUi, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (36, 36), (0, 0, 0, 0), 0);
+        UIButton importButton = new("ImportModelButton", MainUi, AnchorType.MiddleCenter, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (36, 36), (0, 0, 0, 0), 0, 90, (-1, -1), UIState.Static);
+        importButton.SetOnClick(() =>
+        {
+            FileManager.Toggle();
+        });
+
+        importCollection.AddElements(importButton);
 
         stateCollection.AddElement(statePanel);
 
-        stateStacking.AddElement(modelingButton.Collection);
-        stateStacking.AddElement(riggingButton.Collection);
-        stateStacking.AddElement(animationButton.Collection);
-        stateStacking.AddElement(textureButton.Collection);
-        stateStacking.AddElement(vertexCollection);
-        stateStacking.AddElement(edgeCollection);
-        stateStacking.AddElement(faceCollection);
-        stateStacking.AddElement(snappingCollection);
+        stateStacking.AddElements(modelingButton, riggingButton, animationButton, textureButton, vertexCollection, edgeCollection, faceCollection, snappingCollection);
 
-        fileStacking.AddElement(fileNameCollection);
-        fileStacking.AddElement(saveCollection);
-        fileStacking.AddElement(loadCollection);
+        fileStacking.AddElements(fileNameCollection, saveCollection, loadCollection, importCollection);
 
-        stateCollection.AddElement(stateStacking);
-        stateCollection.AddElement(fileStacking);
+        stateCollection.AddElements(stateStacking, fileStacking);
 
         MainUi.AddElement(stateCollection);
+    }
+
+    public void Start()
+    {
+        Console.WriteLine("Animation Editor Start");
+        
+        Game.camera = new Camera(Game.Width, Game.Height, new Vector3(0, 0, 5));
+        ModelSettings.Camera = Game.camera;
+        
+        Transform.Position = new Vector3(0, 0, 0);
 
 
         Camera camera = Game.camera;
@@ -283,7 +277,7 @@ public class GeneralModelingEditor : ScriptingNode
         //MainUi.ToLines();
     }
 
-    public override void Resize()
+    public void Resize()
     {
         MainUi.Resize();
         UIScrollViewTest.Resize();
@@ -293,35 +287,43 @@ public class GeneralModelingEditor : ScriptingNode
         textureEditor.Resize();
     }
 
-    public override void Awake()
+    public void Awake()
     {
         Game.BackgroundColor = (0.3f, 0.3f, 0.3f);
         CurrentEditor.Awake();
-        base.Awake();
     }
 
-    public override void Update()
+    public void Update()
     {
         MainUi.Update();
         UIScrollViewTest.Update();
 
+        if (FileManager.IsVisible && Input.IsKeyPressed(Keys.Enter))
+        {
+            for (int i = 0; i < FileManager.SelectedPaths.Count; i++)
+            {
+                string filePath = FileManager.SelectedPaths[i];
+                ModelManager.LoadModelFromPath(filePath);
+            }
+            FileManager.SelectedPaths = [];
+            FileManager.ToggleOff();
+            FileManagerLoadAction?.Invoke();
+        }
+
         CurrentEditor.Update();
-        base.Update();
     }
 
-    public override void Render()
+    public void Render()
     {     
         CurrentEditor.Render();
 
         MainUi.RenderNoDepthTest();
         UIScrollViewTest.RenderNoDepthTest();
-        base.Render();
     }
 
-    public override void Exit()
+    public void Exit()
     {
         CurrentEditor.Exit();
-        base.Exit();
     }
 
     public void DoSwitchScene(BaseEditor editor)

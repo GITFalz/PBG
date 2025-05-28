@@ -299,6 +299,7 @@ public class ModelingEditingMode : ModelingBase
     {
         ModelSettings.WireframeVisible = true;
         CameraSpeedField.SetText($"{Game.camera.SPEED}").UpdateCharacters();
+        Model?.UpdateVertexPosition();
     }
 
     public override void Resize()
@@ -315,7 +316,7 @@ public class ModelingEditingMode : ModelingBase
 
         if (!FreeCamera)
         {
-            if (Input.IsKeyDown(Keys.LeftControl))
+            if (!FileManager.IsHovering && Input.IsKeyDown(Keys.LeftControl))
             {
                 // Undo
                 if (Input.IsKeyPressed(Keys.Z)) Handle_Undo();
@@ -367,7 +368,7 @@ public class ModelingEditingMode : ModelingBase
                 // Get connected vertices
                 if (Input.IsKeyPressed(Keys.N)) Handle_GetConnectedVertices();
             }
-            else
+            else if (!FileManager.IsHovering)
             {
                 // Extrude
                 if (Input.IsKeyPressed(Keys.E)) Handle_Extrusion();
@@ -395,7 +396,7 @@ public class ModelingEditingMode : ModelingBase
                 }
             }
 
-            if (Input.IsMousePressed(MouseButton.Left))
+            if (!FileManager.IsHovering && Input.IsMousePressed(MouseButton.Left))
             {
                 Selection[(int)selectionType]();
             }

@@ -1,36 +1,45 @@
+using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class ModelingSelectionMode : ModelingBase
 {   
-    public static UIText BackfaceCullingText;
-    public static UIText MeshAlphaText;
-    public static UIText AxisText;
+    public UIText BackfaceCullingText;
+    public UIText MeshAlphaText;
+    public UIText AxisText;
 
     public UIInputField CameraSpeedField;
-    public static UIScrollView HierarchyScrollView;
+    public UIScrollView HierarchyScrollView;
 
     public UIController ModelingUi;
+    public UIController UIHierarchyController;
 
-    public ModelingSelectionMode(ModelingEditor editor) : base(editor) 
+    private bool _started = false;
+
+    public ModelingSelectionMode(ModelingEditor editor) : base(editor)
     {
         ModelingUi = new UIController();
 
         UICollection mainPanelCollection = new("MainPanelCollection", ModelingUi, AnchorType.ScaleRight, PositionType.Absolute, (0, 0, 0), (250, Game.Height), (-5, 5, 5, 5), 0);
 
         UIImage mainPanel = new("MainPanel", ModelingUi, AnchorType.ScaleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (245, Game.Height), (0, 0, 0, 0), 0, 0, (10, 0.05f));
+        mainPanel.SetBottomPc(50);
 
-        UIVerticalCollection mainPanelStacking = new("MainPanelStacking", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (245, 0), (0, 0, 0, 0), (5, 10, 5, 5), 5, 0);
+        UIScrollView mainPanelStacking = new("MainPanelStacking", ModelingUi, AnchorType.ScaleRight, PositionType.Relative, CollectionType.Vertical, (245, 0), (0, 0, 0, 0));
+        mainPanelStacking.SetBorder((0, 10, 5, 5));
+        mainPanelStacking.SetSpacing(5);
+        mainPanelStacking.SetTopPx(5);
+        mainPanelStacking.SetBottomPc(50);
+        mainPanelStacking.AddBottomPx(5);
 
 
-
-        // Main panel collection
+        // Culling panel collection
         UICollection cullingCollection = new("CullingCollection", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 20), (0, 0, 0, 0), 0);
 
         BackfaceCullingText = new("CullingText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (0, 0, 0, 0), 0);
         BackfaceCullingText.SetText("cull: " + ModelSettings.BackfaceCulling, 1.2f);
 
         UIButton cullingButton = new("CullingButton", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (40, 20), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
-        cullingButton.SetOnClick(BackFaceCullingSwitch); 
+        cullingButton.SetOnClick(BackFaceCullingSwitch);
 
         cullingCollection.AddElements(BackfaceCullingText, cullingButton);
 
@@ -85,8 +94,9 @@ public class ModelingSelectionMode : ModelingBase
         GridAlignedText.SetText("grid: " + ModelSettings.GridAligned, 1.2f);
 
         UIButton gridAlignedButton = new("GridAlignedButton", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (40, 20), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
-        gridAlignedButton.SetOnClick(() => {
-            ModelSettings.GridAligned = !ModelSettings.GridAligned; 
+        gridAlignedButton.SetOnClick(() =>
+        {
+            ModelSettings.GridAligned = !ModelSettings.GridAligned;
             GridAlignedText.SetText("grid: " + ModelSettings.GridAligned).UpdateCharacters();
         });
 
@@ -104,7 +114,7 @@ public class ModelingSelectionMode : ModelingBase
         UIInputField textureFileNameField = new("TextureFileNameText", ModelingUi, AnchorType.MiddleCenter, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (10, 0, 0, 0), 0, 0, (10, 0.05f));
 
         textureFileNameField.SetMaxCharCount(24).SetText("cube", 0.92f).SetTextType(TextType.Alphanumeric);
-        textureFileNameField.OnTextChange = new SerializableEvent(() => {  });
+        textureFileNameField.OnTextChange = new SerializableEvent(() => { });
 
         textureFileNamePanel.SetScale((textureFileNameField.newScale.X + 20, 30f));
 
@@ -114,11 +124,12 @@ public class ModelingSelectionMode : ModelingBase
 
         UITextButton textureApplyButton = new("TextureApplyButton", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (110, 30), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
         textureApplyButton.SetTextCharCount("Apply", 1.2f);
-        textureApplyButton.SetOnClick(() => {
+        textureApplyButton.SetOnClick(() =>
+        {
             string fileName = textureFileNameField.Text;
             if (fileName.Length == 0 || ModelManager.SelectedModel == null)
                 return;
-            
+
             fileName += ".png";
             string filePath = Path.Combine(Game.customTexturesPath, fileName);
             if (!File.Exists(filePath))
@@ -129,7 +140,8 @@ public class ModelingSelectionMode : ModelingBase
 
         UITextButton textureReloadButton = new("TextureReloadButton", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (1, 1, 1), (0, 0, 0), (110, 30), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
         textureReloadButton.SetTextCharCount("Reload", 1.2f);
-        textureReloadButton.SetOnClick(() => {
+        textureReloadButton.SetOnClick(() =>
+        {
             ModelManager.SelectedModel?.Reload();
         });
 
@@ -138,40 +150,54 @@ public class ModelingSelectionMode : ModelingBase
         textureApplyStackingCollection.AddElements(textureFileNameStacking, textureApplyButtonStacking);
 
 
-
-        // Hierarchy panel collection
-
-        //HierarchyScrollView = hierarchyScrollView.ScrollView;
-        
-        
-
         // Camera speed panel collection
-        UICollection cameraSpeedStacking = new("CameraSpeedStacking", ModelingUi, AnchorType.BottomCenter, PositionType.Relative, (0, 0, 0), (225, 35), (5, 0, 0, 0), 0);
+        UICollection cameraSpeedStacking = new("CameraSpeedStacking", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 35), (5, 0, 0, 0), 0);
 
         UIText CameraSpeedTextLabel = new("CameraSpeedTextLabel", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (0, 0, 0, 0), 0);
         CameraSpeedTextLabel.SetTextCharCount("Cam Speed: ", 1.2f);
 
         UICollection speedStacking = new UICollection("CameraSpeedStacking", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (0, 0, 0), (0, 20), (0, 0, 0, 0), 0);
-        
+
         UIImage CameraSpeedFieldPanel = new("CameraSpeedTextLabelPanel", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (45, 30), (0, 0, 0, 0), 0, 1, (10, 0.05f));
-        
+
         CameraSpeedField = new("CameraSpeedText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (10, 0, 0, 0), 0, 0, (10, 0.05f));
-        
+
         CameraSpeedField.SetMaxCharCount(2).SetText("50", 1.2f).SetTextType(TextType.Numeric);
-        CameraSpeedField.OnTextChange = new SerializableEvent(() => { try { Game.camera.SPEED = int.Parse(CameraSpeedField.Text); } catch { Game.camera.SPEED = 1; CameraSpeedField.SetText("1").UpdateCharacters(); } }); 
+        CameraSpeedField.OnTextChange = new SerializableEvent(() => { try { Game.camera.SPEED = int.Parse(CameraSpeedField.Text); } catch { Game.camera.SPEED = 1; CameraSpeedField.SetText("1").UpdateCharacters(); } });
 
         speedStacking.SetScale((45, 30f));
         speedStacking.AddElements(CameraSpeedFieldPanel, CameraSpeedField);
 
         cameraSpeedStacking.AddElements(CameraSpeedTextLabel, speedStacking);
 
-        mainPanelStacking.AddElements(cullingCollection, alphaCollection, axisStackingCollection, gridStackingCollection, textureApplyStackingCollection);
+        mainPanelStacking.AddElements(cullingCollection, alphaCollection, axisStackingCollection, gridStackingCollection, textureApplyStackingCollection, cameraSpeedStacking);
 
-        mainPanelCollection.AddElements(mainPanel, mainPanelStacking, cameraSpeedStacking);
+
+
+        // Hierarchy panel collection
+        UIHierarchyController = new UIController("HierarchyController");
+
+        UICollection mainHierarchyCollection = new("MainHierarchyCollection", UIHierarchyController, AnchorType.ScaleRight, PositionType.Absolute, (0, 0, 0), (250, Game.Height), (-5, 5, 5, 5), 0);
+
+        UIImage hierarchyPanel = new("HierarchyPanel", ModelingUi, AnchorType.ScaleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (245, Game.Height - 50), (0, 0, 0, 0), 0, 1, (10, 0.05f));
+        hierarchyPanel.SetTopPc(50);
+
+        HierarchyScrollView = new("HierarchyScrollView", ModelingUi, AnchorType.ScaleRight, PositionType.Relative, CollectionType.Vertical, (238, Game.Height - 50), (-7, 0, 0, 0));
+        HierarchyScrollView.SetBorder((5, 0, 5, 5));
+        HierarchyScrollView.SetSpacing(0);
+        HierarchyScrollView.SetBottomPx(5);
+        HierarchyScrollView.SetTopPc(50);
+        HierarchyScrollView.AddTopPx(5);
+
+
+
+        mainPanelCollection.AddElements(mainPanel, mainPanelStacking);
+        mainHierarchyCollection.AddElements(hierarchyPanel, HierarchyScrollView);
 
 
         // Add elements to ui
         ModelingUi.AddElement(mainPanelCollection);
+        UIHierarchyController.AddElement(mainHierarchyCollection);
     }
 
     public void AlphaControl()
@@ -223,33 +249,97 @@ public class ModelingSelectionMode : ModelingBase
     {
         ModelSettings.WireframeVisible = false;
         CameraSpeedField.SetText($"{Game.camera.SPEED}").UpdateCharacters();
+
+        foreach (var (name, model) in ModelManager.Models)
+        {
+            GenerateModelButton(model);
+        }
+
+        _started = true;
+
+        Editor.Editor.LoadAction = () =>
+        {
+            Editor.Editor.LoadModel();
+            GenerateModelButton(ModelManager.SelectedModel);
+        };
+        Editor.Editor.SaveAction = Editor.Editor.SaveModel;
+        Editor.Editor.FileManagerLoadAction = () =>
+        {
+            HierarchyScrollView.DeleteSubElements();
+            foreach (var (name, model) in ModelManager.Models)
+            {
+                GenerateModelButton(model);
+            }
+        };
+    }
+
+    public void GenerateModelButton(Model? model)
+    {
+        if (model == null)
+            return;
+        
+        Console.WriteLine($"Generating button for model: {model.Name}");    
+        UICollection modelCollection = new UICollection($"ModelCollection_{model.Name}", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), 0);
+
+        UIButton modelButton = new UIButton($"Model_{model.Name}", ModelingUi, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (7.5f, 0.05f), UIState.Interactable);
+        UIText modelText = new UIText($"ModelText_{model.Name}", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (300, 30), (10, 0, 0, 0), 0);
+        modelText.SetTextCharCount(model.Name, 1f);
+        modelButton.SetOnClick(() => ModelManager.Select(model));
+
+        modelCollection.AddElements(modelText, modelButton);
+
+        HierarchyScrollView.AddElement(modelCollection);
+
+        if (_started)
+            UIHierarchyController.AddElement(modelCollection);
     }
 
     public override void Resize()
     {
         ModelingUi.Resize();
+        UIHierarchyController.Resize();
     }
 
     public override void Update()
     {
         ModelingUi.Update();
+        UIHierarchyController.Update();
 
         if (Model == null)
             return;
 
-        if (Input.IsKeyPressed(Keys.Delete))
+        if (!FileManager.IsHovering && Input.IsKeyDown(Keys.G))
+        {
+            Vector3 move = Editor.GetSnappingMovement();
+            if (move != Vector3.Zero)
+            {
+                Model.Position += move;
+            }
+        }
+
+        if (Input.IsControlAndKeyPressed(Keys.Delete))
         {
             Model.Delete();
+            HierarchyScrollView.DeleteSubElements();
+            foreach (var (name, model) in ModelManager.Models)
+            {
+                GenerateModelButton(model);
+            }
         }
     }
 
     public override void Render()
     {
         ModelingUi.RenderDepthTest();
+        UIHierarchyController.RenderDepthTest();
     }
 
     public override void Exit()
     {
-        
+        HierarchyScrollView.DeleteSubElements();
+
+        Editor.Editor.LoadAction = Editor.Editor.LoadModel;
+        Editor.Editor.SaveAction = Editor.Editor.SaveModel;
+        Editor.Editor.FileManagerLoadAction = () => { };
     }
 }

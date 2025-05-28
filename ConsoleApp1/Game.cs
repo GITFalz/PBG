@@ -139,11 +139,12 @@ public class Game : GameWindow
         
         Input.Start(keyboard, mouse);
 
-        TransformNode modelingNode = new TransformNode();
+        FileManager fileManager = new FileManager();
 
-        modelingNode.AddChild(new GeneralModelingEditor());
+        TransformNode modelingNode = new TransformNode();
+        modelingNode.AddChild(new GeneralModelingEditor(fileManager), fileManager);
         
-        _modelingScene.AddNode(modelingNode);
+        _modelingScene.AddNode(modelingNode); 
         
         AddScenes(_modelingScene);
         LoadScene("Modeling");

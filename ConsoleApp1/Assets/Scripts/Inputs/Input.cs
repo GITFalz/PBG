@@ -10,6 +10,9 @@ public static class Input
     
     private static Vector2 _oldMousePosition;
 
+    public static bool LeftShiftDown => IsKeyDown(Keys.LeftShift);
+    public static bool LeftControlDown => IsKeyDown(Keys.LeftControl);
+
     public static List<Keys> PressedKeys = new List<Keys>();
 
     public static void Start(KeyboardState keyboard, MouseState mouse)
@@ -54,6 +57,11 @@ public static class Input
     public static bool IsMouseReleased(MouseButton button)
     {
         return _previousMouseState.IsButtonReleased(button);
+    }
+
+    public static bool IsControlAndKeyPressed(Keys key)
+    {
+        return IsKeyDown(Keys.LeftControl) && IsKeyPressed(key);
     }
     
     public static Vector2 GetMouseScroll()

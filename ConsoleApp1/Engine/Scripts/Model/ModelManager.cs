@@ -52,34 +52,20 @@ public static class ModelManager
         }
 
         string folderPath = Path.Combine(Game.undoModelPath, fileName);
-        if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
+        if (!Directory.Exists(folderPath))
+            Directory.CreateDirectory(folderPath);
 
-        /*
         string newFile = fileName;
 
         while (Models.ContainsKey(newFile))
         {
             newFile = $"{newFile}_{Models.Count}";
         }
-        */
 
-        SelectedModel?.Unload();
-
-        if (SelectedModel == null)
-        {
-            SelectedModel = new Model();
-            Models.Add(name, SelectedModel);
-        }
-
-        SelectedModel.LoadModel(name);
-        SelectedModel.Name = name;
-        SelectedModel.IsSelected = true;
-        SelectedModel.UpdateVertexPosition();
-
-        /*
         Model model = new Model();
-        model.LoadModel(name);
-        model.SaveModel(newFile);
+        if (!model.LoadModel(name))
+            return;
+
         model.Name = newFile;
 
         Models.Add(newFile, model);
@@ -92,7 +78,57 @@ public static class ModelManager
         SelectedModel = model;
         SelectedModel.IsSelected = true;
         SelectedModel.UpdateVertexPosition();
-        */
+    }
+
+    public static void LoadModelFromPath(string path)
+    {
+        if (!File.Exists(path))
+        {
+            PopUp.AddPopUp("File does not exist.");
+            return;
+        }
+
+        string fileName = Path.GetFileNameWithoutExtension(path);
+        string newFile = fileName;
+
+        while (Models.ContainsKey(newFile))
+        {
+            newFile = $"{newFile}_{Models.Count}";
+        }
+
+        Model model = new Model();
+        if (!model.LoadModelFromPath(path))
+            return;
+            
+        model.Name = newFile;
+
+        Models.Add(newFile, model);
+        if (SelectedModel != null)
+        {
+            SelectedModel.IsSelected = false;
+            SelectedModel.SelectedVertices.Clear();
+            SelectedModel.GenerateVertexColor();
+        }
+        SelectedModel = model;
+        SelectedModel.IsSelected = true;
+        SelectedModel.UpdateVertexPosition();
+    }
+
+    public static void Select(Model model)
+    {
+        if (SelectedModel != null)
+        {
+            SelectedModel.IsSelected = false;
+            SelectedModel.SelectedVertices.Clear();
+            SelectedModel.GenerateVertexColor();
+        }
+
+        SelectedModel = model;
+        if (SelectedModel != null)
+        {
+            SelectedModel.IsSelected = true;
+            SelectedModel.UpdateVertexPosition();
+        }
     }
 
     public static void SaveModel(string fileName)

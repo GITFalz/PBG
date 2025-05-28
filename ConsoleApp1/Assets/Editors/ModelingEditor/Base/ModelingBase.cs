@@ -8,8 +8,10 @@ public abstract class ModelingBase
 {
     public ModelingEditor Editor;
     public Model? Model => Editor.Model;
+    public FileManager FileManager => Editor.Editor.FileManager;
 
-    public bool CanStash {
+    public bool CanStash
+    {
         get => Editor.CanStash;
         set => Editor.CanStash = value;
     }

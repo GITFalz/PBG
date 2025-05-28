@@ -54,14 +54,9 @@ public class UIScrollView : UICollection
     {
         OnAlign?.Invoke();
         base.Align();
-        float subScale = SubElements.Scale[Cindex];
         if (SubElements.Scale[Cindex] >= Scale[Cindex])
         {
-            float newScale = Scale[Cindex];
-            float oldScale = OldScale[Cindex];
-
-            float zoomCenter = subScale - newScale - ScrollPosition;
-            ScrollPosition = (ScrollPosition - zoomCenter) * (oldScale / newScale) + zoomCenter;
+            ScrollPosition = 0;
         }
         
         foreach (UIElement element in Elements)

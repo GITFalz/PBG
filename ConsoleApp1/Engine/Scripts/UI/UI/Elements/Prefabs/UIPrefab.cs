@@ -39,4 +39,6 @@ public abstract class UIPrefab
     {
         Collection.Delete();
     }
+
+    public static implicit operator UICollection(UIPrefab prefab) => prefab.Collection;
 }
