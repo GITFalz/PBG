@@ -14,6 +14,10 @@ public class ModelingSelectionMode : ModelingBase
     public UIController UIHierarchyController;
 
     private bool _started = false;
+    private bool _modelSelected = false;
+
+
+    public Dictionary<UIButton, Model> SelectedModels = [];
 
     public ModelingSelectionMode(ModelingEditor editor) : base(editor)
     {
@@ -284,7 +288,42 @@ public class ModelingSelectionMode : ModelingBase
         UIButton modelButton = new UIButton($"Model_{model.Name}", ModelingUi, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (7.5f, 0.05f), UIState.Interactable);
         UIText modelText = new UIText($"ModelText_{model.Name}", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (300, 30), (10, 0, 0, 0), 0);
         modelText.SetTextCharCount(model.Name, 1f);
-        modelButton.SetOnClick(() => ModelManager.Select(model));
+        modelButton.SetOnClick(() =>
+        {
+            _modelSelected = true;
+            if (Input.IsKeyDown(Keys.LeftShift))
+            {
+                if (SelectedModels.ContainsKey(modelButton))
+                {
+                    SelectedModels.Remove(modelButton);
+                    ModelManager.UnSelect(model);
+                    modelButton.Color = (0.5f, 0.5f, 0.5f, 1f);
+                    modelButton.UpdateColor();
+                }
+                else
+                {
+                    SelectedModels.Add(modelButton, model);
+                    ModelManager.Select(model);
+                    modelButton.Color = (0.2f, 0.6f, 0.2f, 1f);
+                    modelButton.UpdateColor();
+                }
+            }
+            else
+            {
+                foreach (var (btn, mdl) in SelectedModels)
+                {
+                    ModelManager.UnSelect(mdl);
+                    btn.Color = (0.5f, 0.5f, 0.5f, 1f);
+                    btn.UpdateColor();
+                }
+                SelectedModels = [];
+
+                ModelManager.Select(model);
+                SelectedModels.Add(modelButton, model);
+                modelButton.Color = (0.2f, 0.6f, 0.2f, 1f);
+                modelButton.UpdateColor();
+            }
+        });
 
         modelCollection.AddElements(modelText, modelButton);
 
@@ -305,6 +344,19 @@ public class ModelingSelectionMode : ModelingBase
         ModelingUi.Update();
         UIHierarchyController.Update();
 
+        if (Input.IsMousePressed(MouseButton.Left) && !_modelSelected)
+        {
+            foreach (var (btn, model) in SelectedModels)
+            {
+                ModelManager.UnSelect(model);
+                btn.Color = (0.5f, 0.5f, 0.5f, 1f);
+                btn.UpdateColor();
+            }
+            SelectedModels = [];
+        }
+
+        _modelSelected = false;
+
         if (Model == null)
             return;
 
@@ -313,7 +365,10 @@ public class ModelingSelectionMode : ModelingBase
             Vector3 move = Editor.GetSnappingMovement();
             if (move != Vector3.Zero)
             {
-                Model.Position += move;
+                foreach (var (_, model) in SelectedModels)
+                {
+                    model.Position += move;
+                }
             }
         }
 

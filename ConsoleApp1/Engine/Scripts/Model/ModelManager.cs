@@ -99,7 +99,7 @@ public static class ModelManager
         Model model = new Model();
         if (!model.LoadModelFromPath(path))
             return;
-            
+
         model.Name = newFile;
 
         Models.Add(newFile, model);
@@ -128,6 +128,17 @@ public static class ModelManager
         {
             SelectedModel.IsSelected = true;
             SelectedModel.UpdateVertexPosition();
+        }
+    }
+
+    public static void UnSelect(Model model)
+    {
+        if (SelectedModel == model)
+        {
+            SelectedModel.IsSelected = false;
+            SelectedModel.SelectedVertices.Clear();
+            SelectedModel.GenerateVertexColor();
+            SelectedModel = null;
         }
     }
 

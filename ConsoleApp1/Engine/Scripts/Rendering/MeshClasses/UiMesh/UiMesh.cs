@@ -163,6 +163,22 @@ public class UIMesh
         UIData[index] = data;
     }
 
+    public void UpdateElementColor(UIPanel panel)
+    {
+        Internal_UpdateElementColor(panel);
+        _updateData = true;
+    }
+
+private void Internal_UpdateElementColor(UIPanel panel)
+    {
+        if (!GetElementData(panel, out int index))
+            return;
+
+        UIStruct data = UIData[index];
+        data.Color = panel.Color;
+        UIData[index] = data;
+    }
+
     public void GenerateBuffers()
     {
         _uiDataSSBO.Renew(UIData);

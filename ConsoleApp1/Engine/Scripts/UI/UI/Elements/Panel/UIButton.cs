@@ -85,6 +85,13 @@ public class UIButton : UIPanel
         uIMesh.UpdateElementTexture(this);
     }
 
+    protected override void Internal_UpdateColor()
+    {
+        if (!CanGenerate())
+            return;
+        uIMesh.UpdateElementColor(this);
+    }
+
     protected bool CanGenerate()
     {
         return State != UIState.InvisibleInteractable;

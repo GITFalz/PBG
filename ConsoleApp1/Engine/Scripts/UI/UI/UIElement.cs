@@ -195,8 +195,15 @@ public abstract class UIElement
         if (CanUpdate)
             Internal_UpdateTexture();
     }
+    
+    protected virtual void Internal_UpdateColor() {}
+    public void UpdateColor() 
+    {
+        if (CanUpdate)
+            Internal_UpdateColor();
+    }
 
-    public virtual bool RemoveElement(UIElement element) { return false;}
+    public virtual bool RemoveElement(UIElement element) { return false; }
     public abstract float GetYScale();
     public abstract float GetXScale();
 

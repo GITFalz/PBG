@@ -17,10 +17,10 @@ public class ModelingEditingMode : ModelingBase
 
 
     // Ui Elements
-    public static UIText BackfaceCullingText;
-    public static UIText MeshAlphaText;
-    public static UIText MirrorText;
-    public static UIText AxisText;
+    public UIText BackfaceCullingText;
+    public UIText MeshAlphaText;
+    public UIText MirrorText;
+    public UIText AxisText;
 
     public UIInputField CameraSpeedField;
 

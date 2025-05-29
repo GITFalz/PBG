@@ -188,7 +188,7 @@ public class FileManager : ScriptingNode
             directories = Directory.GetDirectories(path);
             files = Directory.GetFiles(path);
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return;
         }

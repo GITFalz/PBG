@@ -151,9 +151,6 @@ public class ModelingEditor : BaseEditor
         renderSelection = false;
 
         CurrentMode.Update();
-        
-        if (Model == null)
-            return;
 
         if (Input.IsKeyPressed(Keys.Escape))
         {
@@ -168,12 +165,15 @@ public class ModelingEditor : BaseEditor
             {
                 Game.Instance.CursorState = CursorState.Normal;
                 Game.camera.Lock();
-                Model.UpdateVertexPosition();
+                Model?.UpdateVertexPosition();
             }
         }
         
+        if (Model == null)
+            return;
+        
         if (!Editor.freeCamera)
-        {   
+        {
             if (Input.IsMousePressed(MouseButton.Left))
             {
                 oldMousePos = Input.GetMousePosition();
@@ -182,10 +182,10 @@ public class ModelingEditor : BaseEditor
             if (!Editor.FileManager.IsHovering && Input.IsMouseDown(MouseButton.Left) && !blocked)
             {
                 renderSelection = true;
-                
+
                 Vector2 mousePos = Input.GetMousePosition();
                 Vector2 max = Mathf.Max(mousePos, oldMousePos);
-                Vector2 min = Mathf.Min(mousePos, oldMousePos); 
+                Vector2 min = Mathf.Min(mousePos, oldMousePos);
                 float distance = Vector2.Distance(mousePos, oldMousePos);
                 bool regenColor = false;
 
