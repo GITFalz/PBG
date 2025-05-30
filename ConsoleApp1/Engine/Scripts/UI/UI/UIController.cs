@@ -169,7 +169,9 @@ public class UIController
         if (element is UIPanel panel)
         {
             if (panel is UIButton button)
+            {
                 Buttons.Remove(button);
+            }
         }
         else if (element is UIText text)
         {

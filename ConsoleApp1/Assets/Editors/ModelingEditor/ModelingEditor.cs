@@ -128,9 +128,6 @@ public class ModelingEditor : BaseEditor
     {
         Console.WriteLine("Awake Modeling Editor");
 
-        Editor.LoadAction = Editor.LoadModel;
-        Editor.SaveAction = Editor.SaveModel;
-
         ModelSettings.WireframeVisible = true;
 
         if (Model == null)

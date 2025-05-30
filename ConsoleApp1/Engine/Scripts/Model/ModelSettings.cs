@@ -3,11 +3,19 @@ using OpenTK.Mathematics;
 public static class ModelSettings
 {
     public static ShaderProgram VertexShader = new ShaderProgram("Model/ModelVertex.vert", "Model/ModelVertex.frag");
+    public static int vertexModelLocation = VertexShader.GetLocation("model");
+    public static int vertexViewLocation = VertexShader.GetLocation("view");
+    public static int vertexProjectionLocation = VertexShader.GetLocation("projection");
+    
     public static ShaderProgram EdgeShader = new ShaderProgram("Model/ModelEdge.vert", "Model/ModelEdge.frag");
+    public static int edgeModelLocation = EdgeShader.GetLocation("model");
+    public static int edgeViewLocation = EdgeShader.GetLocation("view");
+    public static int edgeProjectionLocation = EdgeShader.GetLocation("projection");
 
     public static Camera? Camera;
 
     public static RenderType RenderType = RenderType.Vertex;
+    
 
     // Ui values
     public static float MeshAlpha = 1.0f;
@@ -29,10 +37,10 @@ public static class ModelSettings
         { (1, 0, 0), [(1, 1, 1), (-1, 1, 1)] },
         { (0, 1, 0), [(1, 1, 1), (1, -1, 1)] },
         { (0, 0, 1), [(1, 1, 1), (1, 1, -1)] },
-        { (1, 1, 0), [(1, 1, 1), (-1, 1, 1), (1, -1, 1), (-1, -1, 1)] },
-        { (1, 0, 1), [(1, 1, 1), (-1, 1, 1), (1, 1, -1), (-1, 1, -1)] },
-        { (0, 1, 1), [(1, 1, 1), (1, -1, 1), (1, 1, -1), (1, -1, -1)] },
-        { (1, 1, 1), [(1, 1, 1), (-1, 1, 1), (1, -1, 1), (-1, -1, 1), (1, 1, -1), (-1, 1, -1), (1, -1, -1), (-1, -1, -1)] }
+        { (1, 1, 0), [(1, 1, 1), (-1, 1, 1), (-1, -1, 1), (1, -1, 1)] },
+        { (1, 0, 1), [(1, 1, 1), (-1, 1, 1), (-1, 1, -1), (1, 1, -1)] },
+        { (0, 1, 1), [(1, 1, 1), (1, -1, 1), (1, -1, -1), (1, 1, -1)] },
+        { (1, 1, 1), [(1, 1, 1), (-1, 1, 1), (-1, -1, 1), (1, -1, 1), (-1, 1, -1), (1, 1, -1), (1, -1, -1), (-1, -1, -1)] }
     };
 
     public static readonly Dictionary<Vector3i, bool[]> Swapping = new Dictionary<Vector3i, bool[]>()

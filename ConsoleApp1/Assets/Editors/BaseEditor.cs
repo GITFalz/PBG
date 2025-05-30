@@ -3,7 +3,7 @@ using OpenTK.Mathematics;
 public abstract class BaseEditor(GeneralModelingEditor editor)
 { 
     public GeneralModelingEditor Editor = editor;
-    public Model? Model => ModelManager.SelectedModel;
+    public Model? Model => ModelManager.SelectedModel; 
 
     public bool Started = false;
     public bool blocked = false;

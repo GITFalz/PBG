@@ -85,9 +85,14 @@ public class TextureEditor : BaseEditor
         UICollection mainPanelCollection = new("MainPanelCollection", ModelingUi, AnchorType.ScaleRight, PositionType.Absolute, (0, 0, 0), (250, Game.Height), (-5, 5, 5, 5), 0);
 
         UIImage mainPanel = new("MainPanel", ModelingUi, AnchorType.ScaleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (245, Game.Height), (0, 0, 0, 0), 0, 0, (10, 0.05f));
+        mainPanel.SetBottomPc(50);
 
-        UIVerticalCollection mainPanelStacking = new("MainPanelStacking", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (245, 0), (0, 0, 0, 0), (5, 10, 5, 5), 5, 0);
-
+        UIScrollView mainPanelStacking = new("MainPanelStacking", ModelingUi, AnchorType.ScaleRight, PositionType.Relative, CollectionType.Vertical, (245, 0), (0, 0, 0, 0));
+        mainPanelStacking.SetBorder((0, 10, 5, 5));
+        mainPanelStacking.SetSpacing(5);
+        mainPanelStacking.SetTopPx(5);
+        mainPanelStacking.SetBottomPc(50);
+        mainPanelStacking.AddBottomPx(5);
 
         // Texture file collection
         UIVerticalCollection textureFileStacking = new("TextureFileStacking", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 50), (0, 0, 0, 0), (0, 0, 0, 0), 5, 0);
@@ -212,9 +217,6 @@ public class TextureEditor : BaseEditor
         DrawingPanel.WindowPosition = (_windowPosition.X, Game.Height - (_windowPosition.Y + _windowSize.Y));
         DrawingPanel.WindowWidth = _windowSize.X;
         DrawingPanel.WindowHeight = _windowSize.Y;
-
-        Editor.LoadAction = LoadUvs;
-        Editor.SaveAction = SaveUvs;
 
         _regenerateColors = true;
 

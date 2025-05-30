@@ -6,6 +6,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 public class RiggingEditor : BaseEditor
 {
     public UIController ModelingUi;
+
     public UIInputField CameraSpeedField;
 
     public Camera Camera => Game.camera;
@@ -41,7 +42,9 @@ public class RiggingEditor : BaseEditor
 
     // Input data
     private bool _d_pressed = false;
-    
+    private bool _started = false;
+    private bool _modelSelected = true;
+
 
     public RiggingEditor(GeneralModelingEditor editor) : base(editor)
     {
@@ -50,8 +53,14 @@ public class RiggingEditor : BaseEditor
         UICollection mainPanelCollection = new("MainPanelCollection", ModelingUi, AnchorType.ScaleRight, PositionType.Absolute, (0, 0, 0), (250, Game.Height), (-5, 5, 5, 5), 0);
 
         UIImage mainPanel = new("MainPanel", ModelingUi, AnchorType.ScaleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (245, Game.Height), (0, 0, 0, 0), 0, 0, (10, 0.05f));
+        mainPanel.SetBottomPc(50);
 
-        UIVerticalCollection mainPanelStacking = new("MainPanelStacking", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (245, 0), (0, 0, 0, 0), (5, 10, 5, 5), 5, 0);
+        UIScrollView mainPanelStacking = new("MainPanelStacking", ModelingUi, AnchorType.ScaleRight, PositionType.Relative, CollectionType.Vertical, (245, 0), (0, 0, 0, 0));
+        mainPanelStacking.SetBorder((0, 10, 5, 5));
+        mainPanelStacking.SetSpacing(5);
+        mainPanelStacking.SetTopPx(5);
+        mainPanelStacking.SetBottomPc(50);
+        mainPanelStacking.AddBottomPx(5);
 
 
 
@@ -62,7 +71,7 @@ public class RiggingEditor : BaseEditor
         BackfaceCullingText.SetText("cull: " + ModelSettings.BackfaceCulling, 1.2f);
 
         UIButton cullingButton = new("CullingButton", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (40, 20), (0, 0, 0, 0), 0, 0, (10, 0.05f), UIState.Static);
-        cullingButton.SetOnClick(BackFaceCullingSwitch); 
+        cullingButton.SetOnClick(BackFaceCullingSwitch);
 
         cullingCollection.AddElements(BackfaceCullingText, cullingButton);
 
@@ -85,7 +94,7 @@ public class RiggingEditor : BaseEditor
         UIVerticalCollection boneInfoCollection = new("BoneInfoCollection", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 45), (0, 0, 0, 0), (0, 0, 0, 0), 5, 0);
 
         UICollection boneTextCollection = new("BoneTextCollection", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (225, 20), (0, 0, 0, 0), 0);
-        
+
         UIText boneNameText = new("BoneNameText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 20, 0), (400, 20), (0, 0, 0, 0), 0);
         boneNameText.SetTextCharCount("Name:", 1.2f);
 
@@ -235,7 +244,7 @@ public class RiggingEditor : BaseEditor
             Model?.Mesh.UpdateRig();
         });
 
-        boneRotationXCollection.AddElements(boneRotationXText, boneRotationXField.Collection);  
+        boneRotationXCollection.AddElements(boneRotationXText, boneRotationXField.Collection);
 
         UICollection boneRotationYCollection = new("BoneRotationYCollection", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 20), (0, 0, 0, 0), 0);
 
@@ -365,29 +374,28 @@ public class RiggingEditor : BaseEditor
 
 
         // Camera speed panel collection
-        UICollection cameraSpeedStacking = new("CameraSpeedStacking", ModelingUi, AnchorType.BottomCenter, PositionType.Relative, (0, 0, 0), (225, 35), (5, 0, 0, 0), 0);
+        UICollection cameraSpeedStacking = new("CameraSpeedStacking", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 35), (5, 0, 0, 0), 0);
 
         UIText CameraSpeedTextLabel = new("CameraSpeedTextLabel", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (0, 0, 0, 0), 0);
         CameraSpeedTextLabel.SetTextCharCount("Cam Speed: ", 1.2f);
 
         UICollection speedStacking = new UICollection("CameraSpeedStacking", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (0, 0, 0), (0, 20), (0, 0, 0, 0), 0);
-        
+
         UIImage CameraSpeedFieldPanel = new("CameraSpeedTextLabelPanel", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (45, 30), (0, 0, 0, 0), 0, 1, (10, 0.05f));
-        
+
         CameraSpeedField = new("CameraSpeedText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (10, 0, 0, 0), 0, 0, (10, 0.05f));
-        
+
         CameraSpeedField.SetMaxCharCount(2).SetText("50", 1.2f).SetTextType(TextType.Numeric);
-        CameraSpeedField.OnTextChange = new SerializableEvent(() => { try { Game.camera.SPEED = int.Parse(CameraSpeedField.Text); } catch { Game.camera.SPEED = 1; CameraSpeedField.SetText("1").UpdateCharacters(); } }); 
+        CameraSpeedField.OnTextChange = new SerializableEvent(() => { try { Game.camera.SPEED = int.Parse(CameraSpeedField.Text); } catch { Game.camera.SPEED = 1; CameraSpeedField.SetText("1").UpdateCharacters(); } });
 
         speedStacking.SetScale((45, 30f));
         speedStacking.AddElements(CameraSpeedFieldPanel, CameraSpeedField);
 
         cameraSpeedStacking.AddElements(CameraSpeedTextLabel, speedStacking);
 
-        mainPanelStacking.AddElements(cullingCollection, alphaCollection, boneInfoCollection, rigInfoCollection);
+        mainPanelStacking.AddElements(cullingCollection, alphaCollection, boneInfoCollection, rigInfoCollection, cameraSpeedStacking);
 
-        mainPanelCollection.AddElements(mainPanel, mainPanelStacking, cameraSpeedStacking);
-
+        mainPanelCollection.AddElements(mainPanel, mainPanelStacking);
 
         // Add elements to ui
         ModelingUi.AddElement(mainPanelCollection);
@@ -436,6 +444,8 @@ public class RiggingEditor : BaseEditor
         Started = true;
 
         Console.WriteLine("Start Rigging Editor");
+
+        _started = true;
     }
 
     public override void Resize()
@@ -462,7 +472,7 @@ public class RiggingEditor : BaseEditor
     {
         Editor.RenderModel();
 
-        ModelingUi.RenderDepthTest();
+        ModelingUi.RenderNoDepthTest();
 
         if (renderSelection)
         {
@@ -495,9 +505,6 @@ public class RiggingEditor : BaseEditor
 
     public override void Update()
     {
-        if (Model == null)
-            return;
-
         ModelingUi.Update();
 
         if (Input.IsKeyPressed(Keys.Escape))
@@ -515,10 +522,20 @@ public class RiggingEditor : BaseEditor
                 Game.Instance.CursorState = CursorState.Normal;
                 Game.camera.Lock();
                 UpdateBonePosition(Game.camera.ProjectionMatrix, Game.camera.ViewMatrix);
-                Model.UpdateVertexPosition();
+                Model?.UpdateVertexPosition();
             }
         }
-        
+
+        if (Input.IsMousePressed(MouseButton.Left) && !_modelSelected)
+        {
+            foreach (var (name, selected) in ModelManager.SelectedModels)
+            {
+                ModelManager.UnSelect(selected.Model);
+                selected.Button.Color = (0.5f, 0.5f, 0.5f, 1f);
+                selected.Button.UpdateColor();
+            }
+            ModelManager.SelectedModels = [];
+        }
 
         if (!Editor.freeCamera)
         {

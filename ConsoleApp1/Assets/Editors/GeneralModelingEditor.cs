@@ -12,6 +12,9 @@ public class GeneralModelingEditor : ScriptingNode
 
     public UIController MainUi;
     public UIController UIScrollViewTest;
+    public UIController UIHierarchyController;
+
+    public UIScrollView HierarchyScrollView;
 
     public string currentModelName = "cube";
     public List<string> MeshSaveNames = new List<string>();
@@ -121,6 +124,10 @@ public class GeneralModelingEditor : ScriptingNode
     };
 
     public FileManager FileManager;
+
+
+    private bool _started = false;
+    private bool _modelSelected = false;
 
     public GeneralModelingEditor(FileManager fileManager)
     {
@@ -244,28 +251,50 @@ public class GeneralModelingEditor : ScriptingNode
         stateCollection.AddElements(stateStacking, fileStacking);
 
         MainUi.AddElement(stateCollection);
+
+
+
+
+        // Hierarchy panel collection
+        UIHierarchyController = new UIController("HierarchyController");
+
+        UICollection mainHierarchyCollection = new("MainHierarchyCollection", UIHierarchyController, AnchorType.ScaleRight, PositionType.Absolute, (0, 0, 0), (250, Game.Height), (-5, 5, 5, 5), 0);
+
+        UIImage hierarchyPanel = new("HierarchyPanel", UIHierarchyController, AnchorType.ScaleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (245, Game.Height - 50), (0, 0, 0, 0), 0, 1, (10, 0.05f));
+        hierarchyPanel.SetTopPc(50);
+
+        HierarchyScrollView = new("HierarchyScrollView", UIHierarchyController, AnchorType.ScaleRight, PositionType.Relative, CollectionType.Vertical, (238, Game.Height - 50), (-7, 0, 0, 0));
+        HierarchyScrollView.SetBorder((5, 0, 5, 5));
+        HierarchyScrollView.SetSpacing(0);
+        HierarchyScrollView.SetBottomPx(5);
+        HierarchyScrollView.SetTopPc(50);
+        HierarchyScrollView.AddTopPx(5);
+
+        mainHierarchyCollection.AddElements(hierarchyPanel, HierarchyScrollView);
+
+        UIHierarchyController.AddElement(mainHierarchyCollection);
     }
 
     public void Start()
     {
         Console.WriteLine("Animation Editor Start");
-        
+
         Game.camera = new Camera(Game.Width, Game.Height, new Vector3(0, 0, 5));
         ModelSettings.Camera = Game.camera;
-        
+
         Transform.Position = new Vector3(0, 0, 0);
 
 
         Camera camera = Game.camera;
 
         camera.SetCameraMode(CameraMode.Free);
-        
+
         camera.Position = new Vector3(0, 0, 5);
         camera.Pitch = 0;
         camera.Yaw = -90;
-        
+
         camera.UpdateVectors();
-        
+
         camera.SetSmoothFactor(true);
         camera.SetPositionSmoothFactor(true);
 
@@ -275,12 +304,35 @@ public class GeneralModelingEditor : ScriptingNode
         animationEditor.Start();
 
         //MainUi.ToLines();
+        foreach (var (name, model) in ModelManager.Models)
+        {
+            GenerateModelButton(model);
+        }
+
+        LoadAction = () =>
+        {
+            LoadModel();
+            GenerateModelButton(ModelManager.SelectedModel);
+        };
+        SaveAction = SaveModel;
+        FileManagerLoadAction = () =>
+        {
+            HierarchyScrollView.DeleteSubElements();
+            foreach (var (name, model) in ModelManager.Models)
+            {
+                GenerateModelButton(model);
+            }
+        };
+
+        _started = true;
     }
 
     public void Resize()
     {
         MainUi.Resize();
         UIScrollViewTest.Resize();
+        UIHierarchyController.Resize(); 
+
         modelingEditor.Resize();
         riggingEditor.Resize();
         animationEditor.Resize();
@@ -297,6 +349,7 @@ public class GeneralModelingEditor : ScriptingNode
     {
         MainUi.Update();
         UIScrollViewTest.Update();
+        UIHierarchyController.Update();
 
         if (FileManager.IsVisible && Input.IsKeyPressed(Keys.Enter))
         {
@@ -318,12 +371,62 @@ public class GeneralModelingEditor : ScriptingNode
         CurrentEditor.Render();
 
         MainUi.RenderNoDepthTest();
+        UIHierarchyController.RenderNoDepthTest();
         UIScrollViewTest.RenderNoDepthTest();
     }
 
     public void Exit()
     {
         CurrentEditor.Exit();
+        HierarchyScrollView.DeleteSubElements();    
+    }
+    
+    public void GenerateModelButton(Model? model)
+    {
+        if (model == null)
+            return;
+        
+        Console.WriteLine($"Generating button for model: {model.Name}");    
+        UICollection modelCollection = new UICollection($"ModelCollection_{model.Name}", UIHierarchyController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), 0);
+
+        UIButton modelButton = new UIButton($"Model_{model.Name}", UIHierarchyController, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (7.5f, 0.05f), UIState.Interactable);
+        UIText modelText = new UIText($"ModelText_{model.Name}", UIHierarchyController, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (300, 30), (10, 0, 0, 0), 0);
+        modelText.SetTextCharCount(model.Name, 1f);
+        modelButton.SetOnClick(() =>
+        {
+            _modelSelected = true;
+            if (!Input.IsKeyDown(Keys.LeftShift) && ModelManager.SelectedModels.Count > 0 && (ModelManager.SelectedModels.Count > 1 || !ModelManager.SelectedModels.ContainsKey(model.Name)))
+            {
+                foreach (var (name, selected) in ModelManager.SelectedModels)
+                {
+                    ModelManager.UnSelect(selected.Model);
+                    selected.Button.Color = (0.5f, 0.5f, 0.5f, 1f);
+                    selected.Button.UpdateColor();
+                }
+                ModelManager.SelectedModels = [];
+            }
+
+            if (ModelManager.SelectedModels.Remove(model.Name))
+            {
+                ModelManager.UnSelect(model);
+                modelButton.Color = (0.5f, 0.5f, 0.5f, 1f);
+                modelButton.UpdateColor();
+            }
+            else
+            {
+                ModelManager.SelectedModels.Add(model.Name, new(modelButton, model));
+                ModelManager.Select(model);
+                modelButton.Color = (0.529f, 0.808f, 0.980f, 1.0f);
+                modelButton.UpdateColor();
+            }
+        });
+
+        modelCollection.AddElements(modelText, modelButton);
+
+        HierarchyScrollView.AddElement(modelCollection);
+
+        if (_started)
+            UIHierarchyController.AddElement(modelCollection);
     }
 
     public void DoSwitchScene(BaseEditor editor)

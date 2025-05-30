@@ -8,16 +8,8 @@ public class ModelingSelectionMode : ModelingBase
     public UIText AxisText;
 
     public UIInputField CameraSpeedField;
-    public UIScrollView HierarchyScrollView;
 
     public UIController ModelingUi;
-    public UIController UIHierarchyController;
-
-    private bool _started = false;
-    private bool _modelSelected = false;
-
-
-    public Dictionary<UIButton, Model> SelectedModels = [];
 
     public ModelingSelectionMode(ModelingEditor editor) : base(editor)
     {
@@ -176,32 +168,9 @@ public class ModelingSelectionMode : ModelingBase
 
         mainPanelStacking.AddElements(cullingCollection, alphaCollection, axisStackingCollection, gridStackingCollection, textureApplyStackingCollection, cameraSpeedStacking);
 
-
-
-        // Hierarchy panel collection
-        UIHierarchyController = new UIController("HierarchyController");
-
-        UICollection mainHierarchyCollection = new("MainHierarchyCollection", UIHierarchyController, AnchorType.ScaleRight, PositionType.Absolute, (0, 0, 0), (250, Game.Height), (-5, 5, 5, 5), 0);
-
-        UIImage hierarchyPanel = new("HierarchyPanel", ModelingUi, AnchorType.ScaleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (245, Game.Height - 50), (0, 0, 0, 0), 0, 1, (10, 0.05f));
-        hierarchyPanel.SetTopPc(50);
-
-        HierarchyScrollView = new("HierarchyScrollView", ModelingUi, AnchorType.ScaleRight, PositionType.Relative, CollectionType.Vertical, (238, Game.Height - 50), (-7, 0, 0, 0));
-        HierarchyScrollView.SetBorder((5, 0, 5, 5));
-        HierarchyScrollView.SetSpacing(0);
-        HierarchyScrollView.SetBottomPx(5);
-        HierarchyScrollView.SetTopPc(50);
-        HierarchyScrollView.AddTopPx(5);
-
-
-
         mainPanelCollection.AddElements(mainPanel, mainPanelStacking);
-        mainHierarchyCollection.AddElements(hierarchyPanel, HierarchyScrollView);
 
-
-        // Add elements to ui
         ModelingUi.AddElement(mainPanelCollection);
-        UIHierarchyController.AddElement(mainHierarchyCollection);
     }
 
     public void AlphaControl()
@@ -253,148 +222,40 @@ public class ModelingSelectionMode : ModelingBase
     {
         ModelSettings.WireframeVisible = false;
         CameraSpeedField.SetText($"{Game.camera.SPEED}").UpdateCharacters();
-
-        foreach (var (name, model) in ModelManager.Models)
-        {
-            GenerateModelButton(model);
-        }
-
-        _started = true;
-
-        Editor.Editor.LoadAction = () =>
-        {
-            Editor.Editor.LoadModel();
-            GenerateModelButton(ModelManager.SelectedModel);
-        };
-        Editor.Editor.SaveAction = Editor.Editor.SaveModel;
-        Editor.Editor.FileManagerLoadAction = () =>
-        {
-            HierarchyScrollView.DeleteSubElements();
-            foreach (var (name, model) in ModelManager.Models)
-            {
-                GenerateModelButton(model);
-            }
-        };
-    }
-
-    public void GenerateModelButton(Model? model)
-    {
-        if (model == null)
-            return;
-        
-        Console.WriteLine($"Generating button for model: {model.Name}");    
-        UICollection modelCollection = new UICollection($"ModelCollection_{model.Name}", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), 0);
-
-        UIButton modelButton = new UIButton($"Model_{model.Name}", ModelingUi, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (7.5f, 0.05f), UIState.Interactable);
-        UIText modelText = new UIText($"ModelText_{model.Name}", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (300, 30), (10, 0, 0, 0), 0);
-        modelText.SetTextCharCount(model.Name, 1f);
-        modelButton.SetOnClick(() =>
-        {
-            _modelSelected = true;
-            if (Input.IsKeyDown(Keys.LeftShift))
-            {
-                if (SelectedModels.ContainsKey(modelButton))
-                {
-                    SelectedModels.Remove(modelButton);
-                    ModelManager.UnSelect(model);
-                    modelButton.Color = (0.5f, 0.5f, 0.5f, 1f);
-                    modelButton.UpdateColor();
-                }
-                else
-                {
-                    SelectedModels.Add(modelButton, model);
-                    ModelManager.Select(model);
-                    modelButton.Color = (0.2f, 0.6f, 0.2f, 1f);
-                    modelButton.UpdateColor();
-                }
-            }
-            else
-            {
-                foreach (var (btn, mdl) in SelectedModels)
-                {
-                    ModelManager.UnSelect(mdl);
-                    btn.Color = (0.5f, 0.5f, 0.5f, 1f);
-                    btn.UpdateColor();
-                }
-                SelectedModels = [];
-
-                ModelManager.Select(model);
-                SelectedModels.Add(modelButton, model);
-                modelButton.Color = (0.2f, 0.6f, 0.2f, 1f);
-                modelButton.UpdateColor();
-            }
-        });
-
-        modelCollection.AddElements(modelText, modelButton);
-
-        HierarchyScrollView.AddElement(modelCollection);
-
-        if (_started)
-            UIHierarchyController.AddElement(modelCollection);
     }
 
     public override void Resize()
     {
         ModelingUi.Resize();
-        UIHierarchyController.Resize();
     }
 
     public override void Update()
     {
         ModelingUi.Update();
-        UIHierarchyController.Update();
-
-        if (Input.IsMousePressed(MouseButton.Left) && !_modelSelected)
-        {
-            foreach (var (btn, model) in SelectedModels)
-            {
-                ModelManager.UnSelect(model);
-                btn.Color = (0.5f, 0.5f, 0.5f, 1f);
-                btn.UpdateColor();
-            }
-            SelectedModels = [];
-        }
-
-        _modelSelected = false;
-
-        if (Model == null)
-            return;
 
         if (!FileManager.IsHovering && Input.IsKeyDown(Keys.G))
         {
             Vector3 move = Editor.GetSnappingMovement();
             if (move != Vector3.Zero)
             {
-                foreach (var (_, model) in SelectedModels)
+                foreach (var (_, selected) in ModelManager.SelectedModels)
                 {
-                    model.Position += move;
+                    selected.Model.Position += move;
                 }
             }
         }
-
-        if (Input.IsControlAndKeyPressed(Keys.Delete))
-        {
-            Model.Delete();
-            HierarchyScrollView.DeleteSubElements();
-            foreach (var (name, model) in ModelManager.Models)
-            {
-                GenerateModelButton(model);
-            }
-        }
+        
+        if (Model == null)
+            return;
     }
 
     public override void Render()
     {
         ModelingUi.RenderDepthTest();
-        UIHierarchyController.RenderDepthTest();
     }
 
     public override void Exit()
     {
-        HierarchyScrollView.DeleteSubElements();
 
-        Editor.Editor.LoadAction = Editor.Editor.LoadModel;
-        Editor.Editor.SaveAction = Editor.Editor.SaveModel;
-        Editor.Editor.FileManagerLoadAction = () => { };
     }
 }

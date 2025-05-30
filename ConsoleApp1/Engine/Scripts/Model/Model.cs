@@ -324,9 +324,20 @@ public class Model
 
     public void Render()
     {
-        var camera = ModelSettings.Camera;
-        if (camera == null)
-            return;
+        RenderMirror();
+        RenderWireframe();
+
+        if (Rig != null && RenderBones)
+        {
+            Mesh.RenderBones();
+        }
+        
+        GL.CullFace(TriangleFace.Back);
+    }
+
+    public void RenderMirror()
+    {
+        var camera = Game.camera;
 
         _activeShader.Bind();
 
@@ -337,13 +348,10 @@ public class Model
         Matrix4 view = camera.GetViewMatrix();
         Matrix4 projection = camera.GetProjectionMatrix();
 
-        int i = 0;
-        foreach (var flip in ModelSettings.Mirrors)
+        for (int i = 0; i < ModelSettings.Mirrors.Length; i++)
         {
-            if (ModelSettings.BackfaceCulling && 1 == i % 2)
-                GL.CullFace(TriangleFace.Front);
-            else
-                GL.CullFace(TriangleFace.Back);
+            Vector3 flip = ModelSettings.Mirrors[i];
+            GL.CullFace(ModelSettings.BackfaceCulling ? (i % 2 == 0 ? TriangleFace.Back : TriangleFace.Front) : TriangleFace.FrontAndBack);
 
             Model = Matrix4.CreateScale(flip) * ModelMatrix;
 
@@ -366,31 +374,29 @@ public class Model
             }
 
             Texture.Unbind();
-            i++;
         }
 
         _activeShader.Unbind();
+    }
 
-        int modelLocation;
-        int viewLocation;
-        int projectionLocation;
-
+    public void RenderWireframe()
+    {
         if (ModelSettings.WireframeVisible && IsSelected)
         {
+            var camera = Game.camera;
+
             GL.DepthMask(false);
             GL.DepthFunc(DepthFunction.Always);
 
-            Model = ModelMatrix;
+            Matrix4 model = ModelMatrix;
+            Matrix4 view = camera.ViewMatrix;
+            Matrix4 projection = camera.ProjectionMatrix;
 
             ModelSettings.EdgeShader.Bind();
 
-            modelLocation = GL.GetUniformLocation(ModelSettings.EdgeShader.ID, "model");
-            viewLocation = GL.GetUniformLocation(ModelSettings.EdgeShader.ID, "view");
-            projectionLocation = GL.GetUniformLocation(ModelSettings.EdgeShader.ID, "projection");
-
-            GL.UniformMatrix4(modelLocation, true, ref Model);
-            GL.UniformMatrix4(viewLocation, true, ref view);
-            GL.UniformMatrix4(projectionLocation, true, ref projection);
+            GL.UniformMatrix4(ModelSettings.edgeModelLocation, false, ref model);
+            GL.UniformMatrix4(ModelSettings.edgeViewLocation, false, ref view);
+            GL.UniformMatrix4(ModelSettings.edgeProjectionLocation, false, ref projection);
 
             BoneMatrices.Bind(0);
 
@@ -404,13 +410,9 @@ public class Model
 
             ModelSettings.VertexShader.Bind();
 
-            modelLocation = GL.GetUniformLocation(ModelSettings.VertexShader.ID, "model");
-            viewLocation = GL.GetUniformLocation(ModelSettings.VertexShader.ID, "view");
-            projectionLocation = GL.GetUniformLocation(ModelSettings.VertexShader.ID, "projection");
-
-            GL.UniformMatrix4(modelLocation, true, ref Model);
-            GL.UniformMatrix4(viewLocation, true, ref view);
-            GL.UniformMatrix4(projectionLocation, true, ref projection);
+            GL.UniformMatrix4(ModelSettings.edgeModelLocation, false, ref model);
+            GL.UniformMatrix4(ModelSettings.edgeViewLocation, false, ref view);
+            GL.UniformMatrix4(ModelSettings.edgeProjectionLocation, false, ref projection);
 
             Mesh.RenderVertices();
 
@@ -422,13 +424,6 @@ public class Model
             GL.DepthMask(true);
             GL.DepthFunc(DepthFunction.Lequal);
         }
-
-        if (Rig != null && RenderBones)
-        {
-            Mesh.RenderBones();
-        }
-        
-        GL.CullFace(TriangleFace.Back);
     }
 
 
@@ -438,14 +433,14 @@ public class Model
 
         System.Numerics.Matrix4x4 projection = Game.camera.GetNumericsProjectionMatrix();
         System.Numerics.Matrix4x4 view = Game.camera.GetNumericsViewMatrix();
-    
+
         foreach (var vert in Mesh.VertexList)
         {
             Vector3 vertPosition = (ModelMatrix.Transposed() * new Vector4(vert, 1.0f)).Xyz;
             Vector2? screenPos = Mathf.WorldToScreen(vertPosition, projection, view);
             if (screenPos == null)
                 continue;
-            
+
             Vertices.Add(vert, screenPos.Value);
         }
     }

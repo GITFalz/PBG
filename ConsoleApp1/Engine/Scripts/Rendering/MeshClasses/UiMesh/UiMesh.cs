@@ -169,7 +169,7 @@ public class UIMesh
         _updateData = true;
     }
 
-private void Internal_UpdateElementColor(UIPanel panel)
+    private void Internal_UpdateElementColor(UIPanel panel)
     {
         if (!GetElementData(panel, out int index))
             return;

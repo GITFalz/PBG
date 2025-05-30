@@ -5,6 +5,18 @@ public static class ModelManager
     public static Dictionary<string, Model> Models = [];
 
     public static Model? SelectedModel = null;
+    public static Dictionary<string, SelectedModelData> SelectedModels = [];
+    public struct SelectedModelData
+    {
+        public UIButton Button;
+        public Model Model;
+
+        public SelectedModelData(UIButton button, Model model)
+        {
+            Button = button;
+            Model = model;
+        }
+    }
 
     public static void Update()
     {
@@ -18,7 +30,7 @@ public static class ModelManager
             }
             else
             {
-                
+
             }
         }
 
@@ -26,19 +38,17 @@ public static class ModelManager
         {
             if (model.IsShown)
             {
-                model.Update(); 
+                model.Update();
             }
         }
     }
 
     public static void Render()
     {
-        foreach (var (name, model) in Models)
+        foreach (var model in Models.Values)
         {
             if (model.IsShown)
-            {
                 model.Render(); 
-            }
         }
     }
 
