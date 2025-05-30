@@ -14,6 +14,7 @@ public static class NodeParser
     public static MinMaxInputOperationData MinMaxInputOperationData = new();
     public static RangeData RangeData = new();
     public static SampleData SampleData = new();
+    public static DirectSampleData DirectSampleData = new(); 
     public static ThresholdInitMaskData ThresholdInitMaskData = new();
     public static VoronoiData VoronoiData = new();
 
@@ -371,6 +372,7 @@ public static class NodeParser
         { "MinMaxInitMask", MinMaxInitMaskData },
         { "MinMaxInputOperation", MinMaxInputOperationData },
         { "Range", RangeData },
+        { "DirectSample", DirectSampleData },
         { "Sample", SampleData },
         { "ThresholdInitMask", ThresholdInitMaskData },
         { "InitMask", ThresholdInitMaskData },

@@ -36,21 +36,38 @@ public static class VoronoiLib
     public static float Voronoi(Vector2 p, out Vector2 g)
     {
         Vector2i[] ps = GetP(Mathf.FloorToInt(p)); // the floored position and its neighbors
-        Vector2[] gs = GetG(ps); // the random positions of the neighbors
-        p = Mathf.Fraction(p);
-        g = gs[0];
-        float d = Vector2.Distance(p, gs[0]);
+        Vector2 besG = Mathf.Floor(ps[0]) + Hash2(ps[0]); // world-space seed 
+        float d = Vector2.Distance(p, besG);
         float c = Hash(ps[0]);
         for (int i = 1; i < 9; i++)
         {
-            float d1 = Vector2.Distance(p, gs[i]);
+            Vector2 gi = Mathf.Floor(ps[i]) + Hash2(ps[i]); // world-space seed
+            float d1 = Vector2.Distance(p, gi);
             if (d1 < d)
             {
-                d = d1; c = Hash(ps[i]);
-                g = gs[i];
+                d = d1;
+                besG = gi;
+                c = Hash(ps[i]);
             }
         }
+        g = besG;
         return c;
+
+        /*
+        ivec2[9] ps = getP(ivec2(floor(p))); // cell and neighbors
+        vec2 bestG = vec2(ps[0]) + hash2(ps[0]); // world-space seed
+        float d = distance(p, bestG);
+        float c = hash(ps[0]);
+        for (int i = 1; i < 9; i++) {
+            vec2 gi = vec2(ps[i]) + hash2(ps[i]);
+            float d1 = distance(p, gi);
+            if (d1 < d) {
+                d = d1; bestG = gi; c = hash(ps[i]);
+            }
+        }
+        g = bestG; 
+        return c;
+        */
     }
 
     // Edge voronoi

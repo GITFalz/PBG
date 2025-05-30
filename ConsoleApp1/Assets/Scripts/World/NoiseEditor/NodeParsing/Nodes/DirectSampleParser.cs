@@ -1,26 +1,24 @@
 using System.Diagnostics.CodeAnalysis;
 using OpenTK.Mathematics;
 
-public class VoronoiData : INodeData
+public class DirectSampleData : INodeData
 {
     // Values
     public float Scale = 1.0f;
     public Vector2 Offset = Vector2.Zero;
-
-    // Type
-    public VoronoiOperationType Type = 0;
+    public Vector2 Position = Vector2.Zero;
 
     // Input
+    public string InputPosX = "none";
+    public string InputPosY = "none";
     public string InputName1 = "none";
     public string InputName2 = "none";
 
     // Output
     public string OutputName = "none";
-    public string OutputCellX = "none";
-    public string OutputCellY = "none";
 
     // Prefab
-    public string PrefabName = "DisplayPrefab";
+    public string PrefabName = "Direct Sample Prefab";
     public Vector4 PrefabOffset = (0, 0, 0, 0);
 
     public void SetValue(float value, int index = 0)
@@ -30,51 +28,55 @@ public class VoronoiData : INodeData
             Scale = value;
         }
         else
-            Console.WriteLine("A Voronoi node only accepts one float (scale)");
+            Console.WriteLine("A Direct Sample node only accepts one float (scale)");
     }
 
-    public void SetValue(Vector2 value, int index = 0) => Offset = value;
-    public void SetValue(Vector4 value, int index = 0) => Console.WriteLine("A Voronoi node does not accept a Vector4");
-    public void SetValue(int value, int index = 0) => Console.WriteLine("Use SetType to set the operation type");
-    public void SetValue(bool value, int index = 0) => Console.WriteLine("A Voronoi node does not accept a bool");
+    public void SetValue(Vector4 value, int index = 0) => Console.WriteLine("Use SetOffset for Direct Sample node vector2 offset");
+    public void SetValue(Vector2 value, int index = 0)
+    {
+        if (index == 0)
+        {
+            Offset = value;
+        }
+        else if (index == 1)
+        {
+            Position = value;
+        }
+        else
+        {
+            Console.WriteLine("A Direct Sample node only accepts two vector2 values (offset and position)");
+        }
+    }
+    public void SetValue(bool value, int index = 0) => Console.WriteLine("A Direct Sample node cannot have a bool value");
+    public void SetValue(int value, int index = 0) => Console.WriteLine("A Direct Sample node cannot have an int value");
 
-    public void SetType(int type) => Type = (VoronoiOperationType)type;
+    public void SetType(int type) => Console.WriteLine("A Direct Sample node does not have a type");
 
     public void SetInputName(string inputName, int index)
     {
         if (index == 0)
         {
-            InputName1 = inputName;
+            InputPosX = inputName;
         }
         else if (index == 1)
+        {
+            InputPosY = inputName;
+        }
+        else if (index == 2)
+        {
+            InputName1 = inputName;
+        }
+        else if (index == 3)
         {
             InputName2 = inputName;
         }
         else
         {
-            Console.WriteLine("A Voronoi node only accepts two input names");
+            Console.WriteLine("A Direct Sample node only accepts four input names (two for position and two for values)");
         }
     }
 
-    public void SetOutputName(string outputName, int index)
-    {
-        if (index == 0)
-        {
-            OutputName = outputName;
-        }
-        else if (index == 1)
-        {
-            OutputCellX = outputName;
-        }
-        else if (index == 2)
-        {
-            OutputCellY = outputName;
-        }
-        else
-        {
-            Console.WriteLine("A Voronoi node only accepts three output names");
-        }
-    }
+    public void SetOutputName(string outputName, int index) => OutputName = outputName;
 
     public void SetPrefabName(string prefabName) => PrefabName = prefabName;
 
@@ -82,13 +84,13 @@ public class VoronoiData : INodeData
 
     public ConnectorNode GetConnectorNode(UIController controller)
     {
-        UIVoronoiPrefab prefab = new UIVoronoiPrefab(PrefabName, controller, PrefabOffset, Type);
-        VoronoiConnectorNode node = new VoronoiConnectorNode(prefab, Type);
+        UIDirectSampleNodePrefab prefab = new UIDirectSampleNodePrefab(PrefabName, controller, PrefabOffset);
+        DirectSampleConnectorNode node = new DirectSampleConnectorNode(prefab);
+        node.InputPosXConnector.Name = InputPosX;
+        node.InputPosYConnector.Name = InputPosY;
         node.InputGateConnector1.Name = InputName1;
         node.InputGateConnector2.Name = InputName2;
-        node.Output.Name = OutputName;
-        node.OutputCellXConnector.Name = OutputCellX;
-        node.OutputCellYConnector.Name = OutputCellY;
+        node.OutputGateConnector.Name = OutputName;
         node.Scale = Scale;
         node.Offset = Offset;
         prefab.AddedMoveAction = NoiseNodeManager.UpdateLines;
@@ -98,7 +100,7 @@ public class VoronoiData : INodeData
     public bool GetConnectorNode(string line, UIController controller, [NotNullWhen(true)] out ConnectorNode? connectorNode)
     {
         var values = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-        if (values.Length < 11)
+        if (values.Length < 10)
         {
             connectorNode = null;
             return false;
@@ -106,10 +108,9 @@ public class VoronoiData : INodeData
 
         Scale = Float.Parse(values[3]);
         Offset = String.Parse.Vec2(values[4]);
-        SetType(Int.Parse(values[5]));
-        OutputName = values[7];
-        PrefabName = values[9];
-        PrefabOffset = String.Parse.Vec4(values[10]);
+        OutputName = values[6];
+        PrefabName = values[8];
+        PrefabOffset = String.Parse.Vec4(values[9]);
 
         connectorNode = GetConnectorNode(controller);
         return true;
@@ -119,7 +120,6 @@ public class VoronoiData : INodeData
     {
         Scale = 1.0f;
         Offset = Vector2.Zero;
-        Type = 0;
         OutputName = "none";
         PrefabName = "DisplayPrefab";
         PrefabOffset = (0, 0, 0, 0);

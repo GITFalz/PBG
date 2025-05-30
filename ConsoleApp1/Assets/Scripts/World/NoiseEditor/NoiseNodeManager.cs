@@ -237,6 +237,18 @@ public static class NoiseNodeManager
                 nodeMap.Add(node, cWorldSampleNode);
                 nodeManager.AddNode(cWorldSampleNode);
             }
+            else if (node is DirectSampleConnectorNode directSampleNode)
+            {
+                CWorldDirectSampleNode cWorldSampleNode = new CWorldDirectSampleNode()
+                {
+                    Name = node.GetOutputGateConnectors()[0].VariableName,
+                    Position = directSampleNode.Position, 
+                    Scale = (directSampleNode.Scale, directSampleNode.Scale),
+                    Offset = directSampleNode.Offset,
+                };
+                nodeMap.Add(node, cWorldSampleNode);
+                nodeManager.AddNode(cWorldSampleNode);
+            }
             else if (node is VoronoiConnectorNode voronoiNode)
             {
                 CWorldVoronoiNode cWorldVoronoiNode = new CWorldVoronoiNode(voronoiNode.Type)
@@ -275,7 +287,7 @@ public static class NoiseNodeManager
                 CWorldBaseInputNode cWorldBaseInputNode = new CWorldBaseInputNode(baseInputNode.Type)
                 {
                     Name = node.GetOutputGateConnectors()[0].VariableName,
-                    Value = 0, 
+                    Value = 0,
                 };
                 nodeMap.Add(node, cWorldBaseInputNode);
                 nodeManager.AddNode(cWorldBaseInputNode);
@@ -380,6 +392,29 @@ public static class NoiseNodeManager
                 {
                     ((CWorldSampleNode)cWorldNode).InputNode2 = (CWorldGetterNode)inputNode2;
                     ((CWorldSampleNode)cWorldNode).InputNode2Index = sampleNode.InputGateConnector2.GetOutputIndex();
+                }
+            }
+            else if (node is DirectSampleConnectorNode directSampleNode)
+            {
+                if (directSampleNode.InputPosXConnector.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var posXNode))
+                {
+                    ((CWorldDirectSampleNode)cWorldNode).PosXNode = (CWorldGetterNode)posXNode;
+                    ((CWorldDirectSampleNode)cWorldNode).PosXNodeIndex = directSampleNode.InputPosXConnector.GetOutputIndex();
+                }
+                if (directSampleNode.InputPosYConnector.GetConnectedNode(out connectedNode) && nodeMap.TryGetValue(connectedNode, out var posYNode))
+                {
+                    ((CWorldDirectSampleNode)cWorldNode).PosYNode = (CWorldGetterNode)posYNode;
+                    ((CWorldDirectSampleNode)cWorldNode).PosYNodeIndex = directSampleNode.InputPosYConnector.GetOutputIndex();
+                }
+                if (directSampleNode.InputGateConnector1.GetConnectedNode(out connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode1))
+                {
+                    ((CWorldSampleNode)cWorldNode).InputNode1 = (CWorldGetterNode)inputNode1;
+                    ((CWorldSampleNode)cWorldNode).InputNode1Index = directSampleNode.InputGateConnector1.GetOutputIndex();
+                }
+                if (directSampleNode.InputGateConnector2.GetConnectedNode(out connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode2))
+                {
+                    ((CWorldSampleNode)cWorldNode).InputNode2 = (CWorldGetterNode)inputNode2;
+                    ((CWorldSampleNode)cWorldNode).InputNode2Index = directSampleNode.InputGateConnector2.GetOutputIndex();
                 }
             }
             else if (node is DoubleInputConnectorNode doubleInputNode)
@@ -634,7 +669,7 @@ public static class NoiseNodeManager
                 input.Name = "none" + none;
                 none++;
             }
-
+            
             inputGateConnectors.Add(input.Name.Trim(), input);
         }
 

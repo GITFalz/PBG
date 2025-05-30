@@ -99,6 +99,8 @@ public class UISampleNodePrefab : UINoiseNodePrefab
         var node = new SampleConnectorNode(this, Type);
         connectorNode = node;
         noiseNodes.Add(this, node);
+        inputGates.Add(node.InputGateConnector1);
+        inputGates.Add(node.InputGateConnector2);
         outputGates.Add(node.OutputGateConnector);
         return true;
     }

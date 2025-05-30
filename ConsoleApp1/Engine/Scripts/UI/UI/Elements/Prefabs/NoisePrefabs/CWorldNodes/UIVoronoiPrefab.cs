@@ -113,6 +113,8 @@ public class UIVoronoiPrefab : UINoiseNodePrefab
         var node = new VoronoiConnectorNode(this, Type);
         connectorNode = node;
         noiseNodes.Add(this, node);
+        inputGates.Add(node.InputGateConnector1);
+        inputGates.Add(node.InputGateConnector2);
         outputGates.Add(node.Output);
         outputGates.Add(node.OutputCellXConnector);
         outputGates.Add(node.OutputCellYConnector);

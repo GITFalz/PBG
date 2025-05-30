@@ -10,6 +10,9 @@ public static class Mathf
     public static Vector3i FloorToInt(Vector3 value) => new Vector3i(FloorToInt(value.X), FloorToInt(value.Y), FloorToInt(value.Z));
     public static Vector2i FloorToInt(Vector2 value) => new Vector2i(FloorToInt(value.X), FloorToInt(value.Y));
     public static float Floor(float value) => (float)Math.Floor(value);
+    public static Vector2 Floor(Vector2 value) => new Vector2(Floor(value.X), Floor(value.Y));
+    public static Vector3 Floor(Vector3 value) => new Vector3(Floor(value.X), Floor(value.Y), Floor(value.Z));
+    public static Vector4 Floor(Vector4 value) => new Vector4(Floor(value.X), Floor(value.Y), Floor(value.Z), Floor(value.W));
     public static float DeltaAngle(float a, float b)
     {
         float diff = (b - a + 180f) % 360f - 180f;

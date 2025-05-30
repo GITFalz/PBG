@@ -56,7 +56,7 @@ public class SampleData : INodeData
 
     public void SetOutputName(string outputName, int index) => OutputName = outputName;
 
-    public void SetPrefabName(string prefabName) => PrefabName = prefabName;
+    public void SetPrefabName(string prefabName) => PrefabName = prefabName; 
 
     public void SetPrefabOffset(Vector4 prefabOffset) => PrefabOffset = prefabOffset;
 

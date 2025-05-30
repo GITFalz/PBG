@@ -231,6 +231,8 @@ public class NoiseEditor : ScriptingNode
         addSampleButtonBasic.SetTextCharCount("Add Basic Sample", 1.2f);
         UITextButton addSampleButtonAngle = new("AddSampleButtonAngle", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
         addSampleButtonAngle.SetTextCharCount("Add Angle Sample", 1.2f);
+        UITextButton addSampleButtonDirect = new("AddSampleButtonDirect", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addSampleButtonDirect.SetTextCharCount("Add Direct Sample", 1.2f);
 
         // - AddVoronoiNodeCollection -
         UIVerticalCollection addVoronoiNodeCollection = new("AddVoronoiNodeCollection", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), (0, 0, 0, 0), 0f, 0);
@@ -386,6 +388,18 @@ public class NoiseEditor : ScriptingNode
         addSampleButtonAngle.SetOnClick(() =>
         {
             AddSampleOperationType(SampleOperationType.Angle);
+            SelectionCollection.SetVisibility(false);
+        });
+
+        addSampleButtonDirect.SetOnClick(() =>
+        {
+            Vector2 mousePosition = Input.GetMousePosition();
+            UIDirectSampleNodePrefab directSampleNodePrefab = new("DirectSampleNodePrefab", NodeController, (mousePosition.X, mousePosition.Y, 0, 0))
+            {
+                Depth = 1f
+            };
+
+            NoiseNodeManager.AddNode(directSampleNodePrefab);
             SelectionCollection.SetVisibility(false);
         });
 
@@ -563,7 +577,7 @@ public class NoiseEditor : ScriptingNode
             SelectionCollection.SetVisibility(false);
         });
 
-        addSampleNodeCollection.AddElements(addSampleButtonBasic, addSampleButtonAngle);
+        addSampleNodeCollection.AddElements(addSampleButtonBasic, addSampleButtonAngle, addSampleButtonDirect);
         addVoronoiNodeCollection.AddElements(addVoronoiButtonBasic, addVoronoiButtonEdge, addVoronoiButtonDistance, addVoronoiButtonNormal, addVoronoiButtonAngle);
         addMinMaxInputTypeCollection.AddElements(addClampButton, addIgnoreButton, addLerpButton, addSlideButton, addSmoothButton);
         addDoubleInputTypeCollection.AddElements(addAddButton, addSubButton, addMulButton, addDivButton, addMinButton, addMaxButton, addModButton, addPowerButton);
