@@ -261,9 +261,9 @@ public class CurveWindow
         int index = ButtonIndex[button];
         Buttons.Remove(button);
         ButtonIndex.Remove(button);
-        for (int i = index; i < Buttons.Count - 1; i++)
+        for (int i = 0; i < Buttons.Count; i++)
         {
-            ButtonIndex[Buttons[i]]--;
+            ButtonIndex[Buttons[i]] = i;
         }
         button.Delete();
         ButtonCollection.RemoveElement(button);

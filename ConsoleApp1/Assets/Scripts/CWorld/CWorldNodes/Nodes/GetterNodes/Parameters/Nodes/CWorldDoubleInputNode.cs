@@ -2,13 +2,6 @@ using OpenTK.Mathematics;
 
 public class CWorldDoubleInputNode : CWorldParameterNode
 {
-    public static CWorldDoubleInputNode Add => new(DoubleInputOperationType.Add);
-    public static CWorldDoubleInputNode Subtract => new(DoubleInputOperationType.Subtract);
-    public static CWorldDoubleInputNode Multiply => new(DoubleInputOperationType.Multiply);
-    public static CWorldDoubleInputNode Divide => new(DoubleInputOperationType.Divide);
-    public static CWorldDoubleInputNode Max => new(DoubleInputOperationType.Max);
-    public static CWorldDoubleInputNode Min => new(DoubleInputOperationType.Min);
-
     public float Value1 
     {
         get => InputNode1.CachedValue;

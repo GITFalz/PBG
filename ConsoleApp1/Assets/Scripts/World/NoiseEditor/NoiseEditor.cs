@@ -210,6 +210,8 @@ public class NoiseEditor : ScriptingNode
         addMinMaxInputButton.SetTextCharCount("Add Min Max Input", 1.2f);
         UITextButton addDoubleInputButton = new("AddDoubleInputButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
         addDoubleInputButton.SetTextCharCount("Add Double Input", 1.2f);
+        UITextButton addBaseInputButton = new("AddBaseInputButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addBaseInputButton.SetTextCharCount("Add Base Input", 1.2f);
         UITextButton addRangeButton = new("AddRangeButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
         addRangeButton.SetTextCharCount("Add Range", 1.2f);
         UITextButton addCombineButton = new("AddCombineButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
@@ -261,6 +263,26 @@ public class NoiseEditor : ScriptingNode
         addMinButton.SetTextCharCount("Min", 1.2f);
         UITextButton addMaxButton = new("AddMaxButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
         addMaxButton.SetTextCharCount("Max", 1.2f);
+        UITextButton addModButton = new("AddModButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addModButton.SetTextCharCount("Mod", 1.2f);
+        UITextButton addPowerButton = new("AddPowerButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addPowerButton.SetTextCharCount("Power", 1.2f);
+
+        // - AddBaseInputNodeCollection -
+        UIVerticalCollection addBaseInputNodeCollection = new("AddBaseInputNodeCollection", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), (0, 0, 0, 0), 0f, 0);
+
+        UITextButton addInvertButton = new("AddInvertButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addInvertButton.SetTextCharCount("Invert", 1.2f);
+        UITextButton addAbsButton = new("AddAbsButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addAbsButton.SetTextCharCount("Absolute", 1.2f);
+        UITextButton addSquareButton = new("AddSquareButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addSquareButton.SetTextCharCount("Square", 1.2f);
+        UITextButton addSinButton = new("AddSinButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addSinButton.SetTextCharCount("Sine", 1.2f);
+        UITextButton addCosButton = new("AddCosButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addCosButton.SetTextCharCount("Cosine", 1.2f);
+        UITextButton addTanButton = new("AddTanButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addTanButton.SetTextCharCount("Tangent", 1.2f);
 
         // - AddInitMaskNodeCollection -
         UIVerticalCollection addInitMaskNodeCollection = new("AddInitMaskNodeCollection", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), (0, 0, 0, 0), 0f, 0);
@@ -335,6 +357,12 @@ public class NoiseEditor : ScriptingNode
         {
             EmbeddedCollection.SetVisibility(false);
             addDoubleInputTypeCollection.SetVisibility(!addDoubleInputTypeCollection.Visible);
+        });
+
+        addBaseInputButton.SetOnClick(() =>
+        {
+            EmbeddedCollection.SetVisibility(false);
+            addBaseInputNodeCollection.SetVisibility(!addBaseInputNodeCollection.Visible);
         });
 
         addInitMaskButton.SetOnClick(() =>
@@ -430,6 +458,56 @@ public class NoiseEditor : ScriptingNode
             SelectionCollection.SetVisibility(false);
         });
 
+        addModButton.SetOnClick(() =>
+        {
+            AddDoubleInputType(DoubleInputOperationType.Mod);
+            SelectionCollection.SetVisibility(false);
+        });
+
+        addPowerButton.SetOnClick(() =>
+        {
+            AddDoubleInputType(DoubleInputOperationType.Power);
+            SelectionCollection.SetVisibility(false);
+        });
+
+
+
+        addInvertButton.SetOnClick(() =>
+        {
+            AddBaseInputType(BaseInputOperationType.Invert);
+            SelectionCollection.SetVisibility(false);
+        });
+
+        addAbsButton.SetOnClick(() =>
+        {
+            AddBaseInputType(BaseInputOperationType.Absolute);
+            SelectionCollection.SetVisibility(false);
+        });
+
+        addSquareButton.SetOnClick(() =>
+        {
+            AddBaseInputType(BaseInputOperationType.Square);
+            SelectionCollection.SetVisibility(false);
+        });
+
+        addSinButton.SetOnClick(() =>
+        {
+            AddBaseInputType(BaseInputOperationType.Sin);
+            SelectionCollection.SetVisibility(false);
+        });
+
+        addCosButton.SetOnClick(() =>
+        {
+            AddBaseInputType(BaseInputOperationType.Cos);
+            SelectionCollection.SetVisibility(false);
+        });
+
+        addTanButton.SetOnClick(() =>
+        {
+            AddBaseInputType(BaseInputOperationType.Tan);
+            SelectionCollection.SetVisibility(false);
+        });
+
 
         addInitMaskThresholdButton.SetOnClick(() =>
         {
@@ -458,11 +536,12 @@ public class NoiseEditor : ScriptingNode
 
         addVoronoiNodeCollection.AddElements(addVoronoiButtonBasic, addVoronoiButtonEdge, addVoronoiButtonDistance);
         addMinMaxInputTypeCollection.AddElements(addClampButton, addIgnoreButton, addLerpButton, addSlideButton, addSmoothButton);
-        addDoubleInputTypeCollection.AddElements(addAddButton, addSubButton, addMulButton, addDivButton, addMinButton, addMaxButton);
+        addDoubleInputTypeCollection.AddElements(addAddButton, addSubButton, addMulButton, addDivButton, addMinButton, addMaxButton, addModButton, addPowerButton);
+        addBaseInputNodeCollection.AddElements(addInvertButton, addAbsButton, addSquareButton, addSinButton, addCosButton, addTanButton);
         addInitMaskNodeCollection.AddElements(addInitMaskThresholdButton, addInitMaskMinMaxButton);
 
-        EmbeddedCollection.AddElements(addVoronoiNodeCollection, addMinMaxInputTypeCollection, addDoubleInputTypeCollection, addInitMaskNodeCollection);
-        selectionVerticalCollection.AddElements(addSampleButton, addVoronoiButton, addMinMaxInputButton, addDoubleInputButton, addRangeButton, addCombineButton, addInitMaskButton, addCurveButton);
+        EmbeddedCollection.AddElements(addVoronoiNodeCollection, addMinMaxInputTypeCollection, addDoubleInputTypeCollection, addBaseInputNodeCollection, addInitMaskNodeCollection);
+        selectionVerticalCollection.AddElements(addSampleButton, addVoronoiButton, addMinMaxInputButton, addDoubleInputButton, addBaseInputButton, addRangeButton, addCombineButton, addInitMaskButton, addCurveButton);
 
         SelectionCollection.AddElements(selectionVerticalCollection, EmbeddedCollection);
 
@@ -525,6 +604,17 @@ public class NoiseEditor : ScriptingNode
         };
 
         NoiseNodeManager.AddNode(doubleInputNodePrefab);
+        SelectionCollection.SetVisibility(false);
+    }
+
+    public void AddBaseInputType(BaseInputOperationType type)
+    {
+        UIBaseInputNodePrefab baseInputNodePrefab = new("BaseInputNodePrefab", NodeController, (NodePosition.X, NodePosition.Y, 0, 0), type)
+        {
+            Depth = 1f
+        };
+
+        NoiseNodeManager.AddNode(baseInputNodePrefab);
         SelectionCollection.SetVisibility(false);
     }
 

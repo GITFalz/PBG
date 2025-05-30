@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using OpenTK.Mathematics;
 
 public class UICombineNodePrefab : UINoiseNodePrefab
@@ -25,13 +26,14 @@ public class UICombineNodePrefab : UINoiseNodePrefab
     private Vector2 _scale = (100, 100);
     private float _rotation = 0;
 
-    public float Depth {
+    public float Depth
+    {
         get => Collection.Depth;
         set => Collection.Depth = value;
     }
 
     public UICombineNodePrefab(
-        string name, 
+        string name,
         UIController controller,
         Vector4 offset
     ) : base(name, controller, offset)
@@ -39,10 +41,10 @@ public class UICombineNodePrefab : UINoiseNodePrefab
         _scale = (300, 150);
 
         ElementCollection = new UICollection($"{name}ElementCollection", Controller, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), _scale - (6, 17), (0, 17, 0, 0), 0);
-        
+
         NameField = new UIText($"{name}", Controller, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (_scale.X - 14, 20), (6, 6, 0, 0), 0);
         NameField.SetTextCharCount("Combine", 1.2f);
-        
+
         InputButton1 = new UIButton($"{name}InputButton1", Controller, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (0, 22, 0, 0), 0, 11, (10f, 0.05f), UIState.Interactable);
         InputButton2 = new UIButton($"{name}InputButton2", Controller, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (0, 52, 0, 0), 0, 11, (10f, 0.05f), UIState.Interactable);
         OutputButton = new UIButton($"{name}OutputButton", Controller, AnchorType.TopRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (0, 22, 0, 0), 0, 11, (10f, 0.05f), UIState.Interactable);
@@ -66,7 +68,7 @@ public class UICombineNodePrefab : UINoiseNodePrefab
 
         Collection = new UICollection($"{name}Collection", Controller, AnchorType.TopLeft, _positionType, _pivot, _scale + (0, 14), Offset, _rotation);
         SelectionImage = new UIImage($"{name}SelectionImage", controller, AnchorType.TopLeft, PositionType.Relative, SELECTION_COLOR, (0, 0, 0), _scale + (10, 24), (-5, -5, 0, 0), 0, 2, (10f, 0.05f));
-        UICollection mainElements = new UICollection ($"{name}MainElements", controller, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), _scale, (0, 0, 0, 0), 0);
+        UICollection mainElements = new UICollection($"{name}MainElements", controller, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), _scale, (0, 0, 0, 0), 0);
         MoveButton = new UIButton($"{name}MoveButton", Controller, AnchorType.TopLeft, PositionType.Relative, _buttonColor, (0, 0, 0), (_scale.X, 14), (0, 0, 0, 0), 0, 10, (5f, 0.025f), UIState.Interactable);
         Background = new UIImage($"{name}Background", Controller, AnchorType.TopLeft, PositionType.Relative, _backgroundColor, (0, 0, 0), _scale, (0, 14, 0, 0), 0, 10, (10f, 0.05f));
 
@@ -79,5 +81,16 @@ public class UICombineNodePrefab : UINoiseNodePrefab
         SelectionImage.SetVisibility(false);
 
         Controller.AddElements(this);
+    }
+    
+    public override bool GetConnectorNode(Dictionary<UINoiseNodePrefab, ConnectorNode> noiseNodes, List<InputGateConnector> inputGates, List<OutputGateConnector> outputGates, [NotNullWhen(true)] out ConnectorNode? connectorNode)
+    {
+        var node = new CombineConnectorNode(this);
+        noiseNodes.Add(this, node);
+        inputGates.Add(node.InputGateConnector1);
+        inputGates.Add(node.InputGateConnector2);
+        outputGates.Add(node.OutputGateConnector);
+        connectorNode = node;
+        return true;
     }
 }

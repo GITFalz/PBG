@@ -8,7 +8,7 @@ public static class ChunkStageHandler
         {
             case ChunkStage.ToBeGenerated:
                 entry.SetStage(ChunkStage.Generating);
-                entry.SetWantedStage = false;
+                entry.SetWantedStage = false; 
                 ChunkGenerationProcess generationProcess = new ChunkGenerationProcess(entry, false);
                 ThreadPool.QueueAction(generationProcess, TaskPriority.Low);
                 break;

@@ -232,18 +232,21 @@ public class Info
         GL.Enable(EnableCap.DepthTest);
     }
 
-    public static void SetGlobalChunkInfo(int chunkCount, int vertexCount)
+    public static void SetChunkVertexCount()
     {
-        if (_oldVertexCount != vertexCount)
+        if (_oldVertexCount != VertexCount)
         {
-            GlobalChunkVertexCount.SetText($"Vertices: {vertexCount}", 1.2f).UpdateCharacters();
-            _oldVertexCount = vertexCount;
-        }
+            GlobalChunkVertexCount.SetText($"Vertices: {VertexCount}", 1.2f).UpdateCharacters();
+            _oldVertexCount = VertexCount;
+        }  
+    }
 
-        if (_oldChunkCount != chunkCount)
+    public static void SetChunkRenderCount()
+    {
+        if (_oldChunkCount != ChunkCount)
         {
-            GlobalChunkCount.SetText($"Chunks: {chunkCount}", 1.2f).UpdateCharacters();
-            _oldChunkCount = chunkCount;
+            GlobalChunkCount.SetText($"Chunks: {ChunkCount}", 1.2f).UpdateCharacters();
+            _oldChunkCount = ChunkCount;
         }
     }
 

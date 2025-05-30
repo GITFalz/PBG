@@ -287,7 +287,7 @@ public class PlayerStateMachine : ScriptingNode
 
         GL.DepthFunc(DepthFunction.Less);
         
-        PlayerModel?.Render();
+        //PlayerModel?.Render();
     }
 
     private void RenderHit(Vector4i data)

@@ -9,6 +9,7 @@ public static class NodeParser
     public static CurveData CurveData = new();
     public static DisplayData DisplayData = new();
     public static DoubleInputData DoubleInputData = new();
+    public static BaseInputData BaseInputData = new(); 
     public static MinMaxInitMaskData MinMaxInitMaskData = new();
     public static MinMaxInputOperationData MinMaxInputOperationData = new();
     public static RangeData RangeData = new();
@@ -361,6 +362,8 @@ public static class NodeParser
         { "Curve", CurveData },
         { "Display", DisplayData },
         { "DoubleInputOperation", DoubleInputData },
+        { "BaseInputOperation", BaseInputData },
+        { "BaseInput", BaseInputData }, // for backwards compatibility
         { "MinMaxInitMask", MinMaxInitMaskData },
         { "MinMaxInputOperation", MinMaxInputOperationData },
         { "Range", RangeData },

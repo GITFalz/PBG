@@ -1,7 +1,7 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 
-public class SampleConnectorNode : ConnectorNode
+public class SampleConnectorNode : ConnectorNode 
 {
     public string Name => NodePrefab.Name;
     public UISampleNodePrefab NodePrefab;
@@ -10,18 +10,24 @@ public class SampleConnectorNode : ConnectorNode
 
     public float Scale
     {
-        get {
-            return _scale; 
-        } set {
+        get
+        {
+            return _scale;
+        }
+        set
+        {
             _scale = value;
             NodePrefab.ScaleInputField.SetText(NoSpace(_scale));
         }
     }
     public Vector2 Offset
     {
-        get {
-            return _offset; 
-        } set {
+        get
+        {
+            return _offset;
+        }
+        set
+        {
             _offset = value;
             NodePrefab.OffsetXInputField.SetText(NoSpace(_offset.X));
             NodePrefab.OffsetYInputField.SetText(NoSpace(_offset.Y));
@@ -49,7 +55,7 @@ public class SampleConnectorNode : ConnectorNode
         NodePrefab.OffsetXTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
         NodePrefab.OffsetYTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
 
-        NodePrefab.ScaleTextField.SetOnHold(() => SetSlideValue(ref _scale, NodePrefab.ScaleInputField, 5f, _scaleIndex)); 
+        NodePrefab.ScaleTextField.SetOnHold(() => SetSlideValue(ref _scale, NodePrefab.ScaleInputField, 5f, _scaleIndex));
         NodePrefab.OffsetXTextField.SetOnHold(() => SetSlideValue(ref _offset.X, NodePrefab.OffsetXInputField, 5f, _offsetXIndex));
         NodePrefab.OffsetYTextField.SetOnHold(() => SetSlideValue(ref _offset.Y, NodePrefab.OffsetYInputField, 5f, _offsetYIndex));
 
@@ -58,8 +64,8 @@ public class SampleConnectorNode : ConnectorNode
         NodePrefab.OffsetYTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
 
         sampleNodePrefab.Collection.SetOnClick(() => SelectNode(this));
-    } 
-    
+    }
+
     public override void Select()
     {
         NodePrefab.SelectionImage.SetVisibility(true);
@@ -102,13 +108,13 @@ public class SampleConnectorNode : ConnectorNode
         return connectedNodes;
     }
 
-    public override List<ConnectorNode> GetInputNodes() 
-    { 
+    public override List<ConnectorNode> GetInputNodes()
+    {
         return [];
     }
 
-    public override List<ConnectorNode> GetOutputNodes() 
-    { 
+    public override List<ConnectorNode> GetOutputNodes()
+    {
         List<ConnectorNode> outputNodes = [];
         if (OutputGateConnector.IsConnected)
         {
@@ -139,9 +145,9 @@ public class SampleConnectorNode : ConnectorNode
         return NodePrefab.Collection.UIController;
     }
 
-    public override string ToStringList() 
+    public override string ToStringList()
     {
-        return 
+        return
             "NodeType: Sample\n" +
             "{\n" +
             "    Values:\n" +

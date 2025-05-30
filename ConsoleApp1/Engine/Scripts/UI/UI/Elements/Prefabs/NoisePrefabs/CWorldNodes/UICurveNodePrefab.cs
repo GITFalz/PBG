@@ -1,6 +1,7 @@
+using System.Diagnostics.CodeAnalysis;
 using OpenTK.Mathematics;
 
-public class UICurveNodePrefab : UINoiseNodePrefab 
+public class UICurveNodePrefab : UINoiseNodePrefab
 {
     public UIImage SelectionImage;
     public UIButton MoveButton;
@@ -24,7 +25,8 @@ public class UICurveNodePrefab : UINoiseNodePrefab
     public Vector2 Scale = (100, 100);
     public float Rotation = 0;
 
-    public float Depth {
+    public float Depth
+    {
         get => Collection.Depth;
         set => Collection.Depth = value;
     }
@@ -39,10 +41,10 @@ public class UICurveNodePrefab : UINoiseNodePrefab
         CurveWindows.Add(CurveWindow);
 
         ElementCollection = new UICollection($"{name}ElementCollection", controller, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), Scale - (6, 17), (0, 17, 0, 0), 0);
-        
+
         NameField = new UIText($"{name}Curve", controller, AnchorType.TopLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (Scale.X - 14, 20), (6, 6, 0, 0), 0);
         NameField.SetTextCharCount("Curve", 1.2f);
-        
+
         InputButton = new UIButton($"{name}InputButton", controller, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (0, 22, 0, 0), 0, 11, (10f, 0.05f), UIState.Interactable);
         OutputButton = new UIButton($"{name}OutputButton", controller, AnchorType.TopRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (0, 22, 0, 0), 0, 11, (10f, 0.05f), UIState.Interactable);
 
@@ -65,7 +67,7 @@ public class UICurveNodePrefab : UINoiseNodePrefab
 
         Collection = new UICollection($"{name}Collection", controller, AnchorType.TopLeft, PositionType, Pivot, Scale + (0, 14), Offset, Rotation);
         SelectionImage = new UIImage($"{name}SelectionImage", controller, AnchorType.TopLeft, PositionType.Relative, SELECTION_COLOR, (0, 0, 0), Scale + (10, 324), (-5, -5, 0, 0), 0, 2, (10f, 0.05f));
-        UICollection mainElements = new UICollection ($"{name}MainElements", controller, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), Scale, (0, 0, 0, 0), 0);
+        UICollection mainElements = new UICollection($"{name}MainElements", controller, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), Scale, (0, 0, 0, 0), 0);
         MoveButton = new UIButton($"{name}MoveButton", controller, AnchorType.TopLeft, PositionType.Relative, ButtonColor, (0, 0, 0), (Scale.X, 14), (0, 0, 0, 0), 0, 10, (5f, 0.025f), UIState.Interactable);
         Background = new UIImage($"{name}Background", controller, AnchorType.TopLeft, PositionType.Relative, BackgroundColor, (0, 0, 0), Scale, (0, 14, 0, 0), 0, 10, (10f, 0.05f));
 
@@ -111,5 +113,15 @@ public class UICurveNodePrefab : UINoiseNodePrefab
         base.Destroy();
         CurveWindow.Destroy();
         CurveWindows.Remove(CurveWindow);
+    }
+    
+    public override bool GetConnectorNode(Dictionary<UINoiseNodePrefab, ConnectorNode> noiseNodes, List<InputGateConnector> inputGates, List<OutputGateConnector> outputGates, [NotNullWhen(true)] out ConnectorNode? connectorNode)
+    {
+        var node = new CurveConnectorNode(this);
+        noiseNodes.Add(this, node);
+        inputGates.Add(node.InputGateConnector);
+        outputGates.Add(node.OutputGateConnector);
+        connectorNode = node;
+        return true;
     }
 }

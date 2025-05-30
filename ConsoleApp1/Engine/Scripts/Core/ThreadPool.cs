@@ -12,6 +12,7 @@ public static class ThreadPool
     public static int CurrentProcessingThreads = 0;
     public static int AvailableProcesses => ThreadCount - CurrentProcessingThreads;
     public static int QueueCount => _actions.Count;
+    public static bool IsOverloaded => CurrentProcessingThreads >= ThreadCount * 10; // To make sure unloading the thread pool at any moment is not too aggressive
 
     private static PriorityQueue _actions = new PriorityQueue();
 

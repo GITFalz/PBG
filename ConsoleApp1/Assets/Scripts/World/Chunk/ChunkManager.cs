@@ -39,12 +39,10 @@ public static class ChunkManager
     public static void CheckChunks()
     {
         Chunks = SetChunks();
-        foreach (var (key, entry) in ActiveChunks)
+        foreach (var key in ActiveChunks.Keys)
         {
             if (Chunks.Contains(key))
-            {
                 continue;
-            }
 
             RemoveChunk(key);
         }
@@ -63,16 +61,16 @@ public static class ChunkManager
     {
         Camera camera = Game.Camera;
         camera.CalculateFrustumPlanes();
-        
-        int renderCount = 0;
+
+        Info.ChunkCount = 0;
         Info.VertexCount = 0;
-        
-        foreach (var (_, chunkEntry) in ActiveChunks)
+
+        foreach (var chunkEntry in ActiveChunks.Values)
         {
             var chunk = chunkEntry.Chunk;
 
             bool frustum = camera.FrustumIntersects(chunk.boundingBox);
-            bool baseDisabled = !chunkEntry.ShouldRender() || !frustum || chunk.BlockRendering || Vector2.Distance(PlayerData.Position.Xz, chunk.GetWorldPosition().Xz) > World.renderDistance * 32;
+            bool baseDisabled = !chunkEntry.ShouldRender() || !frustum || chunk.BlockRendering;// || Vector2.Distance(PlayerData.Position.Xz, chunk.GetWorldPosition().Xz) > World.renderDistance * 32;
 
             bool isDisabled = chunk.IsDisabled;
             chunk.IsDisabled = baseDisabled || !chunk.HasBlocks;
@@ -101,15 +99,12 @@ public static class ChunkManager
             if (chunk.IsDisabled && chunk.IsTransparentDisabled)
                 continue;
 
-            renderCount++;
+            Info.ChunkCount++;
             Info.VertexCount += chunk.VertexCount;
         }
 
-        if (renderCount != _oldRenderedChunks)
-        {
-            Info.SetGlobalChunkInfo(renderCount, Info.VertexCount);
-            _oldRenderedChunks = renderCount;
-        }
+        Info.SetChunkVertexCount();
+        Info.SetChunkRenderCount();
     }
 
     public static void GenerateNearbyPositions()

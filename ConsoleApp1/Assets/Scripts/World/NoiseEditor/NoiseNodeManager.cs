@@ -35,108 +35,17 @@ public static class NoiseNodeManager
         if (NoiseNodes.ContainsKey(nodePrefab))
             return false;
 
-        if (nodePrefab is UIDisplayNodePrefab displayNodePrefab)
-        {
-            // Only one, no delete
-            if (DisplayNode != null)
-                return false;
-
-            var node = new DisplayConnectorNode(displayNodePrefab);
-            connectorNode = node;
-            NoiseNodes.Add(nodePrefab, node);
-            InputGateConnectors.Add(node.InputGateConnector);
-            displayNodePrefab.AddedMoveAction = UpdateLines;
-            DisplayNode = node;
-        }
-        else if (nodePrefab is UISampleNodePrefab sampleNodePrefab)
-        {
-            var node = new SampleConnectorNode(sampleNodePrefab);
-            connectorNode = node;
-            NoiseNodes.Add(nodePrefab, node);
-            OutputGateConnectors.Add(node.OutputGateConnector);
-            sampleNodePrefab.AddedMoveAction = UpdateLines;
-        }
-        else if (nodePrefab is UIVoronoiPrefab voronoiNodePrefab)
-        {
-            var node = new VoronoiConnectorNode(voronoiNodePrefab, voronoiNodePrefab.Type);
-            connectorNode = node;
-            NoiseNodes.Add(nodePrefab, node);
-            OutputGateConnectors.Add(node.OutputGateConnector);
-            voronoiNodePrefab.AddedMoveAction = UpdateLines;
-        }
-        else if (nodePrefab is UIMinMaxInputNodePrefab minMaxInputNode)
-        {
-            var node = new MinMaxInputOperationConnectorNode(minMaxInputNode, minMaxInputNode.Type);
-            connectorNode = node;
-            NoiseNodes.Add(nodePrefab, node);
-            InputGateConnectors.Add(node.InputGateConnector);
-            OutputGateConnectors.Add(node.OutputGateConnector);
-            minMaxInputNode.AddedMoveAction = UpdateLines;
-        }
-        else if (nodePrefab is UIDoubleInputNodePrefab doubleInputNode)
-        {
-            var node = new DoubleInputConnectorNode(doubleInputNode, doubleInputNode.Type);
-            connectorNode = node;
-            NoiseNodes.Add(nodePrefab, node);
-            InputGateConnectors.Add(node.InputGateConnector1);
-            InputGateConnectors.Add(node.InputGateConnector2);
-            OutputGateConnectors.Add(node.OutputGateConnector);
-            doubleInputNode.AddedMoveAction = UpdateLines;
-        }
-        else if (nodePrefab is UICombineNodePrefab combineNodePrefab)
-        {
-            var node = new CombineConnectorNode(combineNodePrefab);
-            connectorNode = node;
-            NoiseNodes.Add(nodePrefab, node);
-            InputGateConnectors.Add(node.InputGateConnector1);
-            InputGateConnectors.Add(node.InputGateConnector2);
-            OutputGateConnectors.Add(node.OutputGateConnector);
-            combineNodePrefab.AddedMoveAction = UpdateLines;
-        }
-        else if (nodePrefab is UIRangeNodePrefab rangeNodePrefab)
-        {
-            var node = new RangeConnectorNode(rangeNodePrefab);
-            connectorNode = node;
-            NoiseNodes.Add(nodePrefab, node);
-            InputGateConnectors.Add(node.StartGateConnector);
-            InputGateConnectors.Add(node.HeightGateConnector);
-            OutputGateConnectors.Add(node.OutputGateConnector);
-            rangeNodePrefab.AddedMoveAction = UpdateLines;
-        }
-        else if (nodePrefab is UIThresholdInitMaskNodePrefab initMaskNodePrefab)
-        {
-            var node = new InitMaskThresholdConnectorNode(initMaskNodePrefab);
-            connectorNode = node;
-            NoiseNodes.Add(nodePrefab, node);
-            InputGateConnectors.Add(node.ChildGateConnector);
-            InputGateConnectors.Add(node.MaskGateConnector);
-            OutputGateConnectors.Add(node.OutputGateConnector);
-            initMaskNodePrefab.AddedMoveAction = UpdateLines;
-        }
-        else if (nodePrefab is UIMinMaxInitMaskNodePrefab minMaxInitMaskNodePrefab)
-        {
-            var node = new InitMaskMinMaxConnectorNode(minMaxInitMaskNodePrefab);
-            connectorNode = node;
-            NoiseNodes.Add(nodePrefab, node);
-            InputGateConnectors.Add(node.ChildGateConnector);
-            InputGateConnectors.Add(node.MaskGateConnector);
-            OutputGateConnectors.Add(node.OutputGateConnector);
-            minMaxInitMaskNodePrefab.AddedMoveAction = UpdateLines;
-        }
-        else if (nodePrefab is UICurveNodePrefab curveNodePrefab)
-        {
-            var node = new CurveConnectorNode(curveNodePrefab);
-            connectorNode = node;
-            NoiseNodes.Add(nodePrefab, node);
-            InputGateConnectors.Add(node.InputGateConnector);
-            OutputGateConnectors.Add(node.OutputGateConnector);
-            curveNodePrefab.AddedMoveAction = UpdateLines;
-        }
-        else
-        {
+        if (nodePrefab is UIDisplayNodePrefab displayNodePrefab && DisplayNode != null)
             return false;
-        }
 
+        if (!nodePrefab.GetConnectorNode(NoiseNodes, InputGateConnectors, OutputGateConnectors, out var node))
+            return false;
+
+        if (node is DisplayConnectorNode displayConnectorNode)
+            DisplayNode = displayConnectorNode;
+
+        nodePrefab.AddedMoveAction = UpdateLines;
+        connectorNode = node;
         return true;
     }
 
@@ -352,6 +261,16 @@ public static class NoiseNodeManager
                 nodeMap.Add(node, cWorldDoubleInputNode);
                 nodeManager.AddNode(cWorldDoubleInputNode);
             }
+            else if (node is BaseInputConnectorNode baseInputNode)
+            {
+                CWorldBaseInputNode cWorldBaseInputNode = new CWorldBaseInputNode(baseInputNode.Type)
+                {
+                    Name = node.VariableName,
+                    Value = 0, 
+                };
+                nodeMap.Add(node, cWorldBaseInputNode);
+                nodeManager.AddNode(cWorldBaseInputNode);
+            }
             else if (node is CombineConnectorNode combineNode)
             {
                 CWorldCombineNode cWorldCombineNode = new CWorldCombineNode()
@@ -391,7 +310,7 @@ public static class NoiseNodeManager
                 {
                     Name = node.VariableName,
                     Min = minMaxInitMaskNode.Min,
-                    Max = minMaxInitMaskNode.Max, 
+                    Max = minMaxInitMaskNode.Max,
                 };
                 nodeMap.Add(node, cWorldInitMaskNode);
                 nodeManager.AddNode(cWorldInitMaskNode);
@@ -435,6 +354,13 @@ public static class NoiseNodeManager
                 if (doubleInputNode.InputGateConnector2.GetConnectedNode(out connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode2))
                 {
                     ((CWorldDoubleInputNode)cWorldNode).InputNode2 = (CWorldGetterNode)inputNode2;
+                }
+            }
+            else if (node is BaseInputConnectorNode baseInputNode)
+            {
+                if (baseInputNode.InputGateConnector.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode))
+                {
+                    ((CWorldBaseInputNode)cWorldNode).InputNode = (CWorldGetterNode)inputNode;
                 }
             }
             else if (node is CombineConnectorNode combineNode)
