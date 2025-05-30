@@ -3,7 +3,9 @@ using OpenTK.Mathematics;
 public class CWorldMinMaxInitMaskNode : CWorldParameterNode
 {
     public CWorldGetterNode ChildNode = new CWorldEmptyNode("ChildNode");
+    public int ChildValueIndex = 0;
     public CWorldGetterNode MaskNode = new CWorldEmptyNode("MaskNode");
+    public int MaskValueIndex = 0;
 
     public float Min = 0;
     public float Max = 1;
@@ -11,15 +13,20 @@ public class CWorldMinMaxInitMaskNode : CWorldParameterNode
     public override void Init(Vector2 position)
     {
         MaskNode.Init(position);
-        if (MaskNode.CachedValue >= Min && MaskNode.CachedValue < Max)
+        if (MaskNode.GetCachedValue(MaskValueIndex) >= Min && MaskNode.GetCachedValue(MaskValueIndex) < Max)
         {
             ChildNode.Init(position);
-            CachedValue = ChildNode.CachedValue;
+            CachedValue = ChildNode.GetCachedValue(ChildValueIndex);
         }
         else
         {
             CachedValue = 0;
         }
+    }
+
+    public override float GetCachedValue(int index)
+    {
+        return index == 0 ? CachedValue : 0;
     }
 
     public override CWorldNode Copy()
@@ -29,6 +36,8 @@ public class CWorldMinMaxInitMaskNode : CWorldParameterNode
             Name = Name,
             Min = Min,
             Max = Max,
+            ChildValueIndex = ChildValueIndex,
+            MaskValueIndex = MaskValueIndex,
         };
     }
 

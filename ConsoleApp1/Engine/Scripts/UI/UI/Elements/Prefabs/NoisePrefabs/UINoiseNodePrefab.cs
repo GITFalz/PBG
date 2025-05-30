@@ -4,6 +4,7 @@ using OpenTK.Mathematics;
 public abstract class UINoiseNodePrefab : UIPrefab
 {
     public static Vector4 SAMPLE_NODE_COLOR = new Vector4(0.290f, 0.565f, 0.886f, 1f); // #4A90E2
+    public static Vector4 DIRECT_SAMPLE_NODE_COLOR = new Vector4(0.204f, 0.486f, 0.847f, 1f); // #347CD8
     public static Vector4 VORONOI_NODE_COLOR = new Vector4(0.314f, 0.890f, 0.761f, 1f); // #50E3C2
     public static Vector4 DOUBLE_INPUT_COLOR = new Vector4(0.961f, 0.647f, 0.137f, 1f); // #F5A623
     public static Vector4 BASE_INPUT_COLOR = new Vector4(0.400f, 0.600f, 0.800f, 1f); // #6699CC

@@ -7,6 +7,7 @@ public class CWorldCurveNode : CWorldParameterNode
     public Vector2[] Spline = [];
 
     public CWorldGetterNode InputNode = new CWorldEmptyNode("Empty");  
+    public int InputNodeIndex = 0;
 
     public CWorldCurveNode() : base()
     {
@@ -16,7 +17,12 @@ public class CWorldCurveNode : CWorldParameterNode
     public override void Init(Vector2 position)
     {
         InputNode.Init(position);
-        CachedValue = Mathf.Lerp(Min, Max, GetSplineVector(Spline.ToArray(), InputNode.CachedValue));
+        CachedValue = Mathf.Lerp(Min, Max, GetSplineVector(Spline.ToArray(), InputNode.GetCachedValue(InputNodeIndex)));
+    }
+
+    public override float GetCachedValue(int index)
+    {
+        return index == 0 ? CachedValue : 0;
     }
 
     public override CWorldNode Copy()
@@ -27,6 +33,7 @@ public class CWorldCurveNode : CWorldParameterNode
             Min = Min,
             Max = Max,
             Spline = Spline.ToArray(),
+            InputNodeIndex = InputNodeIndex,
         };
     }
 

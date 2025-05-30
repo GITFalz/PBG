@@ -7,7 +7,7 @@ public class CWorldRangeNode : CWorldParameterNode
     /// the start position on the y axis, /!\ make sure the value is the position in blocks and not a noise value between 0 and 1
     /// </summary>
     public int Start {
-        get => (int)StartNode.CachedValue;
+        get => (int)StartNode.GetCachedValue(StartValueIndex);
         set => StartNode.SetValue(value);
     }
 
@@ -15,7 +15,7 @@ public class CWorldRangeNode : CWorldParameterNode
     /// the height on the y axis, /!\ make sure the value is the height in blocks and not a noise value between 0 and 1
     /// </summary>
     public int Height {
-        get => (int)HeightNode.CachedValue;
+        get => (int)HeightNode.GetCachedValue(HeightValueIndex);
         set => HeightNode.SetValue(value);
     }
 
@@ -51,10 +51,12 @@ public class CWorldRangeNode : CWorldParameterNode
     public bool Flipped = false;
 
     public CWorldGetterNode StartNode = new CWorldEmptyNode("StartNode");
+    public int StartValueIndex = 0;
     public CWorldGetterNode HeightNode = new CWorldEmptyNode("HeightNode");
+    public int HeightValueIndex = 1;
 
-    public CWorldRangeNode() : base() 
-    { 
+    public CWorldRangeNode() : base()
+    {
         FalseState = BlockState.Air;
         TrueState = BlockState.Solid;
     }
@@ -65,24 +67,29 @@ public class CWorldRangeNode : CWorldParameterNode
         HeightNode.Init(position);
     }
 
-    public override Block GetBlock(int y)
+    public override Block GetBlock(int y, int index = 0)
     {
         return IsInRange(y) ? _trueBlock : _falseBlock;
     }
+    
+    public override float GetCachedValue(int index)
+    {
+        return index == 0 ? CachedValue : 0;
+    }
 
-    public override bool GetBlock(int y, [NotNullWhen(true)] out Block block)
+    public override bool GetBlock(int y, [NotNullWhen(true)] out Block block, int index = 0)
     {
         block = _falseBlock;
-        if (!IsInRange(y)) 
+        if (!IsInRange(y))
             return false;
 
-        block = _trueBlock;
+        block = _trueBlock; 
         return true;
     }
 
     public bool IsInRange(int y)
     {
-        int start = (int)StartNode.CachedValue; int height = (int)HeightNode.CachedValue;
+        int start = (int)StartNode.GetCachedValue(StartValueIndex); int height = (int)HeightNode.GetCachedValue(HeightValueIndex);
         return height != 0 && ((!Flipped) ? (y >= Start && y < start + height) : (y >= start - height && y < start));
     }
 
@@ -93,6 +100,8 @@ public class CWorldRangeNode : CWorldParameterNode
             Name = Name,
             Start = Start,
             Height = Height,
+            StartValueIndex = StartValueIndex,
+            HeightValueIndex = HeightValueIndex,
         };
     }
 

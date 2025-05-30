@@ -65,17 +65,24 @@ public class InitMaskThresholdConnectorNode : ConnectorNode
     {
         string thresholdValue = _thresholdIndex != -1 ? $"values[{_thresholdIndex}]" : NoSpace(Threshold);
 
-        string line = $"    float {VariableName} = ";
+        string line = $"    float {OutputGateConnector} = ";
         string child = ChildGateConnector.IsConnected && ChildGateConnector.OutputGateConnector != null
-            ? ChildGateConnector.OutputGateConnector.Node.VariableName
+            ? ChildGateConnector.OutputGateConnector.VariableName
             : "0.0";
         
         string mask = MaskGateConnector.IsConnected && MaskGateConnector.OutputGateConnector != null
-            ? MaskGateConnector.OutputGateConnector.Node.VariableName
+            ? MaskGateConnector.OutputGateConnector.VariableName
             : "1.0";
 
         line += $"{mask} > {thresholdValue} ? {child} : 0.0;";
         return line;
+    }
+
+    public override int GetIndex(OutputGateConnector output)
+    {
+        if (output == OutputGateConnector)
+            return 0;
+        return -1;
     }
 
     public override List<ConnectorNode> GetConnectedNodes()

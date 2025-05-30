@@ -43,7 +43,7 @@ public class ThresholdInitMaskData : INodeData
             Console.WriteLine("ThresholdInitMask node has only two inputs");
     }
 
-    public void SetOutputName(string outputName) => OutputName = outputName;
+    public void SetOutputName(string outputName, int index) => OutputName = outputName;
     public void SetPrefabName(string prefabName) => PrefabName = prefabName;
     public void SetPrefabOffset(Vector4 prefabOffset) => PrefabOffset = prefabOffset;
 

@@ -30,7 +30,7 @@ public class BaseInputData : INodeData
         else
             Console.WriteLine("A Base input node cannot have more than 2 inputs");
     }
-    public void SetOutputName(string outputName) => OutputName = outputName;
+    public void SetOutputName(string outputName, int index) => OutputName = outputName;
     public void SetPrefabName(string prefabName) => PrefabName = prefabName;
     public void SetPrefabOffset(Vector4 prefabOffset) => PrefabOffset = prefabOffset;
 

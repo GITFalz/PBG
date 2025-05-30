@@ -54,7 +54,7 @@ public class RangeData : INodeData
             Console.WriteLine("A Range node cannot have more than 2 input names");
     }
 
-    public void SetOutputName(string outputName) => OutputName = outputName;
+    public void SetOutputName(string outputName, int index) => OutputName = outputName;
     public void SetPrefabName(string prefabName) => PrefabName = prefabName;
     public void SetPrefabOffset(Vector4 prefabOffset) => PrefabOffset = prefabOffset;
 

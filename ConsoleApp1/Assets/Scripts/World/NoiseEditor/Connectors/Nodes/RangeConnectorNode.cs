@@ -87,18 +87,25 @@ public class RangeConnectorNode : ConnectorNode
 
     public override string GetLine()
     {
-        string line = $"    float {VariableName} = ";
+        string line = $"    float {OutputGateConnector.VariableName} = ";
 
         string value1 = StartGateConnector.IsConnected && StartGateConnector.OutputGateConnector != null
-            ? StartGateConnector.OutputGateConnector.Node.VariableName
+            ? StartGateConnector.OutputGateConnector.VariableName
             : ( _startIndex != -1 ? $"values[{_startIndex}]" : NoSpace(Start));
         
         string value2 = HeightGateConnector.IsConnected && HeightGateConnector.OutputGateConnector != null
-            ? HeightGateConnector.OutputGateConnector.Node.VariableName
+            ? HeightGateConnector.OutputGateConnector.VariableName
             : ( _heightIndex != -1 ? $"values[{_heightIndex}]" : NoSpace(Height));
 
         line += $"max({value1}, {value2});";
         return line;
+    }
+
+    public override int GetIndex(OutputGateConnector output)
+    {
+        if (output == OutputGateConnector)
+            return 0;
+        return -1;
     }
 
     public override List<ConnectorNode> GetConnectedNodes()

@@ -73,6 +73,33 @@ public class NoiseLib
     {
         return Noise(coord.X, coord.Y, coord.Z);
     }
+    public static float AngleNoise(float x, float y)
+    {
+        float angle = Noise(x, y) * 3.14159265359f;
+        angle = (float)Math.Atan2(Math.Sin(angle), Math.Cos(angle));
+        return (angle / 3.14159265359f + 1.0f) * 0.5f;
+    }
+    public static float AngleNoise2(float x, float y)
+    {
+        float noiseX = Noise(x, y);
+        float noiseY = Noise(x + 100.0f, y + 100.0f);
+        float angle = (float)Math.Atan2(noiseY, noiseX);
+        return (angle / 3.14159265359f + 1.0f) * 0.5f;
+    }
+    public static float AngleNoise(float x, float y, int octaves)
+    {
+        float noiseX = Fbm(x, y, octaves);
+        float noiseY = Fbm(x + 100.0f, y + 100.0f, octaves);
+        float angle = (float)Math.Atan2(noiseY, noiseX);
+        return (angle / 3.14159265359f + 1.0f) * 0.5f;
+    }
+    public static float AngleNoise(Vector2 coord) { return AngleNoise(coord.X, coord.Y); }
+    public static float AngleNoise(Vector2 coord, int octaves) { return AngleNoise(coord.X, coord.Y, octaves); }
+    public static Vector2 AngleToDirection(float angleNoise)
+    {
+        float angle = (angleNoise * 2.0f - 1.0f) * 3.14159265359f;
+        return new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
+    }
 
     #endregion
 
@@ -82,7 +109,8 @@ public class NoiseLib
     {
         var f = 0.0f;
         var w = 0.5f;
-        for (var i = 0; i < octave; i++) {
+        for (var i = 0; i < octave; i++)
+        {
             f += w * Noise(x);
             x *= 2.0f;
             w *= 0.5f;

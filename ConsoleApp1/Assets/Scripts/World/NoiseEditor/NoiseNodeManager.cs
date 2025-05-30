@@ -189,10 +189,19 @@ public static class NoiseNodeManager
 
         ConnectedNodeList = [DisplayNode];
         GetConnectedNodes(DisplayNode, ConnectedNodeList);
-        for (int i = 0; i < ConnectedNodeList.Count; i++)
+        int nodeCount = ConnectedNodeList.Count;
+        for (int i = 0; i < nodeCount; i++)
         {
             ConnectorNode node = ConnectedNodeList[i];
-            node.VariableName = "variable" + i;
+            var outputConnectors = node.GetOutputGateConnectors();
+            if (outputConnectors.Count == 0)
+                continue;
+            
+            for (int j = 0; j < outputConnectors.Count; j++)
+            {
+                OutputGateConnector output = outputConnectors[j];
+                output.VariableName = "variable" + i + "_" + j;
+            }
         }
 
         NoiseGlslNodeManager.Compile(ConnectedNodeList);
@@ -219,9 +228,9 @@ public static class NoiseNodeManager
             }
             else if (node is SampleConnectorNode sampleNode)
             {
-                CWorldSampleNode cWorldSampleNode = new CWorldSampleNode()
+                CWorldSampleNode cWorldSampleNode = new CWorldSampleNode(sampleNode.Type)
                 {
-                    Name = node.VariableName,
+                    Name = node.GetOutputGateConnectors()[0].VariableName,
                     Scale = (sampleNode.Scale, sampleNode.Scale),
                     Offset = sampleNode.Offset,
                 };
@@ -232,7 +241,7 @@ public static class NoiseNodeManager
             {
                 CWorldVoronoiNode cWorldVoronoiNode = new CWorldVoronoiNode(voronoiNode.Type)
                 {
-                    Name = node.VariableName,
+                    Name = node.GetOutputGateConnectors()[0].VariableName,
                     Scale = (voronoiNode.Scale, voronoiNode.Scale),
                     Offset = voronoiNode.Offset,
                 };
@@ -243,7 +252,7 @@ public static class NoiseNodeManager
             {
                 CWorldMinMaxNode cWorldMinMaxNode = new CWorldMinMaxNode(minMaxNode.Type)
                 {
-                    Name = node.VariableName,
+                    Name = node.GetOutputGateConnectors()[0].VariableName,
                     Min = minMaxNode.Min,
                     Max = minMaxNode.Max,
                 };
@@ -254,7 +263,7 @@ public static class NoiseNodeManager
             {
                 CWorldDoubleInputNode cWorldDoubleInputNode = new CWorldDoubleInputNode(doubleInputNode.Type)
                 {
-                    Name = node.VariableName,
+                    Name = node.GetOutputGateConnectors()[0].VariableName,
                     Value1 = doubleInputNode.Value1,
                     Value2 = doubleInputNode.Value2,
                 };
@@ -265,7 +274,7 @@ public static class NoiseNodeManager
             {
                 CWorldBaseInputNode cWorldBaseInputNode = new CWorldBaseInputNode(baseInputNode.Type)
                 {
-                    Name = node.VariableName,
+                    Name = node.GetOutputGateConnectors()[0].VariableName,
                     Value = 0, 
                 };
                 nodeMap.Add(node, cWorldBaseInputNode);
@@ -275,7 +284,7 @@ public static class NoiseNodeManager
             {
                 CWorldCombineNode cWorldCombineNode = new CWorldCombineNode()
                 {
-                    Name = node.VariableName,
+                    Name = node.GetOutputGateConnectors()[0].VariableName,
                     First = combineNode.Value1,
                     Second = combineNode.Value2,
                 };
@@ -286,7 +295,7 @@ public static class NoiseNodeManager
             {
                 CWorldRangeNode cWorldRangeNode = new CWorldRangeNode()
                 {
-                    Name = node.VariableName,
+                    Name = node.GetOutputGateConnectors()[0].VariableName,
                     Start = rangeNode.Start,
                     Height = rangeNode.Height,
                     Flipped = rangeNode.Flipped,
@@ -298,7 +307,7 @@ public static class NoiseNodeManager
             {
                 CWorldThresholdInitMaskNode cWorldInitMaskNode = new CWorldThresholdInitMaskNode()
                 {
-                    Name = node.VariableName,
+                    Name = node.GetOutputGateConnectors()[0].VariableName,
                     Threshold = initMaskNode.Threshold,
                 };
                 nodeMap.Add(node, cWorldInitMaskNode);
@@ -308,7 +317,7 @@ public static class NoiseNodeManager
             {
                 CWorldMinMaxInitMaskNode cWorldInitMaskNode = new CWorldMinMaxInitMaskNode()
                 {
-                    Name = node.VariableName,
+                    Name = node.GetOutputGateConnectors()[0].VariableName,
                     Min = minMaxInitMaskNode.Min,
                     Max = minMaxInitMaskNode.Max,
                 };
@@ -319,7 +328,7 @@ public static class NoiseNodeManager
             {
                 CWorldCurveNode cWorldCurveNode = new CWorldCurveNode()
                 {
-                    Name = node.VariableName,
+                    Name = node.GetOutputGateConnectors()[0].VariableName,
                     Min = curveNode.Min,
                     Max = curveNode.Max,
                     Spline = curveNode.CurveWindow.Points.ToArray(),
@@ -336,6 +345,7 @@ public static class NoiseNodeManager
                 if (displayNode.InputGateConnector.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode))
                 {
                     nodeManager.CWorldOutputNode.InputNode = (CWorldGetterNode)inputNode;
+                    nodeManager.CWorldOutputNode.InputNodeIndex = displayNode.InputGateConnector.GetOutputIndex();
                 }
             }
             else if (node is MinMaxInputOperationConnectorNode minMaxNode)
@@ -343,6 +353,33 @@ public static class NoiseNodeManager
                 if (minMaxNode.InputGateConnector.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode))
                 {
                     ((CWorldMinMaxNode)cWorldNode).InputNode = (CWorldGetterNode)inputNode;
+                    ((CWorldMinMaxNode)cWorldNode).InputNodeIndex = minMaxNode.InputGateConnector.GetOutputIndex();
+                }
+            }
+            else if (node is VoronoiConnectorNode voronoiNode)
+            {
+                if (voronoiNode.InputGateConnector1.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode1))
+                {
+                    ((CWorldVoronoiNode)cWorldNode).InputNode1 = (CWorldGetterNode)inputNode1;
+                    ((CWorldVoronoiNode)cWorldNode).InputNode1Index = voronoiNode.InputGateConnector1.GetOutputIndex();
+                }
+                if (voronoiNode.InputGateConnector2.GetConnectedNode(out connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode2))
+                {
+                    ((CWorldVoronoiNode)cWorldNode).InputNode2 = (CWorldGetterNode)inputNode2;
+                    ((CWorldVoronoiNode)cWorldNode).InputNode2Index = voronoiNode.InputGateConnector2.GetOutputIndex();
+                }
+            }
+            else if (node is SampleConnectorNode sampleNode)
+            {
+                if (sampleNode.InputGateConnector1.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode1))
+                {
+                    ((CWorldSampleNode)cWorldNode).InputNode1 = (CWorldGetterNode)inputNode1;
+                    ((CWorldSampleNode)cWorldNode).InputNode1Index = sampleNode.InputGateConnector1.GetOutputIndex();
+                }
+                if (sampleNode.InputGateConnector2.GetConnectedNode(out connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode2))
+                {
+                    ((CWorldSampleNode)cWorldNode).InputNode2 = (CWorldGetterNode)inputNode2;
+                    ((CWorldSampleNode)cWorldNode).InputNode2Index = sampleNode.InputGateConnector2.GetOutputIndex();
                 }
             }
             else if (node is DoubleInputConnectorNode doubleInputNode)
@@ -350,10 +387,12 @@ public static class NoiseNodeManager
                 if (doubleInputNode.InputGateConnector1.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode1))
                 {
                     ((CWorldDoubleInputNode)cWorldNode).InputNode1 = (CWorldGetterNode)inputNode1;
+                    ((CWorldDoubleInputNode)cWorldNode).InputNode1Index = doubleInputNode.InputGateConnector1.GetOutputIndex();
                 }
                 if (doubleInputNode.InputGateConnector2.GetConnectedNode(out connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode2))
                 {
                     ((CWorldDoubleInputNode)cWorldNode).InputNode2 = (CWorldGetterNode)inputNode2;
+                    ((CWorldDoubleInputNode)cWorldNode).InputNode2Index = doubleInputNode.InputGateConnector2.GetOutputIndex();
                 }
             }
             else if (node is BaseInputConnectorNode baseInputNode)
@@ -361,6 +400,7 @@ public static class NoiseNodeManager
                 if (baseInputNode.InputGateConnector.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode))
                 {
                     ((CWorldBaseInputNode)cWorldNode).InputNode = (CWorldGetterNode)inputNode;
+                    ((CWorldBaseInputNode)cWorldNode).InputNodeIndex = baseInputNode.InputGateConnector.GetOutputIndex();
                 }
             }
             else if (node is CombineConnectorNode combineNode)
@@ -368,10 +408,12 @@ public static class NoiseNodeManager
                 if (combineNode.InputGateConnector1.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode1))
                 {
                     ((CWorldCombineNode)cWorldNode).FirstNode = (CWorldGetterNode)inputNode1;
+                    ((CWorldCombineNode)cWorldNode).FirstValueIndex = combineNode.InputGateConnector1.GetOutputIndex();
                 }
                 if (combineNode.InputGateConnector2.GetConnectedNode(out connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode2))
                 {
                     ((CWorldCombineNode)cWorldNode).SecondNode = (CWorldGetterNode)inputNode2;
+                    ((CWorldCombineNode)cWorldNode).SecondValueIndex = combineNode.InputGateConnector2.GetOutputIndex();
                 }
             }
             else if (node is RangeConnectorNode rangeNode)
@@ -379,10 +421,12 @@ public static class NoiseNodeManager
                 if (rangeNode.StartGateConnector.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var startNode))
                 {
                     ((CWorldRangeNode)cWorldNode).StartNode = (CWorldGetterNode)startNode;
+                    ((CWorldRangeNode)cWorldNode).StartValueIndex = rangeNode.StartGateConnector.GetOutputIndex();
                 }
                 if (rangeNode.HeightGateConnector.GetConnectedNode(out connectedNode) && nodeMap.TryGetValue(connectedNode, out var heightNode))
                 {
                     ((CWorldRangeNode)cWorldNode).HeightNode = (CWorldGetterNode)heightNode;
+                    ((CWorldRangeNode)cWorldNode).HeightValueIndex = rangeNode.HeightGateConnector.GetOutputIndex();
                 }
                 ((CWorldRangeNode)cWorldNode).Flipped = rangeNode.Flipped;
             }
@@ -391,10 +435,12 @@ public static class NoiseNodeManager
                 if (initMaskNode.ChildGateConnector.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var childNode))
                 {
                     ((CWorldThresholdInitMaskNode)cWorldNode).ChildNode = (CWorldGetterNode)childNode;
+                    ((CWorldThresholdInitMaskNode)cWorldNode).ChildValueIndex = initMaskNode.ChildGateConnector.GetOutputIndex();
                 }
                 if (initMaskNode.MaskGateConnector.GetConnectedNode(out connectedNode) && nodeMap.TryGetValue(connectedNode, out var maskNode))
                 {
                     ((CWorldThresholdInitMaskNode)cWorldNode).MaskNode = (CWorldGetterNode)maskNode;
+                    ((CWorldThresholdInitMaskNode)cWorldNode).MaskValueIndex = initMaskNode.MaskGateConnector.GetOutputIndex();
                 }
             }
             else if (node is InitMaskMinMaxConnectorNode minMaxInitMaskNode)
@@ -402,10 +448,12 @@ public static class NoiseNodeManager
                 if (minMaxInitMaskNode.ChildGateConnector.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var childNode))
                 {
                     ((CWorldMinMaxInitMaskNode)cWorldNode).ChildNode = (CWorldGetterNode)childNode;
+                    ((CWorldMinMaxInitMaskNode)cWorldNode).ChildValueIndex = minMaxInitMaskNode.ChildGateConnector.GetOutputIndex();
                 }
                 if (minMaxInitMaskNode.MaskGateConnector.GetConnectedNode(out connectedNode) && nodeMap.TryGetValue(connectedNode, out var maskNode))
                 {
                     ((CWorldMinMaxInitMaskNode)cWorldNode).MaskNode = (CWorldGetterNode)maskNode;
+                    ((CWorldMinMaxInitMaskNode)cWorldNode).MaskValueIndex = minMaxInitMaskNode.MaskGateConnector.GetOutputIndex();
                 }
             }
             else if (node is CurveConnectorNode curveNode)
@@ -413,6 +461,7 @@ public static class NoiseNodeManager
                 if (curveNode.InputGateConnector.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode))
                 {
                     ((CWorldCurveNode)cWorldNode).InputNode = (CWorldGetterNode)inputNode;
+                    ((CWorldCurveNode)cWorldNode).InputNodeIndex = curveNode.InputGateConnector.GetOutputIndex();
                 }
             }
         }
@@ -437,7 +486,6 @@ public static class NoiseNodeManager
         foreach (var (prefab, node) in NoiseNodes)
         {
             string name = $"node{index}";
-            node.VariableName = name;
             nodes.Add(node);
             index++;
         }

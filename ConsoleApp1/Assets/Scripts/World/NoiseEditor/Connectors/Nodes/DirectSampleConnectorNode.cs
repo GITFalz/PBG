@@ -1,63 +1,97 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 
-public class CombineConnectorNode : ConnectorNode
+public class DirectSampleConnectorNode : ConnectorNode 
 {
     public string Name => NodePrefab.Name;
-    public UICombineNodePrefab NodePrefab;
+    public UIDirectSampleNodePrefab NodePrefab;
 
     public InputGateConnector InputGateConnector1;
     public InputGateConnector InputGateConnector2;
-
     public OutputGateConnector OutputGateConnector;
 
-    public float Value1 {
-        get {
-            return _value1; 
-        } set {
-            _value1 = value;
-            NodePrefab.Value1InputField.SetText(NoSpace(_value1));
-        }
-    }
-    public float Value2 {
-        get {
-            return _value2; 
-        } set {
-            _value2 = value;
-            NodePrefab.Value2InputField.SetText(NoSpace(_value2));
-        }
-    }
-
-    private float _value1 = 1.0f;
-    private float _value2 = 1.0f;
-
-    private int _value1Index = -1;
-    private int _value2Index = -1;
-
-    public CombineConnectorNode(UICombineNodePrefab combineNodePrefab)
+    public float Scale
     {
-        NodePrefab = combineNodePrefab;
-        InputGateConnector1 = new InputGateConnector(NodePrefab.InputButton1, this);
-        InputGateConnector2 = new InputGateConnector(NodePrefab.InputButton2, this);
+        get
+        {
+            return _scale;
+        }
+        set
+        {
+            _scale = value;
+            NodePrefab.ScaleInputField.SetText(NoSpace(_scale));
+        }
+    }
+    public Vector2 Offset
+    {
+        get
+        {
+            return _offset;
+        }
+        set
+        {
+            _offset = value;
+            NodePrefab.OffsetXInputField.SetText(NoSpace(_offset.X));
+            NodePrefab.OffsetYInputField.SetText(NoSpace(_offset.Y));
+        }
+    }
+
+    public float OffsetX {
+        get {
+            return _offsetX; 
+        } set {
+            _offsetX = value;
+            _offset.X = _offsetX;
+            NodePrefab.OffsetXInputField.SetText(NoSpace(_offsetX));
+        }
+    }
+    public float OffsetY {
+        get {
+            return _offsetY; 
+        } set {
+            _offsetY = value;
+            _offset.Y = _offsetY;
+            NodePrefab.OffsetYInputField.SetText(NoSpace(_offsetY));
+        }
+    }
+
+    private float _scale = 1.0f;
+    private Vector2 _offset = (0.0f, 0.0f);
+    private float _offsetX = 0.0f;
+    private float _offsetY = 0.0f;
+
+    private int _scaleIndex = -1;
+    private int _offsetXIndex = -1;
+    private int _offsetYIndex = -1;
+
+    public DirectSampleConnectorNode(UIDirectSampleNodePrefab sampleNodePrefab)
+    {
+        NodePrefab = sampleNodePrefab;
+        InputGateConnector1 = new InputGateConnector(sampleNodePrefab.InputButton1, this);
+        InputGateConnector2 = new InputGateConnector(sampleNodePrefab.InputButton2, this);
         OutputGateConnector = new OutputGateConnector(NodePrefab.OutputButton, this);
 
         NodePrefab.InputButton1.SetOnClick(() => InputConnectionTest(InputGateConnector1));
         NodePrefab.InputButton2.SetOnClick(() => InputConnectionTest(InputGateConnector2));
         NodePrefab.OutputButton.SetOnClick(() => OutputConnectionTest(OutputGateConnector));
 
-        NodePrefab.Value1InputField.SetOnTextChange(() => SetValue(ref _value1, NodePrefab.Value1InputField, 1.0f, _value1Index));
-        NodePrefab.Value2InputField.SetOnTextChange(() => SetValue(ref _value2, NodePrefab.Value2InputField, 1.0f, _value2Index));
+        NodePrefab.ScaleInputField.SetOnTextChange(() => SetValue(ref _scale, NodePrefab.ScaleInputField, 1.0f, _scaleIndex));
+        NodePrefab.OffsetXInputField.SetOnTextChange(() => SetValue(ref _offset.X, NodePrefab.OffsetXInputField, 0.0f, _offsetXIndex));
+        NodePrefab.OffsetYInputField.SetOnTextChange(() => SetValue(ref _offset.Y, NodePrefab.OffsetYInputField, 0.0f, _offsetYIndex));
 
-        NodePrefab.Value1TextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
-        NodePrefab.Value2TextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        NodePrefab.ScaleTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        NodePrefab.OffsetXTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        NodePrefab.OffsetYTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
 
-        NodePrefab.Value1TextField.SetOnHold(() => SetSlideValue(ref _value1, NodePrefab.Value1InputField, 5f, _value1Index));
-        NodePrefab.Value2TextField.SetOnHold(() => SetSlideValue(ref _value2, NodePrefab.Value2InputField, 5f, _value2Index));
+        NodePrefab.ScaleTextField.SetOnHold(() => SetSlideValue(ref _scale, NodePrefab.ScaleInputField, 5f, _scaleIndex));
+        NodePrefab.OffsetXTextField.SetOnHold(() => SetSlideValue(ref _offset.X, NodePrefab.OffsetXInputField, 5f, _offsetXIndex));
+        NodePrefab.OffsetYTextField.SetOnHold(() => SetSlideValue(ref _offset.Y, NodePrefab.OffsetYInputField, 5f, _offsetYIndex));
 
-        NodePrefab.Value1TextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
-        NodePrefab.Value2TextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
+        NodePrefab.ScaleTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
+        NodePrefab.OffsetXTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
+        NodePrefab.OffsetYTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
 
-        NodePrefab.Collection.SetOnClick(() => SelectNode(this));
+        sampleNodePrefab.Collection.SetOnClick(() => SelectNode(this));
     }
 
     public override void Select()
@@ -79,23 +113,30 @@ public class CombineConnectorNode : ConnectorNode
 
     public override string GetLine()
     {
-        string line = $"    float {OutputGateConnector} = ";
+        string scaleValue = _scaleIndex != -1 ? $"values[{_scaleIndex}]" : Scale.ToString();
+        string variableName = OutputGateConnector.VariableName;
 
-        string value1 = InputGateConnector1.IsConnected && InputGateConnector1.OutputGateConnector != null 
+        string offsetX = InputGateConnector1.IsConnected && InputGateConnector1.OutputGateConnector != null
             ? InputGateConnector1.OutputGateConnector.VariableName
-            : ( _value1Index != -1 ? $"values[{_value1Index}]" : NoSpace(Value1));
+            : ( _offsetXIndex != -1 ? $"values[{_offsetXIndex}]" : NoSpace(OffsetX));
+        
+        string offsetY = InputGateConnector2.IsConnected && InputGateConnector2.OutputGateConnector != null
+            ? InputGateConnector2.OutputGateConnector.VariableName
+            : ( _offsetYIndex != -1 ? $"values[{_offsetYIndex}]" : NoSpace(OffsetY));
 
-        line += $"{value1};";
-        return line;
+        string scale = $"vec2({variableName}Scale, {variableName}Scale)";
+        string offset = $"vec2({offsetX}, {offsetY})";
+
+        return $"    float {variableName}Scale = {scaleValue}; float {variableName} = ";//{Operation.GetFunction(scale, offset)};";
     }
-    
+
     public override int GetIndex(OutputGateConnector output)
     {
         if (output == OutputGateConnector)
             return 0;
         return -1;
     }
-    
+
     public override List<ConnectorNode> GetConnectedNodes()
     {
         List<ConnectorNode> connectedNodes = [];
@@ -126,8 +167,8 @@ public class CombineConnectorNode : ConnectorNode
         return inputNodes; 
     }
 
-    public override List<ConnectorNode> GetOutputNodes() 
-    { 
+    public override List<ConnectorNode> GetOutputNodes()
+    {
         List<ConnectorNode> outputNodes = [];
         if (OutputGateConnector.IsConnected)
         {
@@ -143,7 +184,6 @@ public class CombineConnectorNode : ConnectorNode
     {
         return [InputGateConnector1, InputGateConnector2];
     }
-
     public override List<OutputGateConnector> GetOutputGateConnectors()
     {
         return [OutputGateConnector];
@@ -162,12 +202,12 @@ public class CombineConnectorNode : ConnectorNode
     public override string ToStringList()
     {
         return
-            "NodeType: Combine\n" +
+            "NodeType: Sample\n" +
             "{\n" +
             "    Values:\n" +
             "    {\n" +
-            "        Float: " + NoSpace(Value1) + " 0\n" +
-            "        Float: " + NoSpace(Value2) + " 1\n" +
+            "        Float: " + NoSpace(Scale) + "\n" +
+            "        Vector2: " + NoSpace(Offset) + "\n" +
             "    }\n" +
             "    Inputs:\n" +
             "    {\n" +
@@ -188,26 +228,30 @@ public class CombineConnectorNode : ConnectorNode
 
     public override void SetValueReferences(List<float> values, ref int index)
     {
+        _scaleIndex = index;
+        values.Add(Scale);
+        index++;
+
         if (!InputGateConnector1.IsConnected)
         {
-            _value1Index = index;
-            values.Add(Value1);
+            _offsetXIndex = index;
+            values.Add(OffsetX);
             index++;
         }
         else
         {
-            _value1Index = -1;
+            _offsetXIndex = -1;
         }
 
         if (!InputGateConnector2.IsConnected)
         {
-            _value2Index = index;
-            values.Add(Value2);
+            _offsetYIndex = index;
+            values.Add(OffsetY);
             index++;
         }
         else
         {
-            _value2Index = -1;
+            _offsetYIndex = -1;
         }
     }
 }

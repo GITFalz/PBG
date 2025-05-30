@@ -9,13 +9,14 @@ public class CWorldMinMaxNode : CWorldParameterNode
     public static CWorldMinMaxNode Smooth => new CWorldMinMaxNode(MinMaxInputOperationType.Smooth);
 
 
-    public float Min = 0;
+    public float Min = 0; 
     public float Max = 1;
 
     public MinMaxInputOperations Operation;
     public MinMaxInputOperationType Type;
 
     public CWorldGetterNode InputNode = new CWorldEmptyNode("Empty");  
+    public int InputNodeIndex = 0;
 
     public CWorldMinMaxNode(MinMaxInputOperationType type) : base()
     {
@@ -26,7 +27,12 @@ public class CWorldMinMaxNode : CWorldParameterNode
     public override void Init(Vector2 position)
     {
         InputNode.Init(position);
-        CachedValue = Operation.GetValue(Min, Max, InputNode.CachedValue);
+        CachedValue = Operation.GetValue(Min, Max, InputNode.GetCachedValue(InputNodeIndex));
+    }
+
+    public override float GetCachedValue(int index)
+    {
+        return index == 0 ? CachedValue : 0;
     }
 
     public string GetFunction(string valueName)
@@ -41,6 +47,7 @@ public class CWorldMinMaxNode : CWorldParameterNode
             Name = Name,
             Min = Min,
             Max = Max,
+            InputNodeIndex = InputNodeIndex,
         };
     }
 

@@ -43,10 +43,17 @@ public class BaseInputConnectorNode : ConnectorNode
         NodePrefab.Collection.UpdateTransformation();
     }
 
+    public override int GetIndex(OutputGateConnector output)
+    {
+        if (output == OutputGateConnector)
+            return 0;
+        return -1;
+    }
+
     public override string GetLine()
     {
-        string line = $"    float {VariableName} = ";
-        string value = InputGateConnector.IsConnected && InputGateConnector.OutputGateConnector != null ? InputGateConnector.OutputGateConnector.Node.VariableName : "0";
+        string line = $"    float {OutputGateConnector} = ";
+        string value = InputGateConnector.IsConnected && InputGateConnector.OutputGateConnector != null ? InputGateConnector.OutputGateConnector.VariableName : "0";
         line += $"{Operation.GetFunction(value)};";
         return line;
     }

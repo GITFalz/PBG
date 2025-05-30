@@ -30,6 +30,11 @@ public class InputGateConnector : GateConnector
         OutputGateConnector = null;
     }
 
+    public int GetOutputIndex()
+    {
+        return OutputGateConnector != null ? OutputGateConnector.Node.GetIndex(OutputGateConnector) : -1;
+    }
+
     public string GetConnectedName()
     {
         return (OutputGateConnector != null && OutputGateConnector.Node != null) ? OutputGateConnector.Name : "None";

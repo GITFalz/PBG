@@ -83,16 +83,23 @@ public class MinMaxInputOperationConnectorNode : ConnectorNode
         string minValue = _minIndex != -1 ? $"values[{_minIndex}]" : NoSpace(Min);
         string maxValue = _maxIndex != -1 ? $"values[{_maxIndex}]" : NoSpace(Max);
 
-        string line = $"    float {VariableName} = ";
+        string line = $"    float {OutputGateConnector.VariableName} = ";
         if (InputGateConnector.IsConnected && InputGateConnector.OutputGateConnector != null)
         {
-            line += $"{Operation.GetFunction(minValue, maxValue, InputGateConnector.OutputGateConnector.Node.VariableName)};";
+            line += $"{Operation.GetFunction(minValue, maxValue, InputGateConnector.OutputGateConnector.VariableName)};";
         }
         else
         {
             line += $"{Operation.GetFunction(minValue, maxValue, "0.0")};";
         }
         return line;
+    }
+
+    public override int GetIndex(OutputGateConnector output)
+    {
+        if (output == OutputGateConnector)
+            return 0;
+        return -1;
     }
 
     public override List<ConnectorNode> GetConnectedNodes()

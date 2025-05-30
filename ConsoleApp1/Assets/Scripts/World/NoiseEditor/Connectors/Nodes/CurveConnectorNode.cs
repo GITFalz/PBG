@@ -101,16 +101,23 @@ public class CurveConnectorNode : ConnectorNode
         string startIndex = _curveIndex != -1 ? $"values[{_curveIndex}]" : "0";
         string count = _curveIndex != -1 ? $"{_pointCount}" : "0";
 
-        string line = $"    float {VariableName} = mix({minValue}, {maxValue}, GetSplineVector(int(floor({startIndex})), {count}, ";
+        string line = $"    float {OutputGateConnector} = mix({minValue}, {maxValue}, GetSplineVector(int(floor({startIndex})), {count}, ";
         if (InputGateConnector.IsConnected && InputGateConnector.OutputGateConnector != null)
         {
-            line += $"{InputGateConnector.OutputGateConnector.Node.VariableName}));";
+            line += $"{InputGateConnector.OutputGateConnector.VariableName}));";
         }
         else
         {
             line += $"0.0));";
         }
         return line;
+    }
+
+    public override int GetIndex(OutputGateConnector output)
+    {
+        if (output == OutputGateConnector)
+            return 0;
+        return -1;
     }
 
     public override List<ConnectorNode> GetConnectedNodes()

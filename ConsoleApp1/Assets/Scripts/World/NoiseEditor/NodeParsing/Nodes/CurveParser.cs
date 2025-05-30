@@ -46,7 +46,7 @@ public class CurveData : INodeData
     public void SetType(int type) => Console.WriteLine("Curve node does not use a type.");
 
     public void SetInputName(string inputName, int index = 0) => InputName = inputName;
-    public void SetOutputName(string outputName) => OutputName = outputName;
+    public void SetOutputName(string outputName, int index) => OutputName = outputName;
     public void SetPrefabName(string prefabName) => PrefabName = prefabName;
     public void SetPrefabOffset(Vector4 prefabOffset) => PrefabOffset = prefabOffset;
 

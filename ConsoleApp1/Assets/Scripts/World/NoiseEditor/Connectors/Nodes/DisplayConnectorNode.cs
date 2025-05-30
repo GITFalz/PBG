@@ -35,7 +35,7 @@ public class DisplayConnectorNode : ConnectorNode
         string line = $"    display = ";
         if (InputGateConnector.IsConnected && InputGateConnector.OutputGateConnector != null)
         {
-            line += $"{InputGateConnector.OutputGateConnector.Node.VariableName};";
+            line += $"{InputGateConnector.OutputGateConnector.VariableName};";
         }
         else
         {
@@ -56,6 +56,11 @@ public class DisplayConnectorNode : ConnectorNode
             node = Empty;
             return false;
         }
+    }
+
+    public override int GetIndex(OutputGateConnector output)
+    {
+        return -1;
     }
 
     public override List<ConnectorNode> GetConnectedNodes()

@@ -81,17 +81,24 @@ public class InitMaskMinMaxConnectorNode : ConnectorNode
         string minValue = _minIndex != -1 ? $"values[{_minIndex}]" : NoSpace(Min);
         string maxValue = _maxIndex != -1 ? $"values[{_maxIndex}]" : NoSpace(Max);
 
-        string line = $"    float {VariableName} = ";
+        string line = $"    float {OutputGateConnector} = ";
         string child = ChildGateConnector.IsConnected && ChildGateConnector.OutputGateConnector != null
-            ? ChildGateConnector.OutputGateConnector.Node.VariableName
+            ? ChildGateConnector.OutputGateConnector.VariableName
             : "0.0";
         
         string mask = MaskGateConnector.IsConnected && MaskGateConnector.OutputGateConnector != null
-            ? MaskGateConnector.OutputGateConnector.Node.VariableName
+            ? MaskGateConnector.OutputGateConnector.VariableName
             : "1.0";
 
         line += $"({mask} >= {minValue} && {mask} < {maxValue}) ? {child} : 0.0;";
         return line;
+    }
+
+    public override int GetIndex(OutputGateConnector output)
+    {
+        if (output == OutputGateConnector)
+            return 0;
+        return -1;
     }
 
     public override List<ConnectorNode> GetConnectedNodes()

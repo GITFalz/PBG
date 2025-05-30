@@ -82,18 +82,25 @@ public class DoubleInputConnectorNode : ConnectorNode
         NodePrefab.Collection.Align();
         NodePrefab.Collection.UpdateTransformation();
     }
+    
+    public override int GetIndex(OutputGateConnector output)
+    {
+        if (output == OutputGateConnector)
+            return 0;
+        return -1;
+    }
 
     public override string GetLine()
     {
-        string line = $"    float {VariableName} = ";
+        string line = $"    float {OutputGateConnector} = ";
 
         string value1 = InputGateConnector1.IsConnected && InputGateConnector1.OutputGateConnector != null
-            ? InputGateConnector1.OutputGateConnector.Node.VariableName
-            : ( _value1Index != -1 ? $"values[{_value1Index}]" : NoSpace(Value1));
-        
+            ? InputGateConnector1.OutputGateConnector.VariableName
+            : (_value1Index != -1 ? $"values[{_value1Index}]" : NoSpace(Value1));
+
         string value2 = InputGateConnector2.IsConnected && InputGateConnector2.OutputGateConnector != null
-            ? InputGateConnector2.OutputGateConnector.Node.VariableName
-            : ( _value2Index != -1 ? $"values[{_value2Index}]" : NoSpace(Value2));
+            ? InputGateConnector2.OutputGateConnector.VariableName
+            : (_value2Index != -1 ? $"values[{_value2Index}]" : NoSpace(Value2));
 
         line += $"{Operation.GetFunction(value1, value2)};";
         return line;

@@ -17,7 +17,7 @@ public class DisplayData : INodeData
     public void SetValue(Vector2 value, int index = 0) => Console.WriteLine("A MinMax node cannot have a vector2 value");
     public void SetType(int type) => Console.WriteLine("A display node cannot have a type");
     public void SetInputName(string inputName, int index = 0) => InputName = inputName;
-    public void SetOutputName(string outputName) => Console.WriteLine("A display node cannot have an output name");
+    public void SetOutputName(string outputName, int index) => Console.WriteLine("A display node cannot have an output name");
     public void SetPrefabName(string prefabName) => PrefabName = prefabName;
     public void SetPrefabOffset(Vector4 prefabOffset) => PrefabOffset = prefabOffset;
 

@@ -7,6 +7,13 @@ public class SampleData : INodeData
     public float Scale = 1.0f;
     public Vector2 Offset = Vector2.Zero;
 
+    // Type
+    public SampleOperationType Type = SampleOperationType.Basic;
+
+    // Input
+    public string InputName1 = "none";
+    public string InputName2 = "none";
+
     // Output
     public string OutputName = "none";
 
@@ -29,11 +36,25 @@ public class SampleData : INodeData
     public void SetValue(bool value, int index = 0) => Console.WriteLine("A Sample node cannot have a bool value");
     public void SetValue(int value, int index = 0) => Console.WriteLine("A Sample node cannot have an int value");
 
-    public void SetType(int type) => Console.WriteLine("A Sample node does not have a type");
+    public void SetType(int type) => Type = (SampleOperationType)type;
 
-    public void SetInputName(string inputName, int index) => Console.WriteLine("A Sample node has no input connectors");
+    public void SetInputName(string inputName, int index)
+    {
+        if (index == 0)
+        {
+            InputName1 = inputName;
+        }
+        else if (index == 1)
+        {
+            InputName2 = inputName;
+        }
+        else
+        {
+            Console.WriteLine("A Sample node only accepts two input names");
+        }
+    }
 
-    public void SetOutputName(string outputName) => OutputName = outputName;
+    public void SetOutputName(string outputName, int index) => OutputName = outputName;
 
     public void SetPrefabName(string prefabName) => PrefabName = prefabName;
 
@@ -41,8 +62,10 @@ public class SampleData : INodeData
 
     public ConnectorNode GetConnectorNode(UIController controller)
     {
-        UISampleNodePrefab prefab = new UISampleNodePrefab(PrefabName, controller, PrefabOffset);
-        SampleConnectorNode node = new SampleConnectorNode(prefab);
+        UISampleNodePrefab prefab = new UISampleNodePrefab(PrefabName, controller, PrefabOffset, Type);
+        SampleConnectorNode node = new SampleConnectorNode(prefab, Type);
+        node.InputGateConnector1.Name = InputName1;
+        node.InputGateConnector2.Name = InputName2;
         node.OutputGateConnector.Name = OutputName;
         node.Scale = Scale;
         node.Offset = Offset;

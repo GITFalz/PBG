@@ -108,13 +108,30 @@ public class UIInputField : UIText
         }
         else if (TextType == TextType.Decimal)
         {
+            string final = "";
             int dotCount = 0;
-            return new string(text.Where(c => {
-                if (c != '.') 
-                    return char.IsDigit(c);
-                dotCount++;
-                return dotCount <= 1;
-            }).ToArray());
+            for (int i = 0; i < text.Length; i++)
+            {
+                char c = text[i];
+                if (c == '-' && i == 0)
+                {
+                    final += c;
+                }
+                else if (c == '.' && dotCount == 0)
+                {
+                    final += c;
+                    dotCount++;
+                }
+                else if (char.IsDigit(c))
+                {
+                    final += c;
+                }
+            }
+            if (final.Length > 0 && final[0] == '.')
+            {
+                final = "0" + final;
+            }
+            return final;
         }
         else if (TextType == TextType.Alphabetic)
         {

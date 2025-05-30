@@ -22,7 +22,7 @@ public static class NoiseGlslNodeManager
     private static string NoiseFragmentPath;
     private static string NoiseFragmentPathCopy;
 
-    private static int _lineInsert = 331; // The line where the new lines will be inserted in the shader file
+    private static int _lineInsert = 396; // The line where the new lines will be inserted in the shader file
 
     static NoiseGlslNodeManager()
     {

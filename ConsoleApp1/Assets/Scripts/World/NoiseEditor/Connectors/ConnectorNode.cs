@@ -6,9 +6,6 @@ public abstract class ConnectorNode
     public static ConnectorNode Empty = new EmptyConnectorNode();
     public static GateConnector? SelectedGateConnector = null;
 
-
-    public string VariableName = "variable0";
-
     public abstract string GetLine();
     public abstract void Select();
     public abstract void Deselect();
@@ -21,6 +18,7 @@ public abstract class ConnectorNode
     public abstract UINoiseNodePrefab[] GetNodePrefabs();
     public abstract UIController GetUIController();
     public abstract string ToStringList();
+    public abstract int GetIndex(OutputGateConnector output);
     public abstract void SetValueReferences(List<float> values, ref int index);
 
     public void SelectNode(ConnectorNode node)

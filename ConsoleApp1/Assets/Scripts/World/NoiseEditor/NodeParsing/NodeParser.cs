@@ -301,7 +301,11 @@ public static class NodeParser
             {
                 index++;
                 var values = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-                if (values.Length > 1)
+                if (values.Length > 2)
+                {
+                    input.SetOutputName(values[1].Trim(), Int.Parse(values[2]));
+                }
+                else if (values.Length > 1)
                 {
                     input.SetOutputName(values[1].Trim());
                 }
@@ -383,7 +387,7 @@ public interface INodeData
     public void SetValue(Vector2 value, int index = 0);
     public void SetType(int type);
     public void SetInputName(string inputName, int index = 0);
-    public void SetOutputName(string outputName);
+    public void SetOutputName(string outputName, int index = 0);
     public void SetPrefabName(string prefabName);
     public void SetPrefabOffset(Vector4 prefabOffset);
 

@@ -183,7 +183,7 @@ public class NoiseEditor : ScriptingNode
 
         // *--- NodeController ---*
 
-        UISampleNodePrefab sampleNodePrefab = new("SampleNodePrefab", NodeController, (100, 100, 0, 0))
+        UISampleNodePrefab sampleNodePrefab = new("SampleNodePrefab", NodeController, (100, 100, 0, 0), SampleOperationType.Basic)
         {
             Depth = 1f
         };
@@ -223,7 +223,15 @@ public class NoiseEditor : ScriptingNode
 
         // -- Embedded Collection --
         EmbeddedCollection = new("EmbeddedCollection", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (300, 0, 0, 0), 0);
-        
+
+        // - AddSampleNodeCollection -
+        UIVerticalCollection addSampleNodeCollection = new("AddSampleNodeCollection", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), (0, 0, 0, 0), 0f, 0);
+
+        UITextButton addSampleButtonBasic = new("AddSampleButtonBasic", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addSampleButtonBasic.SetTextCharCount("Add Basic Sample", 1.2f);
+        UITextButton addSampleButtonAngle = new("AddSampleButtonAngle", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addSampleButtonAngle.SetTextCharCount("Add Angle Sample", 1.2f);
+
         // - AddVoronoiNodeCollection -
         UIVerticalCollection addVoronoiNodeCollection = new("AddVoronoiNodeCollection", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), (0, 0, 0, 0), 0f, 0);
 
@@ -233,6 +241,10 @@ public class NoiseEditor : ScriptingNode
         addVoronoiButtonEdge.SetTextCharCount("Voronoi Edge", 1.2f);
         UITextButton addVoronoiButtonDistance = new("AddVoronoiButtonDistance", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
         addVoronoiButtonDistance.SetTextCharCount("Voronoi Distance", 1.2f);
+        UITextButton addVoronoiButtonNormal = new("AddVoronoiButtonNormal", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addVoronoiButtonNormal.SetTextCharCount("Voronoi Normal", 1.2f);
+        UITextButton addVoronoiButtonAngle = new("AddVoronoiButtonAngle", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
+        addVoronoiButtonAngle.SetTextCharCount("Voronoi Angle", 1.2f);
 
         // - AddMinMaxInputTypeCollection -
         UIVerticalCollection addMinMaxInputTypeCollection = new("AddMinMaxInputTypeCollection", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), (0, 0, 0, 0), 0, 0);
@@ -292,19 +304,6 @@ public class NoiseEditor : ScriptingNode
         UITextButton addInitMaskMinMaxButton = new("AddInitMaskMinMaxButton", SelectionController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (10f, 0.05f));
         addInitMaskMinMaxButton.SetTextCharCount("Add Min Max", 1.2f);
 
-
-        addSampleButton.SetOnClick(() =>
-        {
-            Vector2 mousePosition = Input.GetMousePosition();
-            UISampleNodePrefab sampleNodePrefab = new("SampleNodePrefab", NodeController, (mousePosition.X, mousePosition.Y, 0, 0))
-            {
-                Depth = 1f
-            };
-
-            NoiseNodeManager.AddNode(sampleNodePrefab);
-            SelectionCollection.SetVisibility(false);
-        });
-
         addRangeButton.SetOnClick(() =>
         {
             Vector2 mousePosition = Input.GetMousePosition();
@@ -341,6 +340,12 @@ public class NoiseEditor : ScriptingNode
             SelectionCollection.SetVisibility(false);
         });
 
+        addSampleButton.SetOnClick(() =>
+        {
+            EmbeddedCollection.SetVisibility(false);
+            addSampleNodeCollection.SetVisibility(!addSampleNodeCollection.Visible);
+        });
+
         addVoronoiButton.SetOnClick(() =>
         {
             EmbeddedCollection.SetVisibility(false);
@@ -372,6 +377,19 @@ public class NoiseEditor : ScriptingNode
         });
 
 
+        addSampleButtonBasic.SetOnClick(() =>
+        {
+            AddSampleOperationType(SampleOperationType.Basic);
+            SelectionCollection.SetVisibility(false);
+        });
+
+        addSampleButtonAngle.SetOnClick(() =>
+        {
+            AddSampleOperationType(SampleOperationType.Angle);
+            SelectionCollection.SetVisibility(false);
+        });
+
+
         addVoronoiButtonBasic.SetOnClick(() =>
         {
             AddVoronoiOperationType(VoronoiOperationType.Basic);
@@ -387,6 +405,18 @@ public class NoiseEditor : ScriptingNode
         addVoronoiButtonDistance.SetOnClick(() =>
         {
             AddVoronoiOperationType(VoronoiOperationType.Distance);
+            SelectionCollection.SetVisibility(false);
+        });
+
+        addVoronoiButtonNormal.SetOnClick(() =>
+        {
+            AddVoronoiOperationType(VoronoiOperationType.Normal);
+            SelectionCollection.SetVisibility(false);
+        });
+
+        addVoronoiButtonAngle.SetOnClick(() =>
+        {
+            AddVoronoiOperationType(VoronoiOperationType.Angle);
             SelectionCollection.SetVisibility(false);
         });
 
@@ -533,14 +563,14 @@ public class NoiseEditor : ScriptingNode
             SelectionCollection.SetVisibility(false);
         });
 
-
-        addVoronoiNodeCollection.AddElements(addVoronoiButtonBasic, addVoronoiButtonEdge, addVoronoiButtonDistance);
+        addSampleNodeCollection.AddElements(addSampleButtonBasic, addSampleButtonAngle);
+        addVoronoiNodeCollection.AddElements(addVoronoiButtonBasic, addVoronoiButtonEdge, addVoronoiButtonDistance, addVoronoiButtonNormal, addVoronoiButtonAngle);
         addMinMaxInputTypeCollection.AddElements(addClampButton, addIgnoreButton, addLerpButton, addSlideButton, addSmoothButton);
         addDoubleInputTypeCollection.AddElements(addAddButton, addSubButton, addMulButton, addDivButton, addMinButton, addMaxButton, addModButton, addPowerButton);
         addBaseInputNodeCollection.AddElements(addInvertButton, addAbsButton, addSquareButton, addSinButton, addCosButton, addTanButton);
         addInitMaskNodeCollection.AddElements(addInitMaskThresholdButton, addInitMaskMinMaxButton);
 
-        EmbeddedCollection.AddElements(addVoronoiNodeCollection, addMinMaxInputTypeCollection, addDoubleInputTypeCollection, addBaseInputNodeCollection, addInitMaskNodeCollection);
+        EmbeddedCollection.AddElements(addSampleNodeCollection, addVoronoiNodeCollection, addMinMaxInputTypeCollection, addDoubleInputTypeCollection, addBaseInputNodeCollection, addInitMaskNodeCollection);
         selectionVerticalCollection.AddElements(addSampleButton, addVoronoiButton, addMinMaxInputButton, addDoubleInputButton, addBaseInputButton, addRangeButton, addCombineButton, addInitMaskButton, addCurveButton);
 
         SelectionCollection.AddElements(selectionVerticalCollection, EmbeddedCollection);
@@ -572,6 +602,17 @@ public class NoiseEditor : ScriptingNode
         NodeController.SetScale(scale);
 
         NoiseNodeManager.UpdateLines();
+    }
+
+    public void AddSampleOperationType(SampleOperationType type)
+    {
+        UISampleNodePrefab sampleNodePrefab = new("SampleNodePrefab", NodeController, (NodePosition.X, NodePosition.Y, 0, 0), type)
+        {
+            Depth = 1f
+        };
+
+        NoiseNodeManager.AddNode(sampleNodePrefab);
+        SelectionCollection.SetVisibility(false);
     }
 
     public void AddVoronoiOperationType(VoronoiOperationType type)

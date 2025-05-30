@@ -10,8 +10,14 @@ public class VoronoiData : INodeData
     // Type
     public VoronoiOperationType Type = 0;
 
+    // Input
+    public string InputName1 = "none";
+    public string InputName2 = "none";
+
     // Output
     public string OutputName = "none";
+    public string OutputCellX = "none";
+    public string OutputCellY = "none";
 
     // Prefab
     public string PrefabName = "DisplayPrefab";
@@ -34,9 +40,41 @@ public class VoronoiData : INodeData
 
     public void SetType(int type) => Type = (VoronoiOperationType)type;
 
-    public void SetInputName(string inputName, int index) => Console.WriteLine("A Voronoi node has no input connectors");
+    public void SetInputName(string inputName, int index)
+    {
+        if (index == 0)
+        {
+            InputName1 = inputName;
+        }
+        else if (index == 1)
+        {
+            InputName2 = inputName;
+        }
+        else
+        {
+            Console.WriteLine("A Voronoi node only accepts two input names");
+        }
+    }
 
-    public void SetOutputName(string outputName) => OutputName = outputName;
+    public void SetOutputName(string outputName, int index)
+    {
+        if (index == 0)
+        {
+            OutputName = outputName;
+        }
+        else if (index == 1)
+        {
+            OutputCellX = outputName;
+        }
+        else if (index == 2)
+        {
+            OutputCellY = outputName;
+        }
+        else
+        {
+            Console.WriteLine("A Voronoi node only accepts three output names");
+        }
+    }
 
     public void SetPrefabName(string prefabName) => PrefabName = prefabName;
 
@@ -46,7 +84,9 @@ public class VoronoiData : INodeData
     {
         UIVoronoiPrefab prefab = new UIVoronoiPrefab(PrefabName, controller, PrefabOffset, Type);
         VoronoiConnectorNode node = new VoronoiConnectorNode(prefab, Type);
-        node.OutputGateConnector.Name = OutputName;
+        node.InputGateConnector1.Name = InputName1;
+        node.InputGateConnector2.Name = InputName2;
+        node.Output.Name = OutputName;
         node.Scale = Scale;
         node.Offset = Offset;
         prefab.AddedMoveAction = NoiseNodeManager.UpdateLines;

@@ -18,7 +18,7 @@ public class CWorldEmptyNode : CWorldGetterNode
         CachedValue = Value;
     }
 
-    public override Block GetBlock(int y)
+    public override Block GetBlock(int y, int index = 0)
     {
         return Block.Air;
     }
@@ -30,5 +30,10 @@ public class CWorldEmptyNode : CWorldGetterNode
             Name = Name,
             Value = Value,
         };;
+    }
+
+    public override float GetCachedValue(int index)
+    {
+        return 0;
     }
 }

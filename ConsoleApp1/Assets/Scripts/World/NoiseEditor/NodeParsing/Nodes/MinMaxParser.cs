@@ -43,7 +43,7 @@ public class MinMaxInputOperationData : INodeData
 
     public void SetInputName(string inputName, int index) => InputName = inputName;
 
-    public void SetOutputName(string outputName) => OutputName = outputName;
+    public void SetOutputName(string outputName, int index) => OutputName = outputName;
 
     public void SetPrefabName(string prefabName) => PrefabName = prefabName;
 

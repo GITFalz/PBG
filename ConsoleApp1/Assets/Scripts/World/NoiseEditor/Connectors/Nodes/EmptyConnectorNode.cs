@@ -10,12 +10,12 @@ public class EmptyConnectorNode : ConnectorNode
 
     public override void Select()
     {
-        
+
     }
 
     public override void Deselect()
     {
-        
+
     }
 
     public override void Move(Vector2 delta)
@@ -64,6 +64,11 @@ public class EmptyConnectorNode : ConnectorNode
     }
 
     public override void SetValueReferences(List<float> values, ref int index)
+    {
+        throw new NotImplementedException();
+    }
+    
+    public override int GetIndex(OutputGateConnector output)
     {
         throw new NotImplementedException();
     }

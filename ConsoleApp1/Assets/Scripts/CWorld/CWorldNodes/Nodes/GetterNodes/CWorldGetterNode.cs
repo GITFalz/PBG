@@ -3,10 +3,11 @@ using OpenTK.Mathematics;
 
 public abstract class CWorldGetterNode : CWorldNode
 {
-    public float CachedValue = 0;
+    protected float CachedValue = 0;
 
     public CWorldGetterNode() : base() { }
-    public CWorldGetterNode(string name) : base(name) { } 
+    public CWorldGetterNode(string name) : base(name) { }
+    public abstract float GetCachedValue(int index);
     public virtual void SetValue(float value) { } // Only used for the empty node
 
     /// <summary>
@@ -14,14 +15,14 @@ public abstract class CWorldGetterNode : CWorldNode
     /// </summary>
     /// <param name="y"></param>
     /// <returns></returns>
-    public virtual Block GetBlock(int y)
+    public virtual Block GetBlock(int y, int index = 0)
     {
-        return y <= Mathf.Lerp(0, 120, CachedValue) ? Block.Stone : Block.Air;
+        return y <= Mathf.Lerp(0, 120, GetCachedValue(index)) ? Block.Stone : Block.Air;
     }
 
-    public virtual bool GetBlock(int y, [NotNullWhen(true)] out Block block)
+    public virtual bool GetBlock(int y, [NotNullWhen(true)] out Block block, int index = 0)
     {
-        block = GetBlock(y);
+        block = GetBlock(y, index);
         return true;
     }
 } 

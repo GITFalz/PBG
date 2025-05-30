@@ -2,6 +2,7 @@ using OpenTK.Mathematics;
 
 public class OutputGateConnector : GateConnector
 {
+    public string VariableName = "output";
     public static OutputGateConnector Empty = new OutputGateConnector();
 
     public bool IsConnected = false;
@@ -24,6 +25,11 @@ public class OutputGateConnector : GateConnector
         {
             Indices[InputGateConnectors.IndexOf(input)] = index;
         }
+    }
+
+    public int GetIndex()
+    {
+        return Node.GetIndex(this);
     }
 
     public void Connect(InputGateConnector input)
@@ -50,5 +56,10 @@ public class OutputGateConnector : GateConnector
             Indices.Remove(InputGateConnectors.IndexOf(input));
             InputGateConnectors.Remove(input);
         }
+    }
+
+    public override string ToString()
+    {
+        return VariableName;
     }
 }

@@ -6,7 +6,12 @@ public class SampleConnectorNode : ConnectorNode
     public string Name => NodePrefab.Name;
     public UISampleNodePrefab NodePrefab;
 
+    public InputGateConnector InputGateConnector1;
+    public InputGateConnector InputGateConnector2;
     public OutputGateConnector OutputGateConnector;
+
+    public SampleOperationType Type = SampleOperationType.Basic;
+    public SampleOperation Operation;
 
     public float Scale
     {
@@ -34,17 +39,43 @@ public class SampleConnectorNode : ConnectorNode
         }
     }
 
+    public float OffsetX {
+        get {
+            return _offsetX; 
+        } set {
+            _offsetX = value;
+            _offset.X = _offsetX;
+            NodePrefab.OffsetXInputField.SetText(NoSpace(_offsetX));
+        }
+    }
+    public float OffsetY {
+        get {
+            return _offsetY; 
+        } set {
+            _offsetY = value;
+            _offset.Y = _offsetY;
+            NodePrefab.OffsetYInputField.SetText(NoSpace(_offsetY));
+        }
+    }
+
     private float _scale = 1.0f;
     private Vector2 _offset = (0.0f, 0.0f);
+    private float _offsetX = 0.0f;
+    private float _offsetY = 0.0f;
 
     private int _scaleIndex = -1;
     private int _offsetXIndex = -1;
     private int _offsetYIndex = -1;
 
-    public SampleConnectorNode(UISampleNodePrefab sampleNodePrefab)
+    public SampleConnectorNode(UISampleNodePrefab sampleNodePrefab, SampleOperationType type)
     {
         NodePrefab = sampleNodePrefab;
+        InputGateConnector1 = new InputGateConnector(sampleNodePrefab.InputButton1, this);
+        InputGateConnector2 = new InputGateConnector(sampleNodePrefab.InputButton2, this);
         OutputGateConnector = new OutputGateConnector(NodePrefab.OutputButton, this);
+
+        NodePrefab.InputButton1.SetOnClick(() => InputConnectionTest(InputGateConnector1));
+        NodePrefab.InputButton2.SetOnClick(() => InputConnectionTest(InputGateConnector2));
         NodePrefab.OutputButton.SetOnClick(() => OutputConnectionTest(OutputGateConnector));
 
         NodePrefab.ScaleInputField.SetOnTextChange(() => SetValue(ref _scale, NodePrefab.ScaleInputField, 1.0f, _scaleIndex));
@@ -64,6 +95,9 @@ public class SampleConnectorNode : ConnectorNode
         NodePrefab.OffsetYTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
 
         sampleNodePrefab.Collection.SetOnClick(() => SelectNode(this));
+
+        Operation = SampleOperation.GetSampleOperation(type);
+        Type = type;
     }
 
     public override void Select()
@@ -85,19 +119,39 @@ public class SampleConnectorNode : ConnectorNode
 
     public override string GetLine()
     {
-        string scaleValue = _scaleIndex != -1 ? $"values[{_scaleIndex}]" : NoSpace(Scale);
-        string offsetXValue = _offsetXIndex != -1 ? $"values[{_offsetXIndex}]" : NoSpace(Offset.X);
-        string offsetYValue = _offsetYIndex != -1 ? $"values[{_offsetYIndex}]" : NoSpace(Offset.Y);
+        string scaleValue = _scaleIndex != -1 ? $"values[{_scaleIndex}]" : Scale.ToString();
+        string variableName = OutputGateConnector.VariableName;
 
-        string scale = $"vec2({VariableName}Scale, {VariableName}Scale)";
-        string offset = $"vec2({offsetXValue}, {offsetYValue})";
+        string offsetX = InputGateConnector1.IsConnected && InputGateConnector1.OutputGateConnector != null
+            ? InputGateConnector1.OutputGateConnector.VariableName
+            : ( _offsetXIndex != -1 ? $"values[{_offsetXIndex}]" : NoSpace(OffsetX));
+        
+        string offsetY = InputGateConnector2.IsConnected && InputGateConnector2.OutputGateConnector != null
+            ? InputGateConnector2.OutputGateConnector.VariableName
+            : ( _offsetYIndex != -1 ? $"values[{_offsetYIndex}]" : NoSpace(OffsetY));
 
-        return $"    float {VariableName}Scale = {scaleValue}; float {VariableName} = SampleNoise({scale}, {offset});";
+        string scale = $"vec2({variableName}Scale, {variableName}Scale)";
+        string offset = $"vec2({offsetX}, {offsetY})";
+
+        return $"    float {variableName}Scale = {scaleValue}; float {variableName} = {Operation.GetFunction(scale, offset)};";
+    }
+
+    public override int GetIndex(OutputGateConnector output)
+    {
+        if (output == OutputGateConnector)
+            return 0;
+        return -1;
     }
 
     public override List<ConnectorNode> GetConnectedNodes()
     {
         List<ConnectorNode> connectedNodes = [];
+        if (InputGateConnector1.IsConnected && InputGateConnector1.OutputGateConnector != null)
+            connectedNodes.Add(InputGateConnector1.OutputGateConnector.Node);
+
+        if (InputGateConnector2.IsConnected && InputGateConnector2.OutputGateConnector != null)
+            connectedNodes.Add(InputGateConnector2.OutputGateConnector.Node);
+
         if (OutputGateConnector.IsConnected)
         {
             foreach (var input in OutputGateConnector.InputGateConnectors)
@@ -108,9 +162,15 @@ public class SampleConnectorNode : ConnectorNode
         return connectedNodes;
     }
 
-    public override List<ConnectorNode> GetInputNodes()
-    {
-        return [];
+    public override List<ConnectorNode> GetInputNodes() 
+    { 
+        List<ConnectorNode> inputNodes = [];
+        if (InputGateConnector1.IsConnected && InputGateConnector1.OutputGateConnector != null)
+            inputNodes.Add(InputGateConnector1.OutputGateConnector.Node);
+
+        if (InputGateConnector2.IsConnected && InputGateConnector2.OutputGateConnector != null)
+            inputNodes.Add(InputGateConnector2.OutputGateConnector.Node);
+        return inputNodes; 
     }
 
     public override List<ConnectorNode> GetOutputNodes()
@@ -128,7 +188,7 @@ public class SampleConnectorNode : ConnectorNode
 
     public override List<InputGateConnector> GetInputGateConnectors()
     {
-        return [];
+        return [InputGateConnector1, InputGateConnector2];
     }
     public override List<OutputGateConnector> GetOutputGateConnectors()
     {
@@ -154,6 +214,12 @@ public class SampleConnectorNode : ConnectorNode
             "    {\n" +
             "        Float: " + NoSpace(Scale) + "\n" +
             "        Vector2: " + NoSpace(Offset) + "\n" +
+            "        Type: " + NoSpace((int)Type) + "\n" +
+            "    }\n" +
+            "    Inputs:\n" +
+            "    {\n" +
+            "        Name: " + NoSpace(InputGateConnector1.Name) + " 0\n" +
+            "        Name: " + NoSpace(InputGateConnector2.Name) + " 1\n" +
             "    }\n" +
             "    Outputs:\n" +
             "    {\n" +
@@ -173,12 +239,26 @@ public class SampleConnectorNode : ConnectorNode
         values.Add(Scale);
         index++;
 
-        _offsetXIndex = index;
-        values.Add(Offset.X);
-        index++;
+        if (!InputGateConnector1.IsConnected)
+        {
+            _offsetXIndex = index;
+            values.Add(OffsetX);
+            index++;
+        }
+        else
+        {
+            _offsetXIndex = -1;
+        }
 
-        _offsetYIndex = index;
-        values.Add(Offset.Y);
-        index++;
+        if (!InputGateConnector2.IsConnected)
+        {
+            _offsetYIndex = index;
+            values.Add(OffsetY);
+            index++;
+        }
+        else
+        {
+            _offsetYIndex = -1;
+        }
     }
 }

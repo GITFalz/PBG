@@ -3,22 +3,29 @@ using OpenTK.Mathematics;
 public class CWorldThresholdInitMaskNode : CWorldParameterNode
 {
     public CWorldGetterNode ChildNode = new CWorldEmptyNode("ChildNode");
+    public int ChildValueIndex = 0;
     public CWorldGetterNode MaskNode = new CWorldEmptyNode("MaskNode");
+    public int MaskValueIndex = 0;
 
     public float Threshold = 0;
     
     public override void Init(Vector2 position)
     {
         MaskNode.Init(position);
-        if (MaskNode.CachedValue > Threshold)
+        if (MaskNode.GetCachedValue(MaskValueIndex) > Threshold)
         {
             ChildNode.Init(position);
-            CachedValue = ChildNode.CachedValue;
+            CachedValue = ChildNode.GetCachedValue(ChildValueIndex); 
         }
         else
         {
-            CachedValue = 0;
+            CachedValue = 0; 
         }
+    }
+
+    public override float GetCachedValue(int index)
+    {
+        return index == 0 ? CachedValue : 0;
     }
 
     public override CWorldNode Copy()
@@ -27,6 +34,8 @@ public class CWorldThresholdInitMaskNode : CWorldParameterNode
         {
             Name = Name,
             Threshold = Threshold,
+            MaskValueIndex = MaskValueIndex,
+            ChildValueIndex = ChildValueIndex,
         };
     }
 

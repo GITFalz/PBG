@@ -3,44 +3,51 @@ using OpenTK.Mathematics;
 public class CWorldCombineNode : CWorldParameterNode
 {
     public float First {
-        get => FirstNode.CachedValue;
+        get => FirstNode.GetCachedValue(FirstValueIndex);
         set => FirstNode.SetValue(value);
     }
 
     public float Second {
-        get => SecondNode.CachedValue;
+        get => SecondNode.GetCachedValue(SecondValueIndex);
         set => SecondNode.SetValue(value);
     }
 
     public CWorldGetterNode FirstNode = new CWorldEmptyNode("FirstNode");
+    public int FirstValueIndex = 0;
     public CWorldGetterNode SecondNode = new CWorldEmptyNode("SecondNode");
+    public int SecondValueIndex = 1;
 
     public override void Init(Vector2 position)
     {
         FirstNode.Init(position);
         SecondNode.Init(position);
     }
-
-    public override Block GetBlock(int y)
+    
+    public override float GetCachedValue(int index)
     {
-        if (FirstNode.GetBlock(y, out Block firstBlock))
+        return index == 0 ? CachedValue : 0;
+    }
+
+    public override Block GetBlock(int y, int index = 0)
+    {
+        if (FirstNode.GetBlock(y, out Block firstBlock, FirstValueIndex))
             return firstBlock;
 
-        if (SecondNode.GetBlock(y, out Block secondBlock))
+        if (SecondNode.GetBlock(y, out Block secondBlock, SecondValueIndex))
             return secondBlock;
-        
+
         return Block.Air;
     }
 
-    public override bool GetBlock(int y, out Block block)
+    public override bool GetBlock(int y, out Block block, int index = 0)
     {
-        if (FirstNode.GetBlock(y, out Block firstBlock))
+        if (FirstNode.GetBlock(y, out Block firstBlock, FirstValueIndex))
         {
             block = firstBlock;
             return true;
         }
 
-        if (SecondNode.GetBlock(y, out Block secondBlock))
+        if (SecondNode.GetBlock(y, out Block secondBlock, SecondValueIndex))
         {
             block = secondBlock;
             return true;
@@ -57,6 +64,8 @@ public class CWorldCombineNode : CWorldParameterNode
             Name = Name,
             First = First,
             Second = Second,
+            FirstValueIndex = FirstValueIndex,
+            SecondValueIndex = SecondValueIndex,
         };
     }
 

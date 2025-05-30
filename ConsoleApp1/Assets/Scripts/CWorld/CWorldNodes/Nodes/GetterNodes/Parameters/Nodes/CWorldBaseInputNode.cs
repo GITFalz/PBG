@@ -4,7 +4,7 @@ public class CWorldBaseInputNode : CWorldParameterNode
 {
     public float Value
     {
-        get => InputNode.CachedValue;
+        get => InputNode.GetCachedValue(InputNodeIndex);
         set => InputNode.SetValue(value);
     }
 
@@ -12,6 +12,7 @@ public class CWorldBaseInputNode : CWorldParameterNode
     public BaseInputOperationType Type;
 
     public CWorldGetterNode InputNode = new CWorldEmptyNode("Empty"); 
+    public int InputNodeIndex = 0;
 
     public CWorldBaseInputNode(BaseInputOperationType type) : base()
     {
@@ -22,7 +23,12 @@ public class CWorldBaseInputNode : CWorldParameterNode
     public override void Init(Vector2 position)
     {
         InputNode.Init(position);
-        CachedValue = Operation.GetValue(InputNode.CachedValue);
+        CachedValue = Operation.GetValue(Value);
+    }
+    
+    public override float GetCachedValue(int index)
+    {
+        return index == 0 ? CachedValue : 0;
     }
 
     public override CWorldNode Copy()
@@ -31,7 +37,8 @@ public class CWorldBaseInputNode : CWorldParameterNode
         {
             Name = Name,
             Value = Value,
-        };;
+            InputNodeIndex = InputNodeIndex,
+        };
     }
 
     public override void Copy(CWorldNode copiedNode, Dictionary<string, CWorldNode> copiedNodes, Dictionary<CWorldNode, string> nodeNameMap)
