@@ -3,6 +3,8 @@ using OpenTK.Mathematics;
 public class UICollection : UIElement
 {
     public List<UIElement> Elements = new List<UIElement>();
+    
+    public bool IgnoreInvisibleElements = false;
 
     /*
         ---Important!---
@@ -14,14 +16,14 @@ public class UICollection : UIElement
         2. to position the child correctly based on it's anchor type.
     */
     public UICollection(
-        string name, 
+        string name,
         UIController controller,
-        AnchorType anchorType, 
-        PositionType positionType, 
-        Vector3 pivot, 
-        Vector2 scale, 
-        Vector4 offset, 
-        float rotation) : 
+        AnchorType anchorType,
+        PositionType positionType,
+        Vector3 pivot,
+        Vector2 scale,
+        Vector4 offset,
+        float rotation) :
         base(name, controller, anchorType, positionType, pivot, scale, offset, rotation)
     {
         ResetInit();

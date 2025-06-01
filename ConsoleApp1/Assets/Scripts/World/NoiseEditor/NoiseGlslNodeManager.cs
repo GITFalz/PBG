@@ -22,7 +22,8 @@ public static class NoiseGlslNodeManager
     private static string NoiseFragmentPath;
     private static string NoiseFragmentPathCopy;
 
-    private static int _lineInsert = 404; // The line where the new lines will be inserted in the shader file
+    private static int _lineInsert = 434; // The line where the new lines will be inserted in the shader file
+    private static string[] _startingLines = [];
 
     static NoiseGlslNodeManager()
     {
@@ -38,6 +39,17 @@ public static class NoiseGlslNodeManager
         NoiseFragmentPath = Path.Combine(Game.shaderPath, NoiseFragmentFile);
         string fileName = NoiseFragmentFile.Replace(".frag", "_copy.frag");
         NoiseFragmentPathCopy = Path.Combine(Game.shaderPath, fileName);
+
+        List<string> startingLines = [];
+        string[] lines = File.ReadAllLines(NoiseFragmentPath);
+        for (int i = 0; i < lines.Length; i++)
+        {
+            var line = lines[i];
+            if (line.EndsWith("// Start line"))
+                _lineInsert = i + 1;
+            startingLines.Add(line);
+        }
+        _startingLines = [.. startingLines];
     }
 
     public static void Compile()
@@ -47,7 +59,7 @@ public static class NoiseGlslNodeManager
 
     public static void Compile(List<ConnectorNode> nodes)
     {
-        List<string> lines = File.ReadAllLines(NoiseFragmentPath).ToList();
+        List<string> lines = [.. _startingLines];
         int lineIndex = _lineInsert;
         
         List<float> values = [];

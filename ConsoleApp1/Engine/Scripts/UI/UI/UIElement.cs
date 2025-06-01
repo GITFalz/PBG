@@ -18,6 +18,7 @@ public abstract class UIElement
     public Vector2 Scale = (100, 100);
     public Vector2 newScale = (100, 100);
     public Vector4 Offset = (0, 0, 0, 0);  
+    public Vector4 AddedOffset = (0, 0, 0, 0); // Used for collections to add offset to the elements
 
     public float Rotation = 0f;
     public bool Rotated = false;
@@ -114,7 +115,7 @@ public abstract class UIElement
         }
 
         GetTransformation();
-        if ((int)AnchorType >= 9) newScale = _dimensions[(int)AnchorType - 9](Width, Height, Scale, Offset);
+        if ((int)AnchorType >= 9) newScale = _dimensions[(int)AnchorType - 9](Width, Height, Scale, Offset + AddedOffset);
         SetScale(newScale);
         Center = Origin + new Vector3(newScale.X / 2, newScale.Y / 2, 0);
 
@@ -271,7 +272,7 @@ public abstract class UIElement
     public Vector3 GetTransformedOrigin()
     {
         int index = (int)AnchorType;
-        _transformedOrigin = origins[index](Width, Height, Scale, Offset);
+        _transformedOrigin = origins[index](Width, Height, Scale, Offset + AddedOffset);
         return _transformedOrigin;
     }
 

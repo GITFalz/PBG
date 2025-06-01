@@ -34,6 +34,6 @@ public class CWorldEmptyNode : CWorldGetterNode
 
     public override float GetCachedValue(int index)
     {
-        return 0;
+        return Value;
     }
 }

@@ -11,6 +11,7 @@ public class MinMaxInputOperationConnectorNode : ConnectorNode
 
     public MinMaxInputOperations Operation;
     public MinMaxInputOperationType Type;
+    
 
     public float Min {
         get {

@@ -14,22 +14,58 @@ public class VoronoiConnectorNode : ConnectorNode
 
     public VoronoiOperation Operation;
     public VoronoiOperationType Type;
+    public int Flag = 0;
+    
+
+    public bool Region => NodePrefab.Region;
      
+    public float Value
+    {
+        get
+        {
+            return _value;
+        }
+        set
+        {
+            _value = value;
+            NodePrefab.ValueInputField.SetText(NoSpace(_value));
+        }
+    }
+
+    public float Threshold
+    {
+        get
+        {
+            return _threshold;
+        }
+        set
+        {
+            _threshold = value;
+            NodePrefab.ThresholdInputField.SetText(NoSpace(_threshold));
+        }
+    }
 
     public float Scale
     {
-        get {
-            return _scale; 
-        } set {
+        get
+        {
+            return _scale;
+        }
+        set
+        {
             _scale = value;
             NodePrefab.ScaleInputField.SetText(NoSpace(_scale));
         }
     }
+    
     public Vector2 Offset
     {
-        get {
-            return _offset; 
-        } set {
+        get
+        {
+            return _offset;
+        }
+        set
+        {
             _offset = value;
             _offsetX = _offset.X;
             _offsetY = _offset.Y;
@@ -57,16 +93,20 @@ public class VoronoiConnectorNode : ConnectorNode
         }
     }
 
+    private float _value = 0.0f;
+    private float _threshold = 0.0f;
     private float _scale = 1.0f;
     private Vector2 _offset = (0.0f, 0.0f);
     private float _offsetX = 0.0f;
     private float _offsetY = 0.0f;
 
+    private int _valueIndex = -1;
+    private int _thresholdIndex = -1;
     private int _scaleIndex = -1;
     private int _offsetXIndex = -1;
     private int _offsetYIndex = -1;
 
-    public VoronoiConnectorNode(UIVoronoiPrefab voronoiNodePrefab, VoronoiOperationType type)
+    public VoronoiConnectorNode(UIVoronoiPrefab voronoiNodePrefab, VoronoiOperationType type) : base()
     {
         NodePrefab = voronoiNodePrefab;
         InputGateConnector1 = new InputGateConnector(voronoiNodePrefab.InputButton1, this);
@@ -75,33 +115,50 @@ public class VoronoiConnectorNode : ConnectorNode
         OutputCellXConnector = new OutputGateConnector(NodePrefab.OutputCellXButton, this);
         OutputCellYConnector = new OutputGateConnector(NodePrefab.OutputCellYButton, this);
 
-
         NodePrefab.InputButton1.SetOnClick(() => InputConnectionTest(InputGateConnector1));
         NodePrefab.InputButton2.SetOnClick(() => InputConnectionTest(InputGateConnector2));
+
         NodePrefab.OutputButton.SetOnClick(() => OutputConnectionTest(Output));
         NodePrefab.OutputCellXButton.SetOnClick(() => OutputConnectionTest(OutputCellXConnector));
         NodePrefab.OutputCellYButton.SetOnClick(() => OutputConnectionTest(OutputCellYConnector));
 
+        NodePrefab.ValueInputField.SetOnTextChange(() => SetValue(ref _value, NodePrefab.ValueInputField, 0.0f, _valueIndex));
+        NodePrefab.ThresholdInputField.SetOnTextChange(() => SetValue(ref _threshold, NodePrefab.ThresholdInputField, 0.0f, _thresholdIndex));
         NodePrefab.ScaleInputField.SetOnTextChange(() => SetValue(ref _scale, NodePrefab.ScaleInputField, 1.0f, _scaleIndex));
         NodePrefab.OffsetXInputField.SetOnTextChange(() => SetValue(ref _offset.X, NodePrefab.OffsetXInputField, 0.0f, _offsetXIndex));
         NodePrefab.OffsetYInputField.SetOnTextChange(() => SetValue(ref _offset.Y, NodePrefab.OffsetYInputField, 0.0f, _offsetYIndex));
 
+        NodePrefab.ValueTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        NodePrefab.ThresholdTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
         NodePrefab.ScaleTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
         NodePrefab.OffsetXTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
         NodePrefab.OffsetYTextField.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
 
-        NodePrefab.ScaleTextField.SetOnHold(() => SetSlideValue(ref _scale, NodePrefab.ScaleInputField, 5f, _scaleIndex)); 
+        NodePrefab.ValueTextField.SetOnHold(() => SetSlideValue(ref _value, NodePrefab.ValueInputField, 5f, _valueIndex));
+        NodePrefab.ThresholdTextField.SetOnHold(() => SetSlideValue(ref _threshold, NodePrefab.ThresholdInputField, 5f, _thresholdIndex));
+        NodePrefab.ScaleTextField.SetOnHold(() => SetSlideValue(ref _scale, NodePrefab.ScaleInputField, 5f, _scaleIndex));
         NodePrefab.OffsetXTextField.SetOnHold(() => SetSlideValue(ref _offset.X, NodePrefab.OffsetXInputField, 5f, _offsetXIndex));
         NodePrefab.OffsetYTextField.SetOnHold(() => SetSlideValue(ref _offset.Y, NodePrefab.OffsetYInputField, 5f, _offsetYIndex));
 
+        NodePrefab.ValueTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
+        NodePrefab.ThresholdTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
         NodePrefab.ScaleTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
         NodePrefab.OffsetXTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
         NodePrefab.OffsetYTextField.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
 
         NodePrefab.Collection.SetOnClick(() => SelectNode(this));
 
-        Operation = VoronoiOperation.GetVoronoiOperation(type);
+        NodePrefab.RegionToggleAction = () =>
+        {
+            Flag = 0;
+            if (Region) Flag += VoronoiOperation.InputRegion;
+
+            Operation = VoronoiOperation.GetVoronoiOperation(Type, Flag);
+        };
+
+        Operation = VoronoiOperation.GetVoronoiOperation(type, 0);
         Type = type;
+        Flag = 0;
     }
 
     public override int GetIndex(OutputGateConnector output)
@@ -135,13 +192,13 @@ public class VoronoiConnectorNode : ConnectorNode
 
     public override string GetLine()
     {
-        string scaleValue = _scaleIndex != -1 ? $"values[{_scaleIndex}]" : Scale.ToString();
+        string valueValue = _valueIndex != -1 ? $"values[{_valueIndex}]" : NoSpace(Value);
+        string thresholdValue = _thresholdIndex != -1 ? $"values[{_thresholdIndex}]" : NoSpace(Threshold);
+        string scaleValue = _scaleIndex != -1 ? $"values[{_scaleIndex}]" : NoSpace(Scale);
         string variableName = Output.VariableName;
-
         string offsetX = InputGateConnector1.IsConnected && InputGateConnector1.OutputGateConnector != null
             ? InputGateConnector1.OutputGateConnector.VariableName
             : ( _offsetXIndex != -1 ? $"values[{_offsetXIndex}]" : NoSpace(OffsetX));
-        
         string offsetY = InputGateConnector2.IsConnected && InputGateConnector2.OutputGateConnector != null
             ? InputGateConnector2.OutputGateConnector.VariableName
             : ( _offsetYIndex != -1 ? $"values[{_offsetYIndex}]" : NoSpace(OffsetY));
@@ -149,7 +206,7 @@ public class VoronoiConnectorNode : ConnectorNode
         string scale = $"vec2({variableName}Scale, {variableName}Scale)";
         string offset = $"vec2({offsetX}, {offsetY})";
 
-        return $"    float {variableName}Scale = {scaleValue}; vec2 {variableName}g; float {variableName} = {Operation.GetFunction(scale, offset, variableName+"g")}; float {OutputCellXConnector.VariableName} = {variableName}g.x; float {OutputCellYConnector.VariableName} = {variableName}g.y;";
+        return $"    float {variableName}Scale = {scaleValue}; vec2 {variableName}g; float {variableName} = {Operation.GetFunction(scale, offset, valueValue, thresholdValue, variableName+"g")}; float {OutputCellXConnector.VariableName} = {variableName}g.x; float {OutputCellYConnector.VariableName} = {variableName}g.y;";
     }
 
     public override List<ConnectorNode> GetConnectedNodes()
@@ -278,6 +335,31 @@ public class VoronoiConnectorNode : ConnectorNode
         _scaleIndex = index;
         values.Add(Scale);
         index++;
+
+        if (NodePrefab.Region)
+        {
+            if (!InputGateConnector1.IsConnected && !InputGateConnector2.IsConnected)
+            {
+                _valueIndex = index;
+                values.Add(Value);
+                index++;
+            }
+            else
+            {
+                _valueIndex = -1;
+            }
+
+            if (!InputGateConnector1.IsConnected && !InputGateConnector2.IsConnected)
+            {
+                _thresholdIndex = index;
+                values.Add(Threshold);
+                index++;
+            }
+            else
+            {
+                _thresholdIndex = -1;
+            }
+        }
 
         if (!InputGateConnector1.IsConnected)
         {

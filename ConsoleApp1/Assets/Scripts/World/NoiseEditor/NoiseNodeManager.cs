@@ -251,7 +251,7 @@ public static class NoiseNodeManager
             }
             else if (node is VoronoiConnectorNode voronoiNode)
             {
-                CWorldVoronoiNode cWorldVoronoiNode = new CWorldVoronoiNode(voronoiNode.Type)
+                CWorldVoronoiNode cWorldVoronoiNode = new CWorldVoronoiNode(voronoiNode.Type, voronoiNode.Flag)
                 {
                     Name = node.GetOutputGateConnectors()[0].VariableName,
                     Scale = (voronoiNode.Scale, voronoiNode.Scale),

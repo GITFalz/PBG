@@ -2,20 +2,19 @@ using OpenTK.Mathematics;
 
 public class CWorldVoronoiNode : CWorldParameterNode
 {
-    public static CWorldVoronoiNode Basic => new CWorldVoronoiNode(VoronoiOperationType.Basic);
-    public static CWorldVoronoiNode Edge => new CWorldVoronoiNode(VoronoiOperationType.Edge);
-    public static CWorldVoronoiNode Distance => new CWorldVoronoiNode(VoronoiOperationType.Distance);
-
     public float[] CachedValues = new float[3];
 
-    public Vector2 Offset = (0, 0);
+    public float Value = 0;
+    public float Threshold = 0.0f;
     public Vector2 Scale = (1, 1);
+    public Vector2 Offset = (0, 0);
     public float Amplitude = 1.0f;
     public bool Invert = false;
 
     public float NoiseValue = 0;
     public VoronoiOperation VoronoiOperation;
     public VoronoiOperationType Type;
+    public int Flag = 0;
 
     public CWorldGetterNode InputNode1 = new CWorldEmptyNode("Empty");
     public int InputNode1Index = 0;
@@ -37,10 +36,11 @@ public class CWorldVoronoiNode : CWorldParameterNode
 
     private Vector2 _initPosition = (float.MaxValue, float.MaxValue);
 
-    public CWorldVoronoiNode(VoronoiOperationType type) : base()
+    public CWorldVoronoiNode(VoronoiOperationType type, int flag) : base()
     {
-        VoronoiOperation = VoronoiOperation.GetVoronoiOperation(type);
+        VoronoiOperation = VoronoiOperation.GetVoronoiOperation(type, flag);
         Type = type;
+        Flag = flag;
     }
 
     public override void Init(Vector2 position)
@@ -67,7 +67,7 @@ public class CWorldVoronoiNode : CWorldParameterNode
     {
         Vector2 sampleCoord = position * Scale;
         Vector2 pos = sampleCoord + Offset;
-        return VoronoiOperation.GetValue(pos, out cell);
+        return VoronoiOperation.GetValue(pos, Value, Threshold, out cell);
     }
 
     public override float GetCachedValue(int index)
@@ -81,7 +81,7 @@ public class CWorldVoronoiNode : CWorldParameterNode
 
     public override CWorldNode Copy()
     {
-        return new CWorldVoronoiNode(Type)
+        return new CWorldVoronoiNode(Type, Flag)
         {
             Name = Name,
             Offset = Offset,
