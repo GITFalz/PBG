@@ -50,40 +50,116 @@ public class CurveWindow
 
     public UICollection Collection;
     public UICollection ButtonCollection;
+    public UICollection InfoCollection;
+    public UIInputField XPositionField;
+    public UIInputField YPositionField;
+    private float _oldXPosition = 1f;
+    private float _oldYPosition = 0f;
 
     public UIButton X0Button;
     public UIButton X1Button;
 
     public UIButton? SelectedButton = null;
+    public UIButton DataSelectedButton;
 
     private bool _isHoveringOver = false;
 
     public CurveWindow(UIController controller, Vector2 position, Vector4 offset, Vector2 size)
     {
         Controller = controller;
-        Position = position;
+        Position = position + (0, 66);
         size -= (14, 14);
         Size = size;
 
         ProjectionMatrix = UIController.OrthographicProjection;
 
-        Collection = new UICollection("CurveCollection", controller, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), size + (14, 14), offset, 0);
+        Collection = new UICollection("CurveCollection", controller, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), size + (14, 80), offset, 0);
 
         UIImage background = new UIImage("Background", controller, AnchorType.ScaleFull, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), size, (0, 0, 0, 0), 0, 11, (10, 0.05f));
         background.SetOnHover(() => { _isHoveringOver = true; });
-        ButtonCollection = new UICollection("ButtonCollection", controller, AnchorType.MiddleCenter, PositionType.Absolute, (0, 0, 0), size, (0, 0, 0, 0), 0) 
+
+        InfoCollection = new UICollection("InfoCollection", controller, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (size.X + 14, 72), (0, 0, 0, 0), 0)
         {
             Depth = 10
         };
 
-        X0Button = new UIButton("X0Button", controller, AnchorType.TopLeft, PositionType.Absolute, (0.7f, 0.7f, 0.7f, 1f), (0, 0, 0), (20, 20), (-10, size.Y - 10, 0, 0), 0, 10, (10, 0.05f), UIState.Interactable);
-        X1Button = new UIButton("X1Button", controller, AnchorType.TopLeft, PositionType.Absolute, (0.7f, 0.7f, 0.7f, 1f), (0, 0, 0), (20, 20), (size.X - 10, -10, 0, 0), 0, 10, (10, 0.05f), UIState.Interactable);
+        UIImage infoBackground = new UIImage("InfoBackground", controller, AnchorType.ScaleFull, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (size.X, 30), (0, 0, 0, 0), 0, 10, (10, 0.05f));
+
+        UICollection buttonXPosition = new UICollection("ButtonXPosition", controller, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (size.X + 14, 30), (0, 6, 0, 0), 0);
+
+        UIText xPositionText = new UIText("XPositionText", controller, AnchorType.MiddleLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (size.X + 14 - 10, 20), (12, 0, 0, 0), 0);
+        xPositionText.SetText("X Position", 1.2f).SetTextType(TextType.Alphabetic);
+
+        UIImage xPositionFieldBackground = new UIImage("XPositionFieldBackground", controller, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (size.X + 14 - 10, 24), (-4, 0, 0, 0), 0, 11, (10, 0.05f));
+        XPositionField = new UIInputField("XPositionField", controller, AnchorType.MiddleRight, PositionType.Relative, Vector4.One, (0, 0, 0), (size.X + 14 - 10, 24), (-4, 0, 0, 0), 0, 11, (10, 0.05f));
+        XPositionField.SetMaxCharCount(10).SetText("0.0", 1.2f).SetTextType(TextType.Decimal);
+        xPositionFieldBackground.SetScale(XPositionField.newScale + (16, 16));
+        XPositionField.SetOnTextChange(() =>
+        {
+            float newXPosition = Float.Parse(XPositionField.Text);
+            if (newXPosition != _oldXPosition && DataSelectedButton != null)
+            {
+                if (!ButtonIndex.TryGetValue(DataSelectedButton, out int buttonIndex) || buttonIndex == 0 || buttonIndex == Buttons.Count - 1)
+                    return;
+
+                float deltaX = newXPosition - _oldXPosition;
+                DataSelectedButton.Offset = new Vector4((newXPosition * Size.X) - 10, DataSelectedButton.Offset.Y, 0, 0);
+                DataSelectedButton.Align();
+                DataSelectedButton.UpdateTransformation();
+                CheckButtonSwap(DataSelectedButton, deltaX > 0);
+                _oldXPosition = newXPosition;
+                UpdatePoints();
+            }
+        });
+
+        buttonXPosition.AddElements(xPositionText, xPositionFieldBackground, XPositionField);
+
+        UICollection buttonYPosition = new UICollection("ButtonYPosition", controller, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (size.X + 14, 30), (0, 36, 0, 0), 0);
+
+        UIText yPositionText = new UIText("YPositionText", controller, AnchorType.MiddleLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (size.X + 14 - 10, 20), (12, 0, 0, 0), 0);
+        yPositionText.SetText("Y Position", 1.2f).SetTextType(TextType.Alphabetic);
+
+        UIImage yPositionFieldBackground = new UIImage("YPositionFieldBackground", controller, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (size.X + 14 - 10, 24), (-4, 0, 0, 0), 0, 11, (10, 0.05f));
+        YPositionField = new UIInputField("YPositionField", controller, AnchorType.MiddleRight, PositionType.Relative, Vector4.One, (0, 0, 0), (size.X + 14 - 10, 24), (-4, 0, 0, 0), 0, 11, (10, 0.05f));
+        YPositionField.SetMaxCharCount(10).SetText("0.0", 1.2f).SetTextType(TextType.Decimal);
+        yPositionFieldBackground.SetScale(YPositionField.newScale + (16, 16));
+        YPositionField.SetOnTextChange(() =>
+        {
+            float newYPosition = Float.Parse(YPositionField.Text);
+            if (newYPosition != _oldYPosition && DataSelectedButton != null)
+            {
+                float deltaY = newYPosition - _oldYPosition;
+                DataSelectedButton.Offset = new Vector4(DataSelectedButton.Offset.X, ((1 - newYPosition) * Size.Y) - 10, 0, 0);
+                DataSelectedButton.Align();
+                DataSelectedButton.UpdateTransformation();
+                CheckButtonSwap(DataSelectedButton, deltaY > 0);
+                _oldYPosition = newYPosition;
+                UpdatePoints();
+            }
+        });
+
+        buttonYPosition.AddElements(yPositionText, yPositionFieldBackground, YPositionField);
+
+
+        InfoCollection.AddElements(infoBackground, buttonXPosition, buttonYPosition);
+        
+        ButtonCollection = new UICollection("ButtonCollection", controller, AnchorType.BottomCenter, PositionType.Relative, (0, 0, 0), size, (0, -10, 0, 0), 0)
+        {
+            Depth = 10
+        };
+
+        X0Button = new UIButton("X0Button", controller, AnchorType.TopLeft, PositionType.Relative, (0.7f, 0.7f, 0.7f, 1f), (0, 0, 0), (20, 20), (-10, size.Y - 10, 0, 0), 0, 10, (10, 0.05f), UIState.Interactable);
+        X1Button = new UIButton("X1Button", controller, AnchorType.TopLeft, PositionType.Relative, (0.7f, 0.7f, 0.7f, 1f), (0, 0, 0), (20, 20), (size.X - 10, -10, 0, 0), 0, 10, (10, 0.05f), UIState.Interactable);
 
         Buttons.AddRange(X0Button, X1Button);
         ButtonIndex.Add(X0Button, 0);
         ButtonIndex.Add(X1Button, 1);
 
-        X0Button.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        X0Button.SetOnClick(() =>
+        {
+            Game.SetCursorState(CursorState.Grabbed);
+            SetDataSelectedButton(X1Button);
+        });
         X0Button.SetOnHold(() => 
         {
             Vector2 mouseDelta = Input.GetMouseDelta();
@@ -94,12 +170,17 @@ public class CurveWindow
                 X0Button.Offset = offset;
                 X0Button.Align();
                 X0Button.UpdateTransformation();
+                SetPositionText(X0Button);
                 UpdatePoints();
             }
         });
         X0Button.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
 
-        X1Button.SetOnClick(() => Game.SetCursorState(CursorState.Grabbed));
+        X1Button.SetOnClick(() =>
+        {
+            Game.SetCursorState(CursorState.Grabbed);
+            SetDataSelectedButton(X1Button);
+        });
         X1Button.SetOnHold(() => 
         {
             Vector2 mouseDelta = Input.GetMouseDelta();
@@ -110,6 +191,7 @@ public class CurveWindow
                 X1Button.Offset = offset;
                 X1Button.Align();
                 X1Button.UpdateTransformation();
+                SetPositionText(X1Button);
                 UpdatePoints();
             }
         });
@@ -117,9 +199,28 @@ public class CurveWindow
 
         ButtonCollection.AddElements(X0Button, X1Button);
 
-        Collection.AddElements(background, ButtonCollection);
+        Collection.AddElements(background, InfoCollection, ButtonCollection);
+
+        DataSelectedButton = X0Button;
+        SetDataSelectedButton(X0Button);
 
         UpdatePoints();
+    }
+
+    public void SetPositionText(UIButton button)
+    {
+        float xPosition = (button.Offset.X + 10) / Size.X;
+        float yPosition = 1f - ((button.Offset.Y + 10) / Size.Y);
+
+        XPositionField.SetText(Float.Str(xPosition)).UpdateCharacters();
+        YPositionField.SetText(Float.Str(yPosition)).UpdateCharacters();
+    }
+
+    public void SetDataSelectedButton(UIButton button)
+    {
+        XPositionField.SetText(Float.Str((button.Offset.X + 10) / Size.X)).UpdateCharacters();
+        YPositionField.SetText(Float.Str(1f - ((button.Offset.Y + 10) / Size.Y))).UpdateCharacters();
+        DataSelectedButton = button;
     }
 
     public void MoveNode(Vector2 delta)
@@ -129,8 +230,13 @@ public class CurveWindow
 
     public void UpdateButton(UIButton button)
     {
-        bool updatePoints = false;
         Vector2 mouseDelta = Input.GetMouseDelta();
+        UpdateButton(button, mouseDelta);
+    }
+
+    public void UpdateButton(UIButton button, Vector2 mouseDelta)
+    {
+        bool updatePoints;
         if (mouseDelta != Vector2.Zero)
         {
             Vector4 offset = button.Offset + (mouseDelta.X, mouseDelta.Y, 0, 0);
@@ -140,12 +246,23 @@ public class CurveWindow
             button.UpdateTransformation();
             updatePoints = true;
         }
+        else
+        {
+            return;
+        }
 
+        if (CheckButtonSwap(button, mouseDelta.X > 0) || updatePoints)
+            UpdatePoints();
+    }
+
+    public bool CheckButtonSwap(UIButton button, bool supX)
+    {
+        bool updatePoints = false;
         int index = ButtonIndex[button];
         if (index == 0 || index == Buttons.Count - 1) 
-            return;
+            return false;
 
-        if (mouseDelta.X > 0)
+        if (supX)
         {
             int nextIndex = index + 1;
             UIButton swapButton = Buttons[index + 1];
@@ -173,7 +290,7 @@ public class CurveWindow
             }
 
         }
-        else if (mouseDelta.X < 0)
+        else
         {
             int prevIndex = index - 1;
             UIButton swapButton = Buttons[index - 1];
@@ -201,10 +318,7 @@ public class CurveWindow
             }
         }
 
-        if (updatePoints)
-        {
-            UpdatePoints();
-        }
+        return updatePoints;
     }
 
     public void SwapButton(int index1, int index2, UIButton button1, UIButton button2)
@@ -242,8 +356,13 @@ public class CurveWindow
         }
         Buttons.Insert(index, button);
         ButtonIndex.Add(button, index);
-        button.SetOnClick(() => { Game.SetCursorState(CursorState.Grabbed); SelectedButton = button; });
-        button.SetOnHold(() => UpdateButton(button));
+        button.SetOnClick(() =>
+        {
+            Game.SetCursorState(CursorState.Grabbed);
+            SelectedButton = button;
+            SetDataSelectedButton(button);
+        });
+        button.SetOnHold(() => { UpdateButton(button); SetPositionText(button); });
         button.SetOnRelease(() => Game.SetCursorState(CursorState.Normal));
         ButtonCollection.AddElement(button);
         return button;
@@ -294,7 +413,10 @@ public class CurveWindow
 
         if (Input.IsKeyPressed(Keys.A))
         {
-            Controller.AddElement(AddButton());
+            UIButton button = AddButton();
+            Controller.AddElement(button);
+            SelectedButton = button;
+            SetDataSelectedButton(button);
             UpdateButtons();
         }
 
