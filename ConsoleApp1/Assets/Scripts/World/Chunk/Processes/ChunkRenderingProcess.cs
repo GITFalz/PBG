@@ -22,7 +22,7 @@ public class ChunkRenderingProcess : ThreadProcess
     {
         OcclusionSuccess = GenerateOcclusion(Entry) != -1;
         if (!OcclusionSuccess) return;
-        GenerationSuccess = GenerateMesh(Entry) != -1;
+        GenerationSuccess = GenerateGreedyMesh(Entry.Chunk) != -1;
         Success = OcclusionSuccess && GenerationSuccess;
     }
 
@@ -134,6 +134,7 @@ public class ChunkRenderingProcess : ThreadProcess
         int[] blockMap = new int[WIDTH * DEPTH];
         int index = 0;
         chunkData.ClearMeshData();
+        Vector3i chunkWorldPosition = chunkData.GetWorldPosition();
         
         for (int y = 0; y < 32; y++)
         {
@@ -143,7 +144,7 @@ public class ChunkRenderingProcess : ThreadProcess
                 {
                     int blockMapIndex = x + (z << 5);
                     Block block = chunkData[index];
-                    
+
                     if (block.IsSolid())
                     {
                         int blockPillar = blockMap[blockMapIndex];
@@ -160,7 +161,7 @@ public class ChunkRenderingProcess : ThreadProcess
                         {
                             return -1;
                         }
-                        
+
                         for (int side = 0; side < 6; side++)
                         {
                             byte sideShift = (byte)(1 << side);
@@ -169,41 +170,37 @@ public class ChunkRenderingProcess : ThreadProcess
                             {
                                 bool quit = false;
                                 int i = index;
-                                int loop = VoxelData.FirstLoopBase[side](y, z);
                                 int height = 1;
                                 int width = 1;
 
                                 _checks[index] |= sideShift;
 
-                                while (loop > 0)
+                                for (int a = 0; a < VoxelData.FirstLoopBase[side](y, z); a++)
                                 {
                                     i += VoxelData.FirstOffsetBase[side];
-                                    
+
                                     Block blockI = chunkData[i];
-                                    
+
                                     if (blockI.IsAir() || (blockI.blockData & VoxelData.OcclusionMask[side]) != 0 || (_checks[i] & sideShift) != 0 || (blockI.blockData & 15) != blockId)
                                         break;
 
                                     _checks[i] |= sideShift;
 
                                     height++;
-                                    loop--;
                                 }
 
                                 i = index;
-                                loop = VoxelData.SecondLoopBase[side](x, z);
-
                                 int[] ups = new int[height];
-                                
-                                while (loop > 0)
+
+                                for (int a = 0; a < VoxelData.SecondLoopBase[side](x, z); a++)
                                 {
                                     i += VoxelData.SecondOffsetBase[side];
                                     int up = i;
-                                    
+
                                     for (int j = 0; j < height; j++)
                                     {
                                         Block upBlock = chunkData[up];
-                                        
+
                                         if (upBlock.IsAir() || (upBlock.blockData & VoxelData.OcclusionMask[side]) != 0 || (_checks[up] & sideShift) != 0 || (upBlock.blockData & 15) != blockId)
                                         {
                                             quit = true;
@@ -213,16 +210,15 @@ public class ChunkRenderingProcess : ThreadProcess
                                         ups[j] = up;
                                         up += VoxelData.FirstOffsetBase[side];
                                     }
-                                    
+
                                     if (quit) break;
 
-                                    foreach (int upIndex in ups)
+                                    for (int j = 0; j < ups.Length; j++)
                                     {
-                                        _checks[upIndex] |= sideShift;
+                                        _checks[ups[j]] |= sideShift;
                                     }
 
                                     width++;
-                                    loop--;
                                 }
 
                                 Vector3i position = (x, y, z);
@@ -233,7 +229,7 @@ public class ChunkRenderingProcess : ThreadProcess
                             }
                         }
                     }
-                    
+
                     index++;
                 }
             }

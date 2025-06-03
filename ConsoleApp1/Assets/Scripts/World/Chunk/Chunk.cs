@@ -61,11 +61,6 @@ public class Chunk
     {
         public Vector3 Position;
         public Vector2i TextureIndex;
-
-        public override string ToString()
-        {
-            return $"Position: {Position}, TextureIndex: {TextureIndex}";
-        }
     }
 
     private VAO _chunkVao = new VAO();

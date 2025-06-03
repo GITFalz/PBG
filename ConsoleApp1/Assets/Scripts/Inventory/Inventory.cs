@@ -446,9 +446,6 @@ public class Inventory
         UIController.RenderDepthTest();
 
         InventoryShader.Bind();
-        IconSSBO.Bind(0);
-        ItemDataManager.Image.Bind(TextureUnit.Texture0);
-        InventoryVAO.Bind();
 
         Matrix4 model = Matrix4.CreateTranslation(Position.X, Position.Y, 0.1f);
         Matrix4 projection = Matrix4.CreateOrthographicOffCenter(0, Game.Width, Game.Height, 0, -1, 1);
@@ -456,6 +453,10 @@ public class Inventory
         GL.UniformMatrix4(InventoryModelLocation, true, ref model);
         GL.UniformMatrix4(InventoryProjectionLocation, true, ref projection);
         GL.Uniform1(InventoryTextureLocation, 0);
+
+        IconSSBO.Bind(0);
+        ItemDataManager.Image.Bind(TextureUnit.Texture0);
+        InventoryVAO.Bind();
 
         GL.DrawArrays(PrimitiveType.Triangles, 0, VisibleItems * 6);
 

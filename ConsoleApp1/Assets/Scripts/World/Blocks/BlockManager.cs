@@ -17,7 +17,7 @@ public static class BlockManager
     {
         if (Blocks.TryGetValue(index, out block))
             return true;
-            
+
         block = null;
         return false;
     }
@@ -26,7 +26,7 @@ public static class BlockManager
     {
         return Blocks.ContainsKey(block.index);
     }
-    
+
     public static bool Exists(uint index)
     {
         return Blocks.ContainsKey(index);
@@ -39,7 +39,7 @@ public static class BlockManager
 
         return Blocks.TryAdd(block.index, block);
     }
-    
+
     public static bool Add(uint index)
     {
         return Blocks.TryAdd(index, new CWorldBlock(index));
@@ -49,7 +49,7 @@ public static class BlockManager
     {
         if (uv >= 6 || !Blocks.TryGetValue(index, out var block))
             return false;
-        
+
         block.SetIndices(uv, value);
         return true;
     }
@@ -76,6 +76,16 @@ public static class BlockManager
 
         BlockPriorityList = sortedValues;
         return sortedValues;
+    }
+
+    public static void Save()
+    {
+        
+    }
+
+    public static void Load()
+    {
+
     }
 }
 
