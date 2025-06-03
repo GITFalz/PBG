@@ -64,34 +64,32 @@ public class CurveWindow
 
     private bool _isHoveringOver = false;
 
-    public CurveWindow(UIController controller, Vector2 position, Vector4 offset, Vector2 size)
+    public CurveWindow(UIController controller, Vector2 position, Vector4 offset, Vector2 size) 
     {
         Controller = controller;
-        Position = position + (0, 66);
+        Position = position + (0, 98);
         size -= (14, 14);
         Size = size;
 
         ProjectionMatrix = UIController.OrthographicProjection;
 
-        Collection = new UICollection("CurveCollection", controller, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), size + (14, 80), offset, 0);
+        Collection = new UICollection("CurveCollection", controller, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), size + (14, 112), offset, 0);
 
-        UIImage background = new UIImage("Background", controller, AnchorType.ScaleFull, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), size, (0, 0, 0, 0), 0, 11, (10, 0.05f));
+        UIImage background = new UIImage("Background", controller, AnchorType.ScaleFull, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), size, (0, 98, 0, 0), 0, 11, (10, 0.05f));
         background.SetOnHover(() => { _isHoveringOver = true; });
 
-        InfoCollection = new UICollection("InfoCollection", controller, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (size.X + 14, 72), (0, 0, 0, 0), 0)
+        InfoCollection = new UICollection("InfoCollection", controller, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (size.X + 14, 72), (0, 17, 0, 0), 0)
         {
             Depth = 10
         };
 
-        UIImage infoBackground = new UIImage("InfoBackground", controller, AnchorType.ScaleFull, PositionType.Relative, (0.6f, 0.6f, 0.6f, 1f), (0, 0, 0), (size.X, 30), (0, 0, 0, 0), 0, 10, (10, 0.05f));
-
         UICollection buttonXPosition = new UICollection("ButtonXPosition", controller, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (size.X + 14, 30), (0, 6, 0, 0), 0);
 
-        UIText xPositionText = new UIText("XPositionText", controller, AnchorType.MiddleLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (size.X + 14 - 10, 20), (12, 0, 0, 0), 0);
+        UIText xPositionText = new UIText("XPositionText", controller, AnchorType.MiddleLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (size.X + 14 - 10, 20), (8, 0, 0, 0), 0);
         xPositionText.SetText("X Position", 1.2f).SetTextType(TextType.Alphabetic);
 
         UIImage xPositionFieldBackground = new UIImage("XPositionFieldBackground", controller, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (size.X + 14 - 10, 24), (-4, 0, 0, 0), 0, 11, (10, 0.05f));
-        XPositionField = new UIInputField("XPositionField", controller, AnchorType.MiddleRight, PositionType.Relative, Vector4.One, (0, 0, 0), (size.X + 14 - 10, 24), (-4, 0, 0, 0), 0, 11, (10, 0.05f));
+        XPositionField = new UIInputField("XPositionField", controller, AnchorType.MiddleRight, PositionType.Relative, Vector4.One, (0, 0, 0), (size.X + 14 - 10, 24), (-12, 0, 0, 0), 0, 11, (10, 0.05f));
         XPositionField.SetMaxCharCount(10).SetText("0.0", 1.2f).SetTextType(TextType.Decimal);
         xPositionFieldBackground.SetScale(XPositionField.newScale + (16, 16));
         XPositionField.SetOnTextChange(() =>
@@ -99,9 +97,9 @@ public class CurveWindow
             float newXPosition = Float.Parse(XPositionField.Text);
             if (newXPosition != _oldXPosition && DataSelectedButton != null)
             {
-                if (!ButtonIndex.TryGetValue(DataSelectedButton, out int buttonIndex) || buttonIndex == 0 || buttonIndex == Buttons.Count - 1)
+                if (DataSelectedButton.Name == "X0Button" || DataSelectedButton.Name == "X1Button")
                     return;
-
+                
                 float deltaX = newXPosition - _oldXPosition;
                 DataSelectedButton.Offset = new Vector4((newXPosition * Size.X) - 10, DataSelectedButton.Offset.Y, 0, 0);
                 DataSelectedButton.Align();
@@ -114,13 +112,13 @@ public class CurveWindow
 
         buttonXPosition.AddElements(xPositionText, xPositionFieldBackground, XPositionField);
 
-        UICollection buttonYPosition = new UICollection("ButtonYPosition", controller, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (size.X + 14, 30), (0, 36, 0, 0), 0);
+        UICollection buttonYPosition = new UICollection("ButtonYPosition", controller, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (size.X + 14, 30), (0, 40, 0, 0), 0);
 
-        UIText yPositionText = new UIText("YPositionText", controller, AnchorType.MiddleLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (size.X + 14 - 10, 20), (12, 0, 0, 0), 0);
+        UIText yPositionText = new UIText("YPositionText", controller, AnchorType.MiddleLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (size.X + 14 - 10, 20), (8, 0, 0, 0), 0);
         yPositionText.SetText("Y Position", 1.2f).SetTextType(TextType.Alphabetic);
 
         UIImage yPositionFieldBackground = new UIImage("YPositionFieldBackground", controller, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (size.X + 14 - 10, 24), (-4, 0, 0, 0), 0, 11, (10, 0.05f));
-        YPositionField = new UIInputField("YPositionField", controller, AnchorType.MiddleRight, PositionType.Relative, Vector4.One, (0, 0, 0), (size.X + 14 - 10, 24), (-4, 0, 0, 0), 0, 11, (10, 0.05f));
+        YPositionField = new UIInputField("YPositionField", controller, AnchorType.MiddleRight, PositionType.Relative, Vector4.One, (0, 0, 0), (size.X + 14 - 10, 24), (-12, 0, 0, 0), 0, 11, (10, 0.05f));
         YPositionField.SetMaxCharCount(10).SetText("0.0", 1.2f).SetTextType(TextType.Decimal);
         yPositionFieldBackground.SetScale(YPositionField.newScale + (16, 16));
         YPositionField.SetOnTextChange(() =>
@@ -141,7 +139,7 @@ public class CurveWindow
         buttonYPosition.AddElements(yPositionText, yPositionFieldBackground, YPositionField);
 
 
-        InfoCollection.AddElements(infoBackground, buttonXPosition, buttonYPosition);
+        InfoCollection.AddElements(buttonXPosition, buttonYPosition);
         
         ButtonCollection = new UICollection("ButtonCollection", controller, AnchorType.BottomCenter, PositionType.Relative, (0, 0, 0), size, (0, -10, 0, 0), 0)
         {
@@ -158,7 +156,7 @@ public class CurveWindow
         X0Button.SetOnClick(() =>
         {
             Game.SetCursorState(CursorState.Grabbed);
-            SetDataSelectedButton(X1Button);
+            SetDataSelectedButton(X0Button);
         });
         X0Button.SetOnHold(() => 
         {

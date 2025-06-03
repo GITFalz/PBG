@@ -55,7 +55,7 @@ public class UICurveNodePrefab : UINoiseNodePrefab
         MaxInputField.SetMaxCharCount(10).SetTextType(TextType.Decimal).SetText("1.0", 1.2f);
 
         MinTextField = new UIText($"{name}MinTextField", controller, AnchorType.BottomLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (20, 20), (6, -36, 0, 0), 0);
-        MinTextField.SetMaxCharCount(3).SetText("Min", 1.2f).SetTextType(TextType.Alphabetic);
+        MinTextField.SetMaxCharCount(3).SetText("Min", 1.2f).SetTextType(TextType.Alphabetic); 
 
         MaxTextField = new UIText($"{name}MaxTextField", controller, AnchorType.BottomLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (20, 20), (6, -6, 0, 0), 0);
         MaxTextField.SetMaxCharCount(3).SetText("Max", 1.2f).SetTextType(TextType.Alphabetic);
@@ -63,13 +63,16 @@ public class UICurveNodePrefab : UINoiseNodePrefab
         UIImage minBackground = new UIImage($"{name}MinBackground", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), MinInputField.newScale + (16, 16), (0, -28, 0, 0), 0, 11, (10f, 0.05f));
         UIImage maxBackground = new UIImage($"{name}MaxBackground", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), MaxInputField.newScale + (16, 16), (0, 2, 0, 0), 0, 11, (10f, 0.05f));
 
-        ElementCollection.AddElements(NameField, InputButton, OutputButton, minBackground, maxBackground, MinTextField, MinInputField, MaxTextField, MaxInputField);
+        UITextButton seperatorText = new UITextButton($"{name}SeparatorText", controller, AnchorType.BottomCenter, PositionType.Relative, new Vector3(0.6f), (0, 0, 0), (282, 20), (0, 28, 0, 0), 0, 10, (10f, 0.05f));
+        seperatorText.SetTextCharCount("Curve position", 1f).SetTextType(TextType.Alphabetic);
+        
+        ElementCollection.AddElements(NameField, InputButton, OutputButton, minBackground, maxBackground, MinTextField, MinInputField, MaxTextField, MaxInputField, seperatorText.Collection);
 
         Collection = new UICollection($"{name}Collection", controller, AnchorType.TopLeft, PositionType, Pivot, Scale + (0, 14), Offset, Rotation);
-        SelectionImage = new UIImage($"{name}SelectionImage", controller, AnchorType.TopLeft, PositionType.Relative, SELECTION_COLOR, (0, 0, 0), Scale + (10, 324), (-5, -5, 0, 0), 0, 2, (10f, 0.05f));
+        SelectionImage = new UIImage($"{name}SelectionImage", controller, AnchorType.TopLeft, PositionType.Relative, SELECTION_COLOR, (0, 0, 0), Scale + (10, 422), (-5, -5, 0, 0), 0, 2, (10f, 0.05f));
         UICollection mainElements = new UICollection($"{name}MainElements", controller, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), Scale, (0, 0, 0, 0), 0);
         MoveButton = new UIButton($"{name}MoveButton", controller, AnchorType.TopLeft, PositionType.Relative, ButtonColor, (0, 0, 0), (Scale.X, 14), (0, 0, 0, 0), 0, 10, (5f, 0.025f), UIState.Interactable);
-        Background = new UIImage($"{name}Background", controller, AnchorType.TopLeft, PositionType.Relative, BackgroundColor, (0, 0, 0), Scale, (0, 14, 0, 0), 0, 10, (10f, 0.05f));
+        Background = new UIImage($"{name}Background", controller, AnchorType.TopLeft, PositionType.Relative, BackgroundColor, (0, 0, 0), Scale + (0, 98), (0, 14, 0, 0), 0, 10, (10f, 0.05f));
 
         MoveButton.SetOnClick(SetOldMousePosition);
         MoveButton.SetOnHold(MoveNode);
