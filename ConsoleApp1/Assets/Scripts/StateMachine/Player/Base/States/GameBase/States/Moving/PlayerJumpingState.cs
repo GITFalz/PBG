@@ -4,8 +4,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 public class PlayerJumpingState : PlayerGameBaseState
 {
     Camera Camera;
-    Vector2 input = Vector2.Zero;
-    
+
     public PlayerJumpingState(PlayerGameState gameState) : base(gameState) {}
     
     public override void Enter()
@@ -22,8 +21,6 @@ public class PlayerJumpingState : PlayerGameBaseState
 
     public override void Update()
     {
-        input = Input.GetMovementInput();
-
         if (Input.IsKeyPressed(Keys.F))
         {
             GameState.SwitchState(GameState.GrapplingState);
@@ -45,7 +42,7 @@ public class PlayerJumpingState : PlayerGameBaseState
     
     public override void FixedUpdate()
     {
-        if (input != Vector2.Zero)
+        if (MovementInput != Vector2.Zero)
             StateMachine.MovePlayer(PlayerMovementSpeed.Fall);
     }
 

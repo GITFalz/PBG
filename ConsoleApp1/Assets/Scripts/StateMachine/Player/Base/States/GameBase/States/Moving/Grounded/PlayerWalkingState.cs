@@ -4,8 +4,6 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PlayerWalkingState : PlayerGameBaseState
 {
-    Vector2 input = Vector2.Zero;
-
     public PlayerWalkingState(PlayerGameState gameState) : base(gameState)
     {
     }
@@ -21,15 +19,13 @@ public class PlayerWalkingState : PlayerGameBaseState
 
     public override void Update()
     {
-        input = Input.GetMovementInput();
-        
         if (Input.IsKeyDown(Keys.LeftControl))
         {
             GameState.SwitchState(GameState.RunningState);
             return;
         }
         
-        if (input == Vector2.Zero)
+        if (MovementInput == Vector2.Zero)
         {
             GameState.SwitchState(GameState.IdleState);
             return;

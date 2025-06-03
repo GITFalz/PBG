@@ -6,20 +6,18 @@ public class PlayerAttack4State : PlayerGameBaseState
     Camera Camera;
     
     double timer = 0;
-    Vector2 input;
     
     bool smashed1 = false;
     bool smashed2 = false;
 
     public PlayerAttack4State(PlayerGameState gameState) : base(gameState)
     {
+        Camera = Game.Camera;
     }
 
     public override void Enter()
     {
         Console.WriteLine("Entering attack 4 state");
-        
-        Camera = Game.Camera;
         
         smashed1 = false;
         smashed2 = false;
@@ -31,7 +29,6 @@ public class PlayerAttack4State : PlayerGameBaseState
     public override void Update()
     {
         timer += GameTime.DeltaTime;
-        input = Input.GetMovementInput();
         
         if (timer > 0.12 && !smashed1)
         {
@@ -55,13 +52,13 @@ public class PlayerAttack4State : PlayerGameBaseState
             
             if (timer > 0.5)
             {
-                if (input != Vector2.Zero && Game.MoveTest)
+                if (MovementInput != Vector2.Zero && Game.MoveTest)
                 {
                     GameState.SwitchState(GameState.NextMovingState);
                     return;
                 }
 
-                if (input == Vector2.Zero)
+                if (MovementInput == Vector2.Zero)
                 {
                     GameState.SwitchState(GameState.IdleState);
                     return;

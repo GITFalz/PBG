@@ -1,5 +1,4 @@
 ﻿using OpenTK.Windowing.GraphicsLibraryFramework;
-using Veldrid;
 
 namespace ConsoleApp1.Assets.Scripts.Inputs;
 

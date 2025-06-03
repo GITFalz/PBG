@@ -1,5 +1,4 @@
 using OpenTK.Mathematics;
-using Veldrid;
 
 /// <summary>
 /// This is still an animation, but all frames are pre processed to avoid interpolation overhead at runtime.

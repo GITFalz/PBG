@@ -5,7 +5,6 @@ public class PlayerDashState : PlayerGameBaseState
 {
     private Camera Camera;
     
-    Vector2 input;
     float timer = 0;
 
     public PlayerDashState(PlayerGameState gameState) : base(gameState)
@@ -27,7 +26,6 @@ public class PlayerDashState : PlayerGameBaseState
 
     public override void Update()
     {
-        input = Input.GetMovementInput();
         timer += GameTime.DeltaTime;
 
         if (Input.IsKeyPressed(Keys.F))
@@ -38,7 +36,7 @@ public class PlayerDashState : PlayerGameBaseState
         
         if (timer > 0.5f)
         {
-            if (input == Vector2.Zero)
+            if (MovementInput == Vector2.Zero)
             {
                 GameState.SwitchState(GameState.IdleState);
                 return;
@@ -64,7 +62,7 @@ public class PlayerDashState : PlayerGameBaseState
 
     public override void FixedUpdate()
     {
-        if (input != Vector2.Zero)
+        if (MovementInput != Vector2.Zero)
             StateMachine.MovePlayer(PlayerMovementSpeed.Sprint);
     }
 

@@ -10,7 +10,7 @@ using Vector3 = OpenTK.Mathematics.Vector3;
 
 public class Game : GameWindow
 {
-    public static Game? Instance = null;
+    public static Game Instance = null!; // Singleton instance of the game
     
     public static int Width;
     public static int Height;
@@ -43,14 +43,14 @@ public class Game : GameWindow
     
     public ConcurrentDictionary<string, Scene> Scenes = new ConcurrentDictionary<string, Scene>();
 
-    private Stopwatch stopwatch;
+    private Stopwatch stopwatch = new Stopwatch();
 
 
     public static bool MoveTest = true;
     
     
     private bool isRunning = true;
-    private Thread _physicsThread;
+    private Thread _physicsThread = null!;
 
 
     private static Scene _gameDataScene = new Scene("GameData");
@@ -87,22 +87,6 @@ public class Game : GameWindow
         CenterY = height / 2;
 
         _resizeAction = OnResize;
-
-        /* // Example of using the DataMerger class to merge two SSBOs
-        ComputeShader MergeShader = new ComputeShader("DataTransfer/MergeSSBO.compute");
-
-        List<int> largeSSBOData = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-        List<int> smallSSBOData = [1, 1, 1, 1, 1];
-
-        SSBO<int> LargeSSBO = new SSBO<int>(largeSSBOData);
-        SSBO<int> SmallSSBO = new SSBO<int>(smallSSBOData);
-
-        DataMerger.Merge(LargeSSBO, SmallSSBO, 2);
-
-        int[] data = LargeSSBO.ReadData(10);
-        string dataString = string.Join(", ", data);
-        Console.WriteLine("Data: " + dataString);
-        */
     }
     
     protected override void OnResize(ResizeEventArgs e)
@@ -143,7 +127,6 @@ public class Game : GameWindow
     protected override void OnLoad()
     {
         // Utils
-        stopwatch = new Stopwatch();
         stopwatch.Start();
 
         Timer.Start();
@@ -285,7 +268,7 @@ public class Game : GameWindow
 
         base.OnLoad();
     }
-    
+
     protected override void OnKeyDown(KeyboardKeyEventArgs e)
     {
         base.OnKeyDown(e);
@@ -297,6 +280,22 @@ public class Game : GameWindow
         {
             Camera.SetCameraMode(Camera.GetCameraMode() == CameraMode.Follow ? CameraMode.Free : CameraMode.Follow);
         }
+
+        switch (e.Key)
+        {
+            case Keys.W:
+                Input.MovementInput.Y += 1;
+                break;
+            case Keys.S:
+                Input.MovementInput.Y -= 1;
+                break;
+            case Keys.A:
+                Input.MovementInput.X += 1;
+                break;
+            case Keys.D:
+                Input.MovementInput.X -= 1;
+                break;
+        }
     }
 
     protected override void OnMouseDown(MouseButtonEventArgs e)
@@ -304,11 +303,27 @@ public class Game : GameWindow
         base.OnMouseDown(e);
         Input.PressedButtons.Add(e.Button);
     }
-    
+
     protected override void OnKeyUp(KeyboardKeyEventArgs e)
     {
         base.OnKeyUp(e);
         Input.PressedKeys.Remove(e.Key);
+        
+        switch (e.Key)
+        {
+            case Keys.W:
+                Input.MovementInput.Y -= 1;
+                break;
+            case Keys.S:
+                Input.MovementInput.Y += 1;
+                break;
+            case Keys.A:
+                Input.MovementInput.X -= 1;
+                break;
+            case Keys.D:
+                Input.MovementInput.X += 1;
+                break;
+        }
     }
 
     protected override void OnMouseUp(MouseButtonEventArgs e)
@@ -394,7 +409,6 @@ public class Game : GameWindow
             if (fixedTime >= GameTime.FixedDeltaTime)
             {
                 GameTime.FixedUpdate((float)fixedTime);
-                Camera.FixedUpdate();
                 _worldScene.OnFixedUpdate();  
                 totalTime = time;
             }

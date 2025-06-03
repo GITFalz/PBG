@@ -6,8 +6,6 @@ public class PlayerAttack2State : PlayerGameBaseState
     Camera Camera;
     
     double timer = 0;
-    Vector2 input;
-    
     bool attacked = false;
 
     public PlayerAttack2State(PlayerGameState gameState) : base(gameState)
@@ -30,7 +28,6 @@ public class PlayerAttack2State : PlayerGameBaseState
     public override void Update()
     {
         timer += GameTime.DeltaTime;
-        input = Input.GetMovementInput();
         
         if (Input.IsMousePressed(MouseButton.Left))
             attacked = true;
@@ -45,13 +42,13 @@ public class PlayerAttack2State : PlayerGameBaseState
             
             if (timer > 0.5)
             {
-                if (input != Vector2.Zero && Game.MoveTest)
+                if (MovementInput != Vector2.Zero && Game.MoveTest)
                 {
                     GameState.SwitchState(GameState.NextMovingState);
                     return;
                 }
 
-                if (input == Vector2.Zero)
+                if (MovementInput == Vector2.Zero)
                 {
                     GameState.SwitchState(GameState.IdleState);
                     return;

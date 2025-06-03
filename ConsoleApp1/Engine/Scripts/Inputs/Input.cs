@@ -16,18 +16,24 @@ public static class Input
     public static bool LeftShiftDown => IsKeyDown(Keys.LeftShift);
     public static bool LeftControlDown => IsKeyDown(Keys.LeftControl);
 
+    public static Vector2 MouseDelta;
+    public static Vector2 MovementInput;
+
     public static void Start(KeyboardState keyboard, MouseState mouse)
     {
         _previousKeyboardState = keyboard;
         _previousMouseState = mouse;
+        MouseDelta = GetMouseDelta();
     }
-    
+
     public static void Update(KeyboardState keyboard, MouseState mouse)
     {
         _oldMousePosition = GetMousePosition();
-        
+
         _previousKeyboardState = keyboard;
         _previousMouseState = mouse;
+
+        MouseDelta = GetMouseDelta();
     }
 
     public static bool IsKeyPressed(KeyboardState keyboard, Keys key)
@@ -144,25 +150,6 @@ public static class Input
     public static Vector2 GetOldMousePosition()
     {
         return _oldMousePosition;
-    }
-    
-    
-    //Player Inputs
-    public static Vector2 GetMovementInput()
-    {
-        Vector2 input = Vector2.Zero;
-
-        if (IsKeyDown(Keys.W))
-            input.Y += 1;
-        if (IsKeyDown(Keys.S))
-            input.Y -= 1;
-        
-        if (IsKeyDown(Keys.A))
-            input.X += 1;
-        if (IsKeyDown(Keys.D))
-            input.X -= 1;
-        
-        return input;
     }
 
     public static Vector2 GetMouseScrollDelta()

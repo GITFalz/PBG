@@ -3,8 +3,6 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PlayerRunningState : PlayerGameBaseState
 {
-    Vector2 input = Vector2.Zero;
-
     public PlayerRunningState(PlayerGameState gameState) : base(gameState)
     {
     }
@@ -24,8 +22,6 @@ public class PlayerRunningState : PlayerGameBaseState
 
     public override void Update()
     {
-        input = Input.GetMovementInput();
-        
         if (Input.IsKeyPressed(Keys.LeftControl))
         {
             GameState.SwitchState(GameState.WalkingState);
@@ -38,7 +34,7 @@ public class PlayerRunningState : PlayerGameBaseState
             return;
         }
         
-        if (input == Vector2.Zero)
+        if (MovementInput == Vector2.Zero)
         {
             GameState.SwitchState(GameState.IdleState);
             return;

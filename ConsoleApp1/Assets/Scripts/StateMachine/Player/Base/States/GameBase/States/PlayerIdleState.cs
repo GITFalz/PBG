@@ -13,9 +13,7 @@ public class PlayerIdleState : PlayerGameBaseState
 
     public override void Update()
     {
-        Vector2 input = Input.GetMovementInput();
-
-        if (input != Vector2.Zero)
+        if (MovementInput != Vector2.Zero)
         {
             GameState.SwitchState(GameState.NextMovingState);
             return;

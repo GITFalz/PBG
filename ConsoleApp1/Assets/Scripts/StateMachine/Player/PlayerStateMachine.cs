@@ -4,8 +4,8 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class PlayerStateMachine : ScriptingNode
 {
-    public static PlayerStateMachine Instance;
-    public CameraMode cameraMode = CameraMode.Follow;
+    public static PlayerStateMachine Instance = null!;
+    public CameraMode CameraMode = CameraMode.Follow;
     public const float WALK_SPEED = 20;
     public const float RUN_SPEED = 60;
     public const float DASH_SPEED = 2000;
@@ -62,6 +62,7 @@ public class PlayerStateMachine : ScriptingNode
     private Vector3 _oldCameraCenter = Vector3.Zero;
     public float CameraDistance = 5;
     public float _targetDistance = 5;
+    private Vector3 _CameraOffset = (0, 0.85f, 0);
     public const float SCROLL_SENSITIVITY = 0.4f;
     public const float CAMERA_FOLLOW_SPEED = 50f;
     
@@ -78,20 +79,20 @@ public class PlayerStateMachine : ScriptingNode
         Instance = this;
         _gameState = new PlayerGameState(this);
         _menuState = new PlayerMenuState(this);
+        _currentState = _gameState;
     }
     
     void Start()
     {
         new OldAnimationManager();
         
-        _lastCameraPitch = Game.Camera.Pitch;
-        _lastCameraYaw = Game.Camera.Yaw;
-        _lastCameraPosition = Game.Camera.Position;
+        _lastCameraPitch = Camera.Pitch;
+        _lastCameraYaw = Camera.Yaw;
+        _lastCameraPosition = Camera.Position;
         
         physicsBody = Transform.GetComponent<PhysicsBody>();
         PlayerData.PhysicsBody = physicsBody; 
         
-        _currentState = _gameState;
         _currentState.Enter();
         
         Transform.Position = new Vector3(0, 200, 0);
@@ -126,15 +127,13 @@ public class PlayerStateMachine : ScriptingNode
         physicsBody.SetPosition(Transform.Position);
         _oldCameraCenter = Transform.Position;
 
-        Camera camera = Game.Camera;
+        Camera.SetCameraMode(CameraMode);
 
-        camera.SetCameraMode(cameraMode);
+        Camera.Position = _lastCameraPosition;
+        Camera.Yaw = _lastCameraYaw;
+        Camera.Pitch = _lastCameraPitch;
 
-        camera.Position = _lastCameraPosition;
-        camera.Yaw = _lastCameraYaw;
-        camera.Pitch = _lastCameraPitch;
-
-        camera.UpdateVectors();
+        Camera.UpdateVectors();
 
         if (PlayerModel == null)
         {
@@ -171,23 +170,19 @@ public class PlayerStateMachine : ScriptingNode
 
     void Update()
     {
-        Camera camera = Game.Camera;
-
         if (Input.IsKeyPressed(Keys.F5))
         {
             ToggleView();
         }
 
-        if (!PlayerData.TestInputs || camera.GetCameraMode() == CameraMode.Free)
+        if (!PlayerData.TestInputs || Camera.GetCameraMode() == CameraMode.Free)
             return;
 
         _currentState.Update();
 
-        Vector2 input = Input.GetMovementInput();
-
-        if (input != Vector2.Zero)
+        if (MovementInput != Vector2.Zero)
         {
-            yaw = -camera.Yaw + _inputAngle[input];
+            yaw = -Camera.Yaw + _inputAngle[MovementInput];
             float delta = Mathf.DeltaAngle(_yaw, yaw);
             _yaw += delta * GameTime.DeltaTime * 10;
         }
@@ -199,7 +194,7 @@ public class PlayerStateMachine : ScriptingNode
 
         forward = Mathf.YAngleToDirection(-yaw);
 
-        if (VoxelData.Raycast(camera.Center, camera.front, 4, out Hit hit))
+        if (VoxelData.Raycast(Camera.Center, Camera.front, 4, out Hit hit))
         {
             Vector3i blockPos = hit.BlockPosition;
             Vector3i n = hit.Normal;
@@ -218,9 +213,9 @@ public class PlayerStateMachine : ScriptingNode
             _renderHit = () => {};
         }
 
-        camera.Center = Mathf.Lerp(_oldCameraCenter, Transform.Position + (0, 0.85f, 0), GameTime.PhysicsDelta);
+        Camera.Center = Mathf.Lerp(_oldCameraCenter, Transform.Position + _CameraOffset, GameTime.PhysicsDelta);
 
-        if (camera.GetCameraMode() == CameraMode.Follow)
+        if (Camera.GetCameraMode() == CameraMode.Follow)
         {
             if (Input.IsKeyDown(Keys.LeftControl))
             {
@@ -230,10 +225,10 @@ public class PlayerStateMachine : ScriptingNode
                 CameraDistance = Math.Clamp(CameraDistance, 3, 10);
             }
 
-            Vector3 _targetPosition = camera.Center - camera.front * CameraDistance;
+            Vector3 _targetPosition = Camera.Center - Camera.front * CameraDistance;
             float delta = CAMERA_FOLLOW_SPEED * GameTime.DeltaTime;
 
-            camera.Position = Vector3.Lerp(camera.Position, _targetPosition, delta);
+            Camera.Position = Vector3.Lerp(Camera.Position, _targetPosition, delta);
         }
 
         _oldPosition = Transform.Position;
@@ -249,8 +244,8 @@ public class PlayerStateMachine : ScriptingNode
     
     void FixedUpdate()
     {
-        _oldCameraCenter = Transform.Position + (0, 0.85f, 0);
-        if (!PlayerData.UpdatePhysics || Game.Camera.GetCameraMode() == CameraMode.Free || !Game.MoveTest)
+        _oldCameraCenter = Transform.Position + _CameraOffset;
+        if (!PlayerData.UpdatePhysics || Camera.GetCameraMode() == CameraMode.Free || !Game.MoveTest)
             return;
         
         _currentState.FixedUpdate();
@@ -295,8 +290,8 @@ public class PlayerStateMachine : ScriptingNode
         _hitShader.Bind();
 
         Matrix4 model = Matrix4.Identity;
-        Matrix4 view = Game.Camera.ViewMatrix;
-        Matrix4 projection = Game.Camera.ProjectionMatrix;
+        Matrix4 view = Camera.ViewMatrix;
+        Matrix4 projection = Camera.ProjectionMatrix;
 
         GL.UniformMatrix4(hitModelLocation, true, ref model);
         GL.UniformMatrix4(hitViewLocation, true, ref view);
@@ -321,13 +316,11 @@ public class PlayerStateMachine : ScriptingNode
 
     void Exit()
     {
-        Camera camera = Game.Camera;
-
         Console.WriteLine("Exiting Player State Machine");
         
-        _lastCameraPosition = camera.Position;
-        _lastCameraYaw = camera.Yaw;
-        _lastCameraPitch = camera.Pitch;
+        _lastCameraPosition = Camera.Position;
+        _lastCameraYaw = Camera.Yaw;
+        _lastCameraPitch = Camera.Pitch;
     }
 
     public bool IsGrounded()
@@ -344,18 +337,15 @@ public class PlayerStateMachine : ScriptingNode
 
     public void MovePlayer(PlayerMovementSpeed playerMovementSpeed)
     {
-        Vector2 input = Input.GetMovementInput();
-        if (input == Vector2.Zero)
-            return;
-        MovePlayer(playerMovementSpeed, input);
+        MovePlayer(playerMovementSpeed, MovementInput);
     }
     
     public void MovePlayer(PlayerMovementSpeed playerMovementSpeed, Vector2 input)
     {
-        Camera camera = Game.Camera;
-        
-        Vector3 direction = camera.FrontYto0() * input.Y - camera.RightYto0() * input.X;
-        Vector3 horizontalVelocity = physicsBody.GetHorizontalVelocity();
+        if (input == Vector2.Zero)
+            return;
+            
+        Vector3 direction = Camera.FrontYto0() * input.Y - Camera.RightYto0() * input.X;
         MovePlayer(playerMovementSpeed, direction);
     }
     
@@ -367,9 +357,22 @@ public class PlayerStateMachine : ScriptingNode
 
     public void ToggleView()
     {
-        Game.Camera.SetCameraMode(Game.Camera.GetCameraMode() == CameraMode.Centered ? CameraMode.Follow : CameraMode.Centered);
-        cameraMode = Game.Camera.GetCameraMode();
-        _renderPlayer = cameraMode == CameraMode.Follow;
+        if (CameraMode == CameraMode.Follow)
+        {
+            ToggleView(CameraMode.Centered);
+        }
+        else
+        {
+            ToggleView(CameraMode.Follow);
+        }
+    }
+
+    public void ToggleView(CameraMode CameraMode)
+    {
+        Camera.SetCameraMode(CameraMode);
+        this.CameraMode = CameraMode;
+        _renderPlayer = CameraMode == CameraMode.Follow;
+        _CameraOffset = CameraMode == CameraMode.Follow ? (0, 0.85f, 0) : (0, 1.85f, 0);
     }
 
     public bool IsHuggingWall()

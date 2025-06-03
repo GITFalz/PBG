@@ -18,12 +18,9 @@ public class Camera
     public float targetFOV { get; private set; } = 45f;
     public float FOV_SMOTH_FACTOR { get; private set; } = 10f;
 
-    private Vector3 _lastPosition = (0, 0, 0);
     public Vector3 Position = (0, 0, 0);
 
     public Vector3 Center = (0, 0, 0);
-    private Vector3 _currentCenter = (0, 0, 0);
-    private float _centerLerpSpeed = 30f;
 
     public float Pitch = 0;
     public float Yaw = -90;
@@ -32,12 +29,7 @@ public class Camera
     private Vector3 _lastFront = Vector3.Zero;
     public Vector3 front = -Vector3.UnitZ;
     public Vector3 right = Vector3.UnitX;
-    
-    private float CameraDistance = 5;
-    public float WantedCameraDistance = 5;
-    private float oldScroll = 0;
 
-    public Vector2 pos;
     public Vector2 lastPos;
     
     public Matrix4 ViewMatrix;
@@ -48,11 +40,8 @@ public class Camera
     private bool _smooth = false;
     private float SMOOTH_FACTOR = 100f;
     
-    private Vector3 _targetPosition;
     private Vector2 _targetMouseDelta;
     private Vector2 _currentMouseDelta = Vector2.Zero;
-    private bool _positionSmooth = false;
-    private float POSITION_SMOOTH_FACTOR = 50f;
     
     private CameraMode _cameraMode = CameraMode.Fixed;
     
@@ -64,15 +53,7 @@ public class Camera
     
 
     private Plane[] frustumPlanes = new Plane[6];
-    public Plane LeftPlane => frustumPlanes[0];
-    public Plane RightPlane => frustumPlanes[1];
-    public Plane BottomPlane => frustumPlanes[2];
-    public Plane TopPlane => frustumPlanes[3];
-    public Plane NearPlane => frustumPlanes[4];
-    public Plane FarPlane => frustumPlanes[5];
-
-
-    private float _time = 0;
+    public Vector2 input => Input.MovementInput;
 
     public Camera()
     {
@@ -262,11 +243,6 @@ public class Camera
         v.Y = 0;
         return Vector3.Normalize(v);
     }
-    
-    public float GetYaw()
-    {
-        return Yaw;
-    }
 
     public void Lock()
     {
@@ -280,31 +256,17 @@ public class Camera
 
     public void Update()
     {
-        _lastPosition = Position;
         _lastFront = front;
         FOV = Mathf.Lerp(FOV, targetFOV, FOV_SMOTH_FACTOR * GameTime.DeltaTime);
         _updateAction.Invoke();
-        _time += GameTime.DeltaTime;
-    }
-
-    public void FixedUpdate()
-    {
-        _time = 0;
     }
     
-    public void UpdateProjectionMatrix(int width, int height)
-    {
-        SCREEN_WIDTH = width;
-        SCREEN_HEIGHT = height;
-    }
-
     private void FreeCamera()
     {
         if (MenuManager.IsOpen)
             return;
-        
+
         float speed = SPEED * GameTime.DeltaTime;
-        Vector2 input = Input.GetMovementInput();
 
         if (input != Vector2.Zero)
         {
@@ -356,12 +318,6 @@ public class Camera
         UpdateVectors();
     }
 
-
-    public void SetMoveFirst()
-    {
-        FirstMove = FirstMove1;
-    }
-
     public void FirstMove1()
     {
         lastPos = Input.GetMousePosition();
@@ -373,12 +329,6 @@ public class Camera
         lastPos = Input.GetMousePosition();
         FirstMove = () => { };
     }   
-
-    public bool IsMoving()
-    {
-        return Position != _lastPosition || front != _lastFront;
-    }
-
 
     private void RotateCamera()
     {
@@ -406,16 +356,6 @@ public class Camera
         
         // Clamp pitch to prevent flipping
         Pitch = Mathf.Clamp(-89.0f, 89.0f, Pitch);
-    }
-    
-    public void SetSmoothFactor(bool value)
-    {
-        _smooth = value;
-    }
-    
-    public void SetPositionSmoothFactor(bool value)
-    {
-        _positionSmooth = value;
     }
 }
 

@@ -1,10 +1,16 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using OpenTK.Mathematics;
 
 public class ScriptingNode
 {
+    public static Camera Camera => Game.Camera;
+    public static float DeltaTime => GameTime.DeltaTime;
+    public static Vector2 MovementInput => Input.MovementInput;
+    
     public string Name = "ScriptingNode";
     public TransformNode Transform = TransformNode.Empty;
+
 
     public bool GetAction(string methodName, [NotNullWhen(true)] out Action? action)
     {

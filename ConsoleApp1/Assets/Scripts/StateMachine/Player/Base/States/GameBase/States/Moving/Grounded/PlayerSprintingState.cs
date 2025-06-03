@@ -5,8 +5,6 @@ public class PlayerSprintingState : PlayerGameBaseState
 {
     Camera Camera;
     
-    Vector2 input = Vector2.Zero;
-
     public PlayerSprintingState(PlayerGameState gameState) : base(gameState)
     {
     }
@@ -27,9 +25,7 @@ public class PlayerSprintingState : PlayerGameBaseState
 
     public override void Update()
     { 
-        input = Input.GetMovementInput();
-
-        if (input == Vector2.Zero)
+        if (MovementInput == Vector2.Zero)
         {
             GameState.SwitchState(GameState.IdleState);
             return;

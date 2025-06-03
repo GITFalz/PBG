@@ -4,7 +4,6 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 public class PlayerFallingState : PlayerGameBaseState
 {
     Camera Camera;
-    Vector2 input = Vector2.Zero;
     double timer = 0;
     bool _animate = true;
 
@@ -22,8 +21,6 @@ public class PlayerFallingState : PlayerGameBaseState
 
     public override void Update()
     {
-        input = Input.GetMovementInput();
-
         if (Input.IsKeyPressed(Keys.F))
         {
             GameState.SwitchState(GameState.GrapplingState);
@@ -59,7 +56,7 @@ public class PlayerFallingState : PlayerGameBaseState
     
     public override void FixedUpdate()
     {
-        if (input != Vector2.Zero)
+        if (MovementInput != Vector2.Zero)
             StateMachine.MovePlayer(PlayerMovementSpeed.Fall);
     }
 

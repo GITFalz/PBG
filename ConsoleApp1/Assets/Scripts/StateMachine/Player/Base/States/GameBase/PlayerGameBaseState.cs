@@ -1,7 +1,12 @@
-﻿public abstract class PlayerGameBaseState
+﻿
+
+using OpenTK.Mathematics;
+
+public abstract class PlayerGameBaseState
 {
     public PlayerGameState GameState;
     public PlayerStateMachine StateMachine => GameState.StateMachine;
+    public static Vector2 MovementInput => Input.MovementInput;
 
     public void Play(string name, float blendTime = 0f) => StateMachine.PlayerModel?.AnimationManager?.Play(name, blendTime);
     public void Loop(string name, float blendTime = 0f) => StateMachine.PlayerModel?.AnimationManager?.Loop(name, blendTime);

@@ -15,15 +15,13 @@ public class PlayerGroundedState : PlayerGameBaseState
 
     public override void Update()
     {
-        Vector2 input = Input.GetMovementInput();
-        
         if (_timer <= 0.5f)
         {
             GameState.SwitchState(GameState.IdleState);
             return;
         }
 
-        if (input != Vector2.Zero)
+        if (MovementInput != Vector2.Zero)
         {
             Stop();
             GameState.SwitchState(GameState.NextMovingState);
