@@ -1181,7 +1181,7 @@ public class ModelMesh : Meshes
         _edgeVao.Unbind();
     }
 
-    public void RenderBones()
+    public void RenderBones(Matrix4 model)
     {
         if (BoneCount == 0)
             return;
@@ -1196,9 +1196,11 @@ public class ModelMesh : Meshes
         Matrix4 view = Game.camera.GetViewMatrix();
         Matrix4 projection = Game.camera.GetProjectionMatrix();
 
+        int modelLocation = RigShader.GetLocation("model");
         int viewLocation = RigShader.GetLocation("view");
         int projectionLocation = RigShader.GetLocation("projection");   
 
+        GL.UniformMatrix4(modelLocation, false, ref model);
         GL.UniformMatrix4(viewLocation, false, ref view);
         GL.UniformMatrix4(projectionLocation, false, ref projection);
 

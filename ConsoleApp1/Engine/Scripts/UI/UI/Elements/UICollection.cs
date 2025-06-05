@@ -14,14 +14,14 @@ public class UICollection : UIElement
         2. to position the child correctly based on it's anchor type.
     */
     public UICollection(
-        string name, 
+        string name,
         UIController controller,
-        AnchorType anchorType, 
-        PositionType positionType, 
-        Vector3 pivot, 
-        Vector2 scale, 
-        Vector4 offset, 
-        float rotation) : 
+        AnchorType anchorType,
+        PositionType positionType,
+        Vector3 pivot,
+        Vector2 scale,
+        Vector4 offset,
+        float rotation) :
         base(name, controller, anchorType, positionType, pivot, scale, offset, rotation)
     {
         ResetInit();
@@ -40,7 +40,7 @@ public class UICollection : UIElement
     {
         foreach (UIPrefab e in element)
             AddElements(e.GetMainElements());
-        return this; 
+        return this;
     }
 
     public virtual UICollection AddElements(params UIElement[] element)
@@ -62,7 +62,7 @@ public class UICollection : UIElement
         foreach (UIPrefab element in elements)
         {
             RemoveElements(element.GetMainElements());
-        } 
+        }
     }
 
     public virtual void RemoveElements(params UIElement[] elements)
@@ -73,7 +73,7 @@ public class UICollection : UIElement
         }
     }
 
-    public override bool RemoveElement(UIElement element) 
+    public override bool RemoveElement(UIElement element)
     {
         if (Elements.Remove(element))
         {
@@ -92,7 +92,7 @@ public class UICollection : UIElement
             base.SetVisibility(visible);
     }
 
-    public virtual void CalculateScale() {}
+    public virtual void CalculateScale() { }
 
     public override void Align()
     {
@@ -117,7 +117,7 @@ public class UICollection : UIElement
         foreach (UIElement element in Elements)
             element.Clear();
         Elements.Clear();
-        OnAlign = null; 
+        OnAlign = null;
     }
 
     public override void RemoveChild(UIElement element)
@@ -147,8 +147,8 @@ public class UICollection : UIElement
         }
     }
 
-    public virtual void SetSpacing(float spacing) {}
-    public virtual void SetBorder(Vector4 border) {}
+    public virtual void SetSpacing(float spacing) { }
+    public virtual void SetBorder(Vector4 border) { }
 
     public override float GetYScale()
     {
@@ -183,6 +183,14 @@ public class UICollection : UIElement
         if (baseOnly) return;
         List<UIElement> elementsToDelete = [.. Elements];
         foreach (UIElement element in elementsToDelete)
+            element.Delete();
+        Elements.Clear();
+    }
+
+    public void DeleteElements()
+    {
+        List<UIElement> elementsToDelete = [.. Elements];
+        foreach (var element in elementsToDelete)
             element.Delete();
         Elements.Clear();
     }

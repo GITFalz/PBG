@@ -271,10 +271,7 @@ public class UIController
     {
         if (RegenerateBuffers)
         {
-            while (ElementsToRemove.Count > 0)
-            {
-                Internal_RemoveElement(ElementsToRemove.Dequeue());
-            }
+            RemoveElements();
 
             while (ElementsToAdd.Count > 0)
             {
@@ -303,6 +300,14 @@ public class UIController
             ElementsToRemove.Clear();
         
             RegenerateBuffers = false;
+        }
+    }
+
+    public void RemoveElements()
+    {
+        while (ElementsToRemove.Count > 0)
+        {
+            Internal_RemoveElement(ElementsToRemove.Dequeue());
         }
     }
 

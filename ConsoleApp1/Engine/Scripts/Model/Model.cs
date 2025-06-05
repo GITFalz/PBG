@@ -26,11 +26,11 @@ public class Model
     private static int _animationViewLocation = _animationShader.GetLocation("view");
     private static int _animationProjectionLocation = _animationShader.GetLocation("projection");
     private static int _animationColorAlphaLocation = _animationShader.GetLocation("colorAlpha");
-    private static ShaderProgram _activeShader = _shaderProgram;
-    private static int _activeModelLocation = _modelLocation;
-    private static int _activeViewLocation = _viewLocation; 
-    private static int _activeProjectionLocation = _projectionLocation;
-    private static int _activeColorAlphaLocation = _colorAlphaLocation;
+    private ShaderProgram _activeShader = _shaderProgram;
+    private int _activeModelLocation = _modelLocation;
+    private int _activeViewLocation = _viewLocation; 
+    private int _activeProjectionLocation = _projectionLocation;
+    private int _activeColorAlphaLocation = _colorAlphaLocation;
     public Texture Texture = new Texture("empty.png", TextureLocation.NormalTexture);
 
 
@@ -42,6 +42,7 @@ public class Model
     public List<Edge> SelectedEdges = new();
     public List<Triangle> SelectedTriangles = new();
     public Dictionary<Vertex, Vector2> Vertices = new Dictionary<Vertex, Vector2>();
+    public Dictionary<BonePivot, (Vector2, float)> BonePivots = new Dictionary<BonePivot, (Vector2, float)>();
 
 
     public SSBO<Matrix4> BoneMatrices = new SSBO<Matrix4>();
@@ -329,7 +330,7 @@ public class Model
 
         if (Rig != null && RenderBones)
         {
-            Mesh.RenderBones();
+            Mesh.RenderBones(ModelMatrix);
         }
         
         GL.CullFace(TriangleFace.Back);
@@ -529,7 +530,7 @@ public class Model
 
     public bool LoadFromPath(string path)
     {
-        if (Mesh.LoadModelFromPath(path))
+        if (Mesh.LoadModelFromPath(path)) 
         {
             CurrentModelName = Path.GetFileNameWithoutExtension(path);
             return true;
@@ -574,6 +575,31 @@ public class Model
         SelectedVertices.Clear();
         SelectedVertices.AddRange(connectedVertices);
         GenerateVertexColor();
+    }
+
+    public void UpdateBonePosition(Matrix4 projection, Matrix4 view)
+    {
+        if (Rig == null)
+            return;
+
+        BonePivots = [];
+
+        foreach (var (_, bone) in Rig.Bones)
+        {
+            Vector3 pivot = bone.Pivot.Get + Position;
+            Vector3 end = bone.End.Get + Position;
+
+            Vector2? screenPos1 = Mathf.WorldToScreen(pivot, Mathf.ToNumerics(projection), Mathf.ToNumerics(view));
+            Vector2? screenPos1Side = Mathf.WorldToScreen(pivot + Game.camera.right.Normalized() * 0.3f * 0.1f, Mathf.ToNumerics(projection), Mathf.ToNumerics(view));
+            Vector2? screenPos2 = Mathf.WorldToScreen(end, Mathf.ToNumerics(projection), Mathf.ToNumerics(view));
+            Vector2? screenPos2Side = Mathf.WorldToScreen(end + Game.camera.right.Normalized() * 0.2f * 0.1f, Mathf.ToNumerics(projection), Mathf.ToNumerics(view));
+            
+            if (screenPos1 != null && screenPos1Side != null)
+                BonePivots.Add(bone.Pivot, (screenPos1.Value, Vector2.Distance(screenPos1.Value, screenPos1Side.Value)));
+
+            if (screenPos2 != null && screenPos2Side != null)
+                BonePivots.Add(bone.End, (screenPos2.Value, Vector2.Distance(screenPos2.Value, screenPos2Side.Value)));
+        }
     }
     
     public static List<Edge> GetFullSelectedEdges(List<Vertex> selectedVertices)

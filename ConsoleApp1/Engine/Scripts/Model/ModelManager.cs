@@ -48,7 +48,9 @@ public static class ModelManager
         foreach (var model in Models.Values)
         {
             if (model.IsShown)
+            {
                 model.Render(); 
+            }
         }
     }
 
