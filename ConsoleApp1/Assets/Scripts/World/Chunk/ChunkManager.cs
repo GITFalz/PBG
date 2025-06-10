@@ -69,7 +69,7 @@ public static class ChunkManager
             var chunk = chunkEntry.Chunk;
 
             bool frustum = camera.FrustumIntersects(chunk.boundingBox);
-            bool baseDisabled = !chunkEntry.ShouldRender() || !frustum || chunk.BlockRendering;// || Vector2.Distance(PlayerData.Position.Xz, chunk.GetWorldPosition().Xz) > World.renderDistance * 32;
+            bool baseDisabled = !chunkEntry.ShouldRender() || !frustum || chunk.BlockRendering;
 
             bool isDisabled = chunk.IsDisabled;
             chunk.IsDisabled = baseDisabled || !chunk.HasBlocks;

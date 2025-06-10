@@ -1,9 +1,15 @@
+using System.Collections.Concurrent;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
 public static class ChunkLODManager
 {
     public static LODChunkGrid[] LODChunks = [];
+    public static List<LODChunk> Chunks = [];
+    public static List<LODChunk> OpaqueChunks = [];
+    public static ConcurrentQueue<LODChunk> ChunksToCreateMesh = [];
+
+    public static object lockObject = new object();
 
     public static void Initialize(int x, int y, int z, int startX, int startY, int startZ, int resolution)
     {
@@ -40,14 +46,72 @@ public static class ChunkLODManager
         }
     }
 
+    public static void CheckFrustum()
+    {
+        Camera camera = Game.Camera;
+
+        Info.ChunkCount = 0;
+        Info.VertexCount = 0;
+
+        foreach (var chunkData in Chunks)
+        {
+            ChunkMesh chunk = chunkData.Mesh;
+
+            bool frustum = camera.FrustumIntersects(chunkData.boundingBox);
+            bool baseDisabled = !frustum || chunk.BlockRendering;
+
+            bool isDisabled = chunk.IsDisabled;
+            chunk.IsDisabled = baseDisabled || !chunk.HasBlocks;
+
+            if (!isDisabled && chunk.IsDisabled)
+            {
+                OpaqueChunks.Remove(chunkData);
+            }
+            else if (isDisabled && !chunk.IsDisabled)
+            {
+                OpaqueChunks.Add(chunkData);
+            }
+
+            /*
+            bool isTransparentDisabled = chunk.IsTransparentDisabled;
+            chunk.IsTransparentDisabled = baseDisabled || !chunk.HasTransparentBlocks;
+
+            if (!isTransparentDisabled && chunk.IsTransparentDisabled)
+            {
+                TransparentChunks.Remove(chunkData);
+            }
+            else if (isTransparentDisabled && !chunk.IsTransparentDisabled)
+            {
+                TransparentChunks.TryAdd(chunk.GetWorldPosition(), chunk);
+            }
+
+            if (chunk.IsDisabled && chunk.IsTransparentDisabled)
+                continue;
+                */
+        }
+    }
+
+    public static void Update()
+    {
+        if (!ChunksToCreateMesh.IsEmpty)
+        {
+            while (ChunksToCreateMesh.TryDequeue(out LODChunk? chunk))
+            {
+                chunk.Mesh.CreateChunkSolid();
+                Chunks.Add(chunk);
+            }
+        }
+
+        CheckFrustum();
+    }
+
     public static void RenderChunks()
     {
         GL.Enable(EnableCap.DepthTest);
         GL.DepthFunc(DepthFunction.Less);
         GL.Enable(EnableCap.CullFace);
 
-        Matrix4 model = Matrix4.Identity; 
-        Matrix4 projection = Game.Camera.ProjectionMatrix;
+        Matrix4 projection = Game.Camera.GetProjectionMatrix(300f, 10000f);
         Matrix4 view = Game.Camera.ViewMatrix;
 
         WorldManager.newTestShader.Bind();
@@ -61,17 +125,18 @@ public static class ChunkLODManager
         GL.UniformMatrix4(projectionLocation, false, ref projection);
         GL.Uniform1(textureArrayLocation, 0);
 
-        //Shader.Error("Setting uniforms: ");
-
         WorldShader.Textures.Bind(TextureUnit.Texture0);
 
         GL.DepthMask(true);
         GL.Disable(EnableCap.Blend);
 
-        foreach (var chunk in LODChunks)
+        for (int i = 0; i < OpaqueChunks.Count; i++)
         {
-            chunk.RenderChunk(modelLocation); 
-            //Shader.Error("Rendering chunk at position: " + chunk.Position);
+            LODChunk chunk = OpaqueChunks[i];
+            if (chunk.Mesh.IsDisabled || !chunk.Mesh.HasBlocks)
+                continue;
+
+            chunk.RenderChunk(modelLocation);
         }
 
         /*
@@ -90,10 +155,6 @@ public static class ChunkLODManager
         WorldShader.Textures.Unbind();
 
         WorldManager.newTestShader.Unbind();
-
-        //Shader.Error("After Render End: ");
-
-        model = Matrix4.Identity;
     }
 
     public static void Clear()
@@ -103,5 +164,8 @@ public static class ChunkLODManager
             chunk.Clear();
         }
         LODChunks = [];
+        Chunks = [];
+        OpaqueChunks = [];
+        ChunksToCreateMesh = [];
     }
 }

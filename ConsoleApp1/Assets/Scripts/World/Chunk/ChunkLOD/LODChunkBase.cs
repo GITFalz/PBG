@@ -6,6 +6,7 @@ public abstract class LODChunkBase
     public Vector3 Center;
     public int Size = 1;
     public int Resolution = 1;
+    public int Scale;
 
     public LODChunkBase(Vector3i position, int size, int resolution)
     {
@@ -13,6 +14,7 @@ public abstract class LODChunkBase
         Size = size;
         Resolution = resolution;
         Center = Position + new Vector3(Size / 2f);
+        Scale = (int)Mathf.Pow(2, resolution);
     }
 
     public int X => Position.X;
@@ -22,28 +24,26 @@ public abstract class LODChunkBase
     public int GetResolution(Vector3i position)
     {
         float distance = Vector3.Distance(Center, position);
-        if (distance < 128)
+        if (distance < 512)
         {
             return 0;
         }
-        else if (distance < 512)
+        else if (distance < 1024)
         {
             return 1;
         }
-        else if (distance < 1024)
+        else if (distance < 4096)
         {
             return 2;
         }
-        else
+        else if (distance < 8192)
         {
             return 3;
         }
-    }
-
-    public int SetResolution(Vector3i position, int max = 3)
-    {
-        Resolution = GetResolution(position) > max ? max : GetResolution(position);
-        return Resolution;
+        else
+        {
+            return 4;
+        }
     }
 
     public abstract void RenderChunk(int modelLocation);

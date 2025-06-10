@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -69,8 +70,6 @@ public class WorldManager : ScriptingNode
         CWorldMultithreadNodeManager.Copy(ThreadPool.ThreadCount);
 
         ChunkManager.GenerateNearbyPositions();
-        ChunkLODManager.Initialize(10, 3, 10, -5, 0, -5, 3);
-        ChunkLODManager.CheckChunkResolution((0, 0, 0));
     }
 
     void Awake()
@@ -80,6 +79,10 @@ public class WorldManager : ScriptingNode
         ChunkManager.Clear();
         ChunkManager.CheckChunks();
         ChunkManager.UpdateChunkNeighbours();
+
+        ChunkLODManager.Initialize(30, 3, 30, -15, 0, -15, 4);
+        ChunkLODManager.CheckChunkResolution((0, 0, 0));
+
         Info.TotalGenTime = 0;
         Info.TotalGenCount = 1;
         Info.AvgChunkGenTime = 0;
@@ -116,7 +119,7 @@ public class WorldManager : ScriptingNode
             }
             Info.UpdateBlocks();
         }
-
+        ChunkLODManager.Update();
         //ChunkManager.HandleRenderDistance();
         //ChunkManager.Update();
         //ChunkManager.CheckFrustum();
@@ -447,6 +450,8 @@ public class WorldManager : ScriptingNode
 
     public static void Delete()
     {
+        Console.WriteLine("Unloading world...");
+
         ChunkManager.Unload();
         Chunk.Chunks = [];
 

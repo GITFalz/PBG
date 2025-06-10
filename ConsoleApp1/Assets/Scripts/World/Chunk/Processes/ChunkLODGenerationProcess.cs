@@ -17,7 +17,6 @@ public class ChunkLODGenerationProcess : ThreadProcess
 
     public override void Function()
     {
-        Console.WriteLine($"Generating LOD chunk at {LODChunk.Position} on thread {ThreadIndex}");
         GenerationSuccess = GenerateChunk(ref LODChunk, LODChunk.Position, ThreadIndex) != -1;
     }
 
@@ -26,8 +25,8 @@ public class ChunkLODGenerationProcess : ThreadProcess
     /// </summary>
     protected override void OnCompleteBase()
     {
-        Console.WriteLine($"LOD chunk generation completed at {LODChunk.Position} on thread {ThreadIndex}");
-        LODChunk.Mesh.CreateChunkSolid();
+        if (GenerationSuccess)
+            ChunkLODManager.ChunksToCreateMesh.Enqueue(LODChunk);
     }
 
     public static int GenerateChunk(ref LODChunk chunk, Vector3i position, int threadIndex)
@@ -39,6 +38,7 @@ public class ChunkLODGenerationProcess : ThreadProcess
         nodeManager.IsBeingUsed = true;
         int scale = (int)Mathf.Pow(2, chunk.Resolution);
 
+        bool HasBlocks = false;
         Vector2 chunkWorldPosition2D = new Vector2(position.X + 0.001f, position.Z + 0.001f);
         for (var x = 0; x < WIDTH; x++) 
         {
@@ -51,9 +51,23 @@ public class ChunkLODGenerationProcess : ThreadProcess
 
                 for (int y = 0; y < HEIGHT; y++)
                 {
-                    chunkData[x, y, z] = nodeManager.GetBlock(y * scale + position.Y);
+                    Block block = nodeManager.GetBlock(y * scale + position.Y);
+                    chunkData[x, y, z] = block;
+                    if (!block.IsAir())
+                    {
+                        HasBlocks = true;
+                    }
                 }
             }
+        }
+
+        if (!HasBlocks)
+        {
+            chunk.Mesh.ClearMeshData();
+            chunk.Mesh.IsDisabled = true;
+            chunk.Mesh.HasBlocks = false;
+            nodeManager.IsBeingUsed = false;
+            return -1;
         }
 
         nodeManager.IsBeingUsed = false;
@@ -184,7 +198,7 @@ public class ChunkLODGenerationProcess : ThreadProcess
         }
 
 
-
+        bool hasSolidOrLiquid = false;
         byte[] _checks = new byte[WIDTH * HEIGHT * DEPTH];
         int[] blockMap = new int[WIDTH * DEPTH];
         index = 0;
@@ -201,6 +215,9 @@ public class ChunkLODGenerationProcess : ThreadProcess
 
                     if (block.IsSolid())
                     {
+                        if (!hasSolidOrLiquid)
+                            hasSolidOrLiquid = true;
+                            
                         int blockPillar = blockMap[blockMapIndex];
                         blockPillar |= 1 << y;
                         blockMap[blockMapIndex] = blockPillar;
@@ -287,6 +304,14 @@ public class ChunkLODGenerationProcess : ThreadProcess
                     index++;
                 }
             }
+        }
+
+        if (!hasSolidOrLiquid)
+        {
+            chunk.Mesh.ClearMeshData();
+            chunk.Mesh.IsDisabled = true;
+            chunk.Mesh.HasBlocks = false;
+            return -1;
         }
 
         return 1;

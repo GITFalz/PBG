@@ -26,13 +26,15 @@ public class ChunkMesh
         public Vector2i TextureIndex;
     }
 
-    private VAO _chunkVao = new VAO();
-    public IBO _ibo = new([]);
-    public VBO<VertexData> VertexVBO = new([]);
+    private bool _generateBuffers = false;
 
-    private VAO _transparentVao = new VAO();
-    public IBO _transparentIbo = new([]);
-    private VBO<VertexData> _transparentVbo = new([]);
+    private VAO _chunkVao;
+    public IBO _ibo;
+    public VBO<VertexData> VertexVBO;
+
+    private VAO _transparentVao;
+    public IBO _transparentIbo;
+    private VBO<VertexData> _transparentVbo;
 
     public int IndicesCount = 0;
     public int VertexCount = 0;
@@ -103,13 +105,13 @@ public class ChunkMesh
         lock (Lock)
         {
             // Opaque chunk
-            _chunkVao.Renew();
+            _chunkVao = new();
             _chunkVao.Bind();
 
             try
             {
-                _ibo.Renew(_indices);
-                //Shader.Error("Creating the IBO for chunk: " + _position);
+                _ibo = new(_indices);
+                Shader.Error("Creating the IBO for chunk: " + _position);
             }
             catch (Exception e)
             {
@@ -131,8 +133,8 @@ public class ChunkMesh
 
             try
             {
-                VertexVBO.Renew(VertexDataList);
-                //Shader.Error("Creating the VBO for chunk: " + _position);
+                VertexVBO = new(VertexDataList);
+                Shader.Error("Creating the VBO for chunk: " + _position);
             }
             catch (Exception e)
             {
@@ -149,22 +151,22 @@ public class ChunkMesh
             VertexVBO.Bind();
 
             _chunkVao.Link(0, 3, VertexAttribPointerType.Float, stride, 0);
-            //Shader.Error("Linking position attribute for chunk: " + _position);
+            Shader.Error("Linking position attribute for chunk: " + _position);
             _chunkVao.IntLink(1, 2, VertexAttribIntegerType.Int, stride, 3 * sizeof(float));
-            //Shader.Error("Linking texture index attribute for chunk: " + _position);
+            Shader.Error("Linking texture index attribute for chunk: " + _position);
 
             _chunkVao.Unbind();
             VertexVBO.Unbind();
 
 
             // Transparent chunk
-            _transparentVao.Renew();
+            _transparentVao = new();
             _transparentVao.Bind();
 
             try
             {
-                _transparentIbo.Renew(TransparentIndices);
-                //Shader.Error("Creating the IBO for transparent chunk: " + _position);
+                _transparentIbo = new(TransparentIndices);
+                Shader.Error("Creating the IBO for transparent chunk: " + _position);
             }
             catch (Exception e)
             {
@@ -178,7 +180,7 @@ public class ChunkMesh
 
             try
             {
-                _transparentVbo.Renew(TransparentVertexDataList);
+                _transparentVbo = new(TransparentVertexDataList);
                 Shader.Error("Creating the VBO for transparent chunk: " + _position);
             }
             catch (Exception e)
@@ -222,6 +224,8 @@ public class ChunkMesh
             _transparentVertexCount = TransparentIndicesCount;
             HasTransparentBlocks = transparentVertexCount > 0;
 
+            _generateBuffers = true;
+
             GL.Finish();
         }
 
@@ -246,6 +250,9 @@ public class ChunkMesh
 
     public void RenderChunk()
     {
+        if (!_generateBuffers)
+            return;
+
         _chunkVao.Bind();
         _ibo.Bind();
 
@@ -268,11 +275,16 @@ public class ChunkMesh
 
     public void Delete()
     {
+        if (!_generateBuffers)
+            return;
+
         _chunkVao.DeleteBuffer();
         VertexVBO.DeleteBuffer();
         _ibo.DeleteBuffer();
         _transparentVao.DeleteBuffer();
         _transparentVbo.DeleteBuffer();
         _transparentIbo.DeleteBuffer();
+
+        _generateBuffers = false;
     }
 }

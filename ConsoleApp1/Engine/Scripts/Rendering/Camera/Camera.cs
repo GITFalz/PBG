@@ -90,9 +90,19 @@ public class Camera
             OpenTK.Mathematics.MathHelper.DegreesToRadians(FOV),
             SCREEN_WIDTH / SCREEN_HEIGHT, 
             0.1f, 
-            1000f
+            10000f
         );
         return ProjectionMatrix;
+    }
+
+    public Matrix4 GetProjectionMatrix(float nearPlane, float farPlane)
+    {
+        return Matrix4.CreatePerspectiveFieldOfView(
+            OpenTK.Mathematics.MathHelper.DegreesToRadians(FOV),
+            SCREEN_WIDTH / SCREEN_HEIGHT, 
+            nearPlane, 
+            farPlane
+        );
     }
 
     public Matrix4 GetRotationMatrix()

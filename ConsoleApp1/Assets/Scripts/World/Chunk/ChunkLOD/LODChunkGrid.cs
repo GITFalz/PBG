@@ -8,7 +8,7 @@ public class LODChunkGrid : LODChunkBase
 
     public void Init()
     {
-        int scale = (int)Math.Pow(2, Resolution) * 32;
+        int scale = Scale * 32;
         int index = 0;
         for (int x = 0; x < 2; x++)
         {

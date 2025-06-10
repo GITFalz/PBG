@@ -308,22 +308,35 @@ public class Game : GameWindow
     
     protected override void OnUnload()
     {
+        Console.WriteLine("Unloading game...");
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.Start();
+        double elapsed = stopwatch.Elapsed.TotalSeconds;
         CurrentScene?.OnExit();
-        
+        Console.WriteLine($"Unloading 1 game took {stopwatch.Elapsed.TotalSeconds - elapsed} seconds");
+
+        elapsed = stopwatch.Elapsed.TotalSeconds;
         BufferBase.Delete();
+        Console.WriteLine($"Unloading 2 game took {stopwatch.Elapsed.TotalSeconds - elapsed} seconds");
+
+        elapsed = stopwatch.Elapsed.TotalSeconds;
         IDBOBase.Delete();
+        ThreadPool.Clear();
+        Console.WriteLine($"Unloading 3 game took {stopwatch.Elapsed.TotalSeconds - elapsed} seconds");
 
+        elapsed = stopwatch.Elapsed.TotalSeconds;
         ThreadBlocker.Stop = true;
-
         GC.Collect();
         GC.WaitForPendingFinalizers();
-        
+        Console.WriteLine($"Unloading 4 game took {stopwatch.Elapsed.TotalSeconds - elapsed} seconds");
+
+        elapsed = stopwatch.Elapsed.TotalSeconds;  
         isRunning = false;
-        _physicsThread.Join();
-        
+        _physicsThread.Join(); 
         Timer.Stop();
         UIController.ClearAll();
-        
+        Console.WriteLine($"Unloading 5 game took {stopwatch.Elapsed.TotalSeconds - elapsed} seconds");
+
         base.OnUnload();
     }
 
