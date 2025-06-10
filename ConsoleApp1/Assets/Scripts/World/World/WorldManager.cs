@@ -54,17 +54,19 @@ public class WorldManager : ScriptingNode
         */
     }
 
-    
+
     public WorldManager()
     {
         _render = _renderType == RenderType.Solid ? RenderSolid : RenderWireframe;
         DepthPrepassFBO = new FBO(Game.Width, Game.Height);
 
-        CWorldOutputNode outputNode = CWorldMultithreadNodeManager.CWorldOutputNode; 
-        
+        CWorldOutputNode outputNode = CWorldMultithreadNodeManager.CWorldOutputNode;
+
         CWorldMultithreadNodeManager.Copy(ThreadPool.ThreadCount);
 
         ChunkManager.GenerateNearbyPositions();
+        ChunkLODManager.Initialize(10, 3, 10, -5, 0, -5, 3);
+        ChunkLODManager.CheckChunkResolution((0, 0, 0));
     }
 
     void Awake()

@@ -199,8 +199,10 @@ public class Info
         if (_blockData.Count == 0)
             return;
 
-        GL.Disable(EnableCap.CullFace);
-        GL.Disable(EnableCap.DepthTest);
+        GL.Enable(EnableCap.CullFace);
+        GL.Enable(EnableCap.DepthTest);
+        GL.DepthFunc(DepthFunction.Less);
+        GL.DepthMask(true);
 
         _blockShader.Bind();
 

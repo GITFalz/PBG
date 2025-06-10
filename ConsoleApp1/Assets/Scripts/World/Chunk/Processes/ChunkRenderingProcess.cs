@@ -22,7 +22,7 @@ public class ChunkRenderingProcess : ThreadProcess
     {
         OcclusionSuccess = GenerateOcclusion(Entry) != -1;
         if (!OcclusionSuccess) return;
-        GenerationSuccess = GenerateGreedyMesh(Entry.Chunk) != -1;
+        GenerationSuccess = GenerateMesh(Entry) != -1;
         Success = OcclusionSuccess && GenerationSuccess;
     }
 
@@ -128,8 +128,9 @@ public class ChunkRenderingProcess : ThreadProcess
         
     }
     
-    public static int GenerateGreedyMesh(Chunk chunkData)
+    public static int GenerateGreedyMesh(ChunkEntry chunk)
     {
+        Chunk chunkData = chunk.Chunk;
         byte[] _checks = new byte[WIDTH * HEIGHT * DEPTH];
         int[] blockMap = new int[WIDTH * DEPTH];
         int index = 0;

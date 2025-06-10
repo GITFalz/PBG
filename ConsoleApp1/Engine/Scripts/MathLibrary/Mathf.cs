@@ -32,8 +32,8 @@ public static class Mathf
     public static Vector3 Clamp(Vector3 min, Vector3 max, Vector3 value) => new Vector3(Clamp(min.X, max.X, value.X), Clamp(min.Y, max.Y, value.Y), Clamp(min.Z, max.Z, value.Z));
     public static Vector4 Clamp(Vector4 min, Vector4 max, Vector4 value) => new Vector4(Clamp(min.X, max.X, value.X), Clamp(min.Y, max.Y, value.Y), Clamp(min.Z, max.Z, value.Z), Clamp(min.W, max.W, value.W));
 
-    public static float Pow(float value, float power) => (float)Math.Pow(value, power);
-    public static double Pow(double value, double power) => Math.Pow(value, power);
+    public static float Pow(float power, float value) => (float)Math.Pow(power, value);
+    public static double Pow(double power, double value) => Math.Pow(power, value);
     
     public static Vector3 Normalize(Vector3 value)
     {

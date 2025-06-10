@@ -45,9 +45,6 @@ public class Chunk
     public bool Save = true;
     public bool Loaded = false;
 
-    public Action Render = () => { };
-    public Func<bool> CreateChunk = () => { return false;};
-
     public bool IsDisabled = true;
     public bool HasBlocks = false;
     public bool BlockRendering = false;
@@ -103,9 +100,6 @@ public class Chunk
         System.Numerics.Vector3 max = min + new System.Numerics.Vector3(ChunkGenerator.WIDTH, ChunkGenerator.HEIGHT, ChunkGenerator.DEPTH);
         
         boundingBox = new BoundingBox(min, max);
-
-        Render = renderType == RenderType.Solid ? RenderChunk : RenderWireframe;
-        CreateChunk = renderType == RenderType.Solid ? CreateChunkSolid : CreateChunkWireframe;
         Chunks.Add(this);
     }
 
@@ -182,24 +176,6 @@ public class Chunk
         set => this[position.X, position.Y, position.Z] = value;
     }
 
-    public void SetRenderType(RenderType type)
-    {
-        if (type == RenderType.Solid)
-        {
-            Wireframe.Clear();
-            Render = RenderChunk;
-            CreateChunk = CreateChunkSolid;
-        }
-        else if (type == RenderType.Wireframe)
-        {
-            _edgeVbo.Renew(Wireframe.ToArray());
-            _edgeVao.LinkToVAO(0, 3, VertexAttribPointerType.Float, 0, 0, _edgeVbo);
-
-            Render = RenderWireframe;
-            CreateChunk = CreateChunkWireframe;
-        }
-    }
-
     public Vector3i GetWorldPosition()
     {
         return position * 32;
@@ -208,16 +184,6 @@ public class Chunk
     public Vector3i GetRelativePosition()
     {
         return position;
-    }
-
-    public Vector3 GetCenterPosition()
-    {
-        return GetWorldPosition() + new Vector3(16, 16, 16);
-    }
-
-    public Matrix4 GetModel()
-    {
-        return Matrix4.CreateTranslation(GetWorldPosition());
     }
 
     public void Clear()
@@ -399,16 +365,6 @@ public class Chunk
         ClearMeshData();
     }
 
-    public bool CreateChunkWireframe()
-    {
-        _edgeVao.Renew();
-        _edgeVbo.Renew(Wireframe.ToArray());
-        
-        _edgeVao.LinkToVAO(0, 3, VertexAttribPointerType.Float, 0, 0, _edgeVbo);
-        return true;
-    }
-
-
     public void RenderChunk()
     {
         _chunkVao.Bind();
@@ -429,16 +385,6 @@ public class Chunk
 
         _transparentIbo.Unbind();
         _transparentVao.Unbind();
-    }
-
-    public void RenderWireframe()
-    {
-        _edgeVao.Bind();
-
-        GL.LineWidth(2.0f);
-        GL.DrawArrays(PrimitiveType.Lines, 0, Wireframe.Count);
-
-        _edgeVao.Unbind();
     }
 
     public void SaveChunk()
