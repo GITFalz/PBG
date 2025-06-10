@@ -26,7 +26,6 @@ public class Camera
     public float Yaw = -90;
     
     public Vector3 up = Vector3.UnitY;
-    private Vector3 _lastFront = Vector3.Zero;
     public Vector3 front = -Vector3.UnitZ;
     public Vector3 right = Vector3.UnitX;
 
@@ -35,9 +34,6 @@ public class Camera
     public Matrix4 ViewMatrix;
     public Matrix4 ProjectionMatrix;
     
-    
-    private Vector2 _smoothMouseDelta = Vector2.Zero;
-    private bool _smooth = false;
     private float SMOOTH_FACTOR = 100f;
     
     private Vector2 _targetMouseDelta;
@@ -67,7 +63,7 @@ public class Camera
     {
         SCREEN_WIDTH = width;
         SCREEN_HEIGHT = height;
-        this.Position = position;
+        Position = position;
         
         _cameraModes = new Dictionary<CameraMode, Action>
         {
@@ -179,17 +175,17 @@ public class Camera
     
     public System.Numerics.Matrix4x4 GetNumericsViewMatrix()
     {
-        return Mathf.ToNumerics(GetViewMatrix());
+        return Mathf.ToNumerics(ViewMatrix);
     }
     
     public System.Numerics.Matrix4x4 GetNumericsProjectionMatrix()
     {
-        return Mathf.ToNumerics(GetProjectionMatrix());
+        return Mathf.ToNumerics(ProjectionMatrix);
     }
     
     public Matrix4 GetViewProjectionMatrix()
     {
-        return GetViewMatrix() * GetProjectionMatrix();
+        return ViewMatrix * ProjectionMatrix;
     }
 
     public void SetFOV(float fov)
@@ -256,7 +252,9 @@ public class Camera
 
     public void Update()
     {
-        _lastFront = front;
+        GetViewMatrix();
+        GetProjectionMatrix();
+        CalculateFrustumPlanes();
         FOV = Mathf.Lerp(FOV, targetFOV, FOV_SMOTH_FACTOR * GameTime.DeltaTime);
         _updateAction.Invoke();
     }

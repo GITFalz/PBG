@@ -280,22 +280,6 @@ public class Game : GameWindow
         {
             Camera.SetCameraMode(Camera.GetCameraMode() == CameraMode.Follow ? CameraMode.Free : CameraMode.Follow);
         }
-
-        switch (e.Key)
-        {
-            case Keys.W:
-                Input.MovementInput.Y += 1;
-                break;
-            case Keys.S:
-                Input.MovementInput.Y -= 1;
-                break;
-            case Keys.A:
-                Input.MovementInput.X += 1;
-                break;
-            case Keys.D:
-                Input.MovementInput.X -= 1;
-                break;
-        }
     }
 
     protected override void OnMouseDown(MouseButtonEventArgs e)
@@ -308,22 +292,6 @@ public class Game : GameWindow
     {
         base.OnKeyUp(e);
         Input.PressedKeys.Remove(e.Key);
-        
-        switch (e.Key)
-        {
-            case Keys.W:
-                Input.MovementInput.Y -= 1;
-                break;
-            case Keys.S:
-                Input.MovementInput.Y += 1;
-                break;
-            case Keys.A:
-                Input.MovementInput.X -= 1;
-                break;
-            case Keys.D:
-                Input.MovementInput.X += 1;
-                break;
-        }
     }
 
     protected override void OnMouseUp(MouseButtonEventArgs e)

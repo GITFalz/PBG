@@ -60,7 +60,6 @@ public static class ChunkManager
     public static void CheckFrustum()
     {
         Camera camera = Game.Camera;
-        camera.CalculateFrustumPlanes();
 
         Info.ChunkCount = 0;
         Info.VertexCount = 0;
@@ -112,8 +111,8 @@ public static class ChunkManager
         ChunkProcessDirection = [];
 
         Vector3i center = (0, 0, 0);
-        int renderDistance = World.renderDistance;
-        int maxY = World.yChunkCount;
+        int renderDistance = World.RenderDistance;
+        int maxY = World.VerticalChunkCount;
 
         var result = new List<(Vector3i pos, int distanceSquared)>();
 
@@ -210,14 +209,14 @@ public static class ChunkManager
         Vector2i startPosition = (-1, -1);
         HashSet<Vector3i> chunkPositions = [];
         
-        for (int x = 1; x < World.renderDistance*2+1; x+=2)
+        for (int x = 1; x < World.RenderDistance*2+1; x+=2)
         {
             for (int k = 0; k < 4; k++)
             {
                 for (int i = 0; i < x; i++)
                 {
                     startPosition += _moves[k];
-                    for (int y = -1; y <= World.yChunkCount; y++)
+                    for (int y = -1; y <= World.VerticalChunkCount; y++)
                     {
                         chunkPositions.Add(new Vector3i(startPosition.X, y, startPosition.Y) + _currentPlayerChunk);
                     }

@@ -282,7 +282,7 @@ public class PlayerStateMachine : ScriptingNode
 
         GL.DepthFunc(DepthFunction.Less);
         
-        //PlayerModel?.Render();
+        PlayerModel?.Render();
     }
 
     private void RenderHit(Vector4i data)
@@ -344,7 +344,7 @@ public class PlayerStateMachine : ScriptingNode
     {
         if (input == Vector2.Zero)
             return;
-            
+
         Vector3 direction = Camera.FrontYto0() * input.Y - Camera.RightYto0() * input.X;
         MovePlayer(playerMovementSpeed, direction);
     }
@@ -373,6 +373,8 @@ public class PlayerStateMachine : ScriptingNode
         this.CameraMode = CameraMode;
         _renderPlayer = CameraMode == CameraMode.Follow;
         _CameraOffset = CameraMode == CameraMode.Follow ? (0, 0.85f, 0) : (0, 1.85f, 0);
+        if (PlayerModel != null)
+            PlayerModel.IsShown = _renderPlayer;
     }
 
     public bool IsHuggingWall()

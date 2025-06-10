@@ -91,7 +91,7 @@ public class Model
     public void Render()
     {
         var camera = ModelSettings.Camera;
-        if (camera == null)
+        if (camera == null || !IsShown)
             return;
 
         _animationShader.Bind();
@@ -100,8 +100,8 @@ public class Model
         GL.DepthFunc(DepthFunction.Lequal);
 
         Matrix4 Model = _modelMatrix;
-        Matrix4 view = camera.GetViewMatrix();
-        Matrix4 projection = camera.GetProjectionMatrix();
+        Matrix4 view = camera.ViewMatrix;
+        Matrix4 projection = camera.ProjectionMatrix;
 
         GL.UniformMatrix4(_animationModelLocation, false, ref Model);
         GL.UniformMatrix4(_animationViewLocation, false, ref view);

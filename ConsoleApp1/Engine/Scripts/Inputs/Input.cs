@@ -34,6 +34,16 @@ public static class Input
         _previousMouseState = mouse;
 
         MouseDelta = GetMouseDelta();
+        MovementInput = Vector2.Zero;
+        if (IsKeyDown(Keys.W))
+            MovementInput.Y += 1f;
+        if (IsKeyDown(Keys.S))
+            MovementInput.Y -= 1f;
+
+        if (IsKeyDown(Keys.A))
+            MovementInput.X += 1f;
+        if (IsKeyDown(Keys.D))
+            MovementInput.X -= 1f;
     }
 
     public static bool IsKeyPressed(KeyboardState keyboard, Keys key)

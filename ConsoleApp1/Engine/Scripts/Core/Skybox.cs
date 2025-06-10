@@ -34,8 +34,8 @@ public static class Skybox
         _skyboxShader.Bind();
         
         Matrix4 model = Matrix4.CreateTranslation(Game.Camera.Position);
-        Matrix4 view = Game.Camera.GetViewMatrix();
-        Matrix4 projection = Game.Camera.GetProjectionMatrix();
+        Matrix4 view = Game.Camera.ViewMatrix;
+        Matrix4 projection = Game.Camera.ProjectionMatrix;
 
         GL.UniformMatrix4(sml, true, ref model);
         GL.UniformMatrix4(svl, true, ref view);
