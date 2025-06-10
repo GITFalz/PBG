@@ -20,7 +20,7 @@ public class LODChunkGrid : LODChunkBase
                     index++;
                 }
             }
-        } 
+        }
     }
 
     public void UpdateResolution(Vector3i position)
@@ -50,6 +50,22 @@ public class LODChunkGrid : LODChunkBase
         }
     }
 
+    public override void RenderChunk(int modelLocation)
+    {
+        for (int i = 0; i < Chunks.Length; i++)
+        {
+            Chunks[i].RenderChunk(modelLocation); 
+        }
+    }
+
+    public override void RenderChunkTransparent()
+    {
+        for (int i = 0; i < Chunks.Length; i++)
+        {
+            Chunks[i].RenderChunkTransparent();
+        }
+    }
+
     public override void Clear()
     {
         for (int i = 0; i < Chunks.Length; i++)
@@ -64,6 +80,14 @@ public class LODChunkGrid : LODChunkBase
         for (int i = 0; i < Chunks.Length; i++)
         {
             Chunks[i].GenerateInfo();
+        }
+    }
+    
+    public override void GenerateChunk()
+    {
+        for (int i = 0; i < Chunks.Length; i++)
+        {
+            Chunks[i].GenerateChunk();
         }
     }
 }

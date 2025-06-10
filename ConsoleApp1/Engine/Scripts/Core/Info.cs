@@ -223,7 +223,7 @@ public class Info
 
         GL.DrawArrays(PrimitiveType.Triangles, 0, _blockData.Count * 36);
 
-        Shader.Error("Error rendering info blocks");
+        //Shader.Error("Error rendering info blocks");
         
         _blockSSBO.Unbind();
         _blockVao.Unbind();

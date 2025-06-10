@@ -47,7 +47,7 @@ public class BlockItemData : ItemData
 
         GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
 
-        Shader.Error("Error rendering icon: ");
+        //Shader.Error("Error rendering icon: ");
 
         IconVAO.Unbind();
         ItemDataManager.Image.Unbind();

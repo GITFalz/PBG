@@ -22,7 +22,7 @@ public class ChunkRenderingProcess : ThreadProcess
     {
         OcclusionSuccess = GenerateOcclusion(Entry) != -1;
         if (!OcclusionSuccess) return;
-        GenerationSuccess = GenerateMesh(Entry) != -1;
+        GenerationSuccess = GenerateGreedyMesh(Entry) != -1;
         Success = OcclusionSuccess && GenerationSuccess;
     }
 

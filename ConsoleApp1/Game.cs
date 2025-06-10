@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using ConsoleApp1.Engine.Scripts.Core.Data;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;

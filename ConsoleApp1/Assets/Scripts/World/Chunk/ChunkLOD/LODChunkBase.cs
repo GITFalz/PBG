@@ -46,6 +46,9 @@ public abstract class LODChunkBase
         return Resolution;
     }
 
+    public abstract void RenderChunk(int modelLocation);
+    public abstract void RenderChunkTransparent();
     public abstract void Clear();
     public abstract void GenerateInfo();
+    public abstract void GenerateChunk();
 }

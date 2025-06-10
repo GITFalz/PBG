@@ -36,58 +36,30 @@ public class Chunk
         { ( 1,  0, -1), null }, { ( 1,  0,  0), null }, { ( 1,  0,  1), null },
         { ( 1,  1, -1), null }, { ( 1,  1,  0), null }, { ( 1,  1,  1), null },
     };
+
+    public ChunkMesh Mesh;
     
     public int ChunkCount = 0;
-
-    private VAO _edgeVao = new VAO();
-    private VBO<Vector3> _edgeVbo = new([(0, 0, 0)]);
 
     public bool Save = true;
     public bool Loaded = false;
 
-    public bool IsDisabled = true;
-    public bool HasBlocks = false;
-    public bool BlockRendering = false;
+    public bool BlockRendering => Mesh.BlockRendering;
 
-    public bool IsTransparentDisabled = true;
-    public bool HasTransparentBlocks = false;
+    public bool IsDisabled { get => Mesh.IsDisabled; set => Mesh.IsDisabled = value; }
+    public bool HasBlocks { get => Mesh.HasBlocks; set => Mesh.HasBlocks = value; }
 
+    public bool IsTransparentDisabled { get => Mesh.IsTransparentDisabled; set => Mesh.IsTransparentDisabled = value; }
+    public bool HasTransparentBlocks { get => Mesh.HasTransparentBlocks; set => Mesh.HasTransparentBlocks = value; }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct VertexData
-    {
-        public Vector3 Position;
-        public Vector2i TextureIndex;
-    }
-
-    private VAO _chunkVao = new VAO();
-    public IBO _ibo = new([]);
-    public VBO<VertexData> VertexVBO = new([]);
-
-    private VAO _transparentVao = new VAO();
-    public IBO _transparentIbo = new([]);
-    private VBO<VertexData> _transparentVbo = new([]);
-
-    public int IndicesCount = 0;
-    public int VertexCount = 0;
-    private int _vertexCount = 0; // used when rendering
-
-    public int TransparentIndicesCount = 0;
-    public int TransparentVertexCount = 0;
-    private int _transparentVertexCount = 0; // used when rendering
-
-    public List<uint> _indices = [];
-    public List<VertexData> VertexDataList = [];
-
-    public List<uint> TransparentIndices = [];
-    public List<VertexData> TransparentVertexDataList = [];
-
-    public object Lock = new object();
+    public int VertexCount => Mesh.VertexCount;
+    public int TransparentVertexCount => Mesh.TransparentVertexCount;
 
     public Chunk()
-    { 
-        blockStorage = CornerBlockStorage.Empty; 
+    {
+        blockStorage = CornerBlockStorage.Empty;
         Chunks.Add(this);
+        Mesh = new ChunkMesh(Vector3i.Zero);
     }
 
     public Chunk(RenderType renderType, Vector3i position)
@@ -95,12 +67,13 @@ public class Chunk
         this.position = position;
 
         blockStorage = new FullBlockStorage();
-        
+
         System.Numerics.Vector3 min = Mathf.Num(position * 32);
         System.Numerics.Vector3 max = min + new System.Numerics.Vector3(ChunkGenerator.WIDTH, ChunkGenerator.HEIGHT, ChunkGenerator.DEPTH);
-        
+
         boundingBox = new BoundingBox(min, max);
         Chunks.Add(this);
+        Mesh = new ChunkMesh(position);
     }
 
     public void SetPosition(Vector3i position)
@@ -112,51 +85,14 @@ public class Chunk
 
     public void AddFace(Vector3i position, int width, int height, int side, int textureIndex, Vector4i ambientOcclusion)
     {
-        var vertices = VoxelData.GetSideOffsets[side](width, height);
-
-        AddVertex(position + vertices[0], 0, width, height, side, textureIndex, ambientOcclusion[0]);
-        AddVertex(position + vertices[1], 1, width, height, side, textureIndex, ambientOcclusion[1]);
-        AddVertex(position + vertices[2], 2, width, height, side, textureIndex, ambientOcclusion[2]);
-        AddVertex(position + vertices[3], 3, width, height, side, textureIndex, ambientOcclusion[3]);
-
-        uint v = (uint)VertexCount;
-        _indices.AddRange(v,v+1,v+2,v+2,v+3,v);
-        VertexCount += 4;
+        Mesh.AddFace(position, width, height, side, textureIndex, ambientOcclusion);
     }
 
     public void AddTransparentFace(Vector3i position, int width, int height, int side, int textureIndex, Vector4i ambientOcclusion)
     {
-        var vertices = VoxelData.GetSideOffsets[side](width, height);
-
-        AddTransparentVertex(position + vertices[0], 0, width, height, side, textureIndex, ambientOcclusion[0]);
-        AddTransparentVertex(position + vertices[1], 1, width, height, side, textureIndex, ambientOcclusion[1]);
-        AddTransparentVertex(position + vertices[2], 2, width, height, side, textureIndex, ambientOcclusion[2]);
-        AddTransparentVertex(position + vertices[3], 3, width, height, side, textureIndex, ambientOcclusion[3]);
-
-        uint v = (uint)TransparentVertexCount;
-        TransparentIndices.AddRange(v,v+1,v+2,v+2,v+3,v);
-        TransparentVertexCount += 4;
-    }
-    
-    public void AddVertex(Vector3 position, int uvIndex, int width, int height, int side, int textureIndex, int ambientOcclusion)
-    {
-        VertexData vertexData = new()
-        {
-            Position = position,
-            TextureIndex = ((uvIndex << 29) | (side << 26) | ((width - 1) << 21) | ((height - 1) << 16) | textureIndex, ambientOcclusion)
-        };
-        VertexDataList.Add(vertexData);
+        Mesh.AddTransparentFace(position, width, height, side, textureIndex, ambientOcclusion);
     }
 
-    public void AddTransparentVertex(Vector3 position, int uvIndex, int width, int height, int side, int textureIndex, int ambientOcclusion)
-    {
-        VertexData vertexData = new()
-        {
-            Position = position,
-            TextureIndex = ((uvIndex << 29) | (side << 26) | ((width - 1) << 21) | ((height - 1) << 16) | textureIndex, ambientOcclusion)
-        };
-        TransparentVertexDataList.Add(vertexData);
-    }
 
     public Block this[int index]
     {
@@ -186,14 +122,19 @@ public class Chunk
         return position;
     }
 
+    public bool CreateChunkSolid()
+    {
+        return Mesh.CreateChunkSolid();
+    }
+
     public void Clear()
     {
-        ClearMeshData();
+        Mesh.ClearMeshData();
 
         blockStorage.Clear();
         Wireframe = [];
 
-        VertexCount = 0;
+        Mesh.VertexCount = 0;
         Status = ChunkStatus.Empty;
         Loaded = false;
         Save = true;
@@ -201,190 +142,29 @@ public class Chunk
 
     public void ClearMeshData()
     {
-        VertexDataList = [];
-        _indices = [];
-
-        TransparentVertexDataList = [];
-        TransparentIndices = [];
-
-        VertexCount = 0;
-        IndicesCount = 0;
-
-        TransparentVertexCount = 0;
-        TransparentIndicesCount = 0;
+        Mesh.ClearMeshData();
     }
 
     public void Delete()
     {
         Clear();
-        _edgeVao.DeleteBuffer();
-        _edgeVbo.DeleteBuffer();
-        _chunkVao.DeleteBuffer();
-        VertexVBO.DeleteBuffer();
-        _ibo.DeleteBuffer();
-        _transparentVao.DeleteBuffer();
-        _transparentVbo.DeleteBuffer();
-        _transparentIbo.DeleteBuffer();
+        Mesh.Delete();
         Chunks.Remove(this);
-    }
-
-    
-    public bool CreateChunkSolid()
-    {   
-        lock(Lock)
-        {  
-            // Opaque chunk
-            _chunkVao.Renew();
-            _chunkVao.Bind();
-
-            try
-            {
-                _ibo.Renew(_indices);
-                Shader.Error("Creating the IBO for chunk: " + position);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                Console.WriteLine("Failed to create IBO for chunk: " + position);
-                for (int i = 0; i < _indices.Count; i++)
-                {
-                    if (_indices[i] >= VertexDataList.Count)
-                    {
-                        Console.WriteLine("Index out of range: " + _indices[i] + " >= " + VertexDataList.Count);
-                    }
-                }
-
-                ClearMeshData();
-
-                BlockRendering = true;
-                return false;
-            }
-            
-            try
-            {
-                VertexVBO.Renew(VertexDataList);
-                Shader.Error("Creating the VBO for chunk: " + position);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                Console.WriteLine("Failed to create VBO for chunk: " + position);
-                
-                ClearMeshData();
-
-                BlockRendering = true;
-                return false;
-            }
-
-            int stride = Marshal.SizeOf(typeof(VertexData));
-            VertexVBO.Bind();
-
-            _chunkVao.Link(0, 3, VertexAttribPointerType.Float, stride, 0);
-            Shader.Error("Linking position attribute for chunk: " + position);
-            _chunkVao.IntLink(1, 2, VertexAttribIntegerType.Int, stride, 3 * sizeof(float));
-            Shader.Error("Linking texture index attribute for chunk: " + position);
-
-            _chunkVao.Unbind();
-            VertexVBO.Unbind();
-
-
-            // Transparent chunk
-            _transparentVao.Renew();
-            _transparentVao.Bind();
-
-            try
-            {
-                _transparentIbo.Renew(TransparentIndices);
-                Shader.Error("Creating the IBO for transparent chunk: " + position);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-
-                ClearMeshData();
-
-                BlockRendering = true;
-                return false;
-            }
-
-            try
-            {
-                _transparentVbo.Renew(TransparentVertexDataList);
-                Shader.Error("Creating the VBO for transparent chunk: " + position);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                Console.WriteLine("Failed to create VBO for transparent chunk: " + position);
-
-                ClearMeshData();
-
-                BlockRendering = true;
-                return false;
-            }
-
-            stride = Marshal.SizeOf(typeof(VertexData));
-            _transparentVbo.Bind();
-
-            _transparentVao.Link(0, 3, VertexAttribPointerType.Float, stride, 0);
-            Shader.Error("Linking position attribute for transparent chunk: " + position);
-            _transparentVao.IntLink(1, 2, VertexAttribIntegerType.Int, stride, 3 * sizeof(float));
-            Shader.Error("Linking texture index attribute for transparent chunk: " + position);
-
-            _transparentVao.Unbind();
-            _transparentVbo.Unbind();
-
-
-            // Setting values
-            int indicesCount = _indices.Count;
-            int vertexCount = VertexDataList.Count;
-            int transparentIndicesCount = TransparentIndices.Count;
-            int transparentVertexCount = TransparentVertexDataList.Count;
-
-            ClearMeshData();
-
-            IndicesCount = indicesCount;
-            VertexCount = vertexCount;
-            _vertexCount = IndicesCount;
-            HasBlocks = vertexCount > 0;
-
-            TransparentIndicesCount = transparentIndicesCount;
-            TransparentVertexCount = transparentVertexCount;
-            _transparentVertexCount = TransparentIndicesCount;
-            HasTransparentBlocks = transparentVertexCount > 0;
-
-            GL.Finish();
-        }
-
-        BlockRendering = false;
-        return true;
     }
 
     public void Reload()
     {
-        ClearMeshData();
+        Mesh.ClearMeshData();
     }
 
     public void RenderChunk()
     {
-        _chunkVao.Bind();
-        _ibo.Bind();
-
-        GL.DrawElements(PrimitiveType.Triangles, _vertexCount, DrawElementsType.UnsignedInt, 0);
-        
-        _ibo.Unbind();
-        _chunkVao.Unbind();
+        Mesh.RenderChunk();
     }
 
     public void RenderChunkTransparent()
     {
-        _transparentVao.Bind();
-        _transparentIbo.Bind();
-
-        GL.DrawElements(PrimitiveType.Triangles, _transparentVertexCount, DrawElementsType.UnsignedInt, 0);
-
-        _transparentIbo.Unbind();
-        _transparentVao.Unbind();
+        Mesh.RenderChunkTransparent();
     }
 
     public void SaveChunk()

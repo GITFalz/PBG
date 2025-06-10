@@ -576,7 +576,7 @@ public class UIController
 
             UIMesh.Render();
         
-            Shader.Error("Ui render error: ");
+            //Shader.Error("Ui render error: ");
 
             MaskData.UIMaskSSBO.Unbind();
             _uItexture.Unbind();
@@ -595,7 +595,7 @@ public class UIController
 
             TextMesh.Render();
 
-            Shader.Error("Text render error: ");
+            //Shader.Error("Text render error: ");
 
             MaskData.UIMaskSSBO.Unbind();
             _textShader.Unbind();

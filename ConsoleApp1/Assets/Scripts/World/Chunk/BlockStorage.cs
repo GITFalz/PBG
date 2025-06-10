@@ -40,6 +40,18 @@ public class FullBlockStorage : BlockStorage
         }
     }
 
+    public Block this[int x, int y, int z]
+    {
+        get => this[(x & 31) + (z & 31) * 32 + (y & 31) * 1024];
+        set => this[(x & 31) + (z & 31) * 32 + (y & 31) * 1024] = value;
+    }
+
+    public Block this[Vector3i position]
+    {
+        get => this[position.X, position.Y, position.Z];
+        set => this[position.X, position.Y, position.Z] = value;
+    }
+
     public override void SetBlock(Vector3i position, Block block)
     {
         SetBlock(position.X, position.Y, position.Z, block);

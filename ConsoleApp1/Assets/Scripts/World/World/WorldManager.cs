@@ -60,8 +60,12 @@ public class WorldManager : ScriptingNode
         _render = _renderType == RenderType.Solid ? RenderSolid : RenderWireframe;
         DepthPrepassFBO = new FBO(Game.Width, Game.Height);
 
+        CWorldSampleNode sampleNode = new CWorldSampleNode(SampleOperationType.Basic);
+        sampleNode.Scale = new Vector2(0.01f);
         CWorldOutputNode outputNode = CWorldMultithreadNodeManager.CWorldOutputNode;
+        outputNode.InputNode = sampleNode;
 
+        CWorldMultithreadNodeManager.AddNode(sampleNode);
         CWorldMultithreadNodeManager.Copy(ThreadPool.ThreadCount);
 
         ChunkManager.GenerateNearbyPositions();
@@ -113,14 +117,15 @@ public class WorldManager : ScriptingNode
             Info.UpdateBlocks();
         }
 
-        ChunkManager.HandleRenderDistance();
-        ChunkManager.Update();
-        ChunkManager.CheckFrustum();
+        //ChunkManager.HandleRenderDistance();
+        //ChunkManager.Update();
+        //ChunkManager.CheckFrustum();
     }
 
     void Render()
     {
-        _render.Invoke();
+        ChunkLODManager.RenderChunks();
+        //_render.Invoke();
     }
 
     public void RenderSolid()
@@ -194,19 +199,21 @@ public class WorldManager : ScriptingNode
         GL.UniformMatrix4(projectionLocation, false, ref projection);
         GL.Uniform1(textureArrayLocation, 0);
 
-        Shader.Error("Setting uniforms: ");
+        //Shader.Error("Setting uniforms: ");
 
         WorldShader.Textures.Bind(TextureUnit.Texture0);
 
         GL.DepthMask(true);
         GL.Disable(EnableCap.Blend);
 
+        /*
         foreach (var (key, chunk) in ChunkManager.OpaqueChunks)
-        {   
+        {
             model = Matrix4.CreateTranslation(key);
             GL.UniformMatrix4(modelLocation, false, ref model);
-            chunk.RenderChunk(); 
+            chunk.RenderChunk();
         }
+        */
 
         GL.Enable(EnableCap.Blend);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
@@ -223,7 +230,7 @@ public class WorldManager : ScriptingNode
 
         newTestShader.Unbind();
 
-        Shader.Error("After Render End: ");
+        //Shader.Error("After Render End: ");
 
         model = Matrix4.Identity;
         //WorldShader.UniformModel(ref model);
@@ -437,7 +444,7 @@ public class WorldManager : ScriptingNode
         chunkData = entry.Chunk;
         return true;
     }
-    
+
     public static void Delete()
     {
         ChunkManager.Unload();
@@ -447,6 +454,7 @@ public class WorldManager : ScriptingNode
         ChunkManager.TransparentChunks = [];
 
         ThreadPool.Clear();
+        ChunkLODManager.Clear();
     }
 }
 

@@ -139,7 +139,7 @@ public static class NoiseGlslNodeManager
 
         GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
 
-        Shader.Error("Error rendering noise shader: ");
+        //Shader.Error("Error rendering noise shader: ");
 
         _valueSSBO.Unbind();
         _displayVAO.Unbind();

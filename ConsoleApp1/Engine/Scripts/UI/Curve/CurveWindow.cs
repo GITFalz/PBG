@@ -448,7 +448,7 @@ public class CurveWindow
 
         GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
 
-        Shader.Error("Error while drawing curve panel: ");
+        //Shader.Error("Error while drawing curve panel: ");
 
         _pointSSBO.Unbind();
         _curvePanelVao.Unbind();
