@@ -442,8 +442,11 @@ public class Inventory
     }
 
     public void Render()
-    {   
-        UIController.RenderDepthTest();
+    {
+        GL.Disable(EnableCap.DepthTest);
+        GL.DepthMask(false);
+
+        UIController.RenderNoDepthTest();
 
         InventoryShader.Bind();
 
@@ -464,6 +467,9 @@ public class Inventory
         ItemDataManager.Image.Unbind();
         IconSSBO.Unbind();
         InventoryShader.Unbind();
+
+        GL.Enable(EnableCap.DepthTest);
+        GL.DepthMask(true);
     }
 
 

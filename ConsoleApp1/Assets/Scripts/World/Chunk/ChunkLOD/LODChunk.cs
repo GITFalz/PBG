@@ -7,7 +7,7 @@ public class LODChunk : LODChunkBase
     public bool Blocked = false;
     public ChunkMesh Mesh;
     public Vortice.Mathematics.BoundingBox boundingBox;
-    public Matrix4 ModelMatrix;
+    public Matrix4 ModelMatrix; 
 
     public LODChunk(Vector3i position, int size, int resolution) : base(position, size, resolution)
     {

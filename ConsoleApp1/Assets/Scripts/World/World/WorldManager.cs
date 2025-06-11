@@ -80,7 +80,7 @@ public class WorldManager : ScriptingNode
         ChunkManager.CheckChunks();
         ChunkManager.UpdateChunkNeighbours();
 
-        ChunkLODManager.Initialize(30, 3, 30, -15, 0, -15, 4);
+        ChunkLODManager.Initialize(10, 3, 10, -5, 0, -5, 4);
         ChunkLODManager.CheckChunkResolution((0, 0, 0));
 
         Info.TotalGenTime = 0;

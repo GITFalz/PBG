@@ -91,6 +91,11 @@ public static class ChunkLODManager
         }
     }
 
+    public static void Resize()
+    {
+
+    }
+
     public static void Update()
     {
         if (!ChunksToCreateMesh.IsEmpty)

@@ -90,8 +90,8 @@ public class Model
 
     public void Render()
     {
-        var camera = ModelSettings.Camera;
-        if (camera == null || !IsShown)
+        var camera = Game.Camera;
+        if (!IsShown)
             return;
 
         _animationShader.Bind();
@@ -106,7 +106,7 @@ public class Model
         GL.UniformMatrix4(_animationModelLocation, false, ref Model);
         GL.UniformMatrix4(_animationViewLocation, false, ref view);
         GL.UniformMatrix4(_animationProjectionLocation, false, ref projection);
-        GL.Uniform1(_animationColorAlphaLocation, ModelSettings.MeshAlpha);
+        GL.Uniform1(_animationColorAlphaLocation, 1f);
 
         Texture.Bind();
 

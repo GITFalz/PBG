@@ -14,7 +14,11 @@ public class Camera
     public float HORIZONTAL_SENSITIVITY { get; private set; } = 20f;
     public float SCROLL_SENSITIVITY { get; private set; } = 0.4f;
     
-    public float FOV { get; private set; } = 45f;
+    public float FOV
+    {
+        get => CameraData.FOV;
+        set => CameraData.FOV = value;
+    }
     public float targetFOV { get; private set; } = 45f;
     public float FOV_SMOTH_FACTOR { get; private set; } = 10f;
 
@@ -76,6 +80,11 @@ public class Camera
         FirstMove = FirstMove1;
 
         _updateAction = _cameraModes[_cameraMode];
+    }
+
+    public void Resize()
+    {
+        GetProjectionMatrix();
     }
 
     public Matrix4 GetViewMatrix()
@@ -263,9 +272,7 @@ public class Camera
     public void Update()
     {
         GetViewMatrix();
-        GetProjectionMatrix();
         CalculateFrustumPlanes();
-        FOV = Mathf.Lerp(FOV, targetFOV, FOV_SMOTH_FACTOR * GameTime.DeltaTime);
         _updateAction.Invoke();
     }
     

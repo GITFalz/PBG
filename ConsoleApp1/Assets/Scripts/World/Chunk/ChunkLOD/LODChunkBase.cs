@@ -6,7 +6,7 @@ public abstract class LODChunkBase
     public Vector3 Center;
     public int Size = 1;
     public int Resolution = 1;
-    public int Scale;
+    public int Scale; 
 
     public LODChunkBase(Vector3i position, int size, int resolution)
     {
@@ -24,19 +24,19 @@ public abstract class LODChunkBase
     public int GetResolution(Vector3i position)
     {
         float distance = Vector3.Distance(Center, position);
-        if (distance < 512)
+        if (distance < 256)
         {
             return 0;
         }
-        else if (distance < 1024)
+        else if (distance < 512)
         {
             return 1;
         }
-        else if (distance < 4096)
+        else if (distance < 2048)
         {
             return 2;
         }
-        else if (distance < 8192)
+        else if (distance < 8196)
         {
             return 3;
         }

@@ -458,9 +458,13 @@ public static class VoxelData
     { 
         return new Vector3i( (int)position.X & ~31, (int)position.Y & ~31, (int)position.Z & ~31 ); 
     }
-    public static Vector3i BlockToRelativePosition(Vector3 position) 
+    public static Vector3i BlockToRelativePosition(int x, int y, int z) 
     { 
-        return ((int)position.X & 31, (int)position.Y & 31, (int)position.Z & 31 ); 
+        return ((int)x & 31, (int)y & 31, (int)z & 31 ); 
+    }
+    public static Vector3i BlockToRelativePosition(Vector3 position)
+    {
+        return ((int)position.X & 31, (int)position.Y & 31, (int)position.Z & 31);
     }
     public static Vector3i BlockToRelativePosition(Vector3i position) 
     { 

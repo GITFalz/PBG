@@ -18,6 +18,7 @@ public class ChunkLODGenerationProcess : ThreadProcess
     public override void Function()
     {
         GenerationSuccess = GenerateChunk(ref LODChunk, LODChunk.Position, ThreadIndex) != -1;
+        Console.WriteLine($"Chunk LOD Generation Process: {LODChunk.Position} - {GenerationSuccess}");
     }
 
     /// <summary>
@@ -34,45 +35,79 @@ public class ChunkLODGenerationProcess : ThreadProcess
         if (!CWorldMultithreadNodeManager.GetNodeManager(threadIndex, out var nodeManager))
             return -1;
 
-        FullBlockStorage chunkData = new FullBlockStorage();
+        Dictionary<Vector3i, FullBlockStorage> chunks = [];
+
+        // Initialize the chunks
+        int index = 0;
+        for (int i = 0; i < 27; i++)
+        {
+            if (i == 13)
+            {
+                chunks.Add((0, 0, 0), new());
+            }
+            else
+            {
+                chunks.Add(ChunkData.SidePositions[index], new());
+                index++;
+            }
+        }
+
+        FullBlockStorage chunkData = chunks[(0, 0, 0)];
+
         nodeManager.IsBeingUsed = true;
         int scale = (int)Mathf.Pow(2, chunk.Resolution);
 
         bool HasBlocks = false;
         Vector2 chunkWorldPosition2D = new Vector2(position.X + 0.001f, position.Z + 0.001f);
-        for (var x = 0; x < WIDTH; x++) 
+
+        foreach (var (offset, blocks) in chunks)
         {
-            for (var z = 0; z < DEPTH; z++)
+            bool hasBlock = false;
+            Vector3i fullOffset = offset * HEIGHT * scale;
+            for (var x = 0; x < WIDTH; x++)
             {
-                if (chunk.Blocked)
-                    return -1;
-
-                nodeManager.Init(new Vector2(x * scale, z * scale) + chunkWorldPosition2D);
-
-                for (int y = 0; y < HEIGHT; y++)
+                for (var z = 0; z < DEPTH; z++)
                 {
-                    Block block = nodeManager.GetBlock(y * scale + position.Y);
-                    chunkData[x, y, z] = block;
-                    if (!block.IsAir())
+                    if (chunk.Blocked)
+                        return -1;
+
+                    nodeManager.Init(new Vector2(x * scale, z * scale) + chunkWorldPosition2D + fullOffset.Xz);
+
+                    for (int y = 0; y < HEIGHT; y++)
                     {
-                        HasBlocks = true;
+                        Block block = nodeManager.GetBlock(y * scale + position.Y + fullOffset.Y);
+                        chunkData[x, y, z] = block;
+                        if (!block.IsAir())
+                        {
+                            hasBlock = true;
+                        }
                     }
                 }
             }
-        }
 
+            if (hasBlock && offset == Vector3i.Zero)
+            {
+                HasBlocks = true;
+            }
+        }
+        
         if (!HasBlocks)
         {
             chunk.Mesh.ClearMeshData();
             chunk.Mesh.IsDisabled = true;
             chunk.Mesh.HasBlocks = false;
             nodeManager.IsBeingUsed = false;
+            foreach (var c in chunks)
+            {
+                c.Value.Clear();
+            }
+            Console.WriteLine($"Chunk LOD Generation Process: {chunk.Position} - No blocks found");
             return -1;
         }
 
         nodeManager.IsBeingUsed = false;
 
-        int index = 0;
+        index = 0;
         for (int y = 0; y < HEIGHT; y++)
         {
             for (int z = 0; z < DEPTH; z++)
@@ -103,10 +138,37 @@ public class ChunkLODGenerationProcess : ThreadProcess
 
                                 Vector3i offset = blockPosition + mask.Offset;
                                 Block block;
-                                if (offset.X < 0 || offset.X > 31 || offset.Y < 0 || offset.Y > 31 || offset.Z < 0 || offset.Z > 31)
+                                Vector3i chunkOffset = Vector3i.Zero;
+                                if (offset.X < 0)
                                 {
-                                    block = Block.Solid;
-                                } 
+                                    chunkOffset.X = -1;
+                                }
+                                else if (offset.X > 31)
+                                {
+                                    chunkOffset.X = 1;
+                                }
+                                else if (offset.Y < 0)
+                                {
+                                    chunkOffset.Y = -1;
+                                }
+                                else if (offset.Y > 31)
+                                {
+                                    chunkOffset.Y = 1;
+                                }
+                                else if (offset.Z < 0)
+                                {
+                                    chunkOffset.Z = -1;
+                                }
+                                else if (offset.Z > 31)
+                                {
+                                    chunkOffset.Z = 1;
+                                }
+
+                                if (chunkOffset != Vector3i.Zero)
+                                {
+                                    Vector3i sideChunkBlockPosition = VoxelData.BlockToRelativePosition(offset);
+                                    block = chunks[chunkOffset][sideChunkBlockPosition];
+                                }
                                 else
                                 {
                                     int i = offset.X + offset.Z * WIDTH + offset.Y * WIDTH * HEIGHT;
@@ -154,14 +216,42 @@ public class ChunkLODGenerationProcess : ThreadProcess
 
                             if (!VoxelData.InBounds(x, y, z, i, WIDTH))
                             {
+                                Vector3i sideChunkBlockPosition = VoxelData.BlockToRelativePosition(x, y, z);
+                                FullBlockStorage? blocks = null;
+                                switch (i)
+                                {
+                                    case 0:
+                                        blocks = chunks[(0, 0, -1)];
+                                        break;
+                                    case 1:
+                                        blocks = chunks[(1, 0, 0)];
+                                        break;
+                                    case 2:
+                                        blocks = chunks[(0, 1, 0)];
+                                        break;
+                                    case 3:
+                                        blocks = chunks[(-1, 0, 0)];
+                                        break;
+                                    case 4:
+                                        blocks = chunks[(0, -1, 0)];
+                                        break;
+                                    case 5:
+                                        blocks = chunks[(0, 0, 1)];
+                                        break;
+                                    default:
+                                        break;
+                                }
+                                if (blocks != null)
+                                {
+                                    if (blocks[sideChunkBlockPosition].IsSolid())
+                                        block.SetOcclusion(i);
+                                }
                             }
                             else
                             {
                                 Vector3i offset = blockPosition + VoxelData.SideNormal[i];
-                                int newIndex = offset.X + (offset.Z << 5) + (offset.Y << 10);
-                                
-                                if (chunkData[newIndex].IsSolid())
-                                    block.SetOcclusion(i);      
+                                if (chunkData[offset].IsSolid())
+                                    block.SetOcclusion(i);
                             }
                         }
                     }
@@ -176,7 +266,37 @@ public class ChunkLODGenerationProcess : ThreadProcess
 
                             if (!VoxelData.InBounds(x, y, z, i, WIDTH))
                             {
-
+                                Vector3i sideChunkBlockPosition = VoxelData.BlockToRelativePosition(x, y, z);
+                                FullBlockStorage? blocks = null;
+                                switch (i)
+                                {
+                                    case 0:
+                                        blocks = chunks[(0, 0, -1)];
+                                        break;
+                                    case 1:
+                                        blocks = chunks[(1, 0, 0)];
+                                        break;
+                                    case 2:
+                                        blocks = chunks[(0, 1, 0)];
+                                        break;
+                                    case 3:
+                                        blocks = chunks[(-1, 0, 0)];
+                                        break;
+                                    case 4:
+                                        blocks = chunks[(0, -1, 0)];
+                                        break;
+                                    case 5:
+                                        blocks = chunks[(0, 0, 1)];
+                                        break;
+                                    default:
+                                        break;
+                                }
+                                if (blocks != null)
+                                {
+                                    var b = blocks[sideChunkBlockPosition];
+                                    if (b.IsSolid() || b.IsLiquid())
+                                        block.SetOcclusion(i);
+                                }
                             }
                             else
                             {
@@ -311,9 +431,18 @@ public class ChunkLODGenerationProcess : ThreadProcess
             chunk.Mesh.ClearMeshData();
             chunk.Mesh.IsDisabled = true;
             chunk.Mesh.HasBlocks = false;
+            foreach (var c in chunks)
+            {
+                c.Value.Clear();
+            }
+            Console.WriteLine($"Chunk LOD Generation Process: {chunk.Position} - No solid or liquid blocks found");
             return -1;
         }
-
+        
+        foreach (var c in chunks)
+        {
+            c.Value.Clear();
+        }
         return 1;
     }
 }

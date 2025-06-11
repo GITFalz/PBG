@@ -72,20 +72,20 @@ public class Game : GameWindow
             Title = "OpenGL 4.6"
         })
     {
-        Instance = this;
-        Camera = new Camera(width, height, new Vector3(0, 0, 0));
-        ModelSettings.Camera = Camera;
-
-        CenterWindow(new Vector2i(width, height));
-        //this.VSync = VSyncMode.On;
-
-        _ = new Info();
-        
         Width = width;
         Height = height;
         
         CenterX = width / 2;
         CenterY = height / 2;
+
+        Instance = this;
+        Camera = new Camera(width, height, new Vector3(0, 0, 0));
+        CameraData.SetLODChunksProjectionMatrix();
+
+        CenterWindow(new Vector2i(width, height));
+        //this.VSync = VSyncMode.On;
+
+        _ = new Info();
 
         _resizeAction = OnResize;
     }
@@ -104,6 +104,7 @@ public class Game : GameWindow
 
         Camera.SCREEN_WIDTH = Width;
         Camera.SCREEN_HEIGHT = Height;
+        Camera.Resize();
 
         _resizeAction.Invoke();
         
@@ -250,7 +251,7 @@ public class Game : GameWindow
         uiNode.AddChild(new UIEditor());
 
         _gameDataScene.AddNode(gameDataNode, menuNode, popUpNode);
-        _worldScene.AddNode(playerNode, worldGenerationNode, menuNode, popUpNode);
+        _worldScene.AddNode(worldGenerationNode, playerNode, menuNode, popUpNode);
         _worldNoiseEditorScene.AddNode(noiseEditorNode, menuNode, popUpNode);
         _UIEditorScene.AddNode(uiNode, menuNode, popUpNode);
 
