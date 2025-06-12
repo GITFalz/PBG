@@ -98,6 +98,8 @@ public class Model
 
         GL.Enable(EnableCap.DepthTest);
         GL.DepthFunc(DepthFunction.Lequal);
+        GL.Enable(EnableCap.CullFace);
+        GL.DepthMask(true);
 
         Matrix4 Model = _modelMatrix;
         Matrix4 view = camera.ViewMatrix;

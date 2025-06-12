@@ -18,7 +18,6 @@ public class ChunkLODGenerationProcess : ThreadProcess
     public override void Function()
     {
         GenerationSuccess = GenerateChunk(ref LODChunk, LODChunk.Position, ThreadIndex) != -1;
-        Console.WriteLine($"Chunk LOD Generation Process: {LODChunk.Position} - {GenerationSuccess}");
     }
 
     /// <summary>
@@ -35,62 +34,41 @@ public class ChunkLODGenerationProcess : ThreadProcess
         if (!CWorldMultithreadNodeManager.GetNodeManager(threadIndex, out var nodeManager))
             return -1;
 
+        FullBlockStorage chunkData = new();
         Dictionary<Vector3i, FullBlockStorage> chunks = [];
 
         // Initialize the chunks
-        int index = 0;
-        for (int i = 0; i < 27; i++)
+        for (int i = 0; i < 26; i++)
         {
-            if (i == 13)
-            {
-                chunks.Add((0, 0, 0), new());
-            }
-            else
-            {
-                chunks.Add(ChunkData.SidePositions[index], new());
-                index++;
-            }
+            chunks.Add(ChunkData.SidePositions[i], new());
         }
-
-        FullBlockStorage chunkData = chunks[(0, 0, 0)];
 
         nodeManager.IsBeingUsed = true;
         int scale = (int)Mathf.Pow(2, chunk.Resolution);
 
         bool HasBlocks = false;
-        Vector2 chunkWorldPosition2D = new Vector2(position.X + 0.001f, position.Z + 0.001f);
-
-        foreach (var (offset, blocks) in chunks)
+        Vector2 chunkWorldPosition2D = (position.X + 0.001f, position.Z + 0.001f);
+        for (var x = 0; x < WIDTH; x++)
         {
-            bool hasBlock = false;
-            Vector3i fullOffset = offset * HEIGHT * scale;
-            for (var x = 0; x < WIDTH; x++)
+            for (var z = 0; z < DEPTH; z++)
             {
-                for (var z = 0; z < DEPTH; z++)
+                if (chunk.Blocked)
+                    return -1;
+
+                nodeManager.Init(new Vector2(x * scale, z * scale) + chunkWorldPosition2D);
+
+                for (int y = 0; y < HEIGHT; y++)
                 {
-                    if (chunk.Blocked)
-                        return -1;
-
-                    nodeManager.Init(new Vector2(x * scale, z * scale) + chunkWorldPosition2D + fullOffset.Xz);
-
-                    for (int y = 0; y < HEIGHT; y++)
+                    Block block = nodeManager.GetBlock(y * scale + position.Y);
+                    chunkData[x, y, z] = block;
+                    if (!block.IsAir())
                     {
-                        Block block = nodeManager.GetBlock(y * scale + position.Y + fullOffset.Y);
-                        chunkData[x, y, z] = block;
-                        if (!block.IsAir())
-                        {
-                            hasBlock = true;
-                        }
+                        HasBlocks = true;
                     }
                 }
             }
-
-            if (hasBlock && offset == Vector3i.Zero)
-            {
-                HasBlocks = true;
-            }
         }
-        
+
         if (!HasBlocks)
         {
             chunk.Mesh.ClearMeshData();
@@ -101,13 +79,38 @@ public class ChunkLODGenerationProcess : ThreadProcess
             {
                 c.Value.Clear();
             }
-            Console.WriteLine($"Chunk LOD Generation Process: {chunk.Position} - No blocks found");
             return -1;
+        }
+
+        foreach (var (offset, blocks) in chunks)
+        {
+            Vector3i fullOffset = offset * HEIGHT * scale;
+            int startX = offset.X == 0 ? 0 : (offset.X == -1 ? 31 : 0);
+            int endX = offset.X == 0 ? WIDTH : startX + 1;
+            int startZ = offset.Z == 0 ? 0 : (offset.Z == -1 ? 31 : 0);
+            int endZ = offset.Z == 0 ? DEPTH : startZ + 1;
+
+            for (var x = startX; x < endX; x++)
+            {
+                for (var z = startZ; z < endZ; z++)
+                {
+                    if (chunk.Blocked)
+                        return -1;
+
+                    nodeManager.Init(new Vector2(x * scale, z * scale) + chunkWorldPosition2D + fullOffset.Xz);
+
+                    for (int y = 0; y < HEIGHT; y++)
+                    {
+                        Block block = nodeManager.GetBlock(y * scale + position.Y + fullOffset.Y);
+                        blocks[x, y, z] = block;
+                    }
+                }
+            }
         }
 
         nodeManager.IsBeingUsed = false;
 
-        index = 0;
+        int index = 0;
         for (int y = 0; y < HEIGHT; y++)
         {
             for (int z = 0; z < DEPTH; z++)
@@ -435,7 +438,6 @@ public class ChunkLODGenerationProcess : ThreadProcess
             {
                 c.Value.Clear();
             }
-            Console.WriteLine($"Chunk LOD Generation Process: {chunk.Position} - No solid or liquid blocks found");
             return -1;
         }
         

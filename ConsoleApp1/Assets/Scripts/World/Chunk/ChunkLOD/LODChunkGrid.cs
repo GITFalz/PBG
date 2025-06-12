@@ -54,7 +54,7 @@ public class LODChunkGrid : LODChunkBase
     {
         for (int i = 0; i < Chunks.Length; i++)
         {
-            Chunks[i].RenderChunk(modelLocation); 
+            Chunks[i].RenderChunk(modelLocation);
         }
     }
 
@@ -82,12 +82,20 @@ public class LODChunkGrid : LODChunkBase
             Chunks[i].GenerateInfo();
         }
     }
-    
+
     public override void GenerateChunk()
     {
         for (int i = 0; i < Chunks.Length; i++)
         {
             Chunks[i].GenerateChunk();
+        }
+    }
+    
+    public override void GetChunks(List<LODChunk> chunks)
+    {
+        for (int i = 0; i < Chunks.Length; i++)
+        {
+            Chunks[i].GetChunks(chunks);
         }
     }
 }

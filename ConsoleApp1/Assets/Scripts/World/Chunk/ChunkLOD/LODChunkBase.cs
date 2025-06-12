@@ -6,7 +6,7 @@ public abstract class LODChunkBase
     public Vector3 Center;
     public int Size = 1;
     public int Resolution = 1;
-    public int Scale; 
+    public int Scale;
 
     public LODChunkBase(Vector3i position, int size, int resolution)
     {
@@ -51,4 +51,5 @@ public abstract class LODChunkBase
     public abstract void Clear();
     public abstract void GenerateInfo();
     public abstract void GenerateChunk();
+    public abstract void GetChunks(List<LODChunk> chunks);
 }

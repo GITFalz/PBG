@@ -279,8 +279,6 @@ public class PlayerStateMachine : ScriptingNode
 
         _crosshairVao.Unbind();
         _crosshairShader.Unbind();
-
-        GL.DepthFunc(DepthFunction.Less);
         
         PlayerModel?.Render();
     }

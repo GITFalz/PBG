@@ -48,6 +48,11 @@ public class LODChunk : LODChunkBase
         ThreadPool.QueueAction(process);
     }
 
+    public override void GetChunks(List<LODChunk> chunks)
+    {
+        chunks.Add(this);
+    }
+
     public Vector4 GetColor()
     {
         switch (Resolution)
@@ -58,5 +63,5 @@ public class LODChunk : LODChunkBase
             case 3: return new Vector4(0, 1, 1, 1);
             default: return new Vector4(1, 1, 1, 1);
         }
-    }
+    }  
 }

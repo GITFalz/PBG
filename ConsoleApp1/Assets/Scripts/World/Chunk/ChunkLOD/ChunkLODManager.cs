@@ -39,9 +39,17 @@ public static class ChunkLODManager
             chunk.UpdateResolution(position);
         }
 
+        List<LODChunk> newChunks = [];
         for (int i = 0; i < LODChunks.Length; i++)
         {
             LODChunkGrid chunk = LODChunks[i];
+            chunk.GetChunks(newChunks);
+        }
+
+        newChunks.Sort((a, b) => Vector3.DistanceSquared(a.Center, position).CompareTo(Vector3.DistanceSquared(b.Center, position)));
+        for (int i = 0; i < newChunks.Count; i++)
+        {
+            LODChunk chunk = newChunks[i];
             chunk.GenerateChunk();
         }
     }
@@ -115,8 +123,9 @@ public static class ChunkLODManager
         GL.Enable(EnableCap.DepthTest);
         GL.DepthFunc(DepthFunction.Less);
         GL.Enable(EnableCap.CullFace);
+        GL.DepthMask(true);
 
-        Matrix4 projection = Game.Camera.GetProjectionMatrix(300f, 10000f);
+        Matrix4 projection = Game.Camera.ProjectionMatrix;
         Matrix4 view = Game.Camera.ViewMatrix;
 
         WorldManager.newTestShader.Bind();
@@ -132,7 +141,6 @@ public static class ChunkLODManager
 
         WorldShader.Textures.Bind(TextureUnit.Texture0);
 
-        GL.DepthMask(true);
         GL.Disable(EnableCap.Blend);
 
         for (int i = 0; i < OpaqueChunks.Count; i++)
@@ -158,7 +166,6 @@ public static class ChunkLODManager
         */
 
         WorldShader.Textures.Unbind();
-
         WorldManager.newTestShader.Unbind();
     }
 
