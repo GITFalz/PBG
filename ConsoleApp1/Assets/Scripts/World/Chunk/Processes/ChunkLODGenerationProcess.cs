@@ -8,16 +8,16 @@ public class ChunkLODGenerationProcess : ThreadProcess
     public const int DEPTH = 32;
 
     public LODChunk LODChunk;
-    public bool GenerationSuccess = false;
 
     public ChunkLODGenerationProcess(LODChunk chunk) : base()
     {
         LODChunk = chunk;
     }
 
-    public override void Function()
+    public override bool Function()
     {
-        GenerationSuccess = GenerateChunk(ref LODChunk, LODChunk.Position, ThreadIndex) != -1;
+        Status = ThreadProcessStatus.Running;
+        return GenerateChunk(ref LODChunk, LODChunk.Position, this) != -1;
     }
 
     /// <summary>
@@ -25,13 +25,15 @@ public class ChunkLODGenerationProcess : ThreadProcess
     /// </summary>
     protected override void OnCompleteBase()
     {
-        if (GenerationSuccess)
+        if (Succeded)
+        {
             ChunkLODManager.ChunksToCreateMesh.Enqueue(LODChunk);
+        }
     }
 
-    public static int GenerateChunk(ref LODChunk chunk, Vector3i position, int threadIndex)
+    public static int GenerateChunk(ref LODChunk chunk, Vector3i position, ThreadProcess process)
     {
-        if (!CWorldMultithreadNodeManager.GetNodeManager(threadIndex, out var nodeManager))
+        if (!CWorldMultithreadNodeManager.GetNodeManager(process.ThreadIndex, out var nodeManager))
             return -1;
 
         FullBlockStorage chunkData = new();
@@ -52,7 +54,7 @@ public class ChunkLODGenerationProcess : ThreadProcess
         {
             for (var z = 0; z < DEPTH; z++)
             {
-                if (chunk.Blocked)
+                if (process.Cancel) 
                     return -1;
 
                 nodeManager.Init(new Vector2(x * scale, z * scale) + chunkWorldPosition2D);
@@ -94,7 +96,7 @@ public class ChunkLODGenerationProcess : ThreadProcess
             {
                 for (var z = startZ; z < endZ; z++)
                 {
-                    if (chunk.Blocked)
+                    if (process.Cancel)
                         return -1;
 
                     nodeManager.Init(new Vector2(x * scale, z * scale) + chunkWorldPosition2D + fullOffset.Xz);
@@ -117,7 +119,7 @@ public class ChunkLODGenerationProcess : ThreadProcess
             {
                 for (int x = 0; x < WIDTH; x++)
                 {
-                    if (chunk.Blocked)
+                    if (process.Cancel)
                         return -1;
 
                     Vector3i blockPosition = (x, y, z);
@@ -136,7 +138,7 @@ public class ChunkLODGenerationProcess : ThreadProcess
                                 
                             foreach (var mask in cBlock.BlockChecker.BlockMasks)
                             {
-                                if (chunk.Blocked)
+                                if (process.Cancel)
                                     return -1;
 
                                 Vector3i offset = blockPosition + mask.Offset;
@@ -214,7 +216,7 @@ public class ChunkLODGenerationProcess : ThreadProcess
                         
                         for (int i = 0; i < 6; i++)
                         {
-                            if (chunk.Blocked)
+                            if (process.Cancel)
                                 return -1;
 
                             if (!VoxelData.InBounds(x, y, z, i, WIDTH))
@@ -264,7 +266,7 @@ public class ChunkLODGenerationProcess : ThreadProcess
                         
                         for (int i = 0; i < 6; i++)
                         {
-                            if (chunk.Blocked)
+                            if (process.Cancel)
                                 return -1;
 
                             if (!VoxelData.InBounds(x, y, z, i, WIDTH))

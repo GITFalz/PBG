@@ -9,32 +9,25 @@ public class ChunkRenderingProcess : ThreadProcess
     public ChunkEntry Entry;
     public Chunk chunk => Entry.Chunk;
 
-    private bool GenerationSuccess = false;
-    private bool OcclusionSuccess = false;
-    private bool Success = false;
-
     public ChunkRenderingProcess(ChunkEntry entry) : base()
     {
         Entry = entry;
     }
 
-    public override void Function()
+    public override bool Function()
     {
-        OcclusionSuccess = GenerateOcclusion(Entry) != -1;
-        if (!OcclusionSuccess) return;
-        GenerationSuccess = GenerateGreedyMesh(Entry) != -1;
-        Success = OcclusionSuccess && GenerationSuccess;
+        bool occlusionSuccess = GenerateOcclusion(Entry) != -1;
+        if (!occlusionSuccess) return false;
+        bool generationSuccess = GenerateGreedyMesh(Entry) != -1;
+        return generationSuccess;
     }
 
     protected override void OnCompleteBase()
     {
-        if (!Success)   
-            Console.WriteLine($"Chunk Rendering Process completed for chunk {Entry.Chunk.GetWorldPosition()} with success false and free chunk: {Entry.FreeChunk}");
-
         Entry.Process = null;
         if (Entry.CheckDelete()) return;
 
-        if (!Success)
+        if (Failed)
         { 
             Entry.TrySetStage(ChunkStage.ToBeFreed);
             return;

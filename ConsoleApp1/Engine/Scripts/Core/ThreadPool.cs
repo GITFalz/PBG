@@ -33,16 +33,18 @@ public static class ThreadPool
         }
     }
 
-    public static void QueueAction(Action action, TaskPriority priority = TaskPriority.Normal)
+    public static void QueueAction(Func<bool> action, TaskPriority priority = TaskPriority.Normal)
     {
         ActionProcess actionProcess = new ActionProcess(action);
+        actionProcess.Status = ThreadProcessStatus.Pending;
         actionProcess.SetPriority(priority);
         _actions.Enqueue(actionProcess);
     }
 
-    public static void QueueAction(Action action, out ThreadProcess threadProcess, TaskPriority priority = TaskPriority.Normal)
+    public static void QueueAction(Func<bool> action, out ThreadProcess threadProcess, TaskPriority priority = TaskPriority.Normal)
     {
         ActionProcess actionProcess = new ActionProcess(action);
+        actionProcess.Status = ThreadProcessStatus.Pending;
         threadProcess = actionProcess;
         actionProcess.SetPriority(priority);
         _actions.Enqueue(actionProcess);
@@ -50,24 +52,29 @@ public static class ThreadPool
 
     public static void QueueAction(ThreadProcess process, TaskPriority priority = TaskPriority.Normal)
     {
+        process.Status = ThreadProcessStatus.Pending;
         process.SetPriority(priority);
         _actions.Enqueue(process);
     }
 
     public static bool TryRemoveProcess(ThreadProcess process)
     {
-        return _actions.TryRemoveProcess(process);
+        if (!_actions.TryRemoveProcess(process))
+            return false;
+
+        process.Status = ThreadProcessStatus.Canceled;
+        return true;
     }
 
     public static void Update()
     {
-        try 
+        try
         {
             ProcessTasks();
         }
-        catch (NullReferenceException e) 
+        catch (NullReferenceException e)
         {
-            Console.WriteLine($"ThreadPool Update Error: {e.Message}");
+            throw new InvalidOperationException("ThreadPool encountered a null reference during update.", e);
         }
     }
 
@@ -101,14 +108,14 @@ public static class ThreadPool
 
     private class ActionProcess : ThreadProcess
     {
-        private readonly Action _action;
-        public ActionProcess(Action action)
+        private readonly Func<bool> _action;
+        public ActionProcess(Func<bool> action)
         {
             _action = action;
         }
-        public override void Function()
+        public override bool Function()
         {
-            _action.Invoke();
+            return _action.Invoke();
         }
     }
 
@@ -225,7 +232,7 @@ public class CustomProcess
         OnCompleteAction = OnCompleteBase;
     }
 
-    public virtual void Function() { }
+    public virtual bool Function() { return true; }
     protected virtual void OnCompleteBase() { }
 
     public void OnComplete() { OnCompleteAction.Invoke(); }
@@ -236,6 +243,12 @@ public class ThreadProcess : CustomProcess
 {
     public int ThreadIndex { get; private set; } = -1;
     public TaskPriority Priority { get; private set; } = TaskPriority.Normal;
+    public ThreadProcessStatus Status { get; set; } = ThreadProcessStatus.NotStarted;
+    public bool Cancel = false;
+    public bool Succeded => Status == ThreadProcessStatus.Completed;
+    public bool Failed => Status == ThreadProcessStatus.Failed || Status == ThreadProcessStatus.Canceled;
+    public bool IsPending => Status == ThreadProcessStatus.Pending;
+    public bool IsRunning => Status == ThreadProcessStatus.Running;
 
     public ThreadProcess() : base() { }
 
@@ -244,13 +257,40 @@ public class ThreadProcess : CustomProcess
 
     public Task ExecuteAsync()
     {
-        return Task.Run(Function);
+        return Task.Run(() =>
+        {
+            Status = ThreadProcessStatus.Running;
+            bool succes = Function();
+            if (succes)
+            {
+                Status = ThreadProcessStatus.Completed;
+            }
+            else
+            {
+                Status = ThreadProcessStatus.Failed;
+            }
+        });
     }
 
     public bool TryRemoveProcess()
     {
         return ThreadPool.TryRemoveProcess(this);
     }
+
+    public void Break()
+    {
+        Cancel = true;
+    }
+}
+
+public enum ThreadProcessStatus
+{
+    NotStarted,
+    Pending,
+    Running,
+    Completed,
+    Failed,
+    Canceled,
 }
 
 public enum TaskPriority

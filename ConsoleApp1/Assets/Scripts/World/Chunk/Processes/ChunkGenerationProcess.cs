@@ -6,7 +6,6 @@ public class ChunkGenerationProcess : ThreadProcess
     public ChunkEntry Entry;
     public Chunk chunk => Entry.Chunk;
     public bool Loaded = false;
-    public bool GenerationSuccess = false;
 
     public ChunkGenerationProcess(ChunkEntry entry, bool loaded = false) : base()
     {
@@ -14,15 +13,17 @@ public class ChunkGenerationProcess : ThreadProcess
         Loaded = loaded;
     }
 
-    public override void Function()
+    public override bool Function()
     {
         Entry.generationTime.Reset();
         Entry.generationTime.Start();
+        bool success = false;
         if (!Loaded)
         {
-            GenerationSuccess = GenerateChunk(ref Entry, chunk.GetWorldPosition(), ThreadIndex) != -1;
+            success = GenerateChunk(ref Entry, chunk.GetWorldPosition(), ThreadIndex) != -1;
         }
         Entry.generationTime.Stop();
+        return success;
     }
 
     /// <summary>
@@ -35,7 +36,7 @@ public class ChunkGenerationProcess : ThreadProcess
 
         if (!Loaded)
         {
-            if (!GenerationSuccess)
+            if (Status == ThreadProcessStatus.Failed)
             {
                 Entry.TrySetStage(ChunkStage.ToBeFreed);
                 return;

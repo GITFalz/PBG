@@ -8,18 +8,18 @@ public class ChunkLODPopulationProcess : ThreadProcess
 
     public ChunkEntry Entry;
     public Chunk chunk => Entry.Chunk;
-    public bool PopulationSuccess = false;
 
     public ChunkLODPopulationProcess(int Resolution, ChunkEntry entry) : base()
     {
         Entry = entry;
     }
 
-    public override void Function()
+    public override bool Function()
     {
         Entry.generationTime.Start();
-        PopulationSuccess = PopulateChunk(Entry) != -1;
+        bool success = PopulateChunk(Entry) != -1;
         Entry.generationTime.Stop();
+        return success;
     }
 
     protected override void OnCompleteBase()
@@ -27,7 +27,7 @@ public class ChunkLODPopulationProcess : ThreadProcess
         Entry.Process = null;
         if (Entry.CheckDelete()) return;
 
-        if (!PopulationSuccess)
+        if (Failed)
         {
             Entry.TrySetStage(ChunkStage.ToBeFreed);
             return;

@@ -7,7 +7,9 @@ public class LODChunk : LODChunkBase
     public bool Blocked = false;
     public ChunkMesh Mesh;
     public Vortice.Mathematics.BoundingBox boundingBox;
-    public Matrix4 ModelMatrix; 
+    public Matrix4 ModelMatrix;
+
+    public ThreadProcess? Process;
 
     public LODChunk(Vector3i position, int size, int resolution) : base(position, size, resolution)
     {
@@ -30,6 +32,13 @@ public class LODChunk : LODChunkBase
     public override void Clear()
     {
         Mesh.Delete();
+        if (Process != null)
+        {
+            if (Process.IsPending)
+                Process.TryRemoveProcess();
+            else if (Process.IsRunning)
+                Process.Break();
+        }
     }
 
     public override void GenerateInfo()
@@ -44,8 +53,8 @@ public class LODChunk : LODChunkBase
 
     public override void GenerateChunk()
     {
-        ChunkLODGenerationProcess process = new ChunkLODGenerationProcess(this);
-        ThreadPool.QueueAction(process);
+        Process = new ChunkLODGenerationProcess(this);
+        ThreadPool.QueueAction(Process);
     }
 
     public override void GetChunks(List<LODChunk> chunks)
