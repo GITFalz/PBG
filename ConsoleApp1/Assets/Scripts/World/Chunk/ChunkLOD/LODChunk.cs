@@ -39,6 +39,7 @@ public class LODChunk : LODChunkBase
             else if (Process.IsRunning)
                 Process.Break();
         }
+        Process = null;
     }
 
     public override void GenerateInfo()
