@@ -328,22 +328,20 @@ public class Model
         RenderMirror();
         RenderWireframe();
 
-        if (Rig != null && RenderBones)
+        if (Rig != null && RenderBones && IsSelected)
         {
             Mesh.RenderBones(ModelMatrix);
         }
-        
-        GL.CullFace(TriangleFace.Back);
     }
 
     public void RenderMirror()
     {
         var camera = Game.camera;
 
-        _activeShader.Bind();
-
         GL.Enable(EnableCap.DepthTest);
         GL.DepthFunc(DepthFunction.Lequal);
+
+        _activeShader.Bind();
 
         Matrix4 Model = ModelMatrix;
         Matrix4 view = camera.GetViewMatrix();

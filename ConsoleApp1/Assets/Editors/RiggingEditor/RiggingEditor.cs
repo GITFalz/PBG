@@ -457,16 +457,21 @@ public class RiggingEditor : BaseEditor
         ModelSettings.WireframeVisible = true;
         CameraSpeedField.SetText($"{Game.camera.SPEED}").UpdateCharacters();
 
-        if (Model == null)
-            return;
-
-        Model.RenderBones = true;
         foreach (var (_, model) in ModelManager.SelectedModels)
         {
             model.Model.SetStaticRig();
             model.Model.SetAnimation();
         }
 
+        foreach (var (_, model) in ModelManager.Models)
+        {
+            model.RenderBones = true;
+        }
+
+        if (Model == null)
+            return;
+
+        Model.RenderBones = true;
         Model.UpdateBonePosition(Game.camera.ProjectionMatrix, Game.camera.ViewMatrix);
     }
     
@@ -605,11 +610,12 @@ public class RiggingEditor : BaseEditor
 
     public override void Exit()
     {
-        if (Model == null)
-            return;
+        foreach (var (_, model) in ModelManager.Models)
+        {
+            model.RenderBones = false;
+        }
 
-        Model.RenderBones = false;
-        Model.SetStaticRig();
+        Model?.SetStaticRig();
     }
 
     public void BindSelectedVertices()

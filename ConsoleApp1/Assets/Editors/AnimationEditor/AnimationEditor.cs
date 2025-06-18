@@ -401,14 +401,7 @@ public class AnimationEditor : BaseEditor
 
         animationLoadButton.SetOnClick(() =>
         {
-            if (Model == null ||
-                Model.Animation == null ||
-                Model.Rig == null ||
-                TimelineScrollView == null ||
-                TimelineUI == null ||
-                KeyframeUI == null ||
-                KeyframePanelCollection == null
-            )
+            if (Model == null || Model.Animation == null)
                 return;
 
             string name = AnimationNameField.InputField.Text;
@@ -606,25 +599,29 @@ public class AnimationEditor : BaseEditor
     public override void Awake()
     {
         ModelSettings.WireframeVisible = false;
-        if (Model == null)
-            return;
 
         Console.WriteLine("Awake Animation Editor");
 
-        Model.RenderBones = true;
-        Model.SetAnimationRig();
-        Model.SetAnimation();
+        Model?.SetAnimationRig();
+        Model?.SetAnimation();
+
+        foreach (var (_, model) in ModelManager.Models)
+        {
+            model.RenderBones = true;
+        }
 
         foreach (var (name, model) in ModelManager.SelectedModels)
         {
             model.Model.Animation = new Animation($"{name}_Animation");
         }
 
-        Model.Animation = new Animation("Default_Animation");
-        Animation = Model.Animation;
-
-        GenerateAnimationKeyframes(Model);
-
+        if (Model != null)
+        {
+            Model.Animation = new Animation("Default_Animation");
+            Animation = Model.Animation;
+            GenerateAnimationKeyframes(Model);
+        }
+            
         KeyframePanelCollection.Align();
 
         Editor.AfterNewSelectedModelAction = () =>
@@ -649,7 +646,7 @@ public class AnimationEditor : BaseEditor
         if (model.Animation == null || model.Rig == null)
             return;
 
-        g
+        
         TimelineScrollView.DeleteSubElements();
 
         Animation animation = model.Animation;
@@ -1164,17 +1161,23 @@ public class AnimationEditor : BaseEditor
         TimelineUI.RemoveElements();
         TimelineUI.UpdateMeshes();
 
-        if (Model == null)
-            return;
+        foreach (var (_, model) in ModelManager.Models)
+        {
+            model.RenderBones = true;
+        }
 
-        Model.RenderBones = false;
-        Model.Rig?.Delete();
-        Model.SetAnimationRig();
+        if (Model != null)
+        {   
+            Model.RenderBones = false;
+            Model.Rig?.Delete();
+            Model.SetAnimationRig();
+        }
 
         foreach (var boneAnimation in BoneAnimations)
         {
             boneAnimation.Value.Clear();
         }
+        
         KeyframeUI.RemoveElements();
         KeyframeUI.UpdateMeshes();
 

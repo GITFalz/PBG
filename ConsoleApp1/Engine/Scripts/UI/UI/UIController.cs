@@ -25,6 +25,11 @@ public class UIController
     public List<UIButton> Buttons = [];
     public List<UIInputField> InputFields = [];
 
+    public List<UIElement> ElementsToTest = [];
+    public Queue<UIElement> ElementsToAddToTestQueue = [];
+    public Queue<UIElement> ElementsToRemoveFromTestQueue = [];
+    public bool UpdateTestQueue = false;
+
     public static UIInputField? activeInputField = null;
 
     public bool render = true;
@@ -93,18 +98,28 @@ public class UIController
     {
         if (ElementsToAdd.Contains(element))
             return;
-        
+
         ElementsToAdd.Enqueue(element);
         RegenerateBuffers = true;
     }
 
     private void Internal_AddElement(UIElement element)
     {
+        if (Elements.Contains(element))
+            return;
+
         if (element.PositionType == PositionType.Absolute)
             AbsoluteElements.Add(element);
-            
+
         element.CanUpdate = true;
         Elements.Add(element);
+        element.AddedToController = true;  
+
+        if (element.CanTest)
+        {
+            ElementsToTest.Add(element);
+        }
+
         AddedElements.Enqueue(element);
 
         if (element is UIPanel panel)
@@ -163,9 +178,14 @@ public class UIController
     
     private void Internal_RemoveElement(UIElement element)
     {
-        if (element.PositionType == PositionType.Absolute) 
+        if (!Elements.Remove(element))
+            return;
+            
+        if (element.PositionType == PositionType.Absolute)
             AbsoluteElements.Remove(element);
-
+            
+        ElementsToTest.Remove(element);
+            
         if (element is UIPanel panel)
         {
             if (panel is UIButton button)
@@ -190,7 +210,24 @@ public class UIController
         }
 
         element.CanUpdate = false;
-        Elements.Remove(element);
+    }
+
+    public void AddToTestQueue(UIElement element)
+    {
+        if (ElementsToAddToTestQueue.Contains(element) || ElementsToTest.Contains(element))
+            return;
+
+        ElementsToAddToTestQueue.Enqueue(element);
+        UpdateTestQueue = true;
+    }
+
+    public void RemoveFromTestQueue(UIElement element)
+    {
+        if (ElementsToRemoveFromTestQueue.Contains(element) || !ElementsToTest.Contains(element))
+            return;
+
+        ElementsToRemoveFromTestQueue.Enqueue(element);
+        UpdateTestQueue = true;
     }
 
     public void QueueAlign(UIElement element)
@@ -260,11 +297,14 @@ public class UIController
         Vector2 newOffset = offset;
         GenerateBuffers();
 
-        foreach (var element in Elements)
+        foreach (var element in ElementsToTest)
+        { 
             element.Test(newOffset);
-
+        }
+            
+        UpdateTest();
         PostTestUpdates();
-        UpdateMeshes();
+        UpdateMeshes(); 
     }
 
     public void GenerateBuffers()
@@ -275,7 +315,8 @@ public class UIController
 
             while (ElementsToAdd.Count > 0)
             {
-                Internal_AddElement(ElementsToAdd.Dequeue());
+                UIElement element = ElementsToAdd.Dequeue();
+                Internal_AddElement(element);
             }
 
             foreach (var element in AbsoluteElements)
@@ -307,8 +348,30 @@ public class UIController
     {
         while (ElementsToRemove.Count > 0)
         {
-            Internal_RemoveElement(ElementsToRemove.Dequeue());
+            UIElement element = ElementsToRemove.Dequeue();
+            Internal_RemoveElement(element);
         }
+    }
+
+    public void UpdateTest()
+    {
+        if (!UpdateTestQueue)
+            return;
+
+        while (ElementsToAddToTestQueue.Count > 0)
+        {
+            UIElement element = ElementsToAddToTestQueue.Dequeue();
+            if (!ElementsToTest.Contains(element))
+                ElementsToTest.Add(element);
+        }
+
+        while (ElementsToRemoveFromTestQueue.Count > 0)
+        {
+            UIElement element = ElementsToRemoveFromTestQueue.Dequeue();
+            ElementsToTest.Remove(element);
+        }
+
+        UpdateTestQueue = false;
     }
 
     /// <summary>
@@ -402,7 +465,7 @@ public class UIController
 
     public static void AssignInputField(UIInputField inputField)
     {
-        Console.WriteLine("Assigning: " + inputField.Name);
+        //Console.WriteLine("Assigning: " + inputField.Name);
         activeInputField = inputField;
     }
 
@@ -456,7 +519,7 @@ public class UIController
         memory += "ElementsToAdd: " + ElementsToAdd.Count + "\n";
         memory += "ElementsToRemove: " + ElementsToRemove.Count + "\n";
         memory += "newUIMesh: " + UIMesh.ElementCount + "\n";
-        Console.WriteLine(memory);
+        //Console.WriteLine(memory);
     }
 
     public List<string> ToLines()

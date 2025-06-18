@@ -1,3 +1,4 @@
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public static class ModelManager
@@ -45,13 +46,17 @@ public static class ModelManager
 
     public static void Render()
     {
+        GL.CullFace(TriangleFace.Back);
+
         foreach (var model in Models.Values)
         {
             if (model.IsShown)
             {
-                model.Render(); 
+                model.Render();
             }
         }
+        
+        GL.DepthFunc(DepthFunction.Lequal);
     }
 
     public static void LoadModel(string name)

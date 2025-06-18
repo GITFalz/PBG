@@ -15,6 +15,8 @@ public class GeneralModelingEditor : ScriptingNode
     public UIController UIHierarchyController;
 
     public UIScrollView HierarchyScrollView;
+    public UIScrollView HierarchyCollectionActions;
+    public HierarchyManager HierarchyManager = new HierarchyManager();
 
     public string currentModelName = "cube";
     public List<string> MeshSaveNames = new List<string>();
@@ -24,7 +26,7 @@ public class GeneralModelingEditor : ScriptingNode
     public UIInputField SnappingText;
 
 
-    public float MeshAlpha 
+    public float MeshAlpha
     {
         get => ModelSettings.MeshAlpha;
         set => ModelSettings.MeshAlpha = value;
@@ -101,14 +103,14 @@ public class GeneralModelingEditor : ScriptingNode
         get => ModelSettings.Axis.Z;
         set => ModelSettings.Axis.Z = value;
     }
-    
 
-    public Action LoadAction = () => {};
-    public Action SaveAction = () => {};
 
-    public Action FileManagerLoadAction = () => {};
+    public Action LoadAction = () => { };
+    public Action SaveAction = () => { };
+
+    public Action FileManagerLoadAction = () => { };
     public Action AfterNewSelectedModelAction = () => { };
-    
+
     public bool freeCamera = false;
     public int _selectedModel = 0;
     public bool regenerateVertexUi = false;
@@ -263,14 +265,13 @@ public class GeneralModelingEditor : ScriptingNode
         UIImage hierarchyPanel = new("HierarchyPanel", UIHierarchyController, AnchorType.ScaleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (245, Game.Height - 50), (0, 0, 0, 0), 0, 1, (10, 0.05f));
         hierarchyPanel.SetTopPc(50);
 
-        HierarchyScrollView = new("HierarchyScrollView", UIHierarchyController, AnchorType.ScaleRight, PositionType.Relative, CollectionType.Vertical, (238, Game.Height - 50), (-7, 0, 0, 0));
-        HierarchyScrollView.SetBorder((5, 0, 5, 5));
-        HierarchyScrollView.SetSpacing(0);
-        HierarchyScrollView.SetBottomPx(5);
-        HierarchyScrollView.SetTopPc(50);
-        HierarchyScrollView.AddTopPx(5);
+        HierarchyScrollView = new("HierarchyScrollView", UIHierarchyController, AnchorType.ScaleRight, PositionType.Relative, CollectionType.Vertical, (178, Game.Height - 50), (-67, 0, 0, 0));
+        HierarchyScrollView.SetBorder((5, 0, 5, 5)).SetSpacing(0).SetBottomPx(5).SetTopPc(50).AddTopPx(5);
 
-        mainHierarchyCollection.AddElements(hierarchyPanel, HierarchyScrollView);
+        HierarchyCollectionActions = new UIScrollView("HierarchyCollectionActions", UIHierarchyController, AnchorType.ScaleRight, PositionType.Relative, CollectionType.Vertical, (70, Game.Height - 50), (-1, 0, 0, 0));
+        HierarchyCollectionActions.SetBorder((0, 0, 5, 5)).SetSpacing(0).SetBottomPx(5).SetTopPc(50).AddTopPx(5);
+
+        mainHierarchyCollection.AddElements(hierarchyPanel, HierarchyScrollView, HierarchyCollectionActions);
 
         UIHierarchyController.AddElement(mainHierarchyCollection);
     }
@@ -318,6 +319,8 @@ public class GeneralModelingEditor : ScriptingNode
         FileManagerLoadAction = () =>
         {
             HierarchyScrollView.DeleteSubElements();
+            HierarchyCollectionActions.DeleteSubElements();
+            HierarchyManager.Clear();
             foreach (var (name, model) in ModelManager.Models)
             {
                 GenerateModelButton(model);
@@ -331,7 +334,7 @@ public class GeneralModelingEditor : ScriptingNode
     {
         MainUi.Resize();
         UIScrollViewTest.Resize();
-        UIHierarchyController.Resize(); 
+        UIHierarchyController.Resize();
 
         modelingEditor.Resize();
         riggingEditor.Resize();
@@ -367,29 +370,31 @@ public class GeneralModelingEditor : ScriptingNode
     }
 
     public void Render()
-    {     
+    {
         CurrentEditor.Render();
 
         MainUi.RenderNoDepthTest();
-        UIHierarchyController.RenderNoDepthTest();
+        UIHierarchyController.RenderDepthTest();
         UIScrollViewTest.RenderNoDepthTest();
     }
 
     public void Exit()
     {
         CurrentEditor.Exit();
-        HierarchyScrollView.DeleteSubElements();    
+        HierarchyScrollView.DeleteSubElements();
+        HierarchyCollectionActions.DeleteSubElements();
     }
-    
+
     public void GenerateModelButton(Model? model)
     {
         if (model == null)
             return;
-        
+
         UICollection modelCollection = new UICollection($"ModelCollection_{model.Name}", UIHierarchyController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (300, 30), (0, 0, 0, 0), 0);
 
         UIButton modelButton = new UIButton($"Model_{model.Name}", UIHierarchyController, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (7.5f, 0.05f), UIState.Interactable);
         UIText modelText = new UIText($"ModelText_{model.Name}", UIHierarchyController, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (300, 30), (10, 0, 0, 0), 0);
+
         modelText.SetTextCharCount(model.Name, 1f);
         modelButton.SetOnClick(() =>
         {
@@ -423,11 +428,57 @@ public class GeneralModelingEditor : ScriptingNode
         });
 
         modelCollection.AddElements(modelText, modelButton);
-
         HierarchyScrollView.AddElement(modelCollection);
 
-        if (_started)
-            UIHierarchyController.AddElement(modelCollection);
+
+
+        UICollection modelActions = new UICollection($"ModelActions_{model.Name}", UIHierarchyController, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (60, 30), (0, 0, 0, 0), 0);
+
+        UIImage actionsPanel = new UIImage($"ActionsPanel_{model.Name}", UIHierarchyController, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (60, 30), (0, 0, 0, 0), 0, 10, (7.5f, 0.05f));
+
+        UICollection modelActionsCollection = new UICollection($"ModelActionsCollection_{model.Name}", UIHierarchyController, AnchorType.MiddleLeft, PositionType.Relative, (0, 0, 0), (60, 30), (3, 0, 0, 0), 0);
+
+        UIButton deleteButton = new UIButton($"DeleteModelButton_{model.Name}", UIHierarchyController, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (20, 20), (0, 0, 0, 0), 0, 80, (-1, -1), UIState.Interactable);
+        UIButton hideButton = new UIButton($"HideModelButton_{model.Name}", UIHierarchyController, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (20, 20), (30, 0, 0, 0), 0, 81, (-1, -1), UIState.Interactable);
+        hideButton.SetOnClick(() =>
+        {
+            int textureIndex = hideButton.TextureIndex == 81 ? 82 : 81;
+            hideButton.TextureIndex = textureIndex;
+            hideButton.UpdateTexture();
+            model.IsShown = hideButton.TextureIndex == 81;
+        });
+
+        modelActionsCollection.AddElements(deleteButton, hideButton);
+        modelActions.AddElements(actionsPanel, modelActionsCollection);
+        HierarchyCollectionActions.AddElement(modelActions);
+
+        if (_started) UIHierarchyController.AddElements(modelCollection, modelActions);
+
+        ModelSelection hierarchyModelSelection = new ModelSelection(
+            model,
+            UIHierarchyController,
+            modelCollection,
+            modelButton,
+            modelText,
+            modelActions,
+            actionsPanel,
+            modelActionsCollection,
+            deleteButton,
+            hideButton
+        );
+
+        HierarchyManager.AddSelection(hierarchyModelSelection);
+
+        deleteButton.SetOnClick(() =>
+        {
+            hierarchyModelSelection.Delete();
+            HierarchyScrollView.ResetInit();
+            HierarchyScrollView.QueueAlign();
+            HierarchyScrollView.QueueUpdateTransformation();
+            HierarchyCollectionActions.ResetInit();
+            HierarchyCollectionActions.QueueAlign();
+            HierarchyCollectionActions.QueueUpdateTransformation();
+        });
     }
 
     public void DoSwitchScene(BaseEditor editor)
@@ -500,8 +551,57 @@ public class GeneralModelingEditor : ScriptingNode
     public void SnappingField()
     {
         string text = SnappingText.Text;
-        SnappingFactor = Mathf.Clamp(0, 100, Float.Parse(text, 0.0f)); 
+        SnappingFactor = Mathf.Clamp(0, 100, Float.Parse(text, 0.0f));
         Snapping = SnappingFactor != 0.0f;
     }
     #endregion
+}
+
+public class ModelSelection : HierarchySelection
+{
+    public Model Model;
+    public UIController Controller;
+
+    public UICollection modelCollection;
+    public UIButton modelButton;
+    public UIText modelText;
+
+    public UICollection modelActions;
+    public UIImage actionsPanel;
+    public UICollection modelActionsCollection;
+    public UIButton deleteButton;
+    public UIButton hideButton;
+
+    public ModelSelection(
+        Model model,
+        UIController controller,
+        UICollection modelCollection,
+        UIButton modelButton,
+        UIText modelText,
+        UICollection modelActions,
+        UIImage actionsPanel,
+        UICollection modelActionsCollection,
+        UIButton deleteButton,
+        UIButton hideButton
+    ){
+        Model = model;
+        Controller = controller;
+        this.modelCollection = modelCollection;
+        this.modelButton = modelButton;
+        this.modelText = modelText;
+        this.modelActions = modelActions;
+        this.actionsPanel = actionsPanel;
+        this.modelActionsCollection = modelActionsCollection;
+        this.deleteButton = deleteButton;
+        this.hideButton = hideButton;
+    }
+
+    public override void Delete()
+    {
+        modelCollection.Delete();
+        modelActions.Delete();
+        ModelManager.UnSelect(Model);
+        Model.Delete();
+        DeleteFromParent();
+    }
 }

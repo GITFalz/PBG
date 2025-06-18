@@ -113,9 +113,10 @@ public class UIScrollView : UICollection
         return this;
     }
 
-    public override void SetSpacing(float spacing)
+    public override UIElement SetSpacing(float spacing)
     {
         SubElements.SetSpacing(spacing);
+        return this;
     }
 
     protected override void Internal_UpdateTransformation()
@@ -166,11 +167,7 @@ public class UIScrollView : UICollection
     /// </summary>
     public void DeleteSubElements()
     {
-        List<UIElement> elementsToRemove = [.. SubElements.Elements];
-        foreach (UIElement element in elementsToRemove)
-        {
-            element.Delete();
-        }
+        SubElements.DeleteElements();
     }
 
     public override void Delete(bool baseOnly = false)

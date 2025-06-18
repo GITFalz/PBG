@@ -70,9 +70,10 @@ public class UIVerticalCollection : UICollection
         return totalOffset - Spacing + Border.W;
     }
 
-    public override void SetSpacing(float spacing)
+    public override UIElement SetSpacing(float spacing)
     {
         Spacing = spacing;
+        return this;
     }
 
     public override void SetBorder(Vector4 border)

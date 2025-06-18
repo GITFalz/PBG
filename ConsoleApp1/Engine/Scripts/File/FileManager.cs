@@ -392,8 +392,13 @@ public class FileManager : ScriptingNode
             _wantedPath = path;
             _regen = true;
         }
+        
+        if (Input.IsKeyPressed(Keys.Escape))
+        {
+            ToggleOff();
+        }
 
-        if (Input.IsControlAndKeyPressed(Keys.B)) 
+        if (Input.IsControlAndKeyPressed(Keys.B))
         {
             FilesUIController.PrintMemory();
         }

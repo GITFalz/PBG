@@ -7,16 +7,16 @@ public class UITextButton : UIPrefab
     public UIButton Button;
 
     public UITextButton(
-        string name, 
-        UIController controller, 
-        AnchorType anchorType, 
-        PositionType positionType, 
+        string name,
+        UIController controller,
+        AnchorType anchorType,
+        PositionType positionType,
         Vector3? color,
-        Vector3? pivot, 
-        Vector2? scale, 
-        Vector4? offset, 
-        float? rotation, 
-        int? textureIndex, 
+        Vector3? pivot,
+        Vector2? scale,
+        Vector4? offset,
+        float? rotation,
+        int? textureIndex,
         Vector2? slice,
         UIState state = UIState.Interactable
     ) : base(name, controller, offset ?? (0, 0, 0, 0))
@@ -61,8 +61,20 @@ public class UITextButton : UIPrefab
         return SetText(text, 0.5f);
     }
 
-    public void SetOnClick(Action action) => Button.SetOnClick(action);
-    public void SetOnHover(Action action) => Button.SetOnHover(action);
-    public void SetOnHold(Action action) => Button.SetOnHold(action);
-    public void SetOnRelease(Action action) => Button.SetOnRelease(action);
+    public void SetOnClick(Action action)
+    {
+        Button.SetOnClick(action);
+    }
+    public void SetOnHover(Action action)
+    {
+        Button.SetOnHover(action);
+    }
+    public void SetOnHold(Action action)
+    {
+        Button.SetOnHold(action);
+    }
+    public void SetOnRelease(Action action)
+    {
+        Button.SetOnRelease(action);
+    }
 }

@@ -49,6 +49,7 @@ public class UIMesh
 
     public void RemoveElement(UIPanel element)
     {
+        //Console.WriteLine($"Removing element: {element.Name}");
         if (ElementIndices.TryGetValue(element, out int index))
         {
             int lastIndex = Elements.Count - 1;

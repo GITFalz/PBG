@@ -62,7 +62,7 @@ public class ModelingEditor : BaseEditor
 
         ModeCollection = new UIVerticalCollection("ModeCollection", ModeController, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (200, 30), (0, 0, 0, 0), (0, 0, 0, 0), 5f, 0f);
 
-        UITextButton editButton = new("EditButton", ModeController, AnchorType.TopCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (200, 30), (0, 0, 0, 0), 0f, 0, (10f, 0.05f), UIState.Interactable);
+        UITextButton editButton = new("EditButton_", ModeController, AnchorType.TopCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (200, 30), (0, 0, 0, 0), 0f, 0, (10f, 0.05f), UIState.Interactable);
         editButton.SetTextCharCount("Edit", 1f);
         editButton.SetOnClick(() =>
         {
@@ -70,9 +70,10 @@ public class ModelingEditor : BaseEditor
             SwitchMode(EditingMode);
             editModeText.SetVisibility(true);
             selectText.SetVisibility(false);
+            Console.WriteLine("Switched to Editing Mode");
         });
 
-        UITextButton selectButton = new("SelectButton", ModeController, AnchorType.TopCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (200, 30), (0, 0, 0, 0), 0f, 0, (10f, 0.05f), UIState.Interactable);
+        UITextButton selectButton = new("SelectButton_", ModeController, AnchorType.TopCenter, PositionType.Relative, (0.6f, 0.6f, 0.6f), (0, 0, 0), (200, 30), (0, 0, 0, 0), 0f, 0, (10f, 0.05f), UIState.Interactable);
         selectButton.SetTextCharCount("Select", 1f);
         selectButton.SetOnClick(() =>
         {
@@ -80,6 +81,7 @@ public class ModelingEditor : BaseEditor
             SwitchMode(SelectionMode);
             editModeText.SetVisibility(false);
             selectText.SetVisibility(true);
+            Console.WriteLine("Switched to Selection Mode");
         });
 
         ModeCollection.AddElements(editButton, selectButton);

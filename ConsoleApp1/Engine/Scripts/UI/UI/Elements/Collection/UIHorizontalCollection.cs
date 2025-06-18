@@ -46,9 +46,10 @@ public class UIHorizontalCollection : UICollection
         OnAlign = null;
     }
 
-    public override void SetSpacing(float spacing)
+    public override UIElement SetSpacing(float spacing)
     {
         Spacing = spacing;
+        return this;
     }
 
     public override void SetBorder(Vector4 border)

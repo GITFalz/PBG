@@ -22,7 +22,8 @@ public abstract class UIElement
 
     public float Rotation = 0f;
     public bool Rotated = false;
-    public bool CanTest = true;
+    public bool CanTest = false;
+    public bool AddedToController = false;
     public bool CanUpdate = false;
     public bool Masked = false;
     public int MaskIndex = 0;
@@ -69,30 +70,40 @@ public abstract class UIElement
 
     public void AddConstraint(UIConstraint constraint, float value) => Constraints.Add(Constraint.GetUIConstraint(constraint, value));
     // Left
-    public void SetLeftPx(float value)   => AddConstraint(UIConstraint.SetLeftPx, value);
-    public void SetLeftPc(float value)   => AddConstraint(UIConstraint.SetLeftPc, value);
-    public void AddLeftPx(float value)   => AddConstraint(UIConstraint.AddLeftPx, value);
-    public void AddLeftPc(float value)   => AddConstraint(UIConstraint.AddLeftPc, value);
+    public UIElement SetLeftPx(float value) { AddConstraint(UIConstraint.SetLeftPx, value); return this; }
+    public UIElement SetLeftPc(float value) { AddConstraint(UIConstraint.SetLeftPc, value); return this; }
+    public UIElement AddLeftPx(float value) { AddConstraint(UIConstraint.AddLeftPx, value); return this; }
+    public UIElement AddLeftPc(float value) { AddConstraint(UIConstraint.AddLeftPc, value); return this; }
 
     // Top
-    public void SetTopPx(float value)    => AddConstraint(UIConstraint.SetTopPx, value);
-    public void SetTopPc(float value)    => AddConstraint(UIConstraint.SetTopPc, value);
-    public void AddTopPx(float value)    => AddConstraint(UIConstraint.AddTopPx, value);
-    public void AddTopPc(float value)    => AddConstraint(UIConstraint.AddTopPc, value);
+    public UIElement SetTopPx(float value) { AddConstraint(UIConstraint.SetTopPx, value); return this; }
+    public UIElement SetTopPc(float value) { AddConstraint(UIConstraint.SetTopPc, value); return this; }
+    public UIElement AddTopPx(float value) { AddConstraint(UIConstraint.AddTopPx, value); return this; }
+    public UIElement AddTopPc(float value) { AddConstraint(UIConstraint.AddTopPc, value); return this; }
 
     // Right
-    public void SetRightPx(float value)  => AddConstraint(UIConstraint.SetRightPx, value);
-    public void SetRightPc(float value)  => AddConstraint(UIConstraint.SetRightPc, value);
-    public void AddRightPx(float value)  => AddConstraint(UIConstraint.AddRightPx, value);
-    public void AddRightPc(float value)  => AddConstraint(UIConstraint.AddRightPc, value);
+    public UIElement SetRightPx(float value) { AddConstraint(UIConstraint.SetRightPx, value); return this; }
+    public UIElement SetRightPc(float value) { AddConstraint(UIConstraint.SetRightPc, value); return this; }
+    public UIElement AddRightPx(float value) { AddConstraint(UIConstraint.AddRightPx, value); return this; }
+    public UIElement AddRightPc(float value) { AddConstraint(UIConstraint.AddRightPc, value); return this; }
 
     // Bottom
-    public void SetBottomPx(float value) => AddConstraint(UIConstraint.SetBottomPx, value);
-    public void SetBottomPc(float value) => AddConstraint(UIConstraint.SetBottomPc, value);
-    public void AddBottomPx(float value) => AddConstraint(UIConstraint.AddBottomPx, value);
-    public void AddBottomPc(float value) => AddConstraint(UIConstraint.AddBottomPc, value);
+    public UIElement SetBottomPx(float value) { AddConstraint(UIConstraint.SetBottomPx, value); return this; }
+    public UIElement SetBottomPc(float value) { AddConstraint(UIConstraint.SetBottomPc, value); return this; }
+    public UIElement AddBottomPx(float value) { AddConstraint(UIConstraint.AddBottomPx, value); return this; }
+    public UIElement AddBottomPc(float value) { AddConstraint(UIConstraint.AddBottomPc, value); return this; }
 
-    public virtual void SetVisibility(bool visible) { Visible = visible; CanTest = visible; }
+    public virtual void SetVisibility(bool visible)
+    {
+        if (Visible != visible)
+        {
+            if (visible)
+                UIController.AddToTestQueue(this);
+            else
+                UIController.RemoveFromTestQueue(this);
+        }
+        Visible = visible; CanTest = visible;
+    }
     public virtual void SetMasked(bool masked) { Masked = masked; }
     public virtual void SetMaskIndex(int maskIndex) { MaskIndex = maskIndex; }
     public virtual void Move(Vector3 offset) { Origin += offset; GetTransformation(); }
@@ -211,36 +222,42 @@ public abstract class UIElement
     public UIElement SetOnClick(Action action)
     {
         OnClick = new SerializableEvent(action); 
-        CanTest = true ;
+        if (AddedToController) UIController.AddToTestQueue(this);
+        CanTest = true;
         return this;
     } 
     public UIElement SetOnHoverEnter(Action action)
     {
         OnHoverEnter = new SerializableEvent(action); 
+        if (AddedToController) UIController.AddToTestQueue(this);
         CanTest = true;
         return this;
     }
     public UIElement SetOnHover(Action action)
     {
         OnHover = new SerializableEvent(action);
+        if (AddedToController) UIController.AddToTestQueue(this);
         CanTest = true;
         return this;
     }
     public UIElement SetOnHold(Action action)
     {
         OnHold = new SerializableEvent(action); 
+        if (AddedToController) UIController.AddToTestQueue(this);
         CanTest = true;
         return this;
     }
     public UIElement SetOnRelease(Action action)
     {
         OnRelease = new SerializableEvent(action); 
+        if (AddedToController) UIController.AddToTestQueue(this);
         CanTest = true;
         return this;
     }
     public UIElement SetOnHoverExit(Action action)
     {
         OnHoverExit = new SerializableEvent(action); 
+        if (AddedToController) UIController.AddToTestQueue(this);
         CanTest = true;
         return this;
     }
@@ -249,12 +266,10 @@ public abstract class UIElement
     #region Mouse Events
     public virtual bool Test(Vector2 offset = default)
     {
-        if (!CanTest)
-            return false;
-
         TestButtons(IsMouseOver(offset));
         return true;
     }
+
     public bool IsMouseOver(Vector2 offset = default)
     {
         Vector2 pos = Input.GetMousePosition();

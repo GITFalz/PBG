@@ -147,7 +147,7 @@ public class UICollection : UIElement
         }
     }
 
-    public virtual void SetSpacing(float spacing) { }
+    public virtual UIElement SetSpacing(float spacing) { return this; }
     public virtual void SetBorder(Vector4 border) { }
 
     public override float GetYScale()
