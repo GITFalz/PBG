@@ -459,13 +459,8 @@ public class RiggingEditor : BaseEditor
 
         foreach (var (_, model) in ModelManager.SelectedModels)
         {
-            model.Model.SetStaticRig();
-            model.Model.SetAnimation();
-        }
-
-        foreach (var (_, model) in ModelManager.Models)
-        {
-            model.RenderBones = true;
+            model.Model.SetModeling();
+            model.Model.RenderBones = true;
         }
 
         if (Model == null)
