@@ -609,30 +609,25 @@ public class AnimationEditor : BaseEditor
         {
             model.RenderBones = true;
         }
-
-        foreach (var (name, model) in ModelManager.SelectedModels)
-        {
-            model.Model.Animation = new Animation($"{name}_Animation");
-        }
-
-        if (Model != null)
-        {
-            Model.Animation = new Animation("Default_Animation");
-            Animation = Model.Animation;
-            GenerateAnimationKeyframes(Model);
-        }
             
         KeyframePanelCollection.Align();
 
-        Editor.AfterNewSelectedModelAction = () =>
+        if (Model != null)
         {
-            if (Model == null)
+            Model.Animation ??= new Animation($"{Model.Name}_Animation");
+            GenerateAnimationTimeline(Model, Model.Animation);
+        }
+
+        Editor.AfterNewSelectedModelAction = (model) =>
+        {
+            if (model == null)
             {
                 return;
             }
             else
             {
-                GenerateAnimationTimeline(Model, Model.Animation);
+                model.Animation ??= new Animation($"{model.Name}_Animation");
+                GenerateAnimationTimeline(model, model.Animation);
             }
         };
 
@@ -645,7 +640,6 @@ public class AnimationEditor : BaseEditor
     {   
         if (model.Animation == null || model.Rig == null)
             return;
-
         
         TimelineScrollView.DeleteSubElements();
 
@@ -723,11 +717,8 @@ public class AnimationEditor : BaseEditor
         TimelineScrollView.ResetInit();
     }
 
-    public void GenerateAnimationTimeline(Model model, Animation? animation)
+    public void ClearTimeline()
     {
-        if (model.Rig == null || animation == null)
-            return;
-
         TimelineScrollView.DeleteSubElements();
 
         foreach (var boneAnimation in BoneAnimations)
@@ -736,10 +727,18 @@ public class AnimationEditor : BaseEditor
         }
 
         BoneAnimations = [];
+    }
 
-        int i = 0;
-        foreach (var bone in model.Rig.BonesList)
+    public void GenerateAnimationTimeline(Model model, Animation? animation)
+    {
+        if (model.Rig == null || animation == null)
+            return;
+
+        ClearTimeline();
+
+        for (int i = 0; i < model.Rig.BonesList.Count; i++)
         {
+            Bone bone = model.Rig.BonesList[i];
             if (!animation.TryGetBoneAnimation(bone.Name, out var boneAnimation))
             {
                 boneAnimation = new BoneAnimation(bone.Name);
@@ -809,7 +808,6 @@ public class AnimationEditor : BaseEditor
 
                 timelineAnimation.Add(keyframeButton, keyframe);
             }
-            i++;
         }
 
         TimelineScrollView.ResetInit();
@@ -879,23 +877,28 @@ public class AnimationEditor : BaseEditor
         ModelingUi.Update();
         TimelineUI.Update();
 
-        if (Input.IsKeyPressed(Keys.Escape))
+        if (Input.IsKeyPressed(Keys.U))
         {
-            Editor.freeCamera = !Editor.freeCamera;
-
-            if (Editor.freeCamera)
-            {
-                Game.Instance.CursorState = CursorState.Grabbed;
-                Game.camera.Unlock();
-            }
-            else
-            {
-                Game.Instance.CursorState = CursorState.Normal;
-                Game.camera.Lock();
-                Model?.UpdateVertexPosition();
-                UpdateBonePosition(Game.camera.ProjectionMatrix, Game.camera.ViewMatrix);
-            }
+            ClearTimeline();
         }
+
+        if (Input.IsKeyPressed(Keys.Escape))
+            {
+                Editor.freeCamera = !Editor.freeCamera;
+
+                if (Editor.freeCamera)
+                {
+                    Game.Instance.CursorState = CursorState.Grabbed;
+                    Game.camera.Unlock();
+                }
+                else
+                {
+                    Game.Instance.CursorState = CursorState.Normal;
+                    Game.camera.Lock();
+                    Model?.UpdateVertexPosition();
+                    UpdateBonePosition(Game.camera.ProjectionMatrix, Game.camera.ViewMatrix);
+                }
+            }
 
         if (!Editor.freeCamera)
         {

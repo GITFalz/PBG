@@ -109,7 +109,7 @@ public class GeneralModelingEditor : ScriptingNode
     public Action SaveAction = () => { };
 
     public Action FileManagerLoadAction = () => { };
-    public Action AfterNewSelectedModelAction = () => { };
+    public Action<Model> AfterNewSelectedModelAction = (model) => { };
 
     public bool freeCamera = false;
     public int _selectedModel = 0;
@@ -424,7 +424,7 @@ public class GeneralModelingEditor : ScriptingNode
                 modelButton.UpdateColor();
             }
 
-            AfterNewSelectedModelAction?.Invoke();
+            AfterNewSelectedModelAction(model);
         });
 
         modelCollection.AddElements(modelText, modelButton);
