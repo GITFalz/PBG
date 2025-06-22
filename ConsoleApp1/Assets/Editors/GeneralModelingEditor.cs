@@ -110,6 +110,7 @@ public class GeneralModelingEditor : ScriptingNode
 
     public Action FileManagerLoadAction = () => { };
     public Action<Model> AfterNewSelectedModelAction = (model) => { };
+    public Action<Model> AfterUnSelectedModelAction = (model) => { };
 
     public bool freeCamera = false;
     public int _selectedModel = 0;
@@ -394,7 +395,7 @@ public class GeneralModelingEditor : ScriptingNode
 
         UIButton modelButton = new UIButton($"Model_{model.Name}", UIHierarchyController, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (300, 30), (0, 0, 0, 0), 0, 10, (7.5f, 0.05f), UIState.Interactable);
         UIText modelText = new UIText($"ModelText_{model.Name}", UIHierarchyController, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (300, 30), (10, 0, 0, 0), 0);
-
+        
         modelText.SetTextCharCount(model.Name, 1f);
         modelButton.SetOnClick(() =>
         {
@@ -415,6 +416,7 @@ public class GeneralModelingEditor : ScriptingNode
                 ModelManager.UnSelect(model);
                 modelButton.Color = (0.5f, 0.5f, 0.5f, 1f);
                 modelButton.UpdateColor();
+                AfterUnSelectedModelAction(model);
             }
             else
             {
@@ -422,9 +424,8 @@ public class GeneralModelingEditor : ScriptingNode
                 ModelManager.Select(model);
                 modelButton.Color = (0.529f, 0.808f, 0.980f, 1.0f);
                 modelButton.UpdateColor();
+                AfterNewSelectedModelAction(model);
             }
-
-            AfterNewSelectedModelAction(model);
         });
 
         modelCollection.AddElements(modelText, modelButton);

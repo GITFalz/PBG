@@ -11,10 +11,8 @@ public class Model
     public string CurrentModelName = "";
     public string TextureName = "empty.png";
     public TextureLocation TextureLocation = TextureLocation.NormalTexture;
-    
 
     public ModelMesh Mesh;
-
 
     private static ShaderProgram _shaderProgram = new ShaderProgram("Model/Model.vert", "Model/Model.frag");
     private static int _modelLocation = _shaderProgram.GetLocation("model");
@@ -28,7 +26,7 @@ public class Model
     private static int _animationColorAlphaLocation = _animationShader.GetLocation("colorAlpha");
     private ShaderProgram _activeShader = _shaderProgram;
     private int _activeModelLocation = _modelLocation;
-    private int _activeViewLocation = _viewLocation; 
+    private int _activeViewLocation = _viewLocation;
     private int _activeProjectionLocation = _projectionLocation;
     private int _activeColorAlphaLocation = _colorAlphaLocation;
     public Texture Texture = new Texture("empty.png", TextureLocation.NormalTexture);
@@ -63,7 +61,16 @@ public class Model
 
     public Rig? Rig;
     public string? RigName => Rig?.Name;
-    public Animation? Animation;
+    public Animation? Animation
+    {
+        get => _animation;
+        set
+        {
+            _animation = value;
+            Console.WriteLine($"Animation set: {value?.Name ?? "null"}");
+        }
+    }
+    private Animation? _animation;
 
     public bool RenderBones = false;
     public bool Animate = false;
@@ -181,7 +188,7 @@ public class Model
         _activeProjectionLocation = _projectionLocation;
         _activeColorAlphaLocation = _colorAlphaLocation;
         Mesh.Init();
-        Mesh.UpdateModel(); 
+        Mesh.UpdateModel();
     }
 
     public void SetAnimation()
@@ -237,7 +244,7 @@ public class Model
             Rig = null;
             return;
         }
-        
+
         if (RigManager.Rigs.TryGetValue(RigName, out Rig? value))
         {
             Animate = true;
@@ -528,7 +535,7 @@ public class Model
 
     public bool LoadFromPath(string path)
     {
-        if (Mesh.LoadModelFromPath(path)) 
+        if (Mesh.LoadModelFromPath(path))
         {
             CurrentModelName = Path.GetFileNameWithoutExtension(path);
             return true;
@@ -599,7 +606,7 @@ public class Model
                 BonePivots.Add(bone.End, (screenPos2.Value, Vector2.Distance(screenPos2.Value, screenPos2Side.Value)));
         }
     }
-    
+
     public static List<Edge> GetFullSelectedEdges(List<Vertex> selectedVertices)
     {
         HashSet<Edge> edges = [];
@@ -619,20 +626,20 @@ public class Model
     public static List<Triangle> GetFullSelectedTriangles(List<Vertex> selectedVertices)
     {
         HashSet<Triangle> triangles = [];
-                
+
         foreach (var triangle in GetSelectedTriangles(selectedVertices))
         {
             if (IsTriangleFullySelected(selectedVertices, triangle))
                 triangles.Add(triangle);
         }
-        
+
         return triangles.ToList();
     }
 
     public static HashSet<Triangle> GetSelectedTriangles(List<Vertex> selectedVertices)
     {
         HashSet<Triangle> triangles = [];
-                
+
         foreach (var vert in selectedVertices)
         {
             foreach (var triangle in vert.ParentTriangles)
@@ -640,7 +647,7 @@ public class Model
                 triangles.Add(triangle);
             }
         }
-        
+
         return triangles;
     }
 
@@ -743,7 +750,7 @@ public class Model
 
             if (Vector3.Dot(rotatedNormal, (0, 1, 0)) < 0)
                 angle += 180f;
-            
+
             foreach (var vert in Model.GetVertices(triangles))
                 vert.SetPosition(Mathf.RotatePoint(vert, center, rotationAxis, angle));
         }

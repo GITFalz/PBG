@@ -62,32 +62,18 @@ public class Animation
         }
     }
 
-    public void AddOrUpdateKeyframe(string boneName, AnimationKeyframe keyframe)
+    public bool AddOrUpdateKeyframe(string boneName, AnimationKeyframe keyframe)
     {
         if (BoneAnimations.TryGetValue(boneName, out var boneAnimation))
         {
-            boneAnimation.AddOrUpdateKeyframe(keyframe);
+            return boneAnimation.AddOrUpdateKeyframe(keyframe);
         }
         else
         {
             BoneAnimation newBoneAnimation = new BoneAnimation();
-            newBoneAnimation.AddOrUpdateKeyframe(keyframe);
+            var b = newBoneAnimation.AddOrUpdateKeyframe(keyframe);
             BoneAnimations.Add(boneName, newBoneAnimation);
-        }
-    }
-
-    public void AddOrUpdateKeyframe(string boneName, AnimationKeyframe keyframe, out bool added)
-    {
-        added = false;
-        if (BoneAnimations.TryGetValue(boneName, out var boneAnimation))
-        {
-            boneAnimation.AddOrUpdateKeyframe(keyframe, out added);
-        }
-        else
-        {
-            BoneAnimation newBoneAnimation = new BoneAnimation();
-            newBoneAnimation.AddOrUpdateKeyframe(keyframe, out added);
-            BoneAnimations.Add(boneName, newBoneAnimation);
+            return b;
         }
     }
 
@@ -222,25 +208,7 @@ public class BoneAnimation
     /// Add or updates a keyframe to the animation and sort the keyframes by time
     /// </summary>
     /// <param name="keyframe"></param>
-    public void AddOrUpdateKeyframe(AnimationKeyframe keyframe)
-    {
-        var existing = Keyframes.FirstOrDefault(k => k.Index == keyframe.Index);
-
-        if (existing != null)
-        {
-            existing.Rotation = keyframe.Rotation;
-            return;
-        }
-        else
-        {
-            Keyframes.Add(keyframe);
-            Keyframes = Keyframes.OrderBy(k => k.Time).ToList();
-        }
-
-        GetFrame = Keyframes.Count > 1 ? GetFrameMultiple : GetFrameSingle;
-    }
-
-    public void AddOrUpdateKeyframe(AnimationKeyframe keyframe, out bool added)
+    public bool AddOrUpdateKeyframe(AnimationKeyframe keyframe)
     {
         var existing = Keyframes.FirstOrDefault(k => k.Index == keyframe.Index);
 
@@ -249,17 +217,16 @@ public class BoneAnimation
             existing.Position = keyframe.Position;
             existing.Rotation = keyframe.Rotation;
             existing.Scale = keyframe.Scale;
-            added = false;
-            return;
+            return false;
         }
         else
         {
-            added = true;
             Keyframes.Add(keyframe);
             Keyframes = Keyframes.OrderBy(k => k.Time).ToList();
         }
 
         GetFrame = Keyframes.Count > 1 ? GetFrameMultiple : GetFrameSingle;
+        return true;
     }
 
     public bool RemoveKeyframe(int index, [NotNullWhen(true)] out AnimationKeyframe? removedKeyframe)

@@ -78,7 +78,6 @@ public class AnimationEditor : BaseEditor
     });
 
     // === ANIMATION LOGIC ===
-    public Animation Animation = new Animation("Test");
     public bool Playing = false;
 
     public int CurrentFrame
@@ -385,12 +384,11 @@ public class AnimationEditor : BaseEditor
                 PopUp.AddPopUp("Animation name cannot be empty");
                 return;
             }
-            if (!AnimationManager.TryGet(Animation.Name, out Animation? animation))
+            if (!AnimationManager.TryGet(Model.Animation.Name, out Animation? animation))
             {
-                AnimationManager.Add(Animation);
+                AnimationManager.Add(Model.Animation);
             }
-            AnimationManager.ChangeName(Animation.Name, name);
-            Animation.Name = name;
+            AnimationManager.ChangeName(Model.Animation.Name, name);
 
             AnimationManager.Save(name);
         });
@@ -412,10 +410,9 @@ public class AnimationEditor : BaseEditor
                 return;
             }
 
-            Animation = animation;
             Model.Animation = animation;
 
-            GenerateAnimationTimeline(Model, Animation);
+            GenerateAnimationTimeline(Model);
         });
 
         animationButtonCollection.AddElements(animationSaveButton.Collection, animationLoadButton.Collection);
@@ -580,11 +577,6 @@ public class AnimationEditor : BaseEditor
         CameraSpeedField.SetText($"{Game.camera.SPEED}").UpdateCharacters();
 
         Console.WriteLine("Start Rigging Editor");
-
-        if (Model == null)
-            return;
-
-        Model.Animation = Animation;
     }
 
     public override void Resize()
@@ -601,9 +593,6 @@ public class AnimationEditor : BaseEditor
 
         Console.WriteLine("Awake Animation Editor");
 
-        Model?.SetAnimationRig();
-        Model?.SetAnimation();
-
         foreach (var (_, model) in ModelManager.Models)
         {
             model.RenderBones = true;
@@ -614,24 +603,39 @@ public class AnimationEditor : BaseEditor
         if (Model != null)
         {
             Model.Animation ??= new Animation($"{Model.Name}_Animation");
-            GenerateAnimationTimeline(Model, Model.Animation);
+            Model.SetAnimationRig();
+            Model.SetAnimation();
+            GenerateAnimationTimeline(Model);
         }
 
         Editor.AfterNewSelectedModelAction = (model) =>
         {
-            if (model == null)
+            model.Animation ??= new Animation($"{model.Name}_Animation");
+            model.SetAnimationRig();
+            model.SetAnimation();
+            GenerateAnimationTimeline(model);
+        };
+
+        Editor.AfterUnSelectedModelAction = (model) =>
+        {
+            if (ModelManager.SelectedModels.Count == 0)
             {
-                return;
+                ClearTimeline();
             }
             else
             {
-                model.Animation ??= new Animation($"{model.Name}_Animation");
-                GenerateAnimationTimeline(model, model.Animation);
+                (string name, ModelManager.SelectedModelData data) = ModelManager.SelectedModels.FirstOrDefault();
+                Model selectedModel = data.Model;
+                selectedModel.Animation ??= new Animation($"{selectedModel.Name}_Animation");
+                selectedModel.SetAnimationRig();
+                selectedModel.SetAnimation();
+                GenerateAnimationTimeline(selectedModel);
             }
         };
 
-        Info.RenderInfo = false;
         Handle_BoneMovement();
+
+        Info.RenderInfo = false;
         regenerateVertexUi = true;
     }
 
@@ -728,13 +732,15 @@ public class AnimationEditor : BaseEditor
         BoneAnimations = [];
     }
 
-    public void GenerateAnimationTimeline(Model model, Animation? animation)
+    public void GenerateAnimationTimeline(Model model)
     {
+        Animation? animation = model.Animation;
         if (model.Rig == null || animation == null)
             return;
 
         ClearTimeline();
 
+        Console.WriteLine($"Generating animation timeline for model: {model.Name} with animation: {animation.Name}");
         for (int i = 0; i < model.Rig.BonesList.Count; i++)
         {
             Bone bone = model.Rig.BonesList[i];
@@ -758,7 +764,6 @@ public class AnimationEditor : BaseEditor
                 AnimationKeyframe keyframe = new AnimationKeyframe(0, bone);
                 boneAnimation.AddOrUpdateKeyframe(keyframe);
             }
-
             foreach (var keyframe in boneAnimation.Keyframes)
             {
                 UIButton keyframeButton = new UIButton("KeyframeButton", KeyframeUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (keyframe.Index * 20, i * 25, 0, 0), 0, 10, (10, 0.05f), UIState.Interactable);
@@ -811,7 +816,6 @@ public class AnimationEditor : BaseEditor
 
         TimelineScrollView.ResetInit();
         KeyframePanelCollection.Align();
-        model.Animation = animation;
     }
 
     public override void Render()
@@ -966,6 +970,41 @@ public class AnimationEditor : BaseEditor
         }
     }
 
+
+    public override void Exit()
+    {
+        TimelineScrollView.DeleteSubElements();
+        TimelineUI.RemoveElements();
+        TimelineUI.UpdateMeshes();
+
+        foreach (var (_, model) in ModelManager.Models)
+        {
+            model.RenderBones = false;
+        }
+
+        if (Model != null)
+        {
+            Model.RenderBones = false;
+            Model.SetAnimationRig();
+        }
+
+        foreach (var boneAnimation in BoneAnimations)
+        {
+            boneAnimation.Value.Clear();
+        }
+
+        KeyframeUI.RemoveElements();
+        KeyframeUI.UpdateMeshes();
+
+        Info.RenderInfo = true;
+
+        Playing = false;
+
+        Editor.AfterNewSelectedModelAction = (model) => { };
+        Editor.AfterUnSelectedModelAction = (model) => { };
+    }
+
+
     public void Handle_BoneMovement()
     {
         if (Model == null || Model.Rig == null)
@@ -1040,7 +1079,6 @@ public class AnimationEditor : BaseEditor
         foreach (var (pivot, (position, radius)) in Model.BonePivots)
         {
             float distance = Vector2.Distance(mousePos, position);
-            Console.WriteLine($"Distance: {distance}, Position: {position}, MousePos: {mousePos}, Radius: {radius}");
             float distanceClosest = closest == null ? 1000 : Vector2.Distance(mousePos, (Vector2)closest);
 
             if (distance < distanceClosest && distance < radius)
@@ -1137,39 +1175,11 @@ public class AnimationEditor : BaseEditor
         Model?.UpdateRig();
     }
 
-    public override void Exit()
-    {
-        TimelineScrollView.DeleteSubElements();
-        TimelineUI.RemoveElements();
-        TimelineUI.UpdateMeshes();
-
-        foreach (var (_, model) in ModelManager.Models)
-        {
-            model.RenderBones = true;
-        }
-
-        if (Model != null)
-        {   
-            Model.RenderBones = false;
-            Model.Rig?.Delete();
-            Model.SetAnimationRig();
-        }
-
-        foreach (var boneAnimation in BoneAnimations)
-        {
-            boneAnimation.Value.Clear();
-        }
-        
-        KeyframeUI.RemoveElements();
-        KeyframeUI.UpdateMeshes();
-
-        Info.RenderInfo = true;
-
-        Playing = false;
-    }
-
     public void TestAdd()
     {
+        if (Model == null || Model.Animation == null)
+            return;
+
         if (Input.IsKeyDown(Keys.Q) && Input.IsKeyPressed(Keys.D))
         {
             if (!_d_pressed)
@@ -1180,7 +1190,7 @@ public class AnimationEditor : BaseEditor
             {
                 _d_pressed = false;
                 Console.WriteLine("Add keyframe");
-                AddKeyframe();
+                AddKeyframe(Model.Animation);
             }
         }
 
@@ -1209,7 +1219,7 @@ public class AnimationEditor : BaseEditor
         }
     }
 
-    public void AddKeyframe()
+    public void AddKeyframe(Animation animation)
     {
         HashSet<Bone> selectedBones = GetSelectedBones();
         foreach (var bone in selectedBones)
@@ -1219,9 +1229,8 @@ public class AnimationEditor : BaseEditor
 
             int currentFrame = CurrentFrame;
             AnimationKeyframe keyframe = new AnimationKeyframe(CurrentFrame, bone.Position, bone.Rotation, bone.Scale);
-            Animation.AddOrUpdateKeyframe(bone.Name, keyframe, out bool added);
 
-            if (added)
+            if (animation.AddOrUpdateKeyframe(bone.Name, keyframe))
             {
                 UIButton keyframeButton = new UIButton("KeyframeButton", KeyframeUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (currentFrame * 20, timelineAnimation.Index * 25, 0, 0), 0, 10, (10, 0.05f), UIState.Interactable);
                 KeyframePanelCollection.AddElement(keyframeButton);
@@ -1275,10 +1284,13 @@ public class AnimationEditor : BaseEditor
 
     public void RemoveKeyframe()
     {
+        if (Model == null || Model.Animation == null)
+            return;
+
         HashSet<Bone> selectedBones = GetSelectedBones();
         foreach (var bone in selectedBones)
         {
-            if (Animation.RemoveKeyframe(bone.Name, CurrentFrame, out var keyframe))
+            if (Model.Animation.RemoveKeyframe(bone.Name, CurrentFrame, out var keyframe))
             {
                 if (BoneAnimations.TryGetValue(bone.Name, out TimelineBoneAnimation? timelineAnimation))
                 {
@@ -1339,19 +1351,13 @@ public class AnimationEditor : BaseEditor
         return Vector2.Distance(point, projection);
     }
 
-    public class TimelineBoneAnimation
+    public class TimelineBoneAnimation(string name, BoneAnimation animation)
     {
-        public string Name;
+        public string Name = name;
         public int Index;
-        public BoneAnimation Animation;
-        public Dictionary<UIButton, AnimationKeyframe> ButtonKeyframes = new Dictionary<UIButton, AnimationKeyframe>();
-        public Dictionary<AnimationKeyframe, UIButton> KeyframeButtons = new Dictionary<AnimationKeyframe, UIButton>();
-
-        public TimelineBoneAnimation(string name, BoneAnimation animation)
-        {
-            Name = name;
-            Animation = animation;
-        }
+        public BoneAnimation Animation = animation;
+        public Dictionary<UIButton, AnimationKeyframe> ButtonKeyframes = [];
+        public Dictionary<AnimationKeyframe, UIButton> KeyframeButtons = [];
 
         public void Add(UIButton button, AnimationKeyframe keyframe)
         {
@@ -1400,6 +1406,16 @@ public class AnimationEditor : BaseEditor
         }
 
         public void Clear()
+        {
+            foreach (var button in ButtonKeyframes.Keys)
+            {
+                button.Delete();
+            }
+            ButtonKeyframes = [];
+            KeyframeButtons = [];
+        }
+
+        public void ClearFull()
         {
             foreach (var button in ButtonKeyframes.Keys)
             {

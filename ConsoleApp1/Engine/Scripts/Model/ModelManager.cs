@@ -79,22 +79,13 @@ public static class ModelManager
             newFile = $"{newFile}_{Models.Count}";
         }
 
-        Model model = new Model();
+        Model model = new();
         if (!model.LoadModel(name))
             return;
 
         model.Name = newFile;
-
         Models.Add(newFile, model);
-        if (SelectedModel != null)
-        {
-            SelectedModel.IsSelected = false;
-            SelectedModel.SelectedVertices.Clear();
-            SelectedModel.GenerateVertexColor();
-        }
-        SelectedModel = model;
-        SelectedModel.IsSelected = true;
-        SelectedModel.UpdateVertexPosition();
+        model.UpdateVertexPosition();
     }
 
     public static void LoadModelFromPath(string path)
@@ -118,17 +109,8 @@ public static class ModelManager
             return;
 
         model.Name = newFile;
-
         Models.Add(newFile, model);
-        if (SelectedModel != null)
-        {
-            SelectedModel.IsSelected = false;
-            SelectedModel.SelectedVertices.Clear();
-            SelectedModel.GenerateVertexColor();
-        }
-        SelectedModel = model;
-        SelectedModel.IsSelected = true;
-        SelectedModel.UpdateVertexPosition();
+        model.UpdateVertexPosition();
     }
 
     public static void Select(Model model)
