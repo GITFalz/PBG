@@ -43,7 +43,6 @@ public class AnimationEditor : BaseEditor
     public Bone? SelectedBone = null;
 
     public List<BonePivot> SelectedBonePivots = new();
-    public Dictionary<BonePivot, (Vector2, float)> BonePivots = new Dictionary<BonePivot, (Vector2, float)>();
     public List<Bone> SelectedBones = new();
 
     // === RENDERING / SHADER RESOURCES ===
@@ -886,19 +885,19 @@ public class AnimationEditor : BaseEditor
             {
                 Editor.freeCamera = !Editor.freeCamera;
 
-                if (Editor.freeCamera)
-                {
-                    Game.Instance.CursorState = CursorState.Grabbed;
-                    Game.camera.Unlock();
-                }
-                else
-                {
-                    Game.Instance.CursorState = CursorState.Normal;
-                    Game.camera.Lock();
-                    Model?.UpdateVertexPosition();
-                    UpdateBonePosition(Game.camera.ProjectionMatrix, Game.camera.ViewMatrix);
-                }
+            if (Editor.freeCamera)
+            {
+                Game.Instance.CursorState = CursorState.Grabbed;
+                Game.camera.Unlock();
             }
+            else
+            {
+                Game.Instance.CursorState = CursorState.Normal;
+                Game.camera.Lock();
+                Model?.UpdateVertexPosition();
+                Model?.UpdateBonePosition(Game.camera.ProjectionMatrix, Game.camera.ViewMatrix);
+            }
+        }
 
         if (!Editor.freeCamera)
         {
@@ -950,19 +949,19 @@ public class AnimationEditor : BaseEditor
         if (Input.IsKeyReleased(Keys.G))
         {
             Game.SetCursorState(CursorState.Normal);
-            UpdateBonePosition(Game.camera.ProjectionMatrix, Game.camera.ViewMatrix);
+            Model?.UpdateBonePosition(Game.camera.ProjectionMatrix, Game.camera.ViewMatrix);
             regenerateVertexUi = true;
         }
 
         if (Input.IsKeyReleased(Keys.R))
         {
             Game.SetCursorState(CursorState.Normal);
-            UpdateBonePosition(Game.camera.ProjectionMatrix, Game.camera.ViewMatrix);
+            Model?.UpdateBonePosition(Game.camera.ProjectionMatrix, Game.camera.ViewMatrix);
         }
 
         if (regenerateVertexUi)
         {
-            UpdateBonePosition(Game.camera.ProjectionMatrix, Game.camera.ViewMatrix);
+            Model?.UpdateBonePosition(Game.camera.ProjectionMatrix, Game.camera.ViewMatrix);
             regenerateVertexUi = false;
         }
     }
@@ -1021,30 +1020,6 @@ public class AnimationEditor : BaseEditor
         }
     }
 
-    public void UpdateBonePosition(Matrix4 projection, Matrix4 view)
-    {
-        if (Model == null || Model.Rig == null)
-            return;
-
-        BonePivots.Clear();
-
-        foreach (var (_, bone) in Model.Rig.Bones)
-        {
-            Vector3 pivot = bone.Pivot.Get;
-            Vector3 end = bone.End.Get;
-
-            Vector2? screenPos1 = Mathf.WorldToScreen(pivot, Mathf.ToNumerics(projection), Mathf.ToNumerics(view));
-            Vector2? screenPos1Side = Mathf.WorldToScreen(pivot + Game.camera.right.Normalized() * 0.3f, Mathf.ToNumerics(projection), Mathf.ToNumerics(view));
-            Vector2? screenPos2 = Mathf.WorldToScreen(end, Mathf.ToNumerics(projection), Mathf.ToNumerics(view));
-            Vector2? screenPos2Side = Mathf.WorldToScreen(end + Game.camera.right.Normalized() * 0.2f, Mathf.ToNumerics(projection), Mathf.ToNumerics(view));
-            if (screenPos1 != null && screenPos1Side != null)
-                BonePivots.Add(bone.Pivot, (screenPos1.Value, Vector2.Distance(screenPos1.Value, screenPos1Side.Value)));
-
-            if (screenPos2 != null && screenPos2Side != null)
-                BonePivots.Add(bone.End, (screenPos2.Value, Vector2.Distance(screenPos2.Value, screenPos2Side.Value)));
-        }
-    }
-
     public void TestBonePosition()
     {
         if (Model == null)
@@ -1062,11 +1037,12 @@ public class AnimationEditor : BaseEditor
         Vector2? closest = null;
         BonePivot? closestBone = null;
     
-        foreach (var (pivot, (position, radius)) in BonePivots)
+        foreach (var (pivot, (position, radius)) in Model.BonePivots)
         {
             float distance = Vector2.Distance(mousePos, position);
+            Console.WriteLine($"Distance: {distance}, Position: {position}, MousePos: {mousePos}, Radius: {radius}");
             float distanceClosest = closest == null ? 1000 : Vector2.Distance(mousePos, (Vector2)closest);
-            
+
             if (distance < distanceClosest && distance < radius)
             {
                 closest = position;
@@ -1128,8 +1104,11 @@ public class AnimationEditor : BaseEditor
 
     public void UpdateBoneColors()
     {
+        if (Model == null)
+            return;
+            
         HashSet<Bone> seenBones = [];
-        foreach (var (pivot, _) in BonePivots)
+        foreach (var (pivot, _) in Model.BonePivots)
         {
             Bone bone = pivot.Bone;
             if (SelectedBonePivots.Contains(pivot))
@@ -1218,7 +1197,7 @@ public class AnimationEditor : BaseEditor
             Console.WriteLine("Remove keyframe");
             RemoveKeyframe();
             Model?.SetAnimationFrame(CurrentFrame);
-            UpdateBonePosition(Game.camera.ProjectionMatrix, Game.camera.ViewMatrix);
+            Model?.UpdateBonePosition(Game.camera.ProjectionMatrix, Game.camera.ViewMatrix);
             if (Model == null || Model.Rig == null)
                 return;
 

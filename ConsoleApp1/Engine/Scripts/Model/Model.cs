@@ -591,7 +591,7 @@ public class Model
             Vector2? screenPos1Side = Mathf.WorldToScreen(pivot + Game.camera.right.Normalized() * 0.3f * 0.1f, Mathf.ToNumerics(projection), Mathf.ToNumerics(view));
             Vector2? screenPos2 = Mathf.WorldToScreen(end, Mathf.ToNumerics(projection), Mathf.ToNumerics(view));
             Vector2? screenPos2Side = Mathf.WorldToScreen(end + Game.camera.right.Normalized() * 0.2f * 0.1f, Mathf.ToNumerics(projection), Mathf.ToNumerics(view));
-            
+
             if (screenPos1 != null && screenPos1Side != null)
                 BonePivots.Add(bone.Pivot, (screenPos1.Value, Vector2.Distance(screenPos1.Value, screenPos1Side.Value)));
 
