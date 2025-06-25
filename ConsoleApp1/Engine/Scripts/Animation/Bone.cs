@@ -21,11 +21,24 @@ public abstract class Bone
         set
         {
             _rotation = value;
+            _eulerRotation = _rotation.ToEulerAngles();
             LocalAnimatedMatrix = Matrix4.CreateScale(Scale) * Matrix4.CreateFromQuaternion(Rotation) * Matrix4.CreateTranslation(Position);
         }
     }
     private Quaternion _rotation = Quaternion.Identity;
-    public float Scale {
+    public Vector3 EulerRotation
+    {
+        get => _eulerRotation;
+        set
+        {
+            _eulerRotation = value;
+            _rotation = Quaternion.FromEulerAngles(_eulerRotation);
+            LocalAnimatedMatrix = Matrix4.CreateScale(Scale) * Matrix4.CreateFromQuaternion(Rotation) * Matrix4.CreateTranslation(Position);
+        }
+    }
+    private Vector3 _eulerRotation = Vector3.Zero;
+    public float Scale
+    {
         get => _scale;
         set
         {

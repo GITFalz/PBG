@@ -80,6 +80,13 @@ public class UIInputField : UIText
         //Console.WriteLine("Formated Text: " + formatedText);
         SetText(formatedText).UpdateCharacters();
     }
+
+    public UIText UpdateText(string text)
+    {
+        SetText(text).UpdateCharacters();
+        OnTextChange?.Invoke();
+        return this;
+    }
     
     public void RemoveCharacter()
     {

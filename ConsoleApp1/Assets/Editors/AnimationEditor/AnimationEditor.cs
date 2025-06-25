@@ -187,14 +187,23 @@ public class AnimationEditor : BaseEditor
 
         UICollection bonePositionTextCollection = new("BonePositionTextCollection", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 20), (0, 0, 0, 0), 0);
 
-        UIText bonePositionText = new("BonePositionText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 20, 0), (400, 20), (0, 0, 0, 0), 0);
+        UIText bonePositionText = new("BonePositionText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (0, 0, 0, 0), 0);
         bonePositionText.SetTextCharCount("Position:", 1.2f);
 
         bonePositionTextCollection.AddElements(bonePositionText);
 
         UICollection bonePositionXCollection = new("BonePositionXCollection", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 20), (0, 0, 0, 0), 0);
 
-        UIText bonePositionXText = new("BonePositionXText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 20, 0), (400, 20), (0, 0, 0, 0), 0);
+        UIButton bonePositionXButton = new("BonePositionXButton", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (30, 20), (-5, 0, 0, 0), 0, 0, (10, 0.05f), UIState.InvisibleInteractable);
+        bonePositionXButton.SetOnHold(() =>
+        {
+            float delta = Input.GetMouseDelta().X;
+            if (delta == 0) return;
+            BoneXPositionField.UpdateText(((float)Math.Round(Float.Parse(BoneXPositionField.Text) + delta * 0.1f, 2)).ToString());
+        });
+
+
+        UIText bonePositionXText = new("BonePositionXText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (0, 0, 0, 0), 0);
         bonePositionXText.SetTextCharCount("X:", 1f);
 
         UIInputFieldPrefab bonePositionXField = new("BonePositionXField", ModelingUi, (0, 0, 0, 0), (0.5f, 0.5f, 0.5f, 1f), 1, 19, "0", TextType.Decimal);
@@ -204,20 +213,23 @@ public class AnimationEditor : BaseEditor
         BoneXPositionField = bonePositionXField.InputField;
         BoneXPositionField.SetOnTextChange(() =>
         {
-            if (SelectedBone == null)
-                return;
-
-            float x = Float.Parse(BoneXPositionField.Text);
-            SelectedBone.Position = (x, SelectedBone.Position.Y, SelectedBone.Position.Z);
-            Model?.Rig?.RootBone.UpdateGlobalTransformation();
-            Model?.Mesh.UpdateRig();
+            MoveBone(0, BoneXPositionField.Text);
         });
 
-        bonePositionXCollection.AddElements(bonePositionXText, bonePositionXField.Collection);
+
+        bonePositionXCollection.AddElements(bonePositionXButton, bonePositionXText, bonePositionXField.Collection);
 
         UICollection bonePositionYCollection = new("BonePositionYCollection", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 20), (0, 0, 0, 0), 0);
 
-        UIText bonePositionYText = new("BonePositionYText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 20, 0), (400, 20), (0, 0, 0, 0), 0);
+        UIButton bonePositionYButton = new("BonePositionYButton", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (30, 20), (-5, 0, 0, 0), 0, 0, (10, 0.05f), UIState.InvisibleInteractable);
+        bonePositionYButton.SetOnHold(() =>
+        {
+            float delta = Input.GetMouseDelta().X;
+            if (delta == 0) return;
+            BoneYPositionField.UpdateText(((float)Math.Round(Float.Parse(BoneYPositionField.Text) + delta * 0.1f, 2)).ToString());
+        });
+
+        UIText bonePositionYText = new("BonePositionYText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 0, 0), (400, 20), (0, 0, 0, 0), 0);
         bonePositionYText.SetTextCharCount("Y:", 1f);
 
         UIInputFieldPrefab bonePositionYField = new("BonePositionYField", ModelingUi, (0, 0, 0, 0), (0.5f, 0.5f, 0.5f, 1f), 1, 19, "0", TextType.Decimal);
@@ -226,19 +238,21 @@ public class AnimationEditor : BaseEditor
         bonePositionYField.Collection.SetAnchorType(AnchorType.MiddleRight);
         BoneYPositionField = bonePositionYField.InputField;
         BoneYPositionField.SetOnTextChange(() =>
-        {
-            if (SelectedBone == null)
-                return;
-
-            float y = Float.Parse(BoneYPositionField.Text);
-            SelectedBone.Position = (SelectedBone.Position.X, y, SelectedBone.Position.Z);
-            Model?.Rig?.RootBone.UpdateGlobalTransformation();
-            Model?.Mesh.UpdateRig();
+        { 
+            MoveBone(1, BoneYPositionField.Text); 
         });
 
-        bonePositionYCollection.AddElements(bonePositionYText, bonePositionYField.Collection);
+        bonePositionYCollection.AddElements(bonePositionYButton, bonePositionYText, bonePositionYField.Collection);
 
         UICollection bonePositionZCollection = new("BonePositionZCollection", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 20), (0, 0, 0, 0), 0);
+
+        UIButton bonePositionZButton = new("BonePositionZButton", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (30, 20), (-5, 0, 0, 0), 0, 0, (10, 0.05f), UIState.InvisibleInteractable);
+        bonePositionZButton.SetOnHold(() =>
+        {
+            float delta = Input.GetMouseDelta().X;
+            if (delta == 0) return;
+            BoneZPositionField.UpdateText(((float)Math.Round(Float.Parse(BoneZPositionField.Text) + delta * 0.1f, 2)).ToString());
+        });
 
         UIText bonePositionZText = new("BonePositionZText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 20, 0), (400, 20), (0, 0, 0, 0), 0);
         bonePositionZText.SetTextCharCount("Z:", 1f);
@@ -250,16 +264,10 @@ public class AnimationEditor : BaseEditor
         BoneZPositionField = bonePositionZField.InputField;
         BoneZPositionField.SetOnTextChange(() =>
         {
-            if (SelectedBone == null)
-                return;
-
-            float z = Float.Parse(BoneZPositionField.Text);
-            SelectedBone.Position = (SelectedBone.Position.X, SelectedBone.Position.Y, z);
-            Model?.Rig?.RootBone.UpdateGlobalTransformation();
-            Model?.Mesh.UpdateRig();
+            MoveBone(2, BoneZPositionField.Text);
         });
 
-        bonePositionZCollection.AddElements(bonePositionZText, bonePositionZField.Collection);
+        bonePositionZCollection.AddElements(bonePositionZButton, bonePositionZText, bonePositionZField.Collection);
 
         bonePositionCollection.AddElements(bonePositionTextCollection, bonePositionXCollection, bonePositionYCollection, bonePositionZCollection);
 
@@ -267,6 +275,14 @@ public class AnimationEditor : BaseEditor
         UIVerticalCollection boneRotationCollection = new("BoneRotationCollection", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (225, 20), (0, 0, 0, 0), (0, 0, 0, 0), 5, 0);
 
         UICollection boneRotationTextCollection = new("BoneRotationTextCollection", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 20), (0, 0, 0, 0), 0);
+
+        UIButton boneRotationXButton = new("BoneRotationXButton", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (30, 20), (-5, 0, 0, 0), 0, 0, (10, 0.05f), UIState.InvisibleInteractable);
+        boneRotationXButton.SetOnHold(() =>
+        {
+            float delta = Input.GetMouseDelta().X;
+            if (delta == 0) return;
+            BoneXRotationField.UpdateText(((float)Math.Round((Float.Parse(BoneXRotationField.Text) + delta * 0.1f + 360) % 360, 2)).ToString());
+        });
 
         UIText boneRotationText = new("BoneRotationText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 20, 0), (400, 20), (0, 0, 0, 0), 0);
         boneRotationText.SetTextCharCount("Rotation:", 1.2f);
@@ -285,20 +301,20 @@ public class AnimationEditor : BaseEditor
         BoneXRotationField = boneRotationXField.InputField;
         BoneXRotationField.SetOnTextChange(() =>
         {
-            if (SelectedBone == null)
-                return;
-
-            float x = MathHelper.DegreesToRadians(Float.Parse(BoneXRotationField.Text));
-            Vector3 rotation = SelectedBone.Rotation.ToEulerAngles();
-            rotation.X = x;
-            SelectedBone.Rotation = Quaternion.FromEulerAngles(rotation);
-            Model?.Rig?.RootBone.UpdateGlobalTransformation();
-            Model?.Mesh.UpdateRig();
+            RotateBone(0, BoneXRotationField.Text);
         });
 
-        boneRotationXCollection.AddElements(boneRotationXText, boneRotationXField.Collection);
+        boneRotationXCollection.AddElements(boneRotationXButton, boneRotationXText, boneRotationXField.Collection);
 
         UICollection boneRotationYCollection = new("BoneRotationYCollection", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 20), (0, 0, 0, 0), 0);
+
+        UIButton boneRotationYButton = new("BoneRotationYButton", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (30, 20), (-5, 0, 0, 0), 0, 0, (10, 0.05f), UIState.InvisibleInteractable);
+        boneRotationYButton.SetOnHold(() =>
+        {
+            float delta = Input.GetMouseDelta().X;
+            if (delta == 0) return;
+            BoneYRotationField.UpdateText(((float)Math.Round((Float.Parse(BoneYRotationField.Text) + delta * 0.1f + 360) % 360, 2)).ToString());
+        });
 
         UIText boneRotationYText = new("BoneRotationYText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 20, 0), (400, 20), (0, 0, 0, 0), 0);
         boneRotationYText.SetTextCharCount("Y:", 1f);
@@ -310,20 +326,20 @@ public class AnimationEditor : BaseEditor
         BoneYRotationField = boneRotationYField.InputField;
         BoneYRotationField.SetOnTextChange(() =>
         {
-            if (SelectedBone == null)
-                return;
-
-            float y = MathHelper.DegreesToRadians(Float.Parse(BoneYRotationField.Text));
-            Vector3 rotation = SelectedBone.Rotation.ToEulerAngles();
-            rotation.Y = y;
-            SelectedBone.Rotation = Quaternion.FromEulerAngles(rotation);
-            Model?.Rig?.RootBone.UpdateGlobalTransformation();
-            Model?.Mesh.UpdateRig();
+            RotateBone(1, BoneYRotationField.Text);
         });
 
-        boneRotationYCollection.AddElements(boneRotationYText, boneRotationYField.Collection);
+        boneRotationYCollection.AddElements(boneRotationYButton, boneRotationYText, boneRotationYField.Collection);
 
         UICollection boneRotationZCollection = new("BoneRotationZCollection", ModelingUi, AnchorType.TopCenter, PositionType.Relative, (0, 0, 0), (225, 20), (0, 0, 0, 0), 0);
+
+        UIButton boneRotationZButton = new("BoneRotationZButton", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (30, 20), (-5, 0, 0, 0), 0, 0, (10, 0.05f), UIState.InvisibleInteractable);
+        boneRotationZButton.SetOnHold(() =>
+        {
+            float delta = Input.GetMouseDelta().X;
+            if (delta == 0) return;
+            BoneZRotationField.UpdateText(((float)Math.Round((Float.Parse(BoneZRotationField.Text) + delta * 0.1f + 360) % 360, 2)).ToString());
+        });
 
         UIText boneRotationZText = new("BoneRotationZText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 20, 0), (400, 20), (0, 0, 0, 0), 0);
         boneRotationZText.SetTextCharCount("Z:", 1f);
@@ -335,18 +351,10 @@ public class AnimationEditor : BaseEditor
         BoneZRotationField = boneRotationZField.InputField;
         BoneZRotationField.SetOnTextChange(() =>
         {
-            if (SelectedBone == null)
-                return;
-
-            float z = MathHelper.DegreesToRadians(Float.Parse(BoneZRotationField.Text));
-            Vector3 rotation = SelectedBone.Rotation.ToEulerAngles();
-            rotation.Z = z;
-            SelectedBone.Rotation = Quaternion.FromEulerAngles(rotation);
-            Model?.Rig?.RootBone.UpdateGlobalTransformation();
-            Model?.Mesh.UpdateRig();
+            RotateBone(2, BoneZRotationField.Text);
         });
 
-        boneRotationZCollection.AddElements(boneRotationZText, boneRotationZField.Collection);
+        boneRotationZCollection.AddElements(boneRotationZButton, boneRotationZText, boneRotationZField.Collection);
 
         boneRotationCollection.AddElements(boneRotationTextCollection, boneRotationXCollection, boneRotationYCollection, boneRotationZCollection);
 
@@ -465,11 +473,43 @@ public class AnimationEditor : BaseEditor
             TimelinePosition.X = Mathf.Clamp(-1000, 0, TimelinePosition.X + mouseDelta.X);
         });
 
-        UIVerticalCollection timelineSettingsStacking = new("TimelineSettingsStacking2", TimelineUI, AnchorType.TopRight, PositionType.Relative, (0, 0, 0), (100, 250), (0, 0, 0, 0), (10, 10, 5, 5), 5, 0);
+        UIVerticalCollection timelineSettingsStacking = new("TimelineSettingsStacking2", TimelineUI, AnchorType.TopRight, PositionType.Relative, (0, 0, 0), (100, 250), (0, 10, -10, 0), (0, 0, 5, 5), 0, 0);
 
         TimelineTimeField = new("TimelineTimeField", TimelineUI, (0, 0, 0, 0), (0.5f, 0.5f, 0.5f, 1f), 11, 4, "0", TextType.Numeric);
 
-        timelineSettingsStacking.AddElements(TimelineTimeField.Collection);
+        UICollection timelineKeyframeEasingCollection = new("TimelineKeyframeEasingCollection", TimelineUI, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (100, 30), (0, 0, 0, 0), 0);
+        UIImage timelineEasingIcon = new("TimelineEasingIcon", TimelineUI, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (30, 30), (0, 0, 0, 0), 0, 60, (-1, -1));
+        UIImage leftEasingIcon = new("LeftEasingIcon", TimelineUI, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (30, 30), (30, 0, 0, 0), 0, 70, (-1, -1));
+        UIImage rightEasingIcon = new("RightEasingIcon", TimelineUI, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (30, 30), (60, 0, 0, 0), 0, 71, (-1, -1));
+        timelineKeyframeEasingCollection.AddElements(timelineEasingIcon, leftEasingIcon, rightEasingIcon);
+
+        leftEasingIcon.SetOnClick(() =>
+        {
+            int ease = timelineEasingIcon.TextureIndex % 60;
+            if (ease == 0)
+                return;
+
+            if (ease - 1 >= 0)
+            {
+                timelineEasingIcon.TextureIndex = ease - 1 + 60;
+                timelineEasingIcon.UpdateTexture();
+            }
+        });
+
+        rightEasingIcon.SetOnClick(() =>
+        {
+            int ease = timelineEasingIcon.TextureIndex % 60;
+            if (ease == 5)
+                return;
+
+            if (ease + 1 <= 5)
+            {
+                timelineEasingIcon.TextureIndex = ease + 1 + 60;
+                timelineEasingIcon.UpdateTexture();
+            }
+        });
+
+        timelineSettingsStacking.AddElements(TimelineTimeField.Collection, timelineKeyframeEasingCollection);
 
         UICollection timelineScrollViewCollection = new("TimelineScrollViewCollection", TimelineUI, AnchorType.ScaleBottom, PositionType.Relative, (0, 0, 0), (Game.Width - 10, 250 - 30), (5, -5, 110, 5), 0);
 
@@ -531,6 +571,44 @@ public class AnimationEditor : BaseEditor
         timerPanelCollection.AddElements(timelineIndexButton);
 
         TimerUI.AddElement(timerPanelCollection);
+    }
+
+    public void MoveBone(int i, string text)
+    {
+        if (SelectedBone == null)
+            return;
+
+        float value = Float.Parse(text);
+        Vector3 position = SelectedBone.Position;
+        position[i] = value;
+        SelectedBone.Position = position;
+        if (Model == null || Model.Rig == null)
+            return;
+        Model.Rig.RootBone.UpdateGlobalTransformation();
+        Model.UpdateRig();
+        foreach (var bone in Model.Rig.BonesList)
+        {
+            bone.UpdateEndTarget();
+        }
+    }
+
+    public void RotateBone(int i, string text)
+    {
+        if (SelectedBone == null)
+            return;
+
+        float value = MathHelper.DegreesToRadians(Float.Parse(text));
+        Vector3 rotation = SelectedBone.EulerRotation;
+        rotation[i] = value;
+        SelectedBone.EulerRotation = rotation;
+        if (Model == null || Model.Rig == null)
+            return;
+        Model.Rig.RootBone.UpdateGlobalTransformation();
+        Model.UpdateRig();
+        foreach (var bone in Model.Rig.BonesList)
+        {
+            bone.UpdateEndTarget();
+        }
     }
 
     public void SetBonePositionText()
@@ -907,6 +985,7 @@ public class AnimationEditor : BaseEditor
         {
             if (Input.IsKeyPressed(Keys.Space) && Model != null)
             {
+
                 Playing = !Playing;
                 Model.Animate = Playing;
                 regenerateVertexUi = !Playing;
@@ -1403,6 +1482,48 @@ public class AnimationEditor : BaseEditor
             }
             button = null;
             return false;
+        }
+
+        public void RegenerateBoneKeyframes()
+        {
+            Animation.Clear();
+            List<AnimationKeyframe> currentKeyframes = [.. ButtonKeyframes.Values];
+            List<AnimationKeyframe> keyframes = [];
+            OrderKeyframes(currentKeyframes);
+
+            for (int i = 0; i < currentKeyframes.Count; i++)
+            {
+                AnimationKeyframe keyframe = currentKeyframes[i];
+                if (keyframe.Index == 0)
+                {
+                    keyframes.Add(keyframe);
+                    continue;
+                }
+
+                if (i > 0)
+                {
+                    AnimationKeyframe before = currentKeyframes[i - 1];
+                    int count = keyframe.Index - before.Index;
+                    for (int j = 0; j < count; j++)
+                    {
+                        float t = (float)j / count;
+                        Vector3 position = Ease.Apply(keyframe.Easing, before.Position, keyframe.Position, t);
+                        Quaternion rotation = Ease.Apply(keyframe.Easing, before.Rotation, keyframe.Rotation, t);
+                        float scale = Ease.Apply(keyframe.Easing, before.Scale, keyframe.Scale, t);
+                        AnimationKeyframe newKeyframe = new AnimationKeyframe(before.Index + j + 1, position, rotation, scale);
+                        keyframes.Add(newKeyframe);
+                    }
+                }
+            }
+            Animation.SetKeyframes(keyframes);
+        }
+
+        public void OrderKeyframes(List<AnimationKeyframe> keyframes)
+        {
+            if (keyframes.Count > 1)
+            {
+                keyframes = [.. keyframes.OrderBy(k => k.Time)];
+            }
         }
 
         public void Clear()

@@ -204,6 +204,43 @@ public class BoneAnimation
         return null;
     }
 
+    public void OrderKeyframes()
+    {
+        Keyframes = [.. Keyframes.OrderBy(k => k.Time)];
+    }
+
+    /// <summary>
+    /// Get the index of the keyframe in the list
+    /// Returns -1 if the keyframe is not found
+    /// Assumes the list is sorted by time
+    /// </summary>
+    /// <param name="keyframe"></param>
+    /// <returns></returns>
+    public int GetKeyframePlace(AnimationKeyframe keyframe)
+    {
+        if (Keyframes.Contains(keyframe))
+            return Keyframes.IndexOf(keyframe);
+        return -1;
+    }
+
+    /// <summary>
+    /// Get the keyframe before the given keyframe, if it exists
+    /// Assumes the list is sorted by time
+    /// </summary>
+    /// <param name="keyframe"></param>
+    /// <returns></returns>
+    public AnimationKeyframe? GetBefore(AnimationKeyframe keyframe)
+    {
+        if (Keyframes.Count <= 1)
+            return null;
+
+        int index = GetKeyframePlace(keyframe);
+        if (index <= 0)
+            return null;
+
+        return Keyframes[index - 1];
+    }
+
     /// <summary>
     /// Add or updates a keyframe to the animation and sort the keyframes by time
     /// </summary>
@@ -222,11 +259,18 @@ public class BoneAnimation
         else
         {
             Keyframes.Add(keyframe);
-            Keyframes = Keyframes.OrderBy(k => k.Time).ToList();
+            OrderKeyframes();
         }
 
         GetFrame = Keyframes.Count > 1 ? GetFrameMultiple : GetFrameSingle;
         return true;
+    }
+
+    public void SetKeyframes(List<AnimationKeyframe> keyframes)
+    {
+        Keyframes = keyframes;
+        OrderKeyframes();
+        GetFrame = Keyframes.Count > 1 ? GetFrameMultiple : GetFrameSingle;
     }
 
     public bool RemoveKeyframe(int index, [NotNullWhen(true)] out AnimationKeyframe? removedKeyframe)
@@ -254,7 +298,7 @@ public class BoneAnimation
             }
             else
             {
-                Keyframes = Keyframes.OrderBy(k => k.Time).ToList();
+                OrderKeyframes();
                 GetFrame = Keyframes.Count > 1 ? GetFrameMultiple : GetFrameSingle;
             }
         }
@@ -303,6 +347,7 @@ public class AnimationKeyframe
     public Vector3 Position;
     public Quaternion Rotation;
     public float Scale;
+    public EasingType Easing = EasingType.Linear;
 
     public AnimationKeyframe() : this(0, Vector3.Zero, Quaternion.Identity, 1) { }
     public AnimationKeyframe(int index, Vector3 position, Quaternion rotation, float scale)
