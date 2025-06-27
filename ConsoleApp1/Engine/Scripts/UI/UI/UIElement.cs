@@ -29,6 +29,11 @@ public abstract class UIElement
     public int MaskIndex = 0;
     public float Depth = 0;
 
+    /// <summary>
+    /// This value is used to remember the state of the element (e.g. if it is a button, this can be used to remember if it is pressed or not).
+    /// </summary>
+    public int ElementState = 0;
+
 
     private Vector3 _transformedOrigin = (0, 0, 0);
 
@@ -181,7 +186,7 @@ public abstract class UIElement
     public virtual void Delete(bool baseOnly = false)
     {
         ParentElement?.RemoveChild(this);
-        UIController.RemoveElement(this);
+        try { UIController.RemoveElement(this); } catch { }
     }
     public virtual void RemoveChild(UIElement element) {}
             

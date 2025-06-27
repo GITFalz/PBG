@@ -12,14 +12,15 @@ public class UIInputFieldPrefab : UIPrefab
     public TextType TextType;
 
     public UIInputFieldPrefab(
-        string name, 
-        UIController controller, 
+        string name,
+        UIController controller,
         Vector4 offset,
         Vector4 backgroundColor,
         int backgroundIndex,
         int charCount,
         string text,
         TextType textType = TextType.All
+
     ) : base(name, controller, offset)
     {
         Name = name;
@@ -31,7 +32,7 @@ public class UIInputFieldPrefab : UIPrefab
         TextType = textType;
 
         Collection = new UICollection(name, controller, AnchorType.TopLeft, PositionType.Relative, Vector3.Zero, Vector2.Zero, offset, 0f);
-        Background = new UIImage(name + "_Background", controller, AnchorType.TopLeft, PositionType.Relative, backgroundColor, Vector3.Zero, Vector2.Zero, offset, 0f, backgroundIndex, (10, 0.05f));
+        Background = new UIImage(name + "_Background", controller, AnchorType.TopLeft, PositionType.Relative, backgroundColor, Vector3.Zero, Vector2.Zero, offset, 0f, backgroundIndex, (7.5f, 0.05f));
         InputFieldCollection = new UICollection(name + "_InputFieldCollection", controller, AnchorType.MiddleCenter, PositionType.Relative, Vector3.Zero, Vector2.Zero, (0, 0, 0, 0), 0f);
         InputField = new UIInputField(name + "_InputField", controller, AnchorType.TopLeft, PositionType.Relative, Vector4.One, Vector3.Zero, Vector2.Zero, offset + (8, 8, 0, 0), 0f, backgroundIndex, (10, 0.05f));
         InputFieldCollection.AddElements(InputField);
@@ -56,5 +57,10 @@ public class UIInputFieldPrefab : UIPrefab
         Collection.SetScale(scale + (16, 16));
         InputFieldCollection.SetScale(scale + (16, 16));
         Background.SetScale(scale + (16, 16));
+    }
+
+    public void SetSlice(Vector2 slice)
+    {
+        Background.SizeSlice = (Background.SizeSlice.X, Background.SizeSlice.Y, slice.X, slice.Y);
     }
 }

@@ -130,7 +130,7 @@ public static class ModelManager
         }
     }
 
-    public static void UnSelect(Model model)
+    public static bool UnSelect(Model model)
     {
         if (SelectedModel == model)
         {
@@ -138,7 +138,9 @@ public static class ModelManager
             SelectedModel.SelectedVertices.Clear();
             SelectedModel.GenerateVertexColor();
             SelectedModel = null;
+            return true;
         }
+        return false;
     }
 
     public static void SaveModel(string fileName)

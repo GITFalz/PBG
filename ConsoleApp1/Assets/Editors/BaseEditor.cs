@@ -14,5 +14,6 @@ public abstract class BaseEditor(GeneralModelingEditor editor)
     public abstract void Awake();
     public abstract void Update();
     public abstract void Render();
+    public abstract void EndRender();
     public abstract void Exit();
 }

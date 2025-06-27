@@ -35,6 +35,8 @@ public class UIHorizontalCollection : UICollection
         for (int i = 0; i < Elements.Count; i++)
         {
             UIElement element = Elements[i];
+            if (!element.Visible)
+                continue;
             element.SetPositionType(PositionType.Relative);
             element.SetOffset((totalOffset, Border.Y, 0, 0));
             totalOffset += element.Scale.X + Spacing;

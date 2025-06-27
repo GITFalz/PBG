@@ -39,14 +39,11 @@ public class UIVerticalCollection : UICollection
         for (int i = 0; i < Elements.Count; i++)
         {
             UIElement element = Elements[i];
+            if (!element.Visible)
+                continue;
             element.SetPositionType(PositionType.Relative);
             element.SetOffset((Border.X, totalOffset, 0, 0));
             totalOffset += element.Scale.Y + Spacing;
-
-            continue;
-            Console.WriteLine();
-            Console.WriteLine($"This: {Name}, Element: {element.Name}, Offset: {element.Offset}, Scale: {element.Scale}");
-            Console.WriteLine($"TotalOffset: {totalOffset}, Border: {Border}, Spacing: {Spacing}, Parent: {ParentElement?.Name}");
             
         }
 

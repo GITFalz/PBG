@@ -112,6 +112,18 @@ public static class AnimationParser
                 return true;
             }
         },
+        { "P-Ease:" , (ref int index, string line, ref AnimationData data) =>
+            {
+                var values = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
+                if (values.Length != 2)
+                    return false;
+
+                int ease = Int.Parse(values[1]);
+                data.PositionEasing = Ease.GetEasingType(ease);
+                index++;
+                return true;
+            }
+        },
         { "Rotation:", (ref int index, string line, ref AnimationData data) =>
             {
                 var values = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
@@ -119,6 +131,18 @@ public static class AnimationParser
                     return false;
 
                 data.Rotation = Quaternion.FromEulerAngles(Float.Parse(values[1]), Float.Parse(values[2]), Float.Parse(values[3]));
+                index++;
+                return true;
+            }
+        },
+        { "R-Ease:" , (ref int index, string line, ref AnimationData data) =>
+            {
+                var values = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
+                if (values.Length != 2)
+                    return false;
+
+                int ease = Int.Parse(values[1]);
+                data.RotationEasing = Ease.GetEasingType(ease);
                 index++;
                 return true;
             }
@@ -149,10 +173,13 @@ public static class AnimationParser
             {
                 index++;
                 if (currentBoneAnimation != null)
-                    currentBoneAnimation.AddOrUpdateKeyframe(new AnimationKeyframe(data.Index, data.Position, data.Rotation, data.Scale));
-
-                Console.WriteLine($"Keyframe {data.Index} added to {currentBoneAnimation.Name} with position {data.Position}, rotation {data.Rotation}, scale {data.Scale}");
-
+                {
+                    AnimationKeyframe newKeyframe = new AnimationKeyframe(data.Index, data.Position, data.Rotation, data.Scale);
+                    newKeyframe.PositionEasing = data.PositionEasing;
+                    newKeyframe.RotationEasing = data.RotationEasing;
+                    currentBoneAnimation.AddOrUpdateKeyframe(newKeyframe);
+                }
+                    
                 _currentParseAction = _boneData;
                 return true;
             }
@@ -164,7 +191,9 @@ public static class AnimationParser
     private struct AnimationData
     {
         public Vector3 Position;
+        public EasingType PositionEasing = EasingType.Linear;
         public Quaternion Rotation;
+        public EasingType RotationEasing = EasingType.Linear;
         public float Scale;
         public int Index;
 

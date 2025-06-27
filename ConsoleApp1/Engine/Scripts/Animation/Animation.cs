@@ -87,6 +87,15 @@ public class Animation
         return false;
     }
 
+    public bool RemoveKeyframe(string boneName, AnimationKeyframe keyframe)
+    {
+        if (BoneAnimations.TryGetValue(boneName, out var boneAnimation))
+        {
+            return boneAnimation.RemoveKeyframe(keyframe);
+        }
+        return false;
+    }
+
     public AnimationKeyframe? GetSpecificFrame(string boneName, int index)
     {
         if (BoneAnimations.TryGetValue(boneName, out var boneAnimation))
@@ -305,6 +314,26 @@ public class BoneAnimation
         return removed;
     }
 
+    public bool RemoveKeyframe(AnimationKeyframe keyframe)
+    {
+        if (Keyframes.Count > 0 && Keyframes.Remove(keyframe))
+        {
+            if (Keyframes.Count == 0)
+            {
+                GetFrame = GetNullFrame;
+                elapsedTime = 0;
+                index = 0;
+            }
+            else
+            {
+                OrderKeyframes();
+                GetFrame = Keyframes.Count > 1 ? GetFrameMultiple : GetFrameSingle;
+            }
+            return true;
+        }
+        return false;
+    }
+
     public bool ContainsIndex(int index)
     {
         if (Keyframes.Count > 0)
@@ -345,9 +374,11 @@ public class AnimationKeyframe
     public float Time;
     public int Index;
     public Vector3 Position;
+    public EasingType PositionEasing = EasingType.Linear;
     public Quaternion Rotation;
+    public EasingType RotationEasing = EasingType.Linear;
     public float Scale;
-    public EasingType Easing = EasingType.Linear;
+    public EasingType ScaleEasing = EasingType.Linear;
 
     public AnimationKeyframe() : this(0, Vector3.Zero, Quaternion.Identity, 1) { }
     public AnimationKeyframe(int index, Vector3 position, Quaternion rotation, float scale)
@@ -360,6 +391,11 @@ public class AnimationKeyframe
     }
 
     public AnimationKeyframe(int index, Bone bone) : this(index, bone.Position, bone.Rotation, bone.Scale) { }
+    public AnimationKeyframe(int index, AnimationKeyframe keyframe) : this(index, keyframe.Position, keyframe.Rotation, keyframe.Scale)
+    {
+        PositionEasing = keyframe.PositionEasing;
+        RotationEasing = keyframe.RotationEasing;
+    }
     public AnimationKeyframe(Vector3 position, Quaternion rotation, float scale)
     {
         Index = 0;
@@ -382,12 +418,24 @@ public class AnimationKeyframe
         [
             $"    Keyframe:",
             "    {",
-            $"        Position: {Position.X} {Position.Y} {Position.Z}",
-            $"        Rotation: {rotation.X} {rotation.Y} {rotation.Z}",
+            $"        Position: {Position.X} {Position.Y} {Position.Z}"
+        ];
+        if (PositionEasing != EasingType.Linear)
+        {
+            lines.Add($"        P-Ease: {(int)PositionEasing}");
+        }
+        lines.Add($"        Rotation: {rotation.X} {rotation.Y} {rotation.Z}");
+        if (RotationEasing != EasingType.Linear)
+        {
+            lines.Add($"        R-Ease: {(int)RotationEasing}");
+        }
+        lines.AddRange(
+        [
             $"        Scale: {Scale}",
             $"        Index: {Index}",
             "    }",
-        ];
+        ]
+        );
         return lines;
     }
 

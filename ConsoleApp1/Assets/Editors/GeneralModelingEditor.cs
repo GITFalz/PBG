@@ -109,8 +109,22 @@ public class GeneralModelingEditor : ScriptingNode
     public Action SaveAction = () => { };
 
     public Action FileManagerLoadAction = () => { };
+
+    // Selection
+
+    // Called when the first model is selected
     public Action<Model> AfterNewSelectedModelAction = (model) => { };
+    // Called when another model is selected
+    public Action<Model> AfterOtherSelectedModelAction = (model) => { };
+
+
+    // Unselection
+
+    // Called when a model is unselected
     public Action<Model> AfterUnSelectedModelAction = (model) => { };
+
+    // Called when the unselected model is not the main selected model
+    public Action<Model> AfterUnSelectedOtherModelAction = (model) => { };
 
     public bool freeCamera = false;
     public int _selectedModel = 0;
@@ -377,6 +391,8 @@ public class GeneralModelingEditor : ScriptingNode
         MainUi.RenderNoDepthTest();
         UIHierarchyController.RenderDepthTest();
         UIScrollViewTest.RenderNoDepthTest();
+
+        CurrentEditor.EndRender();
     }
 
     public void Exit()
@@ -413,18 +429,46 @@ public class GeneralModelingEditor : ScriptingNode
 
             if (ModelManager.SelectedModels.Remove(model.Name))
             {
-                ModelManager.UnSelect(model);
+                bool same = ModelManager.UnSelect(model);
                 modelButton.Color = (0.5f, 0.5f, 0.5f, 1f);
                 modelButton.UpdateColor();
-                AfterUnSelectedModelAction(model);
+                if (Input.IsKeyDown(Keys.LeftShift))
+                {
+                    if (same)
+                    {
+                        AfterUnSelectedModelAction(model);
+                        if (ModelManager.SelectedModels.Count > 0)
+                        {
+                            Model model = ModelManager.SelectedModels.First().Value.Model;
+                            ModelManager.Select(model);
+                            AfterNewSelectedModelAction(model);
+                        }
+                    }
+                    else
+                    {
+                        AfterUnSelectedOtherModelAction(model);
+                    }
+                }
+                else
+                {
+                    AfterUnSelectedModelAction(model);
+                }
             }
             else
             {
                 ModelManager.SelectedModels.Add(model.Name, new(modelButton, model));
-                ModelManager.Select(model);
                 modelButton.Color = (0.529f, 0.808f, 0.980f, 1.0f);
                 modelButton.UpdateColor();
-                AfterNewSelectedModelAction(model);
+
+                if (Input.IsKeyDown(Keys.LeftShift) && ModelManager.SelectedModels.Count > 1)
+                {
+                    AfterOtherSelectedModelAction(model);
+                }
+                else
+                {
+                    ModelManager.Select(model);
+                    AfterNewSelectedModelAction(model);
+                }
             }
         });
 

@@ -505,6 +505,11 @@ public class RiggingEditor : BaseEditor
         }
     }
 
+    public override void EndRender()
+    {
+        
+    }
+
     public override void Update()
     {
         ModelingUi.Update();

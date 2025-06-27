@@ -20,6 +20,11 @@ public class ObjectEditor : BaseEditor
         throw new NotImplementedException();
     }
 
+    public override void EndRender()
+    {
+        throw new NotImplementedException();
+    }
+
     public override void Resize()
     {
         throw new NotImplementedException();

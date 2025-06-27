@@ -584,6 +584,11 @@ public class TextureEditor : BaseEditor
         ColorPicker.RenderTexture();
     }
 
+    public override void EndRender()
+    {
+        
+    }
+
     public override void Exit()
     {
         DrawingPanel.IsDrawing = false;

@@ -257,6 +257,11 @@ public class ModelingEditor : BaseEditor
         ModeController.RenderDepthTest();
     }
 
+    public override void EndRender()
+    {
+        
+    }
+
     public override void Exit()
     {
         Game.camera.SetSmoothFactor(true);

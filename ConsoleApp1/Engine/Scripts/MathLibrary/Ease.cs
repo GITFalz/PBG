@@ -97,6 +97,20 @@ public static class Ease
 
         return Math.Pow(2, -10 * t) * Math.Sin((t - s) * (2 * Math.PI) / p) + 1;
     }
+
+    public static EasingType GetEasingType(int type)
+    {
+        return type switch
+        {
+            0 => EasingType.Linear,
+            1 => EasingType.EaseIn,
+            2 => EasingType.EaseOut,
+            3 => EasingType.EaseInOut,
+            4 => EasingType.BounceIn,
+            5 => EasingType.ElasticIn,
+            _ => EasingType.Linear,
+        };
+    }
 }
 
 public enum EasingType
