@@ -30,13 +30,13 @@ public class AnimationEditor : BaseEditor
 
     public static UIInputFieldPrefab BoneNameText;
 
-    public static UIInputField BoneXPositionField;
-    public static UIInputField BoneYPositionField;
-    public static UIInputField BoneZPositionField;
+    public UIInputField BoneXPositionField;
+    public UIInputField BoneYPositionField;
+    public UIInputField BoneZPositionField;
 
-    public static UIInputField BoneXRotationField;
-    public static UIInputField BoneYRotationField;
-    public static UIInputField BoneZRotationField;
+    public UIInputField BoneXRotationField;
+    public UIInputField BoneYRotationField;
+    public UIInputField BoneZRotationField;
 
     public UIVerticalCollection BoneInfoCollection;
     public UIVerticalCollection AnimationCollection;
@@ -1002,7 +1002,10 @@ public class AnimationEditor : BaseEditor
             if (Input.IsKeyPressed(Keys.Space) && ModelManager.SelectedModels.Count > 0)
             {
                 Playing = !Playing;
-                if (Model != null) Model.Animate = Playing;
+                if (Playing)
+                    ForSelectedModels(model => { model.Animate = true; });
+                else
+                    ForModels(model => { model.Animate = false; });
                 regenerateVertexUi = !Playing;
             }
         }
@@ -1102,6 +1105,14 @@ public class AnimationEditor : BaseEditor
         foreach (var (_, modelData) in ModelManager.SelectedModels)
         {
             action(modelData.Model);
+        }
+    }
+
+    public void ForModels(Action<Model> action)
+    {
+        foreach (var (_, model) in ModelManager.Models)
+        {
+            action(model);
         }
     }
 
@@ -1484,7 +1495,7 @@ public class AnimationEditor : BaseEditor
     }
 
 
-    public void  Handle_BoneMovement()
+    public void Handle_BoneMovement()
     {
         if (Model == null || Model.Rig == null)
             return;

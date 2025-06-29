@@ -95,12 +95,13 @@ public class NormalizedBoneAnimation
     public (GlobalKeyframe, GlobalKeyframe) GetKeyframe(int a, int b)
     {
         try
-        {   
+        {
             return (Keyframes[a], Keyframes[b]);
         }
         catch (IndexOutOfRangeException)
         {
-            return (Keyframes[0], Keyframes[0]);
+            Console.WriteLine($"Error: Invalid keyframe indices {a}, {b} in NormalizedBoneAnimation.");
+            return (new GlobalKeyframe(), new GlobalKeyframe());
         }
     }
 }
