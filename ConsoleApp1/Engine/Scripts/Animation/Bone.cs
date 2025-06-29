@@ -37,7 +37,7 @@ public abstract class Bone
         }
     }
     private Vector3 _eulerRotation = Vector3.Zero;
-    public float Scale
+    public Vector3 Scale
     {
         get => _scale;
         set
@@ -46,7 +46,7 @@ public abstract class Bone
             LocalAnimatedMatrix = Matrix4.CreateScale(Scale) * Matrix4.CreateFromQuaternion(Rotation) * Matrix4.CreateTranslation(Position);
         }
     }
-    private float _scale = 1;
+    private Vector3 _scale = Vector3.One;
 
     // Computed at runtime (updated each frame)
     public Matrix4 LocalAnimatedMatrix = Matrix4.Identity;
@@ -175,12 +175,16 @@ public class RootBone : Bone
     public override void Rotate()
     {
         Vector2 mouseDelta = Input.GetMouseDelta();
-        
-        Vector3 axisY = Vector3.Normalize(Game.camera.front);
-        Vector3 axisX = Vector3.Normalize(Game.camera.right);
+    
+        // Use world axes for more intuitive rotation
+        Vector3 worldUp = Vector3.UnitY;  // World up axis
+        Vector3 cameraRight = Vector3.Normalize(Game.camera.right);
 
-        Rotation *= Quaternion.FromAxisAngle(axisY, MathHelper.DegreesToRadians(mouseDelta.X * GameTime.DeltaTime * 50f));
-        Rotation *= Quaternion.FromAxisAngle(axisX, MathHelper.DegreesToRadians(mouseDelta.Y * GameTime.DeltaTime * 50f));
+        // Apply rotations in world space
+        // Horizontal mouse movement rotates around world Y axis
+        Rotation = Quaternion.FromAxisAngle(worldUp, MathHelper.DegreesToRadians(mouseDelta.X * GameTime.DeltaTime * 50f)) * Rotation;
+        // Vertical mouse movement rotates around camera's right axis
+        Rotation = Quaternion.FromAxisAngle(cameraRight, MathHelper.DegreesToRadians(mouseDelta.Y * GameTime.DeltaTime * 50f)) * Rotation;
     }
     
     public override void Rotate(Vector3 axis, float angle)
@@ -266,15 +270,27 @@ public class ChildBone : Bone
     {
         Vector2 mouseDelta = Input.GetMouseDelta();
 
-        Vector3 axisY = Vector3.Normalize(Game.camera.front);
-        Vector3 axisX = Vector3.Normalize(Game.camera.right);
+        // Use world axes for consistent rotation behavior
+        Vector3 worldUp = Vector3.UnitY;  // World up axis
+        Vector3 cameraRight = Vector3.Normalize(Game.camera.right);
 
-        Matrix4 invParent = GlobalAnimatedMatrix.Inverted();
-        Vector3 localAxisY = Vector3.Normalize(Vector3.TransformNormal(axisY, invParent));
-        Vector3 localAxisX = Vector3.Normalize(Vector3.TransformNormal(axisX, invParent));
+        // Create rotations in world space
+        Quaternion horizontalRotation = Quaternion.FromAxisAngle(worldUp, MathHelper.DegreesToRadians(mouseDelta.X * GameTime.DeltaTime * 50f));
+        Quaternion verticalRotation = Quaternion.FromAxisAngle(cameraRight, MathHelper.DegreesToRadians(mouseDelta.Y * GameTime.DeltaTime * 50f));
 
-        Rotation *= Quaternion.FromAxisAngle(localAxisY, MathHelper.DegreesToRadians(mouseDelta.X * GameTime.DeltaTime * 50f));
-        Rotation *= Quaternion.FromAxisAngle(localAxisX, MathHelper.DegreesToRadians(mouseDelta.Y * GameTime.DeltaTime * 50f));
+        // Combine the rotations
+        Quaternion worldRotation = horizontalRotation * verticalRotation;
+
+        // Transform world rotation to parent's local space
+        Matrix4 invParent = Parent.GlobalAnimatedMatrix.Inverted();
+        Matrix4 worldRotMatrix = Matrix4.CreateFromQuaternion(worldRotation);
+        Matrix4 localRotMatrix = invParent * worldRotMatrix * Parent.GlobalAnimatedMatrix;
+
+        // Extract quaternion from the local rotation matrix
+        Quaternion localRotation = localRotMatrix.ExtractRotation();
+
+        // Apply the local rotation
+        Rotation = localRotation * Rotation;
     }
     
     public override void Rotate(Vector3 axis, float angle)
@@ -292,12 +308,13 @@ public class ChildBone : Bone
         Vector3 axisY = Vector3.Normalize(Game.camera.up);
         Vector3 axisX = Vector3.Normalize(Game.camera.right);
 
-        Matrix4 invParent = GlobalAnimatedMatrix.Inverted();
-        Vector3 localAxisY = Vector3.Normalize(Vector3.TransformNormal(axisY, invParent));
-        Vector3 localAxisX = Vector3.Normalize(Vector3.TransformNormal(axisX, invParent));
+        Vector3 worldMovement = axisY * -mouseDelta.Y * GameTime.DeltaTime * 5f + 
+                                axisX * mouseDelta.X * GameTime.DeltaTime * 5f;
 
-        Position += localAxisY * -mouseDelta.Y * GameTime.DeltaTime * 5f;
-        Position += localAxisX * mouseDelta.X * GameTime.DeltaTime * 5f;
+        Matrix4 invParent = Parent.GlobalAnimatedMatrix.Inverted();
+        Vector3 localMovement = Vector3.TransformNormal(worldMovement, invParent);
+
+        Position += localMovement;
     }
 
     public ChildBone Copy(Bone parent)
