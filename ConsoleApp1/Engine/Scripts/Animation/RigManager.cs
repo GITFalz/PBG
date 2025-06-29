@@ -108,7 +108,7 @@ public static class RigManager
             lines.Add($"parent {parentName}");
             lines.Add($"p {Float.Str(bone.Position.X)}, {Float.Str(bone.Position.Y)}, {Float.Str(bone.Position.Z)}");
             lines.Add($"r {Float.Str(bone.Rotation.X)}, {Float.Str(bone.Rotation.Y)}, {Float.Str(bone.Rotation.Z)}, {Float.Str(bone.Rotation.W)}");
-            lines.Add($"s {Float.Str(bone.Scale)}");
+            lines.Add($"s {Float.Str(bone.Scale.X)}, {Float.Str(bone.Scale.Y)}, {Float.Str(bone.Scale.Z)}");
         }
 
         File.WriteAllLines(path, lines);
@@ -165,7 +165,7 @@ public static class RigManager
             string parentName;
             Vector3 position;
             Quaternion rotation;
-            float scale;
+            Vector3 scale;
 
             string[] values = lines[i].Split(' ');
             if (values.Length != 2)
@@ -214,7 +214,20 @@ public static class RigManager
                 PopUp.AddPopUp("Invalid scale at line " + (i + 4));
                 return false;
             }
-            scale = Float.Parse(values[1].Trim(','));
+
+            try
+            {
+                scale = new Vector3(
+                    Float.Parse(values[1].Trim(',')),
+                    Float.Parse(values[2].Trim(',')),
+                    Float.Parse(values[3].Trim(','))
+                );
+            }
+            catch (Exception)
+            {
+                scale = Vector3.One; // Default scale if parsing fails
+            }
+            
 
             if (boneName == parentName) // This means it is the root bone
             {

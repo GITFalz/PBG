@@ -2,10 +2,10 @@ using System.Diagnostics.CodeAnalysis;
 
 public class AnimationManager
 {
-    public static Dictionary<string, Animation> Animations = [];
+    public static Dictionary<string, NewAnimation> Animations = [];
     public static bool DisplayError = true;
 
-    public static bool Add(Animation animation)
+    public static bool Add(NewAnimation animation)
     {
         if (Animations.ContainsKey(animation.Name))
         {
@@ -18,7 +18,7 @@ public class AnimationManager
         return true;
     }
 
-    public static void Update(Animation animation)
+    public static void Update(NewAnimation animation)
     {
         if (Animations.ContainsKey(animation.Name))
         {
@@ -43,7 +43,7 @@ public class AnimationManager
         return true;
     }
 
-    public static bool TryGet(string name, [NotNullWhen(true)] out Animation? animation)
+    public static bool TryGet(string name, [NotNullWhen(true)] out NewAnimation? animation)
     {
         if (Animations.TryGetValue(name, out animation))
             return true;
@@ -81,7 +81,7 @@ public class AnimationManager
     public static void Save(string name, string path)
     {
         path = Path.Combine(path, name + ".anim");
-        if (!Animations.TryGetValue(name, out Animation? animation))
+        if (!Animations.TryGetValue(name, out NewAnimation? animation))
         {
             if (DisplayError)
                 PopUp.AddPopUp("Failed to save animation: Animation not found");
@@ -97,7 +97,7 @@ public class AnimationManager
         SaveRig(animation, path);
     }
 
-    private static void SaveRig(Animation animation, string path)
+    private static void SaveRig(NewAnimation animation, string path)
     {
         var lines = animation.Save();
         File.WriteAllLines(path, lines);
@@ -127,7 +127,7 @@ public class AnimationManager
             return false;
         }
 
-        if (!LoadAnimation(name, path, out Animation? animation))
+        if (!LoadAnimation(name, path, out NewAnimation? animation))
         {
             if (DisplayError)
                 PopUp.AddPopUp("Animation failed to load");
@@ -140,7 +140,7 @@ public class AnimationManager
         return true;
     }
 
-    private static bool LoadAnimation(string name, string path, [NotNullWhen(true)] out Animation? animation)
+    private static bool LoadAnimation(string name, string path, [NotNullWhen(true)] out NewAnimation? animation)
     {
         if (!AnimationParser.Parse(name, File.ReadAllLines(path), out animation))
         {

@@ -61,19 +61,26 @@ public class Model
 
     public Rig? Rig;
     public string? RigName => Rig?.Name;
-    public Animation? Animation
+    public NewAnimation? Animation
     {
         get => _animation;
-        set
-        {
-            _animation = value;
-            Console.WriteLine($"Animation set: {value?.Name ?? "null"}");
-        }
+        set => _animation = value;
     }
-    private Animation? _animation;
+    private NewAnimation? _animation;
+    private NormalizedAnimation? _normalizedAnimation;
 
     public bool RenderBones = false;
-    public bool Animate = false;
+    public bool Animate
+    {
+        get => _animate;
+        set
+        {
+            _animate = value;
+            if (value && Rig != null && Animation != null)
+                _normalizedAnimation = new NormalizedAnimation(Rig, Animation);
+        }
+    }
+    private bool _animate = false;
 
 
     public Model()
@@ -300,14 +307,15 @@ public class Model
 
     public void Update()
     {
-        if (Rig == null || Animation == null)
+        if (Rig == null || _normalizedAnimation == null)
             return;
 
         if (Animate)
         {
+            _normalizedAnimation.Update();
             foreach (var bone in Rig.BonesList)
             {
-                var frame = Animation.GetFrame(bone.Name);
+                var frame = _normalizedAnimation.GetBoneKeyframe(bone.Index);
                 if (frame == null)
                     continue;
 

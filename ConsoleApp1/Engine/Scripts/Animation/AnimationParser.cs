@@ -3,13 +3,13 @@ using OpenTK.Mathematics;
 
 public static class AnimationParser
 {
-    public static Animation currentAnimation = null!;
-    public static BoneAnimation? currentBoneAnimation;
+    public static NewAnimation currentAnimation = null!;
+    public static NewBoneAnimation? currentBoneAnimation;
 
-    public static bool Parse(string name, string[] lines, [NotNullWhen(true)] out Animation? animation)
+    public static bool Parse(string name, string[] lines, [NotNullWhen(true)] out NewAnimation? animation)
     {
         animation = null;
-        currentAnimation = new Animation(name);
+        currentAnimation = new NewAnimation(name);
         currentBoneAnimation = null;
 
         AnimationData data = new AnimationData();
@@ -32,7 +32,7 @@ public static class AnimationParser
 
                 if (!_currentParseAction.TryGetValue(key, out ParseAction? action))
                 {
-                    Console.WriteLine($"Action not found for {key}");
+                    Console.WriteLine($"Action not found for {key} at line {i + 1}");
                     return false;
                 }
 
@@ -60,7 +60,7 @@ public static class AnimationParser
                     return false;
 
                 string name = values[1];
-                currentBoneAnimation = new BoneAnimation(name);
+                currentBoneAnimation = new NewBoneAnimation(name);
                 return true;
             }
         },
@@ -118,7 +118,7 @@ public static class AnimationParser
                 if (values.Length != 2)
                     return false;
 
-                int ease = Int.Parse(values[1]);
+                int ease = Int.Parse(values[1], 0);
                 data.PositionEasing = Ease.GetEasingType(ease);
                 index++;
                 return true;
@@ -127,10 +127,17 @@ public static class AnimationParser
         { "Rotation:", (ref int index, string line, ref AnimationData data) =>
             {
                 var values = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-                if (values.Length != 4)
+                if (values.Length < 4)
                     return false;
 
-                data.Rotation = Quaternion.FromEulerAngles(Float.Parse(values[1]), Float.Parse(values[2]), Float.Parse(values[3]));
+                if (values.Length != 5)
+                {
+                    data.Rotation = Quaternion.FromEulerAngles( Float.Parse(values[1]), Float.Parse(values[2]), Float.Parse(values[3]));
+                }
+                else
+                {
+                    data.Rotation = new Quaternion(Float.Parse(values[1]), Float.Parse(values[2]), Float.Parse(values[3]), Float.Parse(values[4]));
+                }
                 index++;
                 return true;
             }
@@ -141,7 +148,7 @@ public static class AnimationParser
                 if (values.Length != 2)
                     return false;
 
-                int ease = Int.Parse(values[1]);
+                int ease = Int.Parse(values[1], 0);
                 data.RotationEasing = Ease.GetEasingType(ease);
                 index++;
                 return true;
@@ -153,7 +160,19 @@ public static class AnimationParser
                 if (values.Length != 2)
                     return false;
 
-                data.Scale = Float.Parse(values[1]);
+                data.Scale = new Vector3(Float.Parse(values[1]), Float.Parse(values[2]), Float.Parse(values[3]));
+                index++;
+                return true;
+            }
+        },
+        { "S-Ease:" , (ref int index, string line, ref AnimationData data) =>
+            {
+                var values = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
+                if (values.Length != 2)
+                    return false;
+
+                int ease = Int.Parse(values[1], 0);
+                data.ScaleEasing = Ease.GetEasingType(ease);
                 index++;
                 return true;
             }
@@ -164,7 +183,7 @@ public static class AnimationParser
                 if (values.Length != 2)
                     return false;
 
-                data.Index = Int.Parse(values[1]);
+                data.Index = Int.Parse(values[1], 0);
                 index++;
                 return true;
             }
@@ -174,10 +193,21 @@ public static class AnimationParser
                 index++;
                 if (currentBoneAnimation != null)
                 {
-                    AnimationKeyframe newKeyframe = new AnimationKeyframe(data.Index, data.Position, data.Rotation, data.Scale);
-                    newKeyframe.PositionEasing = data.PositionEasing;
-                    newKeyframe.RotationEasing = data.RotationEasing;
-                    currentBoneAnimation.AddOrUpdateKeyframe(newKeyframe);
+                    if (data.Position.HasValue)
+                    {
+                        PositionKeyframe positionKeyframe = new PositionKeyframe(data.Index, data.Position.Value, data.PositionEasing);
+                        currentBoneAnimation.AddOrUpdateKeyframe(positionKeyframe);
+                    }
+                    if (data.Rotation.HasValue)
+                    {
+                        RotationKeyframe rotationKeyframe = new RotationKeyframe(data.Index, data.Rotation.Value, data.RotationEasing);
+                        currentBoneAnimation.AddOrUpdateKeyframe(rotationKeyframe);
+                    }
+                    if (data.Scale.HasValue)
+                    {
+                        ScaleKeyframe scaleKeyframe = new ScaleKeyframe(data.Index, data.Scale.Value, data.ScaleEasing);
+                        currentBoneAnimation.AddOrUpdateKeyframe(scaleKeyframe);
+                    }
                 }
                     
                 _currentParseAction = _boneData;
@@ -190,31 +220,27 @@ public static class AnimationParser
 
     private struct AnimationData
     {
-        public Vector3 Position;
+        public Vector3? Position = null;
         public EasingType PositionEasing = EasingType.Linear;
-        public Quaternion Rotation;
+        public Quaternion? Rotation = null;
         public EasingType RotationEasing = EasingType.Linear;
-        public float Scale;
+        public Vector3? Scale = null;
+        public EasingType ScaleEasing = EasingType.Linear;
         public int Index;
 
         public AnimationData()
         {
-            Position = Vector3.Zero;
-            Rotation = Quaternion.Identity;
-            Scale = 1.0f;
             Index = 0;
-        }
-
-        public Matrix4 GetLocalMatrix()
-        {
-            return Matrix4.CreateScale(Scale) * Matrix4.CreateFromQuaternion(Rotation) * Matrix4.CreateTranslation(Position);
         }
 
         public void Clear()
         {
-            Position = Vector3.Zero;
-            Rotation = Quaternion.Identity;
-            Scale = 1.0f;
+            Position = null;
+            PositionEasing = EasingType.Linear;
+            Rotation = null;
+            RotationEasing = EasingType.Linear;
+            Scale = null;
+            ScaleEasing = EasingType.Linear;
             Index = 0;
         }
     }

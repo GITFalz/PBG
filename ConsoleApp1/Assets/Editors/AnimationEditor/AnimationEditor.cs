@@ -14,6 +14,7 @@ public class AnimationEditor : BaseEditor
     public UIController KeyframeUI;
     public UIController TimerUI;
     public UIController AnimationSavingUI;
+    public UIController RightClickMenuUI;
 
     public UIScrollView MainPanelStacking;
     public UIInputFieldPrefab TimelineTimeField;
@@ -43,8 +44,18 @@ public class AnimationEditor : BaseEditor
     public UIVerticalCollection KeyframeInfoCollection;
 
 
-    public UIImage PositionEasingPanel;
-    public UIImage RotationEasingPanel;
+    public UIImage EasingPanel;
+    // Position - Blue
+    public static Vector4 PositionColor = new Vector4(0.2f, 0.4f, 1.0f, 1f);
+    public static Vector4 PositionSelection = new Vector4(0.4f, 0.6f, 1.0f, 1f);
+
+    // Rotation - Red
+    public static Vector4 RotationColor = new Vector4(1.0f, 0.3f, 0.2f, 1f);
+    public static Vector4 RotationSelection = new Vector4(1.0f, 0.5f, 0.4f, 1f);
+
+    // Scale - Green
+    public static Vector4 ScaleColor = new Vector4(0.2f, 1.0f, 0.4f, 1f);
+    public static Vector4 ScaleSelection = new Vector4(0.4f, 1.0f, 0.6f, 1f);
 
 
     public bool SaveAnimation
@@ -59,6 +70,17 @@ public class AnimationEditor : BaseEditor
     
     private bool _saveAnimation = false;
     public bool GenerateEveryKeyframe = false;
+
+    public bool RightClickMenu
+    {
+        get { return _rightClickMenu; }
+        set
+        {
+            _rightClickMenu = value;
+            ToggleRightClickMenu();
+        }
+    }
+    private bool _rightClickMenu = false;
 
     private UIButton _animationGenerateEveryKeyframeButton;
 
@@ -130,11 +152,11 @@ public class AnimationEditor : BaseEditor
     public struct SelectedKeyframeStruct
     {
         public UIButton Button;
-        public AnimationKeyframe Keyframe;
+        public IndividualKeyframe Keyframe;
         public TimelineBoneAnimation Animation;
         public Bone Bone;
 
-        public SelectedKeyframeStruct(UIButton button, AnimationKeyframe keyframe, TimelineBoneAnimation animation, Bone bone)
+        public SelectedKeyframeStruct(UIButton button, IndividualKeyframe keyframe, TimelineBoneAnimation animation, Bone bone)
         {
             Button = button;
             Keyframe = keyframe;
@@ -444,114 +466,60 @@ public class AnimationEditor : BaseEditor
         keyframeInfoToggleButton.SetOnClick(() => { ToggleElements(!KeyframeInfoCollection.Visible, KeyframeInfoCollection); });
 
         // Position easing collection
-        UICollection keyframePositionEasingCollection = new("KeyframePositionEasingCollection", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (210, 20), (0, 0, 0, 0), 0);
+        UICollection keyframeEasingCollection = new("KeyframePositionEasingCollection", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (210, 20), (0, 0, 0, 0), 0);
 
-        UIText keyframePositionEasingText = new("KeyframePositionEasingText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 20, 0), (400, 20), (0, 0, 0, 0), 0);
-        keyframePositionEasingText.SetTextCharCount("Position:", 0.9f);
+        UIText keyframeEasingText = new("KeyframePositionEasingText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 20, 0), (400, 20), (0, 0, 0, 0), 0);
+        keyframeEasingText.SetTextCharCount("Position:", 0.9f);
 
-        PositionEasingPanel = new("PositionEasingPanel", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 20, 0), (20, 20), (0, 0, -50, 0), 0, 60, (-1, -1));
+        EasingPanel = new("PositionEasingPanel", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 20, 0), (20, 20), (0, 0, -50, 0), 0, 60, (-1, -1));
 
-        UIImage positionEasingLeftPanel = new("PositionEasingLeftPanel", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 20, 0), (20, 20), (0, 0, -25, 0), 0, 70, (-1, -1));
-        positionEasingLeftPanel.SetOnClick(() =>
+        UIImage easingLeftPanel = new("PositionEasingLeftPanel", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 20, 0), (20, 20), (0, 0, -25, 0), 0, 70, (-1, -1));
+        easingLeftPanel.SetOnClick(() =>
         {
             if (SelectedKeyframe == null)
                 return;
-            AnimationKeyframe keyframe = SelectedKeyframe.Value.Keyframe;
+
+            IndividualKeyframe keyframe = SelectedKeyframe.Value.Keyframe;
             TimelineBoneAnimation animation = SelectedKeyframe.Value.Animation;
 
-            int ease = PositionEasingPanel.TextureIndex % 60;
+            int ease = EasingPanel.TextureIndex % 60;
             int newEase = ease - 1;
             if (ease == 0)
                 return;
 
             if (newEase >= 0)
             {
-                PositionEasingPanel.TextureIndex = newEase + 60;
-                PositionEasingPanel.UpdateTexture();
-                keyframe.PositionEasing = (EasingType)newEase;
-                animation.RegenerateBoneKeyframes();
+                EasingPanel.TextureIndex = newEase + 60;
+                EasingPanel.UpdateTexture();
+                keyframe.Easing = (EasingType)newEase;
             }
         });
 
-        UIImage positionEasingRightPanel = new("PositionEasingRightPanel", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 20, 0), (20, 20), (0, 0, 0, 0), 0, 71, (-1, -1));
-        positionEasingRightPanel.SetOnClick(() =>
+        UIImage easingRightPanel = new("PositionEasingRightPanel", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 20, 0), (20, 20), (0, 0, 0, 0), 0, 71, (-1, -1));
+        easingRightPanel.SetOnClick(() =>
         {
             if (SelectedKeyframe == null)
                 return;
-            AnimationKeyframe keyframe = SelectedKeyframe.Value.Keyframe;
+
+            IndividualKeyframe keyframe = SelectedKeyframe.Value.Keyframe;
             TimelineBoneAnimation animation = SelectedKeyframe.Value.Animation;
 
-            int ease = PositionEasingPanel.TextureIndex % 60;
+            int ease = EasingPanel.TextureIndex % 60;
             int newEase = ease + 1;
             if (ease == 5)
                 return;
 
             if (newEase <= 5)
             {
-                PositionEasingPanel.TextureIndex = newEase + 60;
-                PositionEasingPanel.UpdateTexture();
-                keyframe.PositionEasing = (EasingType)newEase;
-                animation.RegenerateBoneKeyframes();
+                EasingPanel.TextureIndex = newEase + 60;
+                EasingPanel.UpdateTexture();
+                keyframe.Easing = (EasingType)newEase;
             }
         });
 
-        keyframePositionEasingCollection.AddElements(keyframePositionEasingText, PositionEasingPanel, positionEasingLeftPanel, positionEasingRightPanel);
+        keyframeEasingCollection.AddElements(keyframeEasingText, EasingPanel, easingLeftPanel, easingRightPanel);
 
-        // Rotation easing collection
-        UICollection keyframeRotationEasingCollection = new("KeyframeRotationEasingCollection", ModelingUi, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (210, 20), (0, 0, 0, 0), 0);
-
-        UIText keyframeRotationEasingText = new("KeyframeRotationEasingText", ModelingUi, AnchorType.MiddleLeft, PositionType.Relative, (1, 1, 1, 1f), (0, 20, 0), (400, 20), (0, 0, 0, 0), 0);
-        keyframeRotationEasingText.SetTextCharCount("Rotation:", 0.9f);
-
-        RotationEasingPanel = new("RotationEasingPanel", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 20, 0), (20, 20), (0, 0, -50, 0), 0, 60, (-1, -1));
-
-        UIImage rotationEasingLeftPanel = new("RotationEasingLeftPanel", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 20, 0), (20, 20), (0, 0, -25, 0), 0, 70, (-1, -1));
-        rotationEasingLeftPanel.SetOnClick(() =>
-        {
-            if (SelectedKeyframe == null)
-                return;
-            AnimationKeyframe keyframe = SelectedKeyframe.Value.Keyframe;
-            TimelineBoneAnimation animation = SelectedKeyframe.Value.Animation;
-
-            int ease = RotationEasingPanel.TextureIndex % 60;
-            int newEase = ease - 1;
-            if (ease == 0)
-                return;
-
-            if (newEase >= 0)
-            {
-                RotationEasingPanel.TextureIndex = newEase + 60;
-                RotationEasingPanel.UpdateTexture();
-                keyframe.RotationEasing = (EasingType)newEase;
-                animation.RegenerateBoneKeyframes();
-            }
-        });
-
-        UIImage rotationEasingRightPanel = new("RotationEasingRightPanel", ModelingUi, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 20, 0), (20, 20), (0, 0, 0, 0), 0, 71, (-1, -1));
-        rotationEasingRightPanel.SetOnClick(() =>
-        {
-            if (SelectedKeyframe == null)
-                return;
-            AnimationKeyframe keyframe = SelectedKeyframe.Value.Keyframe;
-            TimelineBoneAnimation animation = SelectedKeyframe.Value.Animation;
-
-            int ease = RotationEasingPanel.TextureIndex % 60;
-            int newEase = ease + 1;
-            if (ease == 5)
-                return;
-
-            if (newEase <= 5)
-            {
-                RotationEasingPanel.TextureIndex = newEase + 60;
-                RotationEasingPanel.UpdateTexture();
-                keyframe.RotationEasing = (EasingType)newEase;
-                animation.RegenerateBoneKeyframes();
-            }
-        });
-
-        keyframeRotationEasingCollection.AddElements(keyframeRotationEasingText, RotationEasingPanel, rotationEasingLeftPanel, rotationEasingRightPanel);
-
-        KeyframeInfoCollection.AddElements(keyframePositionEasingCollection, keyframeRotationEasingCollection);
+        KeyframeInfoCollection.AddElements(keyframeEasingCollection);
 
         AnimationCollection.AddElements(animationInfoCollection, keyframeInfoToggleButton, KeyframeInfoCollection);
         KeyframeInfoCollection.SetVisibility(false);
@@ -637,7 +605,7 @@ public class AnimationEditor : BaseEditor
                 PopUp.AddPopUp("Animation name cannot be empty");
                 return;
             }
-            if (!AnimationManager.TryGet(Model.Animation.Name, out Animation? animation))
+            if (!AnimationManager.TryGet(Model.Animation.Name, out NewAnimation? animation))
             {
                 AnimationManager.Add(Model.Animation);
             }
@@ -655,6 +623,8 @@ public class AnimationEditor : BaseEditor
             AnimationManager.DisplayError = true;
             AnimationManager.Save(name);
             AnimationManager.DisplayError = false;
+
+            ResetBoneKeyframes();
         });
 
         UITextButton animationLoadingButton = new UITextButton("AnimationLoadingButton", AnimationSavingUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (85, 20), (305, 0, 0, 0), 0, 10, (7.5f, 0.05f), UIState.Static);
@@ -664,21 +634,21 @@ public class AnimationEditor : BaseEditor
             if (Model == null || Model.Animation == null)
                 return;
 
-            AnimationManager.DisplayError = false;
+            AnimationManager.DisplayError = true;
 
             string name = animationSaveNameField.Text;
             AnimationManager.Load(name);
-
-            if (!AnimationManager.TryGet(name, out Animation? animation))
+            
+            if (!AnimationManager.TryGet(name, out NewAnimation? animation))
             {
                 PopUp.AddPopUp("Animation not found or failed to load");
                 return;
             }
 
             Model.Animation = animation;
+            AnimationManager.DisplayError = false;
 
             GenerateAnimationTimeline(Model);
-            RegenerateBoneKeyframes();
         });
 
         animationSaveNameField.SetMaxCharCount(20).SetText("AnimationName", 1f).SetTextType(TextType.Alphanumeric);
@@ -722,7 +692,60 @@ public class AnimationEditor : BaseEditor
 
         AnimationSavingUI.AddElement(animationSavingPanelCollection);
         AnimationSavingUI.GenerateBuffers();
+        
 
+        RightClickMenuUI = new UIController("RightClickMenuUI");
+
+        UICollection rightClickMenuMainCollection = new("RightClickMenuMainCollection", RightClickMenuUI, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (200, 200), (0, 0, 0, 0), 0);
+
+        UIButton rightClickMenuMoveButton = new UIButton("RightClickMenuMoveButton", RightClickMenuUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1), (0, 0, 0), (200, 20), (0, -20, 0, 0), 0, 10, (7.5f, 0.05f), UIState.Static);
+        rightClickMenuMoveButton.SetOnHold(() => 
+        {
+            Vector2 mouseDelta = Input.GetMouseDelta();
+            if (mouseDelta == Vector2.Zero)
+                return;
+
+            rightClickMenuMainCollection.Offset.X += mouseDelta.X;
+            rightClickMenuMainCollection.Offset.Y += mouseDelta.Y;
+            rightClickMenuMainCollection.Align();
+            rightClickMenuMainCollection.UpdateTransformation();
+        });
+
+        UIButton rightClickMenuCloseButton = new UIButton("RightClickMenuCloseButton", RightClickMenuUI, AnchorType.TopRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1), (0, 0, 0), (28, 28), (0, -24, 4, 0), 0, 89, (-1, -1), UIState.Static);
+        rightClickMenuCloseButton.SetOnClick(() => { RightClickMenu = false; });
+
+        UIVerticalCollection rightClickMenuKeyframesCollection = new("RightClickMenuKeyframesCollection", RightClickMenuUI, AnchorType.TopLeft, PositionType.Relative, (0, 0, 0), (200, 200), (0, 0, 0, 0), (0, 0, 0, 0), 0, 0);
+
+        UITextButton addPositionKeyframeButton = new UITextButton("AddPositionKeyframeButton", RightClickMenuUI, AnchorType.TopCenter, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (200, 20), (0, 0, 0, 0), 0, 10, (7.5f, 0.05f), UIState.Static);
+        addPositionKeyframeButton.SetTextCharCount("Add Position", 0.9f);
+        addPositionKeyframeButton.SetOnClick(() =>
+        {
+            AddPositionKeyframe();
+            RightClickMenu = false;
+        });
+
+        UITextButton addRotationKeyframeButton = new UITextButton("AddRotationKeyframeButton", RightClickMenuUI, AnchorType.TopCenter, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (200, 20), (0, 0, 0, 0), 0, 10, (7.5f, 0.05f), UIState.Static);
+        addRotationKeyframeButton.SetTextCharCount("Add Rotation", 0.9f);
+        addRotationKeyframeButton.SetOnClick(() =>
+        {
+            AddRotationKeyframe();
+            RightClickMenu = false;
+        });
+
+        UITextButton addScaleKeyframeButton = new UITextButton("AddScaleKeyframeButton", RightClickMenuUI, AnchorType.TopCenter, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (200, 20), (0, 0, 0, 0), 0, 10, (7.5f, 0.05f), UIState.Static);
+        addScaleKeyframeButton.SetTextCharCount("Add Scale", 0.9f);
+        addScaleKeyframeButton.SetOnClick(() =>
+        {
+            AddScaleKeyframe();
+            RightClickMenu = false;
+        });
+
+        rightClickMenuKeyframesCollection.AddElements(addPositionKeyframeButton.Collection, addRotationKeyframeButton.Collection, addScaleKeyframeButton.Collection);
+
+        rightClickMenuMainCollection.AddElements(rightClickMenuMoveButton, rightClickMenuCloseButton, rightClickMenuKeyframesCollection);
+
+        RightClickMenuUI.AddElements(rightClickMenuMainCollection);
+        RightClickMenuUI.GenerateBuffers();
         
 
         TimelineUI = new UIController("TimelineUI");
@@ -812,14 +835,13 @@ public class AnimationEditor : BaseEditor
     { 
         Started = true;
         CameraSpeedField.SetText($"{Game.camera.SPEED}").UpdateCharacters();
-
-        Console.WriteLine("Start Rigging Editor");
     }
 
     public override void Resize()
     {
         ModelingUi.Resize();
         AnimationSavingUI.Resize();
+        RightClickMenuUI.Resize();
         TimelineUI.Resize();
         KeyframeUI.Resize();
         TimerUI.Resize();
@@ -840,7 +862,7 @@ public class AnimationEditor : BaseEditor
 
         if (Model != null)
         {
-            Model.Animation ??= new Animation($"{Model.Name}_Animation");
+            Model.Animation ??= new NewAnimation($"{Model.Name}_Animation");
             Model.SetAnimationRig();
             Model.SetAnimation();
             GenerateAnimationTimeline(Model);
@@ -848,7 +870,7 @@ public class AnimationEditor : BaseEditor
 
         Editor.AfterNewSelectedModelAction = (model) =>
         {
-            model.Animation ??= new Animation($"{model.Name}_Animation");
+            model.Animation ??= new NewAnimation($"{model.Name}_Animation");
             model.SetAnimationRig();
             model.SetAnimation();
             GenerateAnimationTimeline(model);
@@ -932,6 +954,9 @@ public class AnimationEditor : BaseEditor
     {
         if (SaveAnimation)
             AnimationSavingUI.RenderNoDepthTest();
+
+        if (RightClickMenu)
+            RightClickMenuUI.RenderNoDepthTest();
     }
 
     public override void Update()
@@ -946,11 +971,12 @@ public class AnimationEditor : BaseEditor
         KeyframeUI.Test(keyframeScreenPos);
         ModelingUi.Update();
         AnimationSavingUI.Update();
+        RightClickMenuUI.Update();
         TimelineUI.Update();
 
-        if (Input.IsKeyPressed(Keys.U))
+        if (Input.IsMousePressed(MouseButton.Right) && !RightClickMenu)
         {
-            ClearTimeline();
+            RightClickMenu = true;
         }
 
         if (Input.IsKeyPressed(Keys.Escape))
@@ -989,10 +1015,9 @@ public class AnimationEditor : BaseEditor
 
     private void RigUpdate()
     {
-        if (Input.IsMousePressed(MouseButton.Left))
+        if (Input.IsMousePressed(MouseButton.Left) && !RightClickMenu)
             TestBonePosition();
 
-        TestAdd();
         TestRemove();
 
         if (Input.IsKeyPressed(Keys.G))
@@ -1080,7 +1105,6 @@ public class AnimationEditor : BaseEditor
         }
     }
 
-
     public void RegenerateBoneKeyframes()
     {
         foreach (var (_, boneAnimation) in BoneAnimations)
@@ -1160,15 +1184,13 @@ public class AnimationEditor : BaseEditor
     {
         if (SelectedKeyframe == null)
             return;
-        AnimationKeyframe keyframe = SelectedKeyframe.Value.Keyframe;
+        IndividualKeyframe keyframe = SelectedKeyframe.Value.Keyframe;
 
         if (!KeyframeInfoCollection.Visible)
             ToggleElements(true, KeyframeInfoCollection);
 
-        PositionEasingPanel.TextureIndex = (int)keyframe.PositionEasing + 60;
-        RotationEasingPanel.TextureIndex = (int)keyframe.RotationEasing + 60;
-        PositionEasingPanel.UpdateTexture();
-        RotationEasingPanel.UpdateTexture();
+        EasingPanel.TextureIndex = (int)keyframe.Easing + 60;
+        EasingPanel.UpdateTexture();
     }
 
     public void HideKeyframeInfo()
@@ -1187,6 +1209,11 @@ public class AnimationEditor : BaseEditor
             _animationGenerateEveryKeyframeButton.UpdateTexture();
             _animationGenerateEveryKeyframeButton.UpdateColor();
         }
+    }
+
+    public void ToggleRightClickMenu()
+    {
+        RightClickMenuUI.SetPosition(Input.GetMousePosition());
     }
 
     public void SetBonePositionText()
@@ -1254,7 +1281,7 @@ public class AnimationEditor : BaseEditor
 
     public void GenerateAnimationTimeline(Model model)
     {
-        Animation? animation = model.Animation;
+        NewAnimation? animation = model.Animation;
         if (model.Rig == null || animation == null)
             return;
 
@@ -1263,33 +1290,55 @@ public class AnimationEditor : BaseEditor
         for (int i = 0; i < model.Rig.BonesList.Count; i++)
         {
             Bone bone = model.Rig.BonesList[i];
-            if (!animation.TryGetBoneAnimation(bone.Name, out var boneAnimation))
+            if (!animation.GetBoneAnimation(bone.Name, out var boneAnimation))
             {
-                boneAnimation = new BoneAnimation(bone.Name);
+                boneAnimation = new NewBoneAnimation(bone.Name);
                 animation.AddBoneAnimation(boneAnimation);
             }
 
             TimelineBoneAnimation timelineAnimation = new TimelineBoneAnimation(bone.Name, boneAnimation);
             timelineAnimation.Index = i;
 
-            UITextButton boneTextButton = new UITextButton(bone.Name, TimelineUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (200, 20), (0, 0, 0, 0), 0, 10, (7.5f, 0.05f));
+            UITextButton boneTextButton = new UITextButton(bone.Name, TimelineUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (200, 45), (0, 0, 0, 0), 0, 10, (7.5f, 0.05f));
             boneTextButton.SetTextCharCount(bone.Name, 1f);
             TimelineScrollView.AddElement(boneTextButton.Collection);
             TimelineUI.AddElement(boneTextButton.Collection);
             BoneAnimations.Add(bone.Name, timelineAnimation);
 
-            if (boneAnimation.Keyframes.Count == 0)
+            if (boneAnimation.PositionKeyframes.Count == 0)
             {
-                AnimationKeyframe keyframe = new AnimationKeyframe(0, bone);
+                PositionKeyframe keyframe = new PositionKeyframe(0);
                 boneAnimation.AddOrUpdateKeyframe(keyframe);
             }
-            foreach (var keyframe in boneAnimation.Keyframes)
+            if (boneAnimation.RotationKeyframes.Count == 0)
+            {
+                RotationKeyframe keyframe = new RotationKeyframe(0);
+                boneAnimation.AddOrUpdateKeyframe(keyframe);
+            }
+            if (boneAnimation.ScaleKeyframes.Count == 0)
+            {
+                ScaleKeyframe keyframe = new ScaleKeyframe(0);
+                boneAnimation.AddOrUpdateKeyframe(keyframe);
+            }
+
+            foreach (var keyframe in boneAnimation.PositionKeyframes)
             {
                 var keyframeButton = CreateKeyElement(keyframe, timelineAnimation, bone, keyframe.Index);
                 timelineAnimation.Add(keyframeButton, keyframe);
                 KeyframeUI.AddElement(keyframeButton);
             }
-            timelineAnimation.RegenerateBoneKeyframes();
+            foreach (var keyframe in boneAnimation.RotationKeyframes)
+            {
+                var keyframeButton = CreateKeyElement(keyframe, timelineAnimation, bone, keyframe.Index);
+                timelineAnimation.Add(keyframeButton, keyframe);
+                KeyframeUI.AddElement(keyframeButton);
+            }
+            foreach (var keyframe in boneAnimation.ScaleKeyframes)
+            {
+                var keyframeButton = CreateKeyElement(keyframe, timelineAnimation, bone, keyframe.Index);
+                timelineAnimation.Add(keyframeButton, keyframe);
+                KeyframeUI.AddElement(keyframeButton);
+            }
         }
 
         foreach (var modelData in ModelManager.SelectedModels.Values)
@@ -1306,7 +1355,7 @@ public class AnimationEditor : BaseEditor
         if (Model == model || model.Rig == null || model.Animation == null)
             return;
 
-        Animation animation = model.Animation;
+        NewAnimation animation = model.Animation;
 
         UITextButton modelTextButton = new UITextButton(model.Name, TimelineUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f), (0, 0, 0), (200, 20), (0, 0, 0, 0), 0, 10, (7.5f, 0.05f));
         modelTextButton.SetTextCharCount(model.Name, 1f);
@@ -1317,9 +1366,9 @@ public class AnimationEditor : BaseEditor
         for (int i = 0; i < model.Rig.BonesList.Count; i++)
         {
             Bone bone = model.Rig.BonesList[i];
-            if (!animation.TryGetBoneAnimation(bone.Name, out var boneAnimation))
+            if (!animation.GetBoneAnimation(bone.Name, out var boneAnimation))
             {
-                boneAnimation = new BoneAnimation(bone.Name);
+                boneAnimation = new NewBoneAnimation(bone.Name);
                 animation.AddBoneAnimation(boneAnimation);
             }
 
@@ -1328,17 +1377,37 @@ public class AnimationEditor : BaseEditor
 
             SideBoneAnimations[model].Item2.Add(bone.Name, timelineAnimation);
 
-            if (boneAnimation.Keyframes.Count == 0)
+            if (boneAnimation.PositionKeyframes.Count == 0)
             {
-                AnimationKeyframe keyframe = new AnimationKeyframe(0, bone);
+                PositionKeyframe keyframe = new PositionKeyframe(0);
                 boneAnimation.AddOrUpdateKeyframe(keyframe);
             }
-            foreach (var keyframe in boneAnimation.Keyframes)
+            if (boneAnimation.RotationKeyframes.Count == 0)
             {
-                var keyframeButton = new UIButton(); // can be empty because it isn't used anyways
+                RotationKeyframe keyframe = new RotationKeyframe(0);
+                boneAnimation.AddOrUpdateKeyframe(keyframe);
+            }
+            if (boneAnimation.ScaleKeyframes.Count == 0)
+            {
+                ScaleKeyframe keyframe = new ScaleKeyframe(0);
+                boneAnimation.AddOrUpdateKeyframe(keyframe);
+            }
+
+            foreach (var keyframe in boneAnimation.PositionKeyframes)
+            {
+                var keyframeButton = new UIButton();
                 timelineAnimation.Add(keyframeButton, keyframe);
             }
-            timelineAnimation.RegenerateBoneKeyframes();
+            foreach (var keyframe in boneAnimation.RotationKeyframes)
+            {
+                var keyframeButton = new UIButton();
+                timelineAnimation.Add(keyframeButton, keyframe);
+            }
+            foreach (var keyframe in boneAnimation.ScaleKeyframes)
+            {
+                var keyframeButton = new UIButton();
+                timelineAnimation.Add(keyframeButton, keyframe);
+            }
         }
     }
 
@@ -1357,16 +1426,47 @@ public class AnimationEditor : BaseEditor
         SideBoneAnimations.Remove(model);
     }
 
-    void KeyframeSelection(UIButton button, AnimationKeyframe keyframe, TimelineBoneAnimation timelineAnimation, Bone bone)
+    void KeyframeSelection(UIButton button, IndividualKeyframe keyframe, TimelineBoneAnimation timelineAnimation, Bone bone)
     {
+        Vector4 color = new(0.5f, 0.5f, 0.5f, 1f);
+        Vector4 colorSelection = new(0.8f, 0.8f, 0.8f, 1f);
+        if (button.Name == "PositionKeyframe")
+        {
+            color = PositionColor;
+            colorSelection = PositionSelection;
+        }
+        else if (button.Name == "RotationKeyframe")
+        {
+            color = RotationColor;
+            colorSelection = RotationSelection;
+        }
+        else if (button.Name == "ScaleKeyframe")
+        {
+            color = ScaleColor;
+            colorSelection = ScaleSelection;
+        }
+
         if (button.ElementState == 0)
         {
             button.ElementState = 1;
-            button.Color = (0.5f, 0.5f, 1f, 1f);
+            button.Color = colorSelection;
             if (SelectedKeyframe != null)
             {
                 SelectedKeyframe.Value.Button.ElementState = 0;
-                SelectedKeyframe.Value.Button.Color = (0.5f, 0.5f, 0.5f, 1f);
+                Vector4 oldColor = new Vector4(0.5f, 0.5f, 0.5f, 1f);
+                if (SelectedKeyframe.Value.Button.Name == "PositionKeyframe")
+                {
+                    oldColor = PositionColor;
+                }
+                else if (SelectedKeyframe.Value.Button.Name == "RotationKeyframe")
+                {
+                    oldColor = RotationColor;
+                }
+                else if (SelectedKeyframe.Value.Button.Name == "ScaleKeyframe")
+                {
+                    oldColor = ScaleColor;
+                }
+                SelectedKeyframe.Value.Button.Color = oldColor;
                 SelectedKeyframe.Value.Button.UpdateColor();
             }
             SelectedKeyframe = new SelectedKeyframeStruct(button, keyframe, timelineAnimation, bone);
@@ -1376,7 +1476,7 @@ public class AnimationEditor : BaseEditor
         else
         {
             button.ElementState = 0;
-            button.Color = (0.5f, 0.5f, 0.5f, 1f);
+            button.Color = color;
             SelectedKeyframe = null;
             HideKeyframeInfo();
         }
@@ -1384,7 +1484,7 @@ public class AnimationEditor : BaseEditor
     }
 
 
-    public void Handle_BoneMovement()
+    public void  Handle_BoneMovement()
     {
         if (Model == null || Model.Rig == null)
             return;
@@ -1553,31 +1653,6 @@ public class AnimationEditor : BaseEditor
 
         Model?.UpdateRig();
     }
-
-    public void TestAdd()
-    {
-        if (Model == null || Model.Animation == null)
-            return;
-
-        if (Input.IsKeyDown(Keys.Q) && Input.IsKeyPressed(Keys.D))
-        {
-            if (!_d_pressed)
-            {
-                _d_pressed = true;
-            }
-            else
-            {
-                _d_pressed = false;
-                Console.WriteLine("Add keyframe");
-                AddKeyframe(Model.Animation);
-            }
-        }
-
-        if (Input.IsKeyReleased(Keys.Q))
-        {
-            _d_pressed = false;
-        }
-    }
     
     public void TestRemove()
     {
@@ -1597,12 +1672,30 @@ public class AnimationEditor : BaseEditor
         }
     }
 
-    public void AddKeyframe(Animation animation)
+    public void AddPositionKeyframe()
     {
         HashSet<Bone> selectedBones = GetSelectedBones();
         foreach (var bone in selectedBones)
         {
-            AddKeyframe(animation, bone, CurrentFrame, true);
+            AddKeyframe(bone, 0, CurrentFrame, true);
+        }
+    }
+
+    public void AddRotationKeyframe()
+    {
+        HashSet<Bone> selectedBones = GetSelectedBones();
+        foreach (var bone in selectedBones)
+        {
+            AddKeyframe(bone, 1, CurrentFrame, true);
+        }
+    }
+
+    public void AddScaleKeyframe()
+    {
+        HashSet<Bone> selectedBones = GetSelectedBones();
+        foreach (var bone in selectedBones)
+        {
+            AddKeyframe(bone, 2, CurrentFrame, true);
         }
     }
 
@@ -1669,14 +1762,22 @@ public class AnimationEditor : BaseEditor
                 i++;
     */
 
-    public void AddKeyframe(Animation animation, Bone bone, int frame, bool addToUIController)
+    public void AddKeyframe(Bone bone, int type, int frame, bool addToUIController)
     {
         if (!BoneAnimations.TryGetValue(bone.Name, out TimelineBoneAnimation? timelineAnimation))
             return;
+        
+        IndividualKeyframe keyframe;
+        if (type == 0)
+            keyframe = new PositionKeyframe(frame, bone.Position);
+        else if (type == 1)
+            keyframe = new RotationKeyframe(frame, bone.Rotation);
+        else if (type == 2)
+            keyframe = new ScaleKeyframe(frame, bone.Scale);
+        else
+            return;
 
-        AnimationKeyframe keyframe = new AnimationKeyframe(frame, bone.Position, bone.Rotation, bone.Scale);
-
-        if (animation.AddOrUpdateKeyframe(bone.Name, keyframe))
+        if (timelineAnimation.Animation.AddOrUpdateKeyframe(keyframe))
         {
             var keyframeButton = CreateKeyElement(keyframe, timelineAnimation, bone, frame);
             timelineAnimation.Add(keyframeButton, keyframe);
@@ -1685,9 +1786,25 @@ public class AnimationEditor : BaseEditor
         }
     }
 
-    public UIButton CreateKeyElement(AnimationKeyframe keyframe, TimelineBoneAnimation timelineAnimation, Bone bone, int frame)
+    public UIButton CreateKeyElement(IndividualKeyframe keyframe, TimelineBoneAnimation timelineAnimation, Bone bone, int frame)
     {
-        UIButton keyframeButton = new UIButton("KeyframeButton", KeyframeUI, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (frame * 20, timelineAnimation.Index * 25, 0, 0), 0, 10, (7.5f, 0.05f), UIState.Interactable);
+        int type = 0;
+        Vector4 color = PositionColor;
+        string name = "PositionKeyframe";
+        if (keyframe is RotationKeyframe)
+        {
+            type = 1;
+            color = RotationColor;
+            name = "RotationKeyframe";
+        }
+        else if (keyframe is ScaleKeyframe)
+        {
+            type = 2;
+            color = ScaleColor;
+            name = "ScaleKeyframe";
+        }
+
+        UIButton keyframeButton = new UIButton(name, KeyframeUI, AnchorType.TopLeft, PositionType.Relative, new(color), (0, 0, 0), (15, 15), (frame * 20, timelineAnimation.Index * 50 + type * 15, 0, 0), 0, 72, (-1, -1), UIState.Interactable);
         KeyframePanelCollection.AddElement(keyframeButton);
         KeyframePanelCollection.Align();
         keyframeButton.ElementState = 0;
@@ -1716,7 +1833,7 @@ public class AnimationEditor : BaseEditor
 
                 int index = Mathf.FloorToInt((delta + keyframeButton.Offset.X) / 20);
                 int i = 0;
-                while (timelineAnimation.ContainsIndex(index))
+                while (timelineAnimation.ContainsIndex(type, index))
                 {
                     i += sign;
                     index += i;
@@ -1729,7 +1846,6 @@ public class AnimationEditor : BaseEditor
                 keyframeButton.Align();
                 keyframeButton.UpdateTransformation();
                 _oldMousePos = mousePosition;
-                timelineAnimation.RegenerateBoneKeyframes();
             }
         });
         return keyframeButton;
@@ -1742,7 +1858,7 @@ public class AnimationEditor : BaseEditor
 
         if (SelectedKeyframe != null)
         {
-            AnimationKeyframe keyframe = SelectedKeyframe.Value.Keyframe;
+            IndividualKeyframe keyframe = SelectedKeyframe.Value.Keyframe;
             UIButton button = SelectedKeyframe.Value.Button;
             TimelineBoneAnimation timelineAnimation = SelectedKeyframe.Value.Animation;
             Bone bone = SelectedKeyframe.Value.Bone;
@@ -1751,166 +1867,7 @@ public class AnimationEditor : BaseEditor
             {
                 button.Delete();
                 timelineAnimation.Remove(keyframe);
-                timelineAnimation.RegenerateBoneKeyframes();
             }
-        }
-        else
-        {
-            HashSet<Bone> selectedBones = GetSelectedBones();
-            foreach (var bone in selectedBones)
-            {
-                if (Model.Animation.RemoveKeyframe(bone.Name, CurrentFrame, out var keyframe) &&
-                    BoneAnimations.TryGetValue(bone.Name, out TimelineBoneAnimation? timelineAnimation) &&
-                    timelineAnimation.Get(keyframe, out UIButton? button)
-                )
-                {
-                    button.Delete();
-                    timelineAnimation.Remove(keyframe);
-                    timelineAnimation.RegenerateBoneKeyframes();
-                }
-            }
-        }
-    }
-
-    public class TimelineBoneAnimation(string name, BoneAnimation animation)
-    {
-        public string Name = name;
-        public int Index;
-        public BoneAnimation Animation = animation;
-        public Dictionary<UIButton, AnimationKeyframe> ButtonKeyframes = [];
-        public Dictionary<AnimationKeyframe, UIButton> KeyframeButtons = [];
-
-        public void Add(UIButton button, AnimationKeyframe keyframe)
-        {
-            ButtonKeyframes.Add(button, keyframe);
-            KeyframeButtons.Add(keyframe, button);
-        }
-
-        public void Remove(UIButton button)
-        {
-            if (ButtonKeyframes.TryGetValue(button, out AnimationKeyframe? keyframe))
-            {
-                ButtonKeyframes.Remove(button);
-                KeyframeButtons.Remove(keyframe);
-            }
-        }
-
-        public void Remove(AnimationKeyframe keyframe)
-        {
-            if (KeyframeButtons.TryGetValue(keyframe, out UIButton? button))
-            {
-                KeyframeButtons.Remove(keyframe);
-                ButtonKeyframes.Remove(button);
-            }
-        }
-
-        public bool Get(UIButton button, [NotNullWhen(true)] out AnimationKeyframe? keyframe)
-        {
-            if (ButtonKeyframes.TryGetValue(button, out AnimationKeyframe? value))
-            {
-                keyframe = value;
-                return true;
-            }
-            keyframe = null;
-            return false;
-        }
-
-        public bool ContainsIndex(int index)
-        {
-            return ButtonKeyframes.Values.Any(k => k.Index == index);
-        }
-
-        public bool GetKeyframeAtIndex(int index, [NotNullWhen(true)] out AnimationKeyframe? keyframe)
-        {
-            keyframe = ButtonKeyframes.Values.FirstOrDefault(k => k.Index == index);
-            return keyframe != null;
-        }
-
-        public bool Get(AnimationKeyframe keyframe, [NotNullWhen(true)] out UIButton? button)
-        {
-            if (KeyframeButtons.TryGetValue(keyframe, out UIButton? value))
-            {
-                button = value;
-                return true;
-            }
-            button = null;
-            return false;
-        }
-
-        public void RegenerateBoneKeyframes()
-        {
-            Animation.Clear();
-            List<AnimationKeyframe> currentKeyframes = [.. ButtonKeyframes.Values];
-            List<AnimationKeyframe> keyframes = [];
-            OrderKeyframes(currentKeyframes);
-            for (int i = 0; i < currentKeyframes.Count; i++)
-            {
-                AnimationKeyframe keyframe = currentKeyframes[i];
-                if (keyframe.Index == 0)
-                {
-                    keyframes.Add(keyframe);
-                }
-                else if (i > 0)
-                {
-                    AnimationKeyframe before = currentKeyframes[i - 1];
-                    int count = keyframe.Index - before.Index;
-                    for (int j = 0; j < count; j++)
-                    {
-                        float t = (float)(j + 1) / count;
-                        Vector3 position = Ease.Apply(keyframe.PositionEasing, before.Position, keyframe.Position, t);
-                        Quaternion rotation = Ease.Apply(keyframe.RotationEasing, before.Rotation, keyframe.Rotation, t);
-                        float scale = Ease.Apply(keyframe.ScaleEasing, before.Scale, keyframe.Scale, t);
-                        AnimationKeyframe newKeyframe = new AnimationKeyframe(before.Index + j + 1, position, rotation, scale);
-                        keyframes.Add(newKeyframe);
-                    }
-                    keyframes.Add(keyframe);
-                }
-                else
-                {
-                    for (int j = 0; j < keyframe.Index; j++)
-                    {
-                        AnimationKeyframe newKeyframe = new AnimationKeyframe(j, keyframe);
-                        keyframes.Add(newKeyframe);
-                    }
-                    keyframes.Add(keyframe);
-                }
-            }
-            Animation.SetKeyframes(keyframes);
-        }
-
-        public void ResetKeyframes()
-        {
-            List<AnimationKeyframe> keyframes = [.. ButtonKeyframes.Values];
-            Animation.SetKeyframes(keyframes);
-        }
-
-        public void OrderKeyframes(List<AnimationKeyframe> keyframes)
-        {
-            if (keyframes.Count > 1)
-            {
-                keyframes = [.. keyframes.OrderBy(k => k.Time)];
-            }
-        }
-
-        public void Clear()
-        {
-            foreach (var button in ButtonKeyframes.Keys)
-            {
-                button.Delete();
-            }
-            ButtonKeyframes = [];
-            KeyframeButtons = [];
-        }
-
-        public void ClearFull()
-        {
-            foreach (var button in ButtonKeyframes.Keys)
-            {
-                button.Delete();
-            }
-            Animation.Clear();
-            ButtonKeyframes = [];
-            KeyframeButtons = [];
         }
     }
 }

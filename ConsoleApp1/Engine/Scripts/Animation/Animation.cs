@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using OpenTK.Mathematics;
 
+/*
 public class Animation
 {
     public const int FRAMES = 24;
@@ -144,8 +145,14 @@ public class Animation
 public class BoneAnimation
 {
     public string Name = string.Empty;
-    public List<AnimationKeyframe> Keyframes = [];
-    public Func<AnimationKeyframe?> GetFrame;
+
+    public List<PositionKeyframe> PositionKeyframes = [];
+    public List<RotationKeyframe> RotationKeyframes = [];
+    public List<ScaleKeyframe> ScaleKeyframes = [];
+
+    public List<GlobalKeyframe> Keyframes = [];
+
+    public Func<GlobalKeyframe?> GetFrame;
     public float elapsedTime = 0;
     int index = 0;
 
@@ -155,10 +162,10 @@ public class BoneAnimation
         GetFrame = GetNullFrame;
     }
     public BoneAnimation() { GetFrame = GetNullFrame; }
-    public AnimationKeyframe? GetNullFrame() { return null; }
-    public AnimationKeyframe? GetFrameSingle() { return Keyframes[0]; }
+    public GlobalKeyframe? GetNullFrame() { return null; }
+    public GlobalKeyframe? GetFrameSingle() { return Keyframes[0]; }
 
-    public AnimationKeyframe? GetFrameMultiple()
+    public GlobalKeyframe? GetFrameMultiple()
     {
         ResetIndexCheck();
 
@@ -213,10 +220,10 @@ public class BoneAnimation
         return null;
     }
 
-    public void OrderKeyframes()
-    {
-        Keyframes = [.. Keyframes.OrderBy(k => k.Time)];
-    }
+    public void OrderPositionKeyframes() { PositionKeyframes = [.. PositionKeyframes.OrderBy(k => k.Time)]; }
+    public void OrderRotationKeyframes() { RotationKeyframes = [.. RotationKeyframes.OrderBy(k => k.Time)]; }
+    public void OrderScaleKeyframes() { ScaleKeyframes = [.. ScaleKeyframes.OrderBy(k => k.Time)]; }
+    public void OrderKeyframes() { Keyframes = [.. Keyframes.OrderBy(k => k.Time)]; }
 
     /// <summary>
     /// Get the index of the keyframe in the list
@@ -225,7 +232,7 @@ public class BoneAnimation
     /// </summary>
     /// <param name="keyframe"></param>
     /// <returns></returns>
-    public int GetKeyframePlace(AnimationKeyframe keyframe)
+    public int GetKeyframePlace(GlobalKeyframe keyframe)
     {
         if (Keyframes.Contains(keyframe))
             return Keyframes.IndexOf(keyframe);
@@ -238,7 +245,7 @@ public class BoneAnimation
     /// </summary>
     /// <param name="keyframe"></param>
     /// <returns></returns>
-    public AnimationKeyframe? GetBefore(AnimationKeyframe keyframe)
+    public GlobalKeyframe? GetBefore(GlobalKeyframe keyframe)
     {
         if (Keyframes.Count <= 1)
             return null;
@@ -254,7 +261,7 @@ public class BoneAnimation
     /// Add or updates a keyframe to the animation and sort the keyframes by time
     /// </summary>
     /// <param name="keyframe"></param>
-    public bool AddOrUpdateKeyframe(AnimationKeyframe keyframe)
+    public bool AddOrUpdateKeyframe(GlobalKeyframe keyframe)
     {
         var existing = Keyframes.FirstOrDefault(k => k.Index == keyframe.Index);
 
@@ -368,89 +375,4 @@ public class BoneAnimation
         index = 0;
     }
 }
-
-public class AnimationKeyframe
-{
-    public float Time;
-    public int Index;
-    public Vector3 Position;
-    public EasingType PositionEasing = EasingType.Linear;
-    public Quaternion Rotation;
-    public EasingType RotationEasing = EasingType.Linear;
-    public float Scale;
-    public EasingType ScaleEasing = EasingType.Linear;
-
-    public AnimationKeyframe() : this(0, Vector3.Zero, Quaternion.Identity, 1) { }
-    public AnimationKeyframe(int index, Vector3 position, Quaternion rotation, float scale)
-    {
-        Index = index;
-        Time = (float)index / (float)Animation.FRAMES;
-        Position = position;
-        Rotation = rotation;
-        Scale = scale;
-    }
-
-    public AnimationKeyframe(int index, Bone bone) : this(index, bone.Position, bone.Rotation, bone.Scale) { }
-    public AnimationKeyframe(int index, AnimationKeyframe keyframe) : this(index, keyframe.Position, keyframe.Rotation, keyframe.Scale)
-    {
-        PositionEasing = keyframe.PositionEasing;
-        RotationEasing = keyframe.RotationEasing;
-    }
-    public AnimationKeyframe(Vector3 position, Quaternion rotation, float scale)
-    {
-        Index = 0;
-        Time = 0;
-        Position = position;
-        Rotation = rotation;
-        Scale = scale;
-    }
-
-    public void SetIndex(int index)
-    {
-        Index = index;
-        Time = (float)index / (float)Animation.FRAMES;
-    }
-
-    public List<string> Save()
-    {
-        Vector3 rotation = Rotation.ToEulerAngles();
-        List<string> lines =
-        [
-            $"    Keyframe:",
-            "    {",
-            $"        Position: {Position.X} {Position.Y} {Position.Z}"
-        ];
-        if (PositionEasing != EasingType.Linear)
-        {
-            lines.Add($"        P-Ease: {(int)PositionEasing}");
-        }
-        lines.Add($"        Rotation: {rotation.X} {rotation.Y} {rotation.Z}");
-        if (RotationEasing != EasingType.Linear)
-        {
-            lines.Add($"        R-Ease: {(int)RotationEasing}");
-        }
-        lines.AddRange(
-        [
-            $"        Scale: {Scale}",
-            $"        Index: {Index}",
-            "    }",
-        ]
-        );
-        return lines;
-    }
-
-    public AnimationKeyframe Lerp(Vector3 position, Quaternion rotation, float scale, float t)
-    {
-        return new AnimationKeyframe(Mathf.Lerp(Position, position, t), Quaternion.Slerp(Rotation, rotation, t), Mathf.Lerp(Scale, scale, t));
-    }
-
-    public AnimationKeyframe Lerp(AnimationKeyframe keyframe, float t)
-    {
-        return Lerp(keyframe.Position, keyframe.Rotation, keyframe.Scale, t);
-    }
-
-    public Matrix4 GetLocalTransform()
-    {
-        return Matrix4.CreateScale(Scale) * Matrix4.CreateFromQuaternion(Rotation) * Matrix4.CreateTranslation(Position);
-    }
-}
+*/

@@ -176,14 +176,10 @@ public class RootBone : Bone
     {
         Vector2 mouseDelta = Input.GetMouseDelta();
     
-        // Use world axes for more intuitive rotation
         Vector3 worldUp = Vector3.UnitY;  // World up axis
         Vector3 cameraRight = Vector3.Normalize(Game.camera.right);
 
-        // Apply rotations in world space
-        // Horizontal mouse movement rotates around world Y axis
         Rotation = Quaternion.FromAxisAngle(worldUp, MathHelper.DegreesToRadians(mouseDelta.X * GameTime.DeltaTime * 50f)) * Rotation;
-        // Vertical mouse movement rotates around camera's right axis
         Rotation = Quaternion.FromAxisAngle(cameraRight, MathHelper.DegreesToRadians(mouseDelta.Y * GameTime.DeltaTime * 50f)) * Rotation;
     }
     
@@ -270,26 +266,20 @@ public class ChildBone : Bone
     {
         Vector2 mouseDelta = Input.GetMouseDelta();
 
-        // Use world axes for consistent rotation behavior
         Vector3 worldUp = Vector3.UnitY;  // World up axis
         Vector3 cameraRight = Vector3.Normalize(Game.camera.right);
 
-        // Create rotations in world space
         Quaternion horizontalRotation = Quaternion.FromAxisAngle(worldUp, MathHelper.DegreesToRadians(mouseDelta.X * GameTime.DeltaTime * 50f));
         Quaternion verticalRotation = Quaternion.FromAxisAngle(cameraRight, MathHelper.DegreesToRadians(mouseDelta.Y * GameTime.DeltaTime * 50f));
 
-        // Combine the rotations
         Quaternion worldRotation = horizontalRotation * verticalRotation;
 
-        // Transform world rotation to parent's local space
         Matrix4 invParent = Parent.GlobalAnimatedMatrix.Inverted();
         Matrix4 worldRotMatrix = Matrix4.CreateFromQuaternion(worldRotation);
         Matrix4 localRotMatrix = invParent * worldRotMatrix * Parent.GlobalAnimatedMatrix;
 
-        // Extract quaternion from the local rotation matrix
         Quaternion localRotation = localRotMatrix.ExtractRotation();
 
-        // Apply the local rotation
         Rotation = localRotation * Rotation;
     }
     
