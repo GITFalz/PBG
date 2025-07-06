@@ -91,7 +91,7 @@ public class CurveWindow
         UIImage xPositionFieldBackground = new UIImage("XPositionFieldBackground", controller, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (size.X + 14 - 10, 24), (-4, 0, 0, 0), 0, 11, (10, 0.05f));
         XPositionField = new UIInputField("XPositionField", controller, AnchorType.MiddleRight, PositionType.Relative, Vector4.One, (0, 0, 0), (size.X + 14 - 10, 24), (-12, 0, 0, 0), 0, 11, (10, 0.05f));
         XPositionField.SetMaxCharCount(10).SetText("0.0", 1.2f).SetTextType(TextType.Decimal);
-        xPositionFieldBackground.SetScale(XPositionField.newScale + (16, 16));
+        xPositionFieldBackground.SetScale(XPositionField.Scale + (16, 16));
         XPositionField.SetOnTextChange(() =>
         {
             float newXPosition = Float.Parse(XPositionField.Text);
@@ -120,7 +120,7 @@ public class CurveWindow
         UIImage yPositionFieldBackground = new UIImage("YPositionFieldBackground", controller, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (size.X + 14 - 10, 24), (-4, 0, 0, 0), 0, 11, (10, 0.05f));
         YPositionField = new UIInputField("YPositionField", controller, AnchorType.MiddleRight, PositionType.Relative, Vector4.One, (0, 0, 0), (size.X + 14 - 10, 24), (-12, 0, 0, 0), 0, 11, (10, 0.05f));
         YPositionField.SetMaxCharCount(10).SetText("0.0", 1.2f).SetTextType(TextType.Decimal);
-        yPositionFieldBackground.SetScale(YPositionField.newScale + (16, 16));
+        yPositionFieldBackground.SetScale(YPositionField.Scale + (16, 16));
         YPositionField.SetOnTextChange(() =>
         {
             float newYPosition = Float.Parse(YPositionField.Text);

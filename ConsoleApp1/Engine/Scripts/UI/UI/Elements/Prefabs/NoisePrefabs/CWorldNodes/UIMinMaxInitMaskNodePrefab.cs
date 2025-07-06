@@ -29,7 +29,7 @@ public class UIMinMaxInitMaskNodePrefab : UINoiseNodePrefab
     private Vector3 _pivot = (0, 0, 0);
     private Vector2 _scale = (100, 100);
     private float _rotation = 0;
-    public DoubleInputOperationType Type = DoubleInputOperationType.Add;
+    public OperationOperationType Type = OperationOperationType.Add;
 
     public float Depth
     {
@@ -73,8 +73,8 @@ public class UIMinMaxInitMaskNodePrefab : UINoiseNodePrefab
         MaxText.SetTextCharCount("Max", 1.2f).SetTextType(TextType.Alphanumeric);
 
 
-        UIImage minBackground = new UIImage($"{name}minBackground", Controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), MinInputField.newScale + (16, 16), (0, 2, 0, 0), 0, 11, (10f, 0.05f));
-        UIImage maxBackground = new UIImage($"{name}maxBackground", Controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), MaxInputField.newScale + (16, 16), (0, -28, 0, 0), 0, 11, (10f, 0.05f));
+        UIImage minBackground = new UIImage($"{name}minBackground", Controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), MinInputField.Scale + (16, 16), (0, 2, 0, 0), 0, 11, (10f, 0.05f));
+        UIImage maxBackground = new UIImage($"{name}maxBackground", Controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), MaxInputField.Scale + (16, 16), (0, -28, 0, 0), 0, 11, (10f, 0.05f));
 
         ElementCollection.AddElements(NameField, ChildButton, MaskButton, OutputButton, minBackground, maxBackground, MinInputField, MaxInputField, ChildTextField, MaskTextField, MinText, MaxText);
 

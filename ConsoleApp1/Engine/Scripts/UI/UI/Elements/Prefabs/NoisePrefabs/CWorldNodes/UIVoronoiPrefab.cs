@@ -130,7 +130,7 @@ public class UIVoronoiPrefab : UINoiseNodePrefab
         ValueTextField = new UIText($"{name}ValueTextField", controller, AnchorType.MiddleLeft, PositionType.Relative, (1f, 1f, 1f, 1f), (0, 0, 0), (20, 20), (6, 0, 0, 0), 0);
         ValueTextField.SetTextCharCount("Value", 1.2f).SetTextType(TextType.Alphabetic);
 
-        UIImage valueBackground = new UIImage($"{name}ValueBackground", controller, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), ValueInputField.newScale + (16, 16), (0, 0, 0, 0), 0, 11, (10f, 0.05f));
+        UIImage valueBackground = new UIImage($"{name}ValueBackground", controller, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), ValueInputField.Scale + (16, 16), (0, 0, 0, 0), 0, 11, (10f, 0.05f));
 
         valueCollection.AddElements(ValueTextField, ValueInputField, valueBackground);
 
@@ -143,7 +143,7 @@ public class UIVoronoiPrefab : UINoiseNodePrefab
         ThresholdTextField = new UIText($"{name}ThresholdTextField", controller, AnchorType.MiddleLeft, PositionType.Relative, (1f, 1f, 1f, 1f), (0, 0, 0), (20, 20), (6, 0, 0, 0), 0);
         ThresholdTextField.SetTextCharCount("Threshold", 1.2f).SetTextType(TextType.Alphabetic);
 
-        UIImage thresholdBackground = new UIImage($"{name}ThresholdBackground", controller, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), ThresholdInputField.newScale + (16, 16), (0, 0, 0, 0), 0, 11, (10f, 0.05f));
+        UIImage thresholdBackground = new UIImage($"{name}ThresholdBackground", controller, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), ThresholdInputField.Scale + (16, 16), (0, 0, 0, 0), 0, 11, (10f, 0.05f));
 
         thresholdCollection.AddElements(ThresholdTextField, ThresholdInputField, thresholdBackground);
 
@@ -172,7 +172,7 @@ public class UIVoronoiPrefab : UINoiseNodePrefab
         ScaleTextField = new UIText($"{name}ScaleTextField", controller, AnchorType.MiddleLeft, PositionType.Relative, (1f, 1f, 1f, 1f), (0, 0, 0), (20, 20), (6, 0, 0, 0), 0);
         ScaleTextField.SetTextCharCount("Scale", 1.2f).SetTextType(TextType.Alphanumeric);
 
-        UIImage scaleBackground = new UIImage($"{name}ScaleBackground", controller, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), ScaleInputField.newScale + (16, 16), (0, 0, 0, 0), 0, 11, (10f, 0.05f));
+        UIImage scaleBackground = new UIImage($"{name}ScaleBackground", controller, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), ScaleInputField.Scale + (16, 16), (0, 0, 0, 0), 0, 11, (10f, 0.05f));
 
         scaleCollection.AddElements(ScaleTextField, ScaleInputField, scaleBackground);
 
@@ -187,7 +187,7 @@ public class UIVoronoiPrefab : UINoiseNodePrefab
         OffsetXInputField = new UIInputField($"{name}OffsetXInputField", controller, AnchorType.MiddleRight, PositionType.Relative, (1f, 1f, 1f, 1f), (0, 0, 0), (20, 20), (-6, 0, 0, 0), 0, 11, (10f, 0.05f));
         OffsetXInputField.SetMaxCharCount(10).SetText("0.0", 1.2f).SetTextType(TextType.Decimal);
 
-        UIImage offsetXBackground = new UIImage($"{name}OffsetXBackground", controller, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), OffsetXInputField.newScale + (16, 16), (0, 0, 0, 0), 0, 11, (10f, 0.05f));
+        UIImage offsetXBackground = new UIImage($"{name}OffsetXBackground", controller, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), OffsetXInputField.Scale + (16, 16), (0, 0, 0, 0), 0, 11, (10f, 0.05f));
 
         offsetXCollection.AddElements(InputButton1, OffsetXTextField, OffsetXInputField, offsetXBackground);
 
@@ -202,7 +202,7 @@ public class UIVoronoiPrefab : UINoiseNodePrefab
         OffsetYInputField = new UIInputField($"{name}OffsetYInputField", controller, AnchorType.MiddleRight, PositionType.Relative, (1f, 1f, 1f, 1f), (0, 0, 0), (20, 20), (-6, 0, 0, 0), 0, 11, (10f, 0.05f));
         OffsetYInputField.SetMaxCharCount(10).SetText("0.0", 1.2f).SetTextType(TextType.Decimal);
 
-        UIImage offsetYBackground = new UIImage($"{name}OffsetYBackground", controller, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), OffsetYInputField.newScale + (16, 16), (0, 0, 0, 0), 0, 11, (10f, 0.05f));
+        UIImage offsetYBackground = new UIImage($"{name}OffsetYBackground", controller, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), OffsetYInputField.Scale + (16, 16), (0, 0, 0, 0), 0, 11, (10f, 0.05f));
 
         offsetYCollection.AddElements(InputButton2, OffsetYTextField, OffsetYInputField, offsetYBackground);
 
@@ -218,19 +218,19 @@ public class UIVoronoiPrefab : UINoiseNodePrefab
         MoveButton = new UIButton($"{name}MoveButton", controller, AnchorType.TopLeft, PositionType.Relative, ButtonColor, (0, 0, 0), (Scale.X, 14), (0, 0, 0, 0), 0, 10, (5f, 0.025f), UIState.Interactable);
         Background = new UIImage($"{name}Background", controller, AnchorType.TopLeft, PositionType.Relative, BackgroundColor, (0, 0, 0), (Scale.X, elementScaleY - 14), (0, 14, 0, 0), 0, 10, (10f, 0.05f));
 
-        regionSectionToggle.SetOnClick(() =>
+        regionSectionToggle.SetOnClick((Action)(() =>
         {
             valueCollection.SetVisibility(!valueCollection.Visible);
             thresholdCollection.SetVisibility(valueCollection.Visible);
             ElementCollection.ResetInit();
             RegionCollection.ResetInit();
             float elementScaleY = ElementCollection.GetElementScaleY();
-            SelectionImage.SetScale((SelectionImage.Scale.X, elementScaleY + 10));
-            Background.SetScale((Background.Scale.X, elementScaleY - 14));
+            SelectionImage.SetScale((X:(float)SelectionImage.Scale.X, elementScaleY + 10));
+            Background.SetScale((X:(float)Background.Scale.X, elementScaleY - 14));
             Collection.Align();
             Collection.UpdateTransformation();
             Collection.UpdateScale();
-        });
+        }));
 
         regionToggle.SetOnClick(() =>
         {

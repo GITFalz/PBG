@@ -6,7 +6,7 @@ public class DoubleInputData : INodeData
     // Values
     public float Value1 = 1.0f;
     public float Value2 = 1.0f;
-    public DoubleInputOperationType Type = DoubleInputOperationType.Add;
+    public OperationOperationType Type = OperationOperationType.Add;
 
     // Inputs
     public string InputName1 = "none";
@@ -36,7 +36,7 @@ public class DoubleInputData : INodeData
     public void SetValue(bool value, int index = 0) => Console.WriteLine("A display node cannot have a bool value");
     public void SetValue(Vector4 value, int index = 0) => Console.WriteLine("A display node cannot have a vector4 value");
     public void SetValue(Vector2 value, int index = 0) => Console.WriteLine("A MinMax node cannot have a vector2 value");
-    public void SetType(int type) => Type = (DoubleInputOperationType)type;
+    public void SetType(int type) => Type = (OperationOperationType)type;
     public void SetInputName(string inputName, int index = 0)
     {
         if (index == 0)
@@ -80,7 +80,7 @@ public class DoubleInputData : INodeData
 
         Value1 = Float.Parse(values[3]);
         Value2 = Float.Parse(values[4]);
-        Type = (DoubleInputOperationType)Int.Parse(values[5]);
+        Type = (OperationOperationType)Int.Parse(values[5]);
         InputName1 = values[7];
         InputName2 = values[8];
         OutputName = values[10];
@@ -94,7 +94,7 @@ public class DoubleInputData : INodeData
     {
         Value1 = 1.0f;
         Value2 = 1.0f;
-        Type = DoubleInputOperationType.Add;
+        Type = OperationOperationType.Add;
         InputName1 = "none";
         InputName2 = "none";
         OutputName = "none";

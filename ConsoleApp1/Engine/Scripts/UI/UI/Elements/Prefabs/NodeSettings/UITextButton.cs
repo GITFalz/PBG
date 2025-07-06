@@ -32,8 +32,8 @@ public class UITextButton : UIPrefab
 
     public void CorrectScale()
     {
-        Collection.SetScale(Text.newScale + (14, 14));
-        TextCollection.SetScale(Text.newScale + (14, 14));
+        Collection.SetScale(Text.Scale + (14, 14));
+        TextCollection.SetScale(Text.Scale + (14, 14));
     }
 
     public override UIElement[] GetElements()

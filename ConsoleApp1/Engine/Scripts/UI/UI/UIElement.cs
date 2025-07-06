@@ -15,7 +15,18 @@ public abstract class UIElement
     public Vector3 Origin = (0, 0, 0);
     public Vector3 Center = (0, 0, 0);
     public Vector3 Pivot = (0, 0, 0);
-    public Vector2 Scale = (100, 100);
+    public float ScaleX { get => _scale.X; set => _scale.X = value; }
+    public float ScaleY { get => _scale.Y; set => _scale.Y = value; }
+    public Vector2 Scale
+    {
+        get => _scale;
+        set
+        {
+            _scale = value;
+            newScale = value;
+        }
+    }
+    private Vector2 _scale = (100, 100);
     public Vector2 newScale = (100, 100);
     public Vector4 Offset = (0, 0, 0, 0);  
     public Vector4 AddedOffset = (0, 0, 0, 0); // Used for collections to add offset to the elements
@@ -98,7 +109,6 @@ public abstract class UIElement
 
     public virtual void Align()
     {
-
         if (PositionType == PositionType.Relative && ParentElement != null)
         {
             Width = ParentElement.newScale.X;
@@ -113,14 +123,22 @@ public abstract class UIElement
             GetTransformedOrigin();
             Origin = _transformedOrigin;
         }
-
+        
+        //Console.WriteLine("-------------------------------");
         GetTransformation();
-        if ((int)AnchorType >= 9) newScale = _dimensions[(int)AnchorType - 9](Width, Height, Scale, Offset + AddedOffset);
-        SetScale(newScale);
+        if ((int)AnchorType >= 9)
+        {
+            newScale = _dimensions[(int)AnchorType - 9](Width, Height, Scale, Offset + AddedOffset);
+            SetScale(newScale);
+        }
+        else
+        {
+            SetScale(Scale);
+        }
+        
         Center = Origin + new Vector3(newScale.X / 2, newScale.Y / 2, 0);
 
         return;
-        Console.WriteLine();
         Console.WriteLine($"Name: {Name}, PositionType: {PositionType}, AnchorType: {AnchorType}");
         Console.WriteLine($"Origin: {Origin}, Transformed: {_transformedOrigin}, Center: {Center}, Scale: {newScale}, Offset: {Offset}, Width: {Width}, Height: {Height}");
         Console.WriteLine($"Parent: {ParentElement?.Name}, Origin: {ParentElement?.Origin}, Scale: {ParentElement?.newScale}, Offset: {ParentElement?.Offset}, Width: {ParentElement?.Width}, Height: {ParentElement?.Height}");
@@ -278,7 +296,9 @@ public abstract class UIElement
 
     public Matrix4 GetTransformation()
     {
+        //Console.WriteLine($"Calculating transformation for {Name} with Origin: {Origin}, Scale: {Scale}, Rotation: {Rotation}, Offset: {Offset}");
         Transformation = Matrix4.CreateTranslation(Origin);
+        //Console.WriteLine($"Translation: {Transformation}");
         return Transformation;
     }
 

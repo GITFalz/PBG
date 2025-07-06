@@ -88,11 +88,11 @@ public class UIDirectSampleNodePrefab : UINoiseNodePrefab
         OffsetYTextField = new UIText($"{name}OffsetYTextField", controller, AnchorType.BottomLeft, PositionType.Relative, (1f, 1f, 1f, 1f), (0, 0, 0), (20, 20), (30, -6, 0, 0), 0);
         OffsetYTextField.SetTextCharCount("Offset Y", 1.2f).SetTextType(TextType.Alphanumeric);
 
-        UIImage scaleBackground = new UIImage($"{name}MinBackground", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), ScaleInputField.newScale + (16, 16), (0, -118, 0, 0), 0, 11, (10f, 0.05f));
-        UIImage posXBackground = new UIImage($"{name}MinBackground", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), PosXInputField.newScale + (16, 16), (0, -88, 0, 0), 0, 11, (10f, 0.05f));
-        UIImage posYBackground = new UIImage($"{name}MinBackground", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), PosYInputField.newScale + (16, 16), (0, -58, 0, 0), 0, 11, (10f, 0.05f));
-        UIImage offsetXBackground = new UIImage($"{name}MinBackground", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), OffsetXInputField.newScale + (16, 16), (0, -28, 0, 0), 0, 11, (10f, 0.05f));
-        UIImage offsetYBackground = new UIImage($"{name}MinBackground", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), OffsetYInputField.newScale + (16, 16), (0, 2, 0, 0), 0, 11, (10f, 0.05f));
+        UIImage scaleBackground = new UIImage($"{name}MinBackground", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), ScaleInputField.Scale + (16, 16), (0, -118, 0, 0), 0, 11, (10f, 0.05f));
+        UIImage posXBackground = new UIImage($"{name}MinBackground", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), PosXInputField.Scale + (16, 16), (0, -88, 0, 0), 0, 11, (10f, 0.05f));
+        UIImage posYBackground = new UIImage($"{name}MinBackground", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), PosYInputField.Scale + (16, 16), (0, -58, 0, 0), 0, 11, (10f, 0.05f));
+        UIImage offsetXBackground = new UIImage($"{name}MinBackground", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), OffsetXInputField.Scale + (16, 16), (0, -28, 0, 0), 0, 11, (10f, 0.05f));
+        UIImage offsetYBackground = new UIImage($"{name}MinBackground", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), OffsetYInputField.Scale + (16, 16), (0, 2, 0, 0), 0, 11, (10f, 0.05f));
 
         ElementCollection.AddElements(
             NameField,

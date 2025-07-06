@@ -32,6 +32,7 @@ public class NoiseEditor : ScriptingNode
     public static UIInputField NodeNameField;
     public UIController NodeController;
     public UIController SelectionController;
+    public UIController TestController;
 
     private UICollection _mainWindowCollection;
     private UIImage _mainWindowBackground;
@@ -59,6 +60,12 @@ public class NoiseEditor : ScriptingNode
 
     public NoiseEditor()
     {
+        _ = new NNS_NodeManager();
+
+        NNS_NodeManager.AddNode(new NNS_SampleNode((200, 200)));
+        NNS_NodeManager.AddNode(new NNS_OperationNode((400, 200), "add"));
+
+
         InternalNodeWindowPosition = new Vector2i(0, Game.Height - NodePanelHeight);
 
         DisplayController = new();
@@ -66,6 +73,9 @@ public class NoiseEditor : ScriptingNode
         SidePanelController = new();
         NodeController = new();
         SelectionController = new();
+
+        TestController = new();
+        var testNewNode = new NNS_SampleNode((200, 200));
 
         NoiseNodeManager.NodeController = NodeController;
 
@@ -468,49 +478,49 @@ public class NoiseEditor : ScriptingNode
 
         addAddButton.SetOnClick(() =>
         {
-            AddDoubleInputType(DoubleInputOperationType.Add);
+            AddDoubleInputType(OperationOperationType.Add);
             SelectionCollection.SetVisibility(false);
         });
 
         addSubButton.SetOnClick(() =>
         {
-            AddDoubleInputType(DoubleInputOperationType.Subtract);
+            AddDoubleInputType(OperationOperationType.Subtract);
             SelectionCollection.SetVisibility(false);
         });
 
         addMulButton.SetOnClick(() =>
         {
-            AddDoubleInputType(DoubleInputOperationType.Multiply);
+            AddDoubleInputType(OperationOperationType.Multiply);
             SelectionCollection.SetVisibility(false);
         });
 
         addDivButton.SetOnClick(() =>
         {
-            AddDoubleInputType(DoubleInputOperationType.Divide);
+            AddDoubleInputType(OperationOperationType.Divide);
             SelectionCollection.SetVisibility(false);
         });
 
         addMaxButton.SetOnClick(() =>
         {
-            AddDoubleInputType(DoubleInputOperationType.Max);
+            AddDoubleInputType(OperationOperationType.Max);
             SelectionCollection.SetVisibility(false);
         });
 
         addMinButton.SetOnClick(() =>
         {
-            AddDoubleInputType(DoubleInputOperationType.Min);
+            AddDoubleInputType(OperationOperationType.Min);
             SelectionCollection.SetVisibility(false);
         });
 
         addModButton.SetOnClick(() =>
         {
-            AddDoubleInputType(DoubleInputOperationType.Mod);
+            AddDoubleInputType(OperationOperationType.Mod);
             SelectionCollection.SetVisibility(false);
         });
 
         addPowerButton.SetOnClick(() =>
         {
-            AddDoubleInputType(DoubleInputOperationType.Power);
+            AddDoubleInputType(OperationOperationType.Power);
             SelectionCollection.SetVisibility(false);
         });
 
@@ -651,7 +661,7 @@ public class NoiseEditor : ScriptingNode
         SelectionCollection.SetVisibility(false);
     }
 
-    public void AddDoubleInputType(DoubleInputOperationType type)
+    public void AddDoubleInputType(OperationOperationType type)
     {
         UIDoubleInputNodePrefab doubleInputNodePrefab = new("DoubleInputNodePrefab", NodeController, (NodePosition.X, NodePosition.Y, 0, 0), type)
         {
@@ -676,7 +686,7 @@ public class NoiseEditor : ScriptingNode
 
     void Start()
     {
-         NoiseGlslNodeManager.Compile([]);
+         NoiseGlslNodeManager.Compile();
     }
 
     void Awake()
@@ -694,6 +704,10 @@ public class NoiseEditor : ScriptingNode
         SidePanelController.Resize();
         NodeController.Resize();
         SelectionController.Resize();
+
+        TestController.Resize();
+
+        NNS_NodeManager.NodeController.Resize();
     }
 
     void Update()
@@ -729,6 +743,7 @@ public class NoiseEditor : ScriptingNode
         Selected = false;
         //_colorPicker.Update();
         NodeController.Test(NodeWindowPosition);
+        NNS_NodeManager.NodeController.Test(NodeWindowPosition);
         UICurveNodePrefab.Update();
 
         if (!Selected && Input.IsMousePressed(MouseButton.Left) && !holdingShift)
@@ -757,6 +772,8 @@ public class NoiseEditor : ScriptingNode
         DisplayController.Test();
         SidePanelController.Test();
         SelectionController.Test();
+
+        TestController.Test();
 
         MainWindowController.Test();
 
@@ -836,13 +853,16 @@ public class NoiseEditor : ScriptingNode
         GL.Viewport(InternalNodeWindowPosition.X + 7, InternalNodeWindowPosition.Y + 7, NodePanelWidth - 14, NodePanelHeight - 14);
 
         NodeController.RenderDepthTest(NodePanelProjectionMatrix);
+        NoiseNodeManager.NodeController.RenderDepthTest(NodePanelProjectionMatrix);
+
         UICurveNodePrefab.Render(NodeController.ModelMatrix, NodePanelProjectionMatrix);
         NoiseNodeManager.RenderLine(NodePanelProjectionMatrix);
+        NNS_NodeManager.RenderLine(NodePanelProjectionMatrix);
 
         GL.Clear(ClearBufferMask.DepthBufferBit);
 
         GL.Viewport(0, 0, Game.Width, Game.Height);
-        
+
         SidePanelController.RenderDepthTest();
         DisplayController.RenderDepthTest();
         NoiseGlslNodeManager.Render(DisplayProjectionMatrix, DisplayPosition, _displayPrefab.Scale, NoiseSize, Offset, _colorPicker.Color);
@@ -879,6 +899,7 @@ public class NoiseEditor : ScriptingNode
 
 
         //_inventory.Render();
+        TestController.RenderDepthTest();
     }
 
     void Exit()

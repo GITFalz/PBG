@@ -34,7 +34,7 @@ public class UIInputFieldPrefab : UIPrefab
         InputField = new UIInputField(name + "_InputField", controller, AnchorType.TopLeft, PositionType.Relative, Vector4.One, Vector3.Zero, Vector2.Zero, offset + (8, 8, 0, 0), 0f, backgroundIndex, (10, 0.05f));
         InputField.SetMaxCharCount(CharCount).SetText(text, 1.2f).SetTextType(TextType);
 
-        Vector2 scale = InputField.newScale;
+        Vector2 scale = InputField.Scale;
         Collection.SetScale(scale + (16, 16));
         Background.SetScale(scale + (16, 16));
 

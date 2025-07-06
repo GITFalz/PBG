@@ -1,7 +1,7 @@
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-public static class NoiseNodeManager
+public class NoiseNodeManager
 {
     public static Dictionary<UINoiseNodePrefab, ConnectorNode> NoiseNodes = [];
     public static List<ConnectorNode> ConnectedNodeList = [];
@@ -273,7 +273,7 @@ public static class NoiseNodeManager
             }
             else if (node is DoubleInputConnectorNode doubleInputNode)
             {
-                CWorldDoubleInputNode cWorldDoubleInputNode = new CWorldDoubleInputNode(doubleInputNode.Type)
+                CWorldOperationNode cWorldDoubleInputNode = new CWorldOperationNode(doubleInputNode.Type)
                 {
                     Name = node.GetOutputGateConnectors()[0].VariableName,
                     Value1 = doubleInputNode.Value1,
@@ -421,13 +421,13 @@ public static class NoiseNodeManager
             {
                 if (doubleInputNode.InputGateConnector1.GetConnectedNode(out var connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode1))
                 {
-                    ((CWorldDoubleInputNode)cWorldNode).InputNode1 = (CWorldGetterNode)inputNode1;
-                    ((CWorldDoubleInputNode)cWorldNode).InputNode1Index = doubleInputNode.InputGateConnector1.GetOutputIndex();
+                    ((CWorldOperationNode)cWorldNode).InputNode1 = (CWorldGetterNode)inputNode1;
+                    ((CWorldOperationNode)cWorldNode).InputNode1Index = doubleInputNode.InputGateConnector1.GetOutputIndex();
                 }
                 if (doubleInputNode.InputGateConnector2.GetConnectedNode(out connectedNode) && nodeMap.TryGetValue(connectedNode, out var inputNode2))
                 {
-                    ((CWorldDoubleInputNode)cWorldNode).InputNode2 = (CWorldGetterNode)inputNode2;
-                    ((CWorldDoubleInputNode)cWorldNode).InputNode2Index = doubleInputNode.InputGateConnector2.GetOutputIndex();
+                    ((CWorldOperationNode)cWorldNode).InputNode2 = (CWorldGetterNode)inputNode2;
+                    ((CWorldOperationNode)cWorldNode).InputNode2Index = doubleInputNode.InputGateConnector2.GetOutputIndex();
                 }
             }
             else if (node is BaseInputConnectorNode baseInputNode)

@@ -8,68 +8,68 @@ public class SerializableEvent
     public string TargetName = null!;
     public string SceneName = null!;
     public bool IsStatic = true;
-    
+
     [XmlIgnore]
     private Action? _action;
     public string? FixedParameter = null;
-    
-    public SerializableEvent() {}
-    
+
+    public SerializableEvent() { }
+
     public SerializableEvent(Action? action)
     {
         _action = action;
         if (action?.Target == null)
         {
-            if (action?.Method == null) 
+            if (action?.Method == null)
                 return;
-            
+
             IsStatic = true;
             MethodName = action.Method.Name;
             TargetName = action.Method.DeclaringType?.FullName ?? string.Empty;
             return;
         }
-        
+
         MethodName = action.Method.Name;
         TargetName = action.Target.GetType().Name;
     }
-    
+
     public void Invoke()
     {
         _action?.Invoke();
     }
-    
+
     public void SetAction(Action action)
     {
         _action = action;
     }
-    
+
     public bool BindStaticMethod(string methodName, string targetTypeName, string? fixedParameter = null)
     {
         var targetType = Type.GetType(targetTypeName);
         var methodInfo = targetType?.GetMethod(methodName, BindingFlags.Public | BindingFlags.Static);
-        
-        if (targetType == null || methodInfo == null) 
+
+        if (targetType == null || methodInfo == null)
             return false;
-    
+
         MethodName = methodName;
         TargetName = targetType.FullName ?? targetType.Name;
         IsStatic = true;
-        
+
         return AssignMethod(methodInfo, null, fixedParameter);
     }
-    
+
     public bool BindMethod(string methodName, object target, string? fixedParameter = null)
     {
         var targetType = target.GetType();
         var methodInfo = targetType.GetMethod(methodName);
 
-        if (methodInfo == null) 
+        if (methodInfo == null)
             return false;
-    
+
         MethodName = methodName;
         TargetName = targetType.Name;
         IsStatic = false;
-        
+
         return AssignMethod(methodInfo, target, fixedParameter);
     }
 
@@ -87,5 +87,19 @@ public class SerializableEvent
     public string GetMethodString()
     {
         return $"{(IsStatic ? "Static" : SceneName)}.{TargetName}.{MethodName}{(FixedParameter == null ? "" : $"({FixedParameter})")}";
+    }
+    
+
+    public SerializableEvent Copy()
+    {
+        return new SerializableEvent
+        {
+            MethodName = MethodName,
+            TargetName = TargetName,
+            SceneName = SceneName,
+            IsStatic = IsStatic,
+            FixedParameter = FixedParameter,
+            _action = _action
+        };
     }
 }

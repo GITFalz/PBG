@@ -22,6 +22,9 @@ public class UIVerticalCollection : UICollection
         Spacing = spacing;
     }
 
+    public UIVerticalCollection(string name, UIController controller, AnchorType anchorType, PositionType positionType) : 
+    this(name, controller, anchorType, positionType, (0, 0, 0), (0, 0), (0, 0, 0, 0), (0, 0, 0, 0), 0, 0) { }
+
     public override void Align()
     {
         base.Align();
@@ -48,7 +51,7 @@ public class UIVerticalCollection : UICollection
         }
 
         Scale = (Scale.X, totalOffset - Spacing + Border.W);
-        newScale = Scale;
+        Scale = Scale;
         OnAlign = null;
     }
 

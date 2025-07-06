@@ -1,37 +1,37 @@
-public abstract class DoubleInputOperations
+public abstract class OperationOperations
 {
     public abstract float GetValue(float value1, float value2);
     public abstract string GetFunction(string value1, string value2);
-    private static readonly DoubleInputOperationType[] _types = 
+    private static readonly OperationOperationType[] _types = 
     {
-        DoubleInputOperationType.Add,
-        DoubleInputOperationType.Subtract,
-        DoubleInputOperationType.Multiply,
-        DoubleInputOperationType.Divide,
-        DoubleInputOperationType.Max,
-        DoubleInputOperationType.Min,
-        DoubleInputOperationType.Mod,
-        DoubleInputOperationType.Power
+        OperationOperationType.Add,
+        OperationOperationType.Subtract,
+        OperationOperationType.Multiply,
+        OperationOperationType.Divide,
+        OperationOperationType.Max,
+        OperationOperationType.Min,
+        OperationOperationType.Mod,
+        OperationOperationType.Power
     };
 
-    public static DoubleInputOperations GetOperation(DoubleInputOperationType type)
+    public static OperationOperations GetOperation(OperationOperationType type)
     {
         return type switch
         {
-            DoubleInputOperationType.Add => new DoubleInputAddValueOperation(),
-            DoubleInputOperationType.Subtract => new DoubleInputSubtractValueOperation(),
-            DoubleInputOperationType.Multiply => new DoubleInputMultiplyValueOperation(),
-            DoubleInputOperationType.Divide => new DoubleInputDivideValueOperation(),
-            DoubleInputOperationType.Max => new DoubleInputMaxValueOperation(),
-            DoubleInputOperationType.Min => new DoubleInputMinValueOperation(),
-            DoubleInputOperationType.Mod => new DoubleInputModValueOperation(),
-            DoubleInputOperationType.Power => new DoubleInputPowerValueOperation(),
+            OperationOperationType.Add => new DoubleInputAddValueOperation(),
+            OperationOperationType.Subtract => new DoubleInputSubtractValueOperation(),
+            OperationOperationType.Multiply => new DoubleInputMultiplyValueOperation(),
+            OperationOperationType.Divide => new DoubleInputDivideValueOperation(),
+            OperationOperationType.Max => new DoubleInputMaxValueOperation(),
+            OperationOperationType.Min => new DoubleInputMinValueOperation(),
+            OperationOperationType.Mod => new DoubleInputModValueOperation(),
+            OperationOperationType.Power => new DoubleInputPowerValueOperation(),
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
     }
 }
 
-public class DoubleInputAddValueOperation : DoubleInputOperations
+public class DoubleInputAddValueOperation : OperationOperations
 {
     public override float GetValue(float value1, float value2)
     {
@@ -44,7 +44,7 @@ public class DoubleInputAddValueOperation : DoubleInputOperations
     }
 }
 
-public class DoubleInputSubtractValueOperation : DoubleInputOperations
+public class DoubleInputSubtractValueOperation : OperationOperations
 {
     public override float GetValue(float value1, float value2)
     {
@@ -57,7 +57,7 @@ public class DoubleInputSubtractValueOperation : DoubleInputOperations
     }
 }
 
-public class DoubleInputMultiplyValueOperation : DoubleInputOperations
+public class DoubleInputMultiplyValueOperation : OperationOperations
 {
     public override float GetValue(float value1, float value2)
     {
@@ -70,7 +70,7 @@ public class DoubleInputMultiplyValueOperation : DoubleInputOperations
     }
 }
 
-public class DoubleInputDivideValueOperation : DoubleInputOperations
+public class DoubleInputDivideValueOperation : OperationOperations
 {
     public override float GetValue(float value1, float value2)
     {
@@ -83,7 +83,7 @@ public class DoubleInputDivideValueOperation : DoubleInputOperations
     }
 }
 
-public class DoubleInputMaxValueOperation : DoubleInputOperations
+public class DoubleInputMaxValueOperation : OperationOperations
 {
     public override float GetValue(float value1, float value2)
     {
@@ -96,7 +96,7 @@ public class DoubleInputMaxValueOperation : DoubleInputOperations
     }
 }
 
-public class DoubleInputMinValueOperation : DoubleInputOperations
+public class DoubleInputMinValueOperation : OperationOperations
 {
     public override float GetValue(float value1, float value2)
     {
@@ -109,7 +109,7 @@ public class DoubleInputMinValueOperation : DoubleInputOperations
     }
 }
 
-public class DoubleInputModValueOperation : DoubleInputOperations
+public class DoubleInputModValueOperation : OperationOperations
 {
     public override float GetValue(float value1, float value2)
     {
@@ -122,7 +122,7 @@ public class DoubleInputModValueOperation : DoubleInputOperations
     }
 }
 
-public class DoubleInputPowerValueOperation : DoubleInputOperations
+public class DoubleInputPowerValueOperation : OperationOperations
 {
     public override float GetValue(float value1, float value2)
     {
@@ -135,7 +135,7 @@ public class DoubleInputPowerValueOperation : DoubleInputOperations
     }
 }
 
-public enum DoubleInputOperationType
+public enum OperationOperationType
 {
     Add = 0,
     Subtract = 1,

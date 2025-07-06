@@ -25,7 +25,7 @@ public class UIDoubleInputNodePrefab : UINoiseNodePrefab
     private Vector3 _pivot = (0, 0, 0);
     private Vector2 _scale = (100, 100);
     private float _rotation = 0;
-    public DoubleInputOperationType Type = DoubleInputOperationType.Add;
+    public OperationOperationType Type = OperationOperationType.Add;
 
     public float Depth
     {
@@ -37,7 +37,7 @@ public class UIDoubleInputNodePrefab : UINoiseNodePrefab
         string name,
         UIController controller,
         Vector4 offset,
-        DoubleInputOperationType type
+        OperationOperationType type
     ) : base(name, controller, offset)
     {
         _scale = (300, 150);
@@ -65,8 +65,8 @@ public class UIDoubleInputNodePrefab : UINoiseNodePrefab
         Value2TextField = new UIText($"{name}OffsetYTextField", Controller, AnchorType.BottomLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (20, 20), (6, -6, 0, 0), 0);
         Value2TextField.SetTextCharCount("Value 2", 1.2f).SetTextType(TextType.Alphanumeric);
 
-        UIImage value1Background = new UIImage($"{name}value1Background", Controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), Value1InputField.newScale + (16, 16), (0, -28, 0, 0), 0, 11, (10f, 0.05f));
-        UIImage value2Background = new UIImage($"{name}value2Background", Controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), Value2InputField.newScale + (16, 16), (0, 2, 0, 0), 0, 11, (10f, 0.05f));
+        UIImage value1Background = new UIImage($"{name}value1Background", Controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), Value1InputField.Scale + (16, 16), (0, -28, 0, 0), 0, 11, (10f, 0.05f));
+        UIImage value2Background = new UIImage($"{name}value2Background", Controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), Value2InputField.Scale + (16, 16), (0, 2, 0, 0), 0, 11, (10f, 0.05f));
 
         ElementCollection.AddElements(NameField, InputButton1, InputButton2, OutputButton, value1Background, value2Background, Value1InputField, Value2InputField, Value1TextField, Value2TextField);
 

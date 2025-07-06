@@ -31,7 +31,7 @@ public class UIMask : UIPanel
 
     public override void Generate()
     {
-        SetScale(newScale);
+        SetScale(Scale);
         MaskData.AddElement(this);
     }
 

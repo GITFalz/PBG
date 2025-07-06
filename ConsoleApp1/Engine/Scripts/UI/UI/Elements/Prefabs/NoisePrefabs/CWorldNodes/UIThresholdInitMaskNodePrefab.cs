@@ -27,7 +27,7 @@ public class UIThresholdInitMaskNodePrefab : UINoiseNodePrefab
     private Vector3 _pivot = (0, 0, 0);
     private Vector2 _scale = (100, 100);
     private float _rotation = 0;
-    public DoubleInputOperationType Type = DoubleInputOperationType.Add;
+    public OperationOperationType Type = OperationOperationType.Add;
 
     public float Depth
     {
@@ -65,7 +65,7 @@ public class UIThresholdInitMaskNodePrefab : UINoiseNodePrefab
         ThresholdText.SetTextCharCount("Threshold", 1.2f).SetTextType(TextType.Alphanumeric);
 
 
-        UIImage thresholdBackground = new UIImage($"{name}value2Background", Controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), ThresholdInputField.newScale + (16, 16), (0, 2, 0, 0), 0, 11, (10f, 0.05f));
+        UIImage thresholdBackground = new UIImage($"{name}value2Background", Controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), ThresholdInputField.Scale + (16, 16), (0, 2, 0, 0), 0, 11, (10f, 0.05f));
 
         ElementCollection.AddElements(NameField, ChildButton, MaskButton, OutputButton, thresholdBackground, ThresholdInputField, ChildTextField, MaskTextField, ThresholdText);
 

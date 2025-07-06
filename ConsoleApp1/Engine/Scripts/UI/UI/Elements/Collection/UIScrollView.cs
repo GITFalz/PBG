@@ -51,10 +51,10 @@ public class UIScrollView : UICollection
     private void MoveScrollView()
     {
         float scrollDelta = Input.GetMouseScrollDelta().Y;
-        if (scrollDelta == 0 || SubElements.Scale[(int)CollectionType] < newScale[(int)CollectionType]) return;
+        if (scrollDelta == 0 || SubElements.Scale[(int)CollectionType] < Scale[(int)CollectionType]) return;
 
         SubElements.Offset += scrollOffset[CollectionType](scrollDelta) * GameTime.DeltaTime * ScrollSpeed * 1000;
-        SubElements.Offset = scrollClamp[CollectionType](SubElements.Scale - newScale, SubElements.Offset);
+        SubElements.Offset = scrollClamp[CollectionType](SubElements.Scale - Scale, SubElements.Offset);
         ScrollPosition = SubElements.Offset[(int)CollectionType];
         
         SubElements.Align();

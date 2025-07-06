@@ -58,8 +58,8 @@ public class UIMinMaxInputNodePrefab : UINoiseNodePrefab
         MaxTextField = new UIText($"{name}MaxTextField", controller, AnchorType.BottomLeft, PositionType.Relative, Vector4.One, (0, 0, 0), (20, 20), (6, -6, 0, 0), 0);
         MaxTextField.SetMaxCharCount(3).SetText("Max", 1.2f).SetTextType(TextType.Alphabetic);
 
-        UIImage minBackground = new UIImage($"{name}MinBackground", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), MinInputField.newScale + (16, 16), (0, -28, 0, 0), 0, 11, (10f, 0.05f));
-        UIImage maxBackground = new UIImage($"{name}MaxBackground", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), MaxInputField.newScale + (16, 16), (0, 2, 0, 0), 0, 11, (10f, 0.05f));
+        UIImage minBackground = new UIImage($"{name}MinBackground", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), MinInputField.Scale + (16, 16), (0, -28, 0, 0), 0, 11, (10f, 0.05f));
+        UIImage maxBackground = new UIImage($"{name}MaxBackground", controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), MaxInputField.Scale + (16, 16), (0, 2, 0, 0), 0, 11, (10f, 0.05f));
 
         ElementCollection.AddElements(NameField, InputButton, OutputButton, minBackground, maxBackground, MinTextField, MinInputField, MaxTextField, MaxInputField);
 

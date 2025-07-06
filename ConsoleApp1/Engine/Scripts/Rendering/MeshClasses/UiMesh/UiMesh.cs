@@ -32,6 +32,8 @@ public class UIMesh
             Transformation = element.Transformation
         };
 
+        //Console.WriteLine($"Adding element {element.Name} with: {uiData}");
+
         UIData.Add(uiData);
         Elements.Add(element);
         ElementIndices.Add(element, ElementCount);

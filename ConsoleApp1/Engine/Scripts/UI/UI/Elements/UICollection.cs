@@ -3,7 +3,7 @@ using OpenTK.Mathematics;
 public class UICollection : UIElement
 {
     public List<UIElement> Elements = new List<UIElement>();
-    
+
     public bool IgnoreInvisibleElements = false;
 
     /*
@@ -15,19 +15,23 @@ public class UICollection : UIElement
         1. if it were to be used as a child element in another collection.
         2. to position the child correctly based on it's anchor type.
     */
-    public UICollection(
-        string name,
-        UIController controller,
-        AnchorType anchorType,
-        PositionType positionType,
-        Vector3 pivot,
-        Vector2 scale,
-        Vector4 offset,
-        float rotation) :
-        base(name, controller, anchorType, positionType, pivot, scale, offset, rotation)
+    public UICollection(string name, UIController controller, AnchorType anchorType, PositionType positionType, Vector3 pivot, Vector2 scale, Vector4 offset, float rotation) :
+    base(name, controller, anchorType, positionType, pivot, scale, offset, rotation)
     {
         ResetInit();
     }
+
+    public UICollection(string name, UIController controller) :
+    this(name, controller, AnchorType.TopLeft, PositionType.Absolute, (0, 0, 0), (0, 0), (0, 0, 0, 0), 0)
+    { }
+
+    public UICollection(string name, UIController controller, AnchorType anchorType) :
+    this(name, controller, anchorType, PositionType.Absolute, (0, 0, 0), (0, 0), (0, 0, 0, 0), 0)
+    { }
+
+    public UICollection(string name, UIController controller, AnchorType anchorType, PositionType positionType) :
+    this(name, controller, anchorType, positionType, (0, 0, 0), (0, 0), (0, 0, 0, 0), 0)
+    { }
 
     public virtual UICollection AddElement(UIElement element)
     {
@@ -42,7 +46,7 @@ public class UICollection : UIElement
     {
         foreach (UIPrefab e in element)
             AddElements(e.GetMainElements());
-        return this; 
+        return this;
     }
 
     public virtual UICollection AddElements(params UIElement[] element)
@@ -64,7 +68,7 @@ public class UICollection : UIElement
         foreach (UIPrefab element in elements)
         {
             RemoveElements(element.GetMainElements());
-        } 
+        }
     }
 
     public virtual void RemoveElements(params UIElement[] elements)
@@ -75,7 +79,7 @@ public class UICollection : UIElement
         }
     }
 
-    public override bool RemoveElement(UIElement element) 
+    public override bool RemoveElement(UIElement element)
     {
         if (Elements.Remove(element))
         {
@@ -94,7 +98,7 @@ public class UICollection : UIElement
             base.SetVisibility(visible);
     }
 
-    public virtual void CalculateScale() {}
+    public virtual void CalculateScale() { }
 
     public override void Align()
     {
@@ -119,7 +123,7 @@ public class UICollection : UIElement
         foreach (UIElement element in Elements)
             element.Clear();
         Elements.Clear();
-        OnAlign = null; 
+        OnAlign = null;
     }
 
     public override void RemoveChild(UIElement element)
@@ -149,8 +153,8 @@ public class UICollection : UIElement
         }
     }
 
-    public virtual void SetSpacing(float spacing) {}
-    public virtual void SetBorder(Vector4 border) {}
+    public virtual void SetSpacing(float spacing) { }
+    public virtual void SetBorder(Vector4 border) { }
 
     public override float GetYScale()
     {
@@ -176,8 +180,8 @@ public class UICollection : UIElement
             element.SetMaskIndex(maskIndex);
     }
 
-    public virtual float GetElementScaleY() { return newScale.Y; }
-    public virtual float GetElementScaleX() { return newScale.X; }
+    public virtual float GetElementScaleY() { return Scale.Y; }
+    public virtual float GetElementScaleX() { return Scale.X; }
 
     public override void Delete(bool baseOnly = false)
     {

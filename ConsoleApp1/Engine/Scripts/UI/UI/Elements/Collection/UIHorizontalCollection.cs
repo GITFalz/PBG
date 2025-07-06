@@ -44,7 +44,7 @@ public class UIHorizontalCollection : UICollection
         }
 
         Scale = (totalOffset - Spacing + Border.Z, Scale.Y);
-        newScale = Scale;
+        Scale = Scale;
 
         OnAlign = null;
     }

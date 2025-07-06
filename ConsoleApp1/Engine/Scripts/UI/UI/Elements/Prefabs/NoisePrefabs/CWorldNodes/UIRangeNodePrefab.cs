@@ -29,7 +29,7 @@ public class UIRangeNodePrefab : UINoiseNodePrefab
     private Vector3 _pivot = (0, 0, 0);
     private Vector2 _scale = (100, 100);
     private float _rotation = 0;
-    public DoubleInputOperationType Type = DoubleInputOperationType.Add;
+    public OperationOperationType Type = OperationOperationType.Add;
 
     public float Depth
     {
@@ -73,9 +73,9 @@ public class UIRangeNodePrefab : UINoiseNodePrefab
         FlippedText.SetTextCharCount("Flip: False", 1.2f).SetTextType(TextType.Alphabetic);
 
 
-        UIImage startBackground = new UIImage($"{name}value1Background", Controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), StartInputField.newScale + (16, 16), (0, -58, 0, 0), 0, 11, (10f, 0.05f));
-        UIImage heightBackground = new UIImage($"{name}value2Background", Controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), HeightInputField.newScale + (16, 16), (0, -28, 0, 0), 0, 11, (10f, 0.05f));
-        FlippedButton.SetScale((50, HeightInputField.newScale.Y + 16));
+        UIImage startBackground = new UIImage($"{name}value1Background", Controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), StartInputField.Scale + (16, 16), (0, -58, 0, 0), 0, 11, (10f, 0.05f));
+        UIImage heightBackground = new UIImage($"{name}value2Background", Controller, AnchorType.BottomRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), HeightInputField.Scale + (16, 16), (0, -28, 0, 0), 0, 11, (10f, 0.05f));
+        FlippedButton.SetScale((50, HeightInputField.Scale.Y + 16));
 
         ElementCollection.AddElements(NameField, StartButton, HeightButton, OutputButton, startBackground, heightBackground, StartInputField, HeightInputField, FlippedButton, StartTextField, HeightTextField, FlippedText);
 

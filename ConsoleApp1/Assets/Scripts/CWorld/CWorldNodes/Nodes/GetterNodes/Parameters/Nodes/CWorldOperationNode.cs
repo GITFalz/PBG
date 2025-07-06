@@ -1,6 +1,6 @@
 using OpenTK.Mathematics;
 
-public class CWorldDoubleInputNode : CWorldParameterNode
+public class CWorldOperationNode : CWorldParameterNode
 {
     public float Value1 
     {
@@ -14,17 +14,17 @@ public class CWorldDoubleInputNode : CWorldParameterNode
         set => InputNode2.SetValue(value);
     }
 
-    public DoubleInputOperations Operation;
-    public DoubleInputOperationType Type;
+    public OperationOperations Operation;
+    public OperationOperationType Type;
 
     public CWorldGetterNode InputNode1 = new CWorldEmptyNode("Empty"); 
     public int InputNode1Index = 0;
     public CWorldGetterNode InputNode2 = new CWorldEmptyNode("Empty"); 
     public int InputNode2Index = 0;
 
-    public CWorldDoubleInputNode(DoubleInputOperationType type) : base()
+    public CWorldOperationNode(OperationOperationType type) : base()
     {
-        Operation = DoubleInputOperations.GetOperation(type);
+        Operation = OperationOperations.GetOperation(type);
         Type = type;
     }
 
@@ -37,7 +37,7 @@ public class CWorldDoubleInputNode : CWorldParameterNode
 
     public override CWorldNode Copy()
     {
-        return new CWorldDoubleInputNode(Type)
+        return new CWorldOperationNode(Type)
         {
             Name = Name,
             Value1 = Value1,
@@ -57,12 +57,12 @@ public class CWorldDoubleInputNode : CWorldParameterNode
         if (InputNode1.IsntEmpty())
         {
             string inputName1 = nodeNameMap[InputNode1];
-            ((CWorldDoubleInputNode)copiedNode).InputNode1 = (CWorldGetterNode)copiedNodes[inputName1];
+            ((CWorldOperationNode)copiedNode).InputNode1 = (CWorldGetterNode)copiedNodes[inputName1];
         }
         if (InputNode2.IsntEmpty())
         {
             string inputName2 = nodeNameMap[InputNode2];
-            ((CWorldDoubleInputNode)copiedNode).InputNode2 = (CWorldGetterNode)copiedNodes[inputName2];
+            ((CWorldOperationNode)copiedNode).InputNode2 = (CWorldGetterNode)copiedNodes[inputName2];
         }
     }
 }

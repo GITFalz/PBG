@@ -6,16 +6,16 @@ public class UIInputField : UIText
     public SerializableEvent? OnTextChange = null;
 
     public UIInputField(
-        string name, 
+        string name,
         UIController controller,
-        AnchorType anchorType, 
-        PositionType positionType, 
+        AnchorType anchorType,
+        PositionType positionType,
         Vector4 color,
-        Vector3 pivot, 
-        Vector2 scale, 
-        Vector4 offset, 
-        float rotation, 
-        int textureIndex, 
+        Vector3 pivot,
+        Vector2 scale,
+        Vector4 offset,
+        float rotation,
+        int textureIndex,
         Vector2 slice
     ) : base(name, controller, anchorType, positionType, color, pivot, scale, offset, rotation)
     {
@@ -80,7 +80,7 @@ public class UIInputField : UIText
         //Console.WriteLine("Formated Text: " + formatedText);
         SetText(formatedText).UpdateCharacters();
     }
-    
+
     public void RemoveCharacter()
     {
         if (Text.Length <= 0) return;
@@ -99,7 +99,7 @@ public class UIInputField : UIText
         }
         return Text;
     }
-    
+
     public string Format(string text)
     {
         if (TextType == TextType.Numeric)
@@ -151,7 +151,7 @@ public class UIInputField : UIText
     {
         List<string> lines = new List<string>();
         string gapString = new(' ', gap * 4);
-        
+
         lines.Add(gapString + "Inputfield");
         lines.Add(gapString + "{");
         lines.AddRange(GetBasicDisplayLines(gapString));
@@ -160,7 +160,7 @@ public class UIInputField : UIText
         lines.Add(gapString + "    MaxCharCount: " + MaxCharCount);
         lines.Add(gapString + "    TextType: " + (int)TextType);
         lines.Add(gapString + "}");
-        
+
         return lines;
     }
 }

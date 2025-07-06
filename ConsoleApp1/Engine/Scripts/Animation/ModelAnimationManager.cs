@@ -62,10 +62,10 @@ public class ModelAnimationManager
             PreviousAnimation?.Animation.Update();
         
         if (CurrentAnimation.Status == AnimationStatus.Done)
-            {
-                if (!CurrentAnimation.OnAnimationEnd?.Invoke() ?? true)
-                    return;
-            }
+        {
+            if (!CurrentAnimation.OnAnimationEnd?.Invoke() ?? true)
+                return;
+        }
 
         foreach (var bone in Rig.BonesList)
         {

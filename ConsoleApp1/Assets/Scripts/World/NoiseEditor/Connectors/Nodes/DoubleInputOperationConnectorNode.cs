@@ -11,8 +11,8 @@ public class DoubleInputConnectorNode : ConnectorNode
 
     public OutputGateConnector OutputGateConnector;
 
-    public DoubleInputOperations Operation;
-    public DoubleInputOperationType Type;
+    public OperationOperations Operation;
+    public OperationOperationType Type;
 
     public float Value1 {
         get {
@@ -37,7 +37,7 @@ public class DoubleInputConnectorNode : ConnectorNode
     private int _value1Index = -1;
     private int _value2Index = -1;
 
-    public DoubleInputConnectorNode(UIDoubleInputNodePrefab doubleInputNodePrefab, DoubleInputOperationType type)
+    public DoubleInputConnectorNode(UIDoubleInputNodePrefab doubleInputNodePrefab, OperationOperationType type)
     {
         NodePrefab = doubleInputNodePrefab;
         InputGateConnector1 = new InputGateConnector(doubleInputNodePrefab.InputButton1, this);
@@ -62,7 +62,7 @@ public class DoubleInputConnectorNode : ConnectorNode
 
         NodePrefab.Collection.SetOnClick(() => SelectNode(this));
 
-        Operation = DoubleInputOperations.GetOperation(type);
+        Operation = OperationOperations.GetOperation(type);
         Type = type;
     }
 

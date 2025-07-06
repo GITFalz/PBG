@@ -52,7 +52,7 @@ public class UIButton : UIPanel
     {
         if (!CanGenerate())
             return;
-        SetScale(newScale);
+        SetScale(Scale);
         GenerateUIQuad(uIMesh);    
     }
 

@@ -13,7 +13,7 @@ public class UIText : UIElement
     public List<int> Chars = [];
 
     public List<TextElementData> CharacterDataList = [];
-    
+
     public TextType TextType = TextType.Alphabetic;
     public int TextOffset = 0;
 
@@ -24,22 +24,22 @@ public class UIText : UIElement
     private UIText() : base() { }
     public UIText
     (
-        string name, 
-        UIController controller, 
-        AnchorType anchorType, 
-        PositionType positionType, 
+        string name,
+        UIController controller,
+        AnchorType anchorType,
+        PositionType positionType,
         Vector4 color,
-        Vector3 pivot, 
-        Vector2 scale, 
-        Vector4 offset, 
-        float rotation) : 
+        Vector3 pivot,
+        Vector2 scale,
+        Vector4 offset,
+        float rotation) :
         base(name, controller, anchorType, positionType, pivot, scale, offset, rotation)
     {
         TextMesh = controller.TextMesh;
     }
 
     public override void SetVisibility(bool visible)
-    {   
+    {
         if (Visible == visible)
             return;
 
@@ -74,16 +74,14 @@ public class UIText : UIElement
         MaxCharCount = text.Length;
         return SetText(text, fontSize);
     }
-    
+
     public virtual UIText SetText(string text)
     {
         Text = ClampText(text, 0, MaxCharCount);
         finalText = AddSpaces(Text, MaxCharCount);
         CharCount = Text.Length;
         Characters = finalText.ToCharArray();
-
         Scale = new Vector2(MaxCharCount * (10 * FontSize), 10 * FontSize);
-        newScale = Scale;
 
         return this;
     }
@@ -108,7 +106,7 @@ public class UIText : UIElement
         if (int.TryParse(text, out int scaleValue))
             value = scaleValue;
         else
-            value = replacement; 
+            value = replacement;
         return value;
     }
 
@@ -119,7 +117,7 @@ public class UIText : UIElement
 
     public override void Generate()
     {
-        SetScale(newScale);
+        SetScale(Scale);
         GenerateChars();
         GenerateQuad();
     }
@@ -136,11 +134,11 @@ public class UIText : UIElement
         TextMesh.UpdateCharacters(this, CharacterDataList);
     }
 
-    public override void Delete(bool baseOnly = false) 
+    public override void Delete(bool baseOnly = false)
     {
 
         base.Delete();
-        if (baseOnly) 
+        if (baseOnly)
             return;
         TextMesh.RemoveElement(this);
         CharacterDataList.Clear();
@@ -186,7 +184,7 @@ public class UIText : UIElement
                 PositionSize = (index * (10 * FontSize), 0, 10 * FontSize, 10 * FontSize),
                 Index = (charIndex, Visible ? _mask : 0, 0, Masked ? (MaskIndex | _mask) : 0)
             };
-            
+
             TextElementData textElementData = new TextElementData(Character);
             CharacterDataList.Add(textElementData);
 
@@ -217,11 +215,11 @@ public class UIText : UIElement
 
     public static string AddSpaces(string text, int maxCount)
     {
-        if (text.Length > maxCount) 
+        if (text.Length > maxCount)
         {
             return text[..maxCount];
         }
-        else if (text.Length < maxCount) 
+        else if (text.Length < maxCount)
         {
             return text.PadRight(maxCount, ' ');
         }
@@ -232,7 +230,7 @@ public class UIText : UIElement
     {
         List<string> lines = new List<string>();
         string gapString = new(' ', gap * 4);
-        
+
         lines.Add(gapString + "Text");
         lines.Add(gapString + "{");
         lines.AddRange(GetBasicDisplayLines(gapString));
@@ -241,25 +239,18 @@ public class UIText : UIElement
         lines.Add(gapString + "    MaxCharCount: " + MaxCharCount);
         lines.Add(gapString + "    TextType: " + (int)TextType);
         lines.Add(gapString + "}");
-        
+
         return lines;
     }
 
 
     public override float GetYScale()
     {
-        return newScale.Y;
+        return Scale.Y;
     }
 
     public override float GetXScale()
     {
-        return newScale.X;
+        return Scale.X;
     }
-}
-
-public class TextQuad
-{
-    public List<Vector3> Vertices = [];
-    public List<Vector2> Uvs = [];
-    public List<Vector2i> TextSize = [];
 }

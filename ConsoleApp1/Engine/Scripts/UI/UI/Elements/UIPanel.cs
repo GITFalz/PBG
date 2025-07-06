@@ -44,7 +44,7 @@ public abstract class UIPanel : UIRender
 
     public override void Generate()
     {
-        SetScale(newScale);
+        SetScale(Scale);
         GenerateUIQuad(uIMesh);    
     }
 
@@ -77,11 +77,11 @@ public abstract class UIPanel : UIRender
 
     public override float GetYScale()
     {
-        return newScale.Y;
+        return Scale.Y;
     }
 
     public override float GetXScale()
     {
-        return newScale.X;
-    }
+        return Scale.X;
+    }  
 }
