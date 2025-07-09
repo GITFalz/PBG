@@ -232,7 +232,8 @@ public abstract class UIElement
             OnHover?.Invoke();
 
             if (Input.IsMousePressed(MouseButton.Left) && !_clicked)
-            {  
+            {
+                Console.WriteLine("Element: " + Name);
                 OnClick?.Invoke();
                 _clicked = true;
             }

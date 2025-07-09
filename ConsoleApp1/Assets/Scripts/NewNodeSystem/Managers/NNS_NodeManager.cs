@@ -18,8 +18,20 @@ public class NNS_NodeManager
 
     public NNS_NodeManager()
     {
-        NodeController = new();
-        OutputNode = new NNS_OutputNode(new Vector2(0, 0));
+        NodeController = new("NodeController");
+        OutputNode = new NNS_OutputNode(new Vector2(400, 0));
+        Nodes.Add(OutputNode);
+    }
+
+    public static void UpdateDepth()
+    {
+        for (int i = 0; i < Nodes.Count; i++)
+        {
+            NNS_NodeBase node = Nodes[i];
+            node.Collection.Depth = i * 30;
+            node.Collection.Align();
+            node.Collection.UpdateTransformation();
+        }
     }
 
     public static void AddNode(NNS_NodeBase node)
@@ -28,14 +40,8 @@ public class NNS_NodeManager
             return;
 
         Nodes.Add(node);
-        for (int i = 0; i < node.Inputs.Count; i++)
-        {
-            Inputs.Add(node.Inputs[i]);
-        }
-        for (int i = 0; i < node.Outputs.Count; i++)
-        {
-            Outputs.Add(node.Outputs[i]);
-        }
+        Inputs.AddRange(node.Inputs);
+        Outputs.AddRange(node.Outputs);
     }
 
     public static void RemoveNode(NNS_NodeBase node)
@@ -44,14 +50,8 @@ public class NNS_NodeManager
             return;
 
         Nodes.Remove(node);
-        for (int i = 0; i < node.Inputs.Count; i++)
-        {
-            Inputs.Remove(node.Inputs[i]);
-        }
-        for (int i = 0; i < node.Outputs.Count; i++)
-        {
-            Outputs.Remove(node.Outputs[i]);
-        }
+        Inputs.RemoveAll(input => input.Node == node);
+        Outputs.RemoveAll(output => output.Node == node);
     }
 
     public static void GenerateLines()
@@ -65,7 +65,7 @@ public class NNS_NodeManager
             _connectorLineVertices.Add(Vector3.TransformPosition(output.Position, NodeController.ModelMatrix));
             _connectorLineVertices.Add(Vector3.TransformPosition(input.Position, NodeController.ModelMatrix));
 
-            index++;
+            index++;      
         }
 
         _connectorLineVAO.Bind();
@@ -176,14 +176,17 @@ public class NNS_NodeManager
         List<(NNS_NodeInput, NNS_NodeOutput)> connections = [];
         foreach (var output in Outputs)
         {
+            Console.WriteLine($"Output: {output.Name}, Connected: {output.IsConnected}");
             if (!output.IsConnected)
                 continue;
 
             foreach (var input in output.Inputs)
             {
+                Console.WriteLine($"  Input: {input.Name}, Connected: {input.IsConnected}");
                 connections.Add((input, output));
             }
         }
+        Console.WriteLine($"Total connections: {connections.Count}");
         return connections;
     }
 }

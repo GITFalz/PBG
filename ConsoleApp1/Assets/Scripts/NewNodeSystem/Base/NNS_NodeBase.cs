@@ -49,7 +49,7 @@ public abstract class NNS_NodeBase
     /* Connection logic */
     public static NNS_NodeConnector? SelectedConnection = null;
 
-    
+
     public NNS_NodeBase(string name, Vector4 color, Vector2 position, string type = "")
     {
         if (!string.IsNullOrEmpty(type))
@@ -62,20 +62,19 @@ public abstract class NNS_NodeBase
         Color = color;
         Position = position;
         Controller = NNS_NodeManager.NodeController;
-        if (!NodeTemplates.ContainsKey(name))
+        if (!NodeTemplates.TryGetValue(Name, out NNS_NodeTemplate? value))
         {
             _nodeTemplate = new NNS_NodeTemplate(GetType().Name);
             InitializeNodeData();
-            NodeTemplates.Add(name, _nodeTemplate);
+            NodeTemplates.Add(Name, _nodeTemplate);
         }
         else
         {
-            _nodeTemplate = NodeTemplates[name];
+            _nodeTemplate = value;
         }
         Initialize();
         _nodeTemplate = null;
     }
-
 
 
     /* Connection functions */
@@ -84,6 +83,7 @@ public abstract class NNS_NodeBase
         if (input.IsConnected)
         {
             input.Disconnect();
+            input.Deselect();
             NNS_NodeManager.GenerateLines();
             return;
         }
@@ -97,8 +97,8 @@ public abstract class NNS_NodeBase
 
         if (SelectedConnection is NNS_NodeInput)
         {
-            SelectedConnection.Disconnect();
             SelectedConnection = null;
+            input.Deselect();
             return;
         }
 
@@ -107,11 +107,14 @@ public abstract class NNS_NodeBase
             if (output.Node == input.Node || output.IsConnectedTo(input))
             {
                 output.Deselect();
+                input.Deselect();
                 SelectedConnection = null;
                 return;
             }
 
             output.Connect(input);
+            output.Deselect();
+            input.Deselect();
             SelectedConnection = null;
             NNS_NodeManager.GenerateLines();
         }
@@ -132,8 +135,8 @@ public abstract class NNS_NodeBase
 
         if (SelectedConnection is NNS_NodeOutput)
         {
-            SelectedConnection.Disconnect();
             SelectedConnection = null;
+            output.Deselect();
             return;
         }
 
@@ -142,11 +145,14 @@ public abstract class NNS_NodeBase
             if (input.Node == output.Node || output.IsConnectedTo(input))
             {
                 SelectedConnection.Deselect();
+                output.Deselect();
                 SelectedConnection = null;
                 return;
             }
 
             output.Connect(input);
+            output.Deselect();
+            input.Deselect();
             SelectedConnection = null;
             NNS_NodeManager.GenerateLines();
         }
@@ -201,7 +207,7 @@ public abstract class NNS_NodeBase
         if (_nodeTemplate == null)
             throw new InvalidOperationException("Node template is not initialized. This should not happen. Please fix the bug you dumbass.");
 
-        Collection = new UICollection("Node collection", Controller, AnchorType.TopLeft) { Offset = (Position.X, Position.Y, 0, 0) };
+        Collection = new UICollection($"{GetType().Name} Node collection", Controller, AnchorType.TopLeft) { Offset = (Position.X, Position.Y, 0, 0) };
         UIButton moveButton = new UIButton("Move button", Controller, AnchorType.TopLeft, PositionType.Relative, Color, (0, 0, 0), (20, 20), (0, 0, 0, 0), 0, 10, (10f, 0.05f), UIState.Interactable);
         moveButton.SetOnClick(SetOldMousePosition);
         moveButton.SetOnHold(MoveNode);
@@ -209,82 +215,91 @@ public abstract class NNS_NodeBase
         UIText nodeName = new UIText("Node name", Controller, AnchorType.TopLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (100, 20), (10, 30, 0, 0), 0);
         nodeName.SetTextCharCount(Name + (HasType ? " " + Type : ""), 1f);
         UIVerticalCollection inputFieldsCollection = new UIVerticalCollection("Node fields", Controller, AnchorType.ScaleTop, PositionType.Relative) { Border = (0, nodeName.Scale.Y + 15, 0, 0), Offset = (0, 20, 0, 0) };
+        UICollection spacingCollection = new UICollection("Spacing collection", Controller, AnchorType.TopLeft, PositionType.Relative) { Offset = (0, 0, 0, 0), Scale = (0, 5) };
+
+        float maxScaleX = nodeName.Scale.X + 20;
 
         UICollection outputSectionCollection = new UICollection("Output fields collection", Controller, AnchorType.TopCenter, PositionType.Relative) { Offset = (0, 0, 0, 0), Scale = (0, 15) };
-        UIImage outputFieldButton = new UIImage("Output fields background", Controller, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (0, 15), (0, 0, 0, 0), 0, 10, (7.5f, 0.05f));
-        UIText outputFieldsName = new UIText("Output fields name", Controller, AnchorType.MiddleCenter, PositionType.Relative, (1f, 1f, 1f, 1f), (0, 0, 0), (100, 15), (0, 0, 0, 0), 0);
-        outputFieldsName.SetTextCharCount("Outputs", 0.8f);
-        outputSectionCollection.AddElements(outputFieldButton, outputFieldsName);
-
-        inputFieldsCollection.AddElement(outputSectionCollection);
-
-        UICollection spacingCollection = new UICollection("Spacing collection", Controller, AnchorType.TopLeft, PositionType.Relative) { Offset = (0, 0, 0, 0), Scale = (0, 5) };
-        inputFieldsCollection.AddElement(spacingCollection);
-
-        float maxScaleX = 0;
-        for (int i = 0; i < _nodeTemplate.RegisteredOutputFields.Count; i++)
+        if (_nodeTemplate.RegisteredOutputFields.Count > 0)
         {
-            var field = _nodeTemplate.RegisteredOutputFields[i];
+            UIImage outputFieldButton = new UIImage("Output fields background", Controller, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (0, 15), (0, 0, 0, 0), 0, 10, (7.5f, 0.05f));
+            UIText outputFieldsName = new UIText("Output fields name", Controller, AnchorType.MiddleCenter, PositionType.Relative, (1f, 1f, 1f, 1f), (0, 0, 0), (100, 15), (0, 0, 0, 0), 0);
+            outputFieldsName.SetTextCharCount("Outputs", 0.8f);
+            outputSectionCollection.AddElements(outputFieldButton, outputFieldsName);
 
-            UICollection fieldCollection = new UICollection($"Field collection {field.Identifier}", Controller, AnchorType.ScaleTop, PositionType.Relative) { Scale = (0, 20) };
+            inputFieldsCollection.AddElement(outputSectionCollection);
+            inputFieldsCollection.AddElement(spacingCollection);
 
-            UIButton outputButton = new UIButton($"Output button {field.Identifier}", Controller, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (-5, 0, 5, 0), 0, 11, (7.5f, 0.05f), UIState.Interactable);
-            NNS_NodeOutput output = new NNS_NodeOutput(outputButton, this, field.Type);
-            _outputFields.Add(output, field);
-            outputButton.SetOnClick(() => Connect(output));
-            fieldCollection.AddElement(outputButton);
+            for (int i = 0; i < _nodeTemplate.RegisteredOutputFields.Count; i++)
+            {
+                var field = _nodeTemplate.RegisteredOutputFields[i];
 
-            UIText fieldName = new UIText($"Field name {field.Identifier}", Controller, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (100, 20), (30, 0, 0, 0), 0);
-            fieldName.SetMaxCharCount(10).SetText(field.Identifier, 0.8f);
-            fieldCollection.AddElement(fieldName);
+                UICollection fieldCollection = new UICollection($"Field collection {field.Identifier}", Controller, AnchorType.ScaleTop, PositionType.Relative) { Scale = (0, 20) };
 
-            inputFieldsCollection.AddElement(fieldCollection);
+                UIButton outputButton = new UIButton($"Output button {field.Identifier} {i}", Controller, AnchorType.MiddleRight, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (-5, 0, 5, 0), 0, 11, (7.5f, 0.05f), UIState.Interactable);
+                NNS_NodeOutput output = new NNS_NodeOutput(outputButton, this, field.Type);
+                _outputFields.Add(output, field);
+                Outputs.Add(output);
+                outputButton.SetOnClick(() => { Connect(output); });
+                fieldCollection.AddElement(outputButton);
+
+                UIText fieldName = new UIText($"Field name {field.Identifier}", Controller, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (100, 20), (30, 0, 0, 0), 0);
+                fieldName.SetMaxCharCount(10).SetText(field.Identifier, 0.8f);
+                fieldCollection.AddElement(fieldName);
+
+                inputFieldsCollection.AddElement(fieldCollection);
+            }
+
+            inputFieldsCollection.AddElement(spacingCollection);
         }
 
-        inputFieldsCollection.AddElement(spacingCollection);
-
         UICollection inputSectionCollection = new UICollection("Output fields collection", Controller, AnchorType.TopCenter, PositionType.Relative) { Offset = (0, 0, 0, 0), Scale = (0, 15) };
-        UIImage inputFieldButton = new UIImage("Output fields background", Controller, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (0, 15), (0, 0, 0, 0), 0, 10, (7.5f, 0.05f));
-        UIText inputFieldsName = new UIText("Output fields name", Controller, AnchorType.MiddleCenter, PositionType.Relative, (1f, 1f, 1f, 1f), (0, 0, 0), (100, 15), (0, 0, 0, 0), 0);
-        inputFieldsName.SetTextCharCount("Inputs", 0.8f);
-        inputSectionCollection.AddElements(inputFieldButton, inputFieldsName);
-
-        inputFieldsCollection.AddElement(inputSectionCollection);
-
-        inputFieldsCollection.AddElement(spacingCollection);
-
-        for (int i = 0; i < _nodeTemplate.RegisteredInputFields.Count; i++)
+        if (_nodeTemplate.RegisteredInputFields.Count > 0)
         {
-            var field = _nodeTemplate.RegisteredInputFields[i];
-            NNS_NodeValue value = NNS_NodeValue.Get(field.Value);
-            NNS_NodeInput? input = null;
-            NNS_ValueType valueType = NNS_NodeValue.GetValueType(field.Value);
+            UIImage inputFieldButton = new UIImage("Output fields background", Controller, AnchorType.ScaleFull, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (0, 15), (0, 0, 0, 0), 0, 10, (7.5f, 0.05f));
+            UIText inputFieldsName = new UIText("Output fields name", Controller, AnchorType.MiddleCenter, PositionType.Relative, (1f, 1f, 1f, 1f), (0, 0, 0), (100, 15), (0, 0, 0, 0), 0);
+            inputFieldsName.SetTextCharCount("Inputs", 0.8f);
+            inputSectionCollection.AddElements(inputFieldButton, inputFieldsName);
 
-            UICollection fieldCollection = new UICollection($"Field collection {field.Identifier}", Controller, AnchorType.TopLeft, PositionType.Relative) { Scale = (0, 20) };
+            inputFieldsCollection.AddElement(inputSectionCollection);
+            inputFieldsCollection.AddElement(spacingCollection);
 
-            if (field.HasInput)
+            for (int i = 0; i < _nodeTemplate.RegisteredInputFields.Count; i++)
             {
-                UIButton inputButton = new UIButton($"Input button {field.Identifier}", Controller, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (5, 0, 0, 0), 0, 11, (7.5f, 0.05f), UIState.Interactable);
-                input = new NNS_NodeInput(inputButton, this, valueType);
-                _inputFields.Add(input, field);
-                inputButton.SetOnClick(() => Connect(input));
-                fieldCollection.AddElement(inputButton);
+                var field = _nodeTemplate.RegisteredInputFields[i];
+                NNS_NodeValue value = NNS_NodeValue.Get(field.Value);
+                NNS_NodeInput? input = null;
+                NNS_ValueType valueType = NNS_NodeValue.GetValueType(field.Value);
+
+                UICollection fieldCollection = new UICollection($"Field collection {field.Identifier}", Controller, AnchorType.TopLeft, PositionType.Relative) { Scale = (0, 20) };
+
+                if (field.HasInput)
+                {
+                    UIButton inputButton = new UIButton($"Input button {field.Identifier}", Controller, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (20, 20), (5, 0, 0, 0), 0, 11, (7.5f, 0.05f), UIState.Interactable);
+                    input = new NNS_NodeInput(inputButton, this, valueType);
+                    _inputFields.Add(input, field);
+                    Inputs.Add(input);
+                    inputButton.SetOnClick(() => Connect(input));
+                    fieldCollection.AddElement(inputButton);
+                }
+
+                UIText fieldName = new UIText($"Field name {field.Identifier}", Controller, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (100, 20), (30, 0, 0, 0), 0);
+                fieldName.SetMaxCharCount(10).SetText(field.Identifier, 0.8f);
+                fieldCollection.AddElement(fieldName);
+
+                maxScaleX = Math.Max(maxScaleX, fieldName.Scale.X + 40);
+
+                if (field.HasDefaultValue)
+                {
+                    UICollection inputFields = value.GetInputFields(Controller);
+                    inputFields.Offset.X = fieldName.Scale.X + 35;
+                    maxScaleX = Math.Max(maxScaleX, inputFields.Scale.X + fieldName.Scale.X + 40);
+                    fieldCollection.AddElement(inputFields);
+                }
+
+                inputFieldsCollection.AddElement(fieldCollection);
+                Fields.Add(new NNS_NodeField(value, input));
             }
-
-            UIText fieldName = new UIText($"Field name {field.Identifier}", Controller, AnchorType.MiddleLeft, PositionType.Relative, (0.5f, 0.5f, 0.5f, 1f), (0, 0, 0), (100, 20), (30, 0, 0, 0), 0);
-            fieldName.SetMaxCharCount(10).SetText(field.Identifier, 0.8f);
-            fieldCollection.AddElement(fieldName);
-
-            if (field.HasDefaultValue)
-            {
-                UICollection inputFields = value.GetInputFields(Controller);
-                inputFields.Offset.X = fieldName.Scale.X + 35;
-                maxScaleX = Math.Max(maxScaleX, inputFields.Scale.X + fieldName.Scale.X + 40);
-                fieldCollection.AddElement(inputFields);
-            }
-
-            inputFieldsCollection.AddElement(fieldCollection);
-            Fields.Add(new NNS_NodeField(value, input));
         }
 
         outputSectionCollection.SetScale((maxScaleX - 10, 15));

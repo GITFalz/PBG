@@ -4,6 +4,8 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class UIController
 {
+    public string Name = "UIController";
+
     public static List<UIController> Controllers = [];
     public static UIController Empty = new();
 
@@ -16,7 +18,7 @@ public class UIController
     public static ShaderProgram _textShader = UIData.TextShader;
     public static Texture _textTexture = UIData.TextTexture;
 
-    public static Matrix4 OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, 1, 1, 0, -1, 1);
+    public static Matrix4 OrthographicProjection = Matrix4.CreateOrthographicOffCenter(0, 1, 1, 0, 0.01f, 1);
     public List<UIElement> Elements = [];
     public List<UIElement> AbsoluteElements = [];
     public List<UIScrollView> ScrollViews = [];
@@ -51,6 +53,12 @@ public class UIController
     /// </summary>
     public UIController()
     {
+        Controllers.Add(this);
+    }
+
+    public UIController(string name)
+    {
+        Name = name;
         Controllers.Add(this);
     }
 
@@ -562,6 +570,11 @@ public class UIController
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
         Matrix4 model = ModelMatrix;
+        
+        /*if (Name == "NodeController")
+        {
+            Console.WriteLine("Rendering UIController: " + Name + " " + UIMesh.ElementCount);
+        }*/
 
         if (UIMesh.ElementCount > 0)
         {
@@ -575,7 +588,7 @@ public class UIController
             MaskData.UIMaskSSBO.Bind(1);
 
             UIMesh.Render();
-        
+
             //Shader.Error("Ui render error: ");
 
             MaskData.UIMaskSSBO.Unbind();

@@ -9,7 +9,6 @@ public abstract class NNS_NodeConnector(UIButton button, NNS_NodeBase node, NNS_
         set
         {
             if (_isConnected == value) return;
-            Deselect(); // deselect whenever a connection modified
             _isConnected = value;
         }
     }

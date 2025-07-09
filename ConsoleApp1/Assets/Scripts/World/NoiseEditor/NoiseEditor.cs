@@ -65,6 +65,8 @@ public class NoiseEditor : ScriptingNode
         NNS_NodeManager.AddNode(new NNS_SampleNode((200, 200)));
         NNS_NodeManager.AddNode(new NNS_OperationNode((400, 200), "add"));
 
+        NNS_NodeManager.UpdateDepth();
+
 
         InternalNodeWindowPosition = new Vector2i(0, Game.Height - NodePanelHeight);
 
@@ -75,7 +77,6 @@ public class NoiseEditor : ScriptingNode
         SelectionController = new();
 
         TestController = new();
-        var testNewNode = new NNS_SampleNode((200, 200));
 
         NoiseNodeManager.NodeController = NodeController;
 
@@ -853,7 +854,8 @@ public class NoiseEditor : ScriptingNode
         GL.Viewport(InternalNodeWindowPosition.X + 7, InternalNodeWindowPosition.Y + 7, NodePanelWidth - 14, NodePanelHeight - 14);
 
         NodeController.RenderDepthTest(NodePanelProjectionMatrix);
-        NoiseNodeManager.NodeController.RenderDepthTest(NodePanelProjectionMatrix);
+        NNS_NodeManager.NodeController.RenderDepthTest(NodePanelProjectionMatrix);
+        //NoiseNodeManager.NodeController.RenderDepthTest(NodePanelProjectionMatrix);
 
         UICurveNodePrefab.Render(NodeController.ModelMatrix, NodePanelProjectionMatrix);
         NoiseNodeManager.RenderLine(NodePanelProjectionMatrix);
